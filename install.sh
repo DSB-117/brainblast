@@ -1,13 +1,28 @@
 #!/bin/sh
-# Brainblast installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.1.0/install.sh | sh
+# Brainblast installer / updater
+# Install:  curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | sh
+# Update:   curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=latest sh
+# Specific: curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.1.1 sh
 #
-# Pins to a tagged release (not main) and verifies SHA-256 checksums before
-# writing any file. Override the ref with BRAINBLAST_REF=main for bleeding edge.
+# Pins to a tagged release and verifies SHA-256 checksums before writing any file.
 set -e
 
 REPO="DSB-117/brainblast"
 REF="${BRAINBLAST_REF:-v0.1.1}"
+
+# Resolve "latest" to the actual newest release tag via GitHub API
+if [ "$REF" = "latest" ]; then
+  LATEST=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \
+    | grep '"tag_name"' \
+    | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+  if [ -n "$LATEST" ]; then
+    REF="$LATEST"
+  else
+    echo "ERROR: could not resolve latest release from GitHub API." >&2
+    exit 1
+  fi
+fi
+
 RAW="https://raw.githubusercontent.com/$REPO/$REF"
 INSTALLED=""
 GSTACK_BIN="$HOME/.claude/skills/gstack/browse/dist/browse"
@@ -79,8 +94,11 @@ if [ -d "$HOME/.claude/skills" ]; then
   # Register /brainblast as a first-class slash command in the command palette
   mkdir -p "$HOME/.claude/commands"
   curl -fsSL "$RAW/commands/brainblast.md" -o "$HOME/.claude/commands/brainblast.md"
-  echo "  Registered → ~/.claude/commands/brainblast.md (slash command)"
+  curl -fsSL "$RAW/commands/brainblast-update.md" -o "$HOME/.claude/commands/brainblast-update.md"
+  echo "  Registered → ~/.claude/commands/brainblast.md"
+  echo "  Registered → ~/.claude/commands/brainblast-update.md"
   echo "  Invoke:     /brainblast [requirements-file]"
+  echo "  Update:     /brainblast-update"
   echo ""
   INSTALLED="yes"
 fi

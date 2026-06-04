@@ -151,7 +151,22 @@ The installer refuses to write files whose SHA-256 does not match the tagged rel
 
 ## Updating
 
-Re-run the install one-liner with a newer tag (or `BRAINBLAST_REF=main`). The Claude Code skill file is overwritten in place; the Codex adapter block is replaced (not duplicated) thanks to its `<!-- BRAINBLAST:START/END -->` markers.
+**From inside Claude Code or Codex:**
+```
+/brainblast-update
+```
+
+**From the terminal:**
+```sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=latest sh
+```
+
+**Specific version:**
+```sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.1.1 sh
+```
+
+The installer is idempotent: the Claude Code skill is overwritten in place, and the Codex adapter block is replaced (not duplicated) via its `<!-- BRAINBLAST:START/END -->` markers.
 
 ## Uninstall
 
