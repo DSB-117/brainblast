@@ -112,7 +112,13 @@ if command -v codex >/dev/null 2>&1 || [ -d "$HOME/.codex" ]; then
     printf '%s\n' "$END"
   } >> "$AGENTS"
   rm -f "$BLOCK"
-  echo "  Invoke:  Tell Codex: 'Run brainblast on requirements.md'"
+  # Install the Codex skill package (registers /brainblast in Codex's skill UI)
+  CODEX_SKILL="$HOME/.codex/skills/brainblast"
+  mkdir -p "$CODEX_SKILL/agents"
+  curl -fsSL "$RAW/adapters/codex-skill/SKILL.md" -o "$CODEX_SKILL/SKILL.md"
+  curl -fsSL "$RAW/adapters/codex-skill/agents/openai.yaml" -o "$CODEX_SKILL/agents/openai.yaml"
+  echo "  Installed → $CODEX_SKILL/  (skill + openai.yaml)"
+  echo "  Invoke:     /brainblast [requirements-file]"
   echo ""
   INSTALLED="yes"
 fi

@@ -7,7 +7,6 @@ allowed-tools:
   - Read
   - Write
   - Edit
-  - AskUserQuestion
 triggers:
   - research this before coding
   - brainblast
@@ -65,8 +64,8 @@ find . -maxdepth 2 \( \
 **Decision rules:**
 
 1. **Exactly one file found** → use it, tell the user which file was picked
-2. **Multiple files found** → show the list and ask the user which to use (do not guess)
-3. **Nothing found** → scan for any `.md` files in the project root (maxdepth 1), show up to 10, and ask the user which contains their requirements; if still nothing, ask the user to create one or pass a path
+2. **Multiple files found** → show the list; use `AskUserQuestion` if available, otherwise output the list as plain text and wait for the user to reply before continuing
+3. **Nothing found** → scan for any `.md` files in the project root (maxdepth 1), show up to 10; use `AskUserQuestion` if available, otherwise ask as plain text. If still nothing, ask the user to create a spec file or pass a path explicitly
 
 The internal output artifact is always saved as `$_RUN_DIR/requirements.md` regardless of the source filename.
 
@@ -106,7 +105,7 @@ Write this to `$_RUN_DIR/component-inventory.md` using this format:
 | [name] | [type] | [role] | [High/Medium/Low] |
 ```
 
-Tell the user which components were found and ask if anything is missing or wrong before continuing.
+Output the inventory to the user and ask if anything is missing or wrong. Use `AskUserQuestion` if available; otherwise print the table and ask as plain text. If no response is possible (automated/CI context), proceed with the discovered inventory and note it as an assumption.
 
 ---
 
