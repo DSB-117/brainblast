@@ -1,0 +1,12 @@
+# gstack / browse runtime
+.gstack/
+
+# Claude Code project state
+.claude/settings.local.json
+.claude/settings.json
+
+# Research run outputs (large, project-specific)
+.agent-research/
+
+# macOS
+.DS_Store
