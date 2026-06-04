@@ -7,6 +7,31 @@
 
 ---
 
+## Executive Summary
+
+*The 30-second version.*
+
+- **Building:** Launch a Solana token through the Bags API and earn + claim creator trading fees.
+- **Verdict:** Build with caution — one configuration mistake permanently zeroes the creator's revenue.
+- **Top risk:** Omitting the creator wallet from the fee-share array launches a token where the creator earns 0% of all trading fees, forever, with no fix after launch.
+- **Must decide first:** The fee mode UUID (`bagsConfigType`) and the fee-share array — both are immutable on-chain after launch.
+- **Watch out for:** Mainnet-only (no devnet — testing costs real SOL), a mandatory fee-share step with no skip path, and a Jito-bundle submission that needs a tip.
+
+---
+
+## Risk Heatmap
+
+| Component | 🔴 Critical | 🟠 High | 🟡 Medium | 🟢 Low |
+|---|---|---|---|---|
+| Bags API | 1 | 1 | 2 | 1 |
+| **Total** | **1** | **1** | **2** | **1** |
+
+**Critical & High, by name:**
+1. **[CRITICAL] Bags API — zero-revenue config** — creator omitted from `feeClaimers` earns nothing, permanently and silently.
+2. **[HIGH] Bags API — launch fails without fee-share config** — `createLaunchTransaction` errors if the fee-share step is skipped.
+
+---
+
 ## Components researched
 
 | Component | Source found | Status |

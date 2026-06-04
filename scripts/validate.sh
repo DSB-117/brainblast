@@ -68,24 +68,36 @@ for f in adapters/codex/AGENTS.md adapters/generic/PROMPT.md; do
   if [ -f "$ROOT/$f" ]; then ok "$f present"; else bad "$f missing"; fi
 done
 
-# ── 3. Committed example is a complete run ─────────────────────────────────
-EX="$ROOT/examples/bags-api"
-for f in requirements.md component-inventory.md research-plan.md \
-         coverage-review.md requirements-rereview.md final-report.md \
-         components/bags-api.md; do
-  if [ -f "$EX/$f" ]; then ok "example/$f present"; else bad "example/$f missing"; fi
-done
+# ── 3. Every committed example is a complete run ───────────────────────────
+# Each examples/<name>/ directory must contain the full artifact set and at
+# least one component file, and every component's "## Facts" section must
+# carry source URLs.
+for EX in "$ROOT"/examples/*/; do
+  [ -d "$EX" ] || continue
+  name=$(basename "$EX")
+  for f in requirements.md component-inventory.md research-plan.md \
+           coverage-review.md requirements-rereview.md final-report.md; do
+    if [ -f "$EX/$f" ]; then ok "example $name/$f present"; else bad "example $name/$f missing"; fi
+  done
 
-# Every "## Facts" section in example component files must carry URLs, and
-# every non-empty fact line in that section should reference a source.
-for cf in "$EX"/components/*.md; do
-  [ -f "$cf" ] || continue
-  urls=$(awk '/^## Facts/{f=1;next} /^## /{f=0} f' "$cf" | grep -c 'http' || true)
-  if [ "$urls" -gt 0 ]; then
-    ok "example $(basename "$cf"): Facts cite sources ($urls URLs)"
+  # At least one component file.
+  ncomp=$(find "$EX/components" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$ncomp" -gt 0 ]; then
+    ok "example $name: $ncomp component file(s)"
   else
-    bad "example $(basename "$cf"): Facts section has no source URLs"
+    bad "example $name: no component files"
   fi
+
+  # Every "## Facts" section must reference a source URL.
+  for cf in "$EX"/components/*.md; do
+    [ -f "$cf" ] || continue
+    urls=$(awk '/^## Facts/{f=1;next} /^## /{f=0} f' "$cf" | grep -c 'http' || true)
+    if [ "$urls" -gt 0 ]; then
+      ok "example $name/$(basename "$cf"): Facts cite sources ($urls URLs)"
+    else
+      bad "example $name/$(basename "$cf"): Facts section has no source URLs"
+    fi
+  done
 done
 
 echo "====================="

@@ -37,7 +37,14 @@ For each component, verify the notes cover: auth method, install/version, rate l
 Re-read the original requirements. Flag: missing constraints, wrong assumptions, underspecified decisions, immutable choices that must be made before coding. Write `requirements-rereview.md`.
 
 **Step 6 — Final report**
-Write `final-report.md` covering: components researched, what a coding agent must know before starting (numbered, concrete facts), pre-coding decisions required, requirements corrections, and what the research prevents.
+Write `final-report.md`. Open with two scannable sections before the detail:
+1. **Executive Summary** — the 30-second version for a human: what is being built, a Verdict (Ready to build / Build with caution / Blocked), the top risk, the one irreversible decision, and the biggest spec gap.
+2. **Risk Heatmap** — a `Component × Critical/High/Medium/Low` count table (with a Total row), followed by the CRITICAL and HIGH risks listed by name. Counts come from the per-component risk sections.
+
+Then the detail: components researched, what a coding agent must know before starting (numbered, concrete facts), pre-coding decisions required, requirements corrections, and what the research prevents.
+
+**Step 7 — Handoff (auto-inject into the next coding session)**
+Inject a pointer to the report into the project's `AGENTS.md` (project root — Codex auto-loads it) so the next coding session sees it without anyone pasting it. Use an idempotent, marker-delimited block (`<!-- BRAINBLAST:REPORT:START -->` … `<!-- BRAINBLAST:REPORT:END -->`): if a block already exists, strip it first, then append the fresh one — never duplicate. Create the file if absent. The block states the date, the project-relative path to `final-report.md`, and that it is research to verify, not instructions. Tell the user the file was written; the block is reversible by deleting the marked lines.
 
 ### Core rules
 

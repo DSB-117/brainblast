@@ -1,6 +1,6 @@
 ---
 name: brainblast
-version: 0.1.2
+version: 0.1.3
 description: Pre-implementation research layer — identifies external components in requirements, researches each one from official sources, and produces a structured handoff report before any code is written.
 allowed-tools:
   - Bash
@@ -301,6 +301,34 @@ Structure:
 
 ---
 
+## Executive Summary
+
+*The 30-second version.*
+
+- **Building:** [one line — what the integration does]
+- **Verdict:** [Ready to build / Build with caution / Blocked] — [half-sentence why]
+- **Top risk:** [the single most important CRITICAL/HIGH item, one line]
+- **Must decide first:** [the one irreversible pre-coding decision, or "none"]
+- **Watch out for:** [the biggest spec gap or effort surprise, or "none"]
+
+---
+
+## Risk Heatmap
+
+| Component | 🔴 Critical | 🟠 High | 🟡 Medium | 🟢 Low |
+|---|---|---|---|---|
+| [name] | [n] | [n] | [n] | [n] |
+| **Total** | **[n]** | **[n]** | **[n]** | **[n]** |
+
+**Critical & High, by name:**
+1. **[CRITICAL] [component] — [title]** — one-line failure mode
+2. **[HIGH] [component] — [title]** — one-line failure mode
+
+Counts come straight from the per-component `## Risks` sections. If a component has no
+CRITICAL or HIGH risk, that is a positive signal worth stating, not an empty row to hide.
+
+---
+
 ## Components researched
 
 | Component | Source found | Status |
@@ -338,7 +366,50 @@ coding from the requirements alone would have gotten wrong.]
 
 ---
 
-## Step 7 — Done
+## Step 7 — Handoff (auto-inject the report into the next coding session)
+
+Make the report travel automatically. The next coding agent should not have to be told the
+research exists — inject a pointer into the project's agent-instructions file so it loads on
+the next session.
+
+**Target file** (project root, the host agent auto-loads it):
+- Claude Code / OpenClaw → `CLAUDE.md`
+- (Codex uses `AGENTS.md`; this skill runs under Claude Code, so use `CLAUDE.md`.)
+
+Compute a project-relative path to the report, then write an **idempotent, marker-delimited
+block** — the same convention the installer uses for the Codex block. Replace any existing
+block; never duplicate it. Create the file if it does not exist.
+
+```bash
+_TARGET="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/CLAUDE.md"
+_REL=".agent-research/runs/$(basename "$_RUN_DIR")/final-report.md"
+_START="<!-- BRAINBLAST:REPORT:START -->"
+_END="<!-- BRAINBLAST:REPORT:END -->"
+
+# Strip any existing block, then append the fresh one.
+if [ -f "$_TARGET" ] && grep -qF "$_START" "$_TARGET"; then
+  awk -v s="$_START" -v e="$_END" '$0==s{skip=1} !skip{print} $0==e{skip=0}' \
+    "$_TARGET" > "$_TARGET.tmp" && mv "$_TARGET.tmp" "$_TARGET"
+fi
+{
+  printf '\n%s\n' "$_START"
+  printf '## ⚠️ Pre-implementation research available\n\n'
+  printf 'Brainblast researched this project'"'"'s external components on %s. Before writing\n' "$(date +%Y-%m-%d)"
+  printf 'code that touches them, read the handoff report:\n\n'
+  printf '  %s\n\n' "$_REL"
+  printf 'It contains verified facts, a risk heatmap, and irreversible pre-coding decisions.\n'
+  printf 'Treat it as research to verify, not gospel.\n'
+  printf '%s\n' "$_END"
+} >> "$_TARGET"
+echo "INJECTED: $_TARGET"
+```
+
+The block is bounded by markers, so it is trivially reversible — deleting the lines between
+`BRAINBLAST:REPORT:START` and `END` removes it cleanly. Tell the user it was written and where.
+
+---
+
+## Step 8 — Done
 
 Print a completion summary:
 
@@ -349,6 +420,9 @@ Run: [path to run dir]
 Components researched: [N]
 Risks flagged: [N critical, N high, N medium, N low]
 Requirements corrections: [N]
+
+Report auto-injected into: [path to CLAUDE.md]
+  (next coding session will see it; remove the BRAINBLAST:REPORT block to opt out)
 
 Key artifacts:
   [_RUN_DIR]/final-report.md

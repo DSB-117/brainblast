@@ -33,14 +33,14 @@ Install gstack: run git clone --single-branch --depth 1 https://github.com/garry
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.1.2/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.1.3/install.sh | sh
 ```
 
 The installer pins to a tagged release, verifies SHA-256 checksums before writing any file, and auto-detects Claude Code, OpenClaw, and Codex. If gstack is missing, it warns you with the exact command to fix it. (It installs the Brainblast skill, but it does **not** install gstack for you — that is a one-time prerequisite above.)
 
 **Or tell your agent:**
 
-> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.1.2/install.sh | sh`
+> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.1.3/install.sh | sh`
 
 For the bleeding edge instead of a pinned release, prefix with `BRAINBLAST_REF=main`.
 
@@ -90,6 +90,16 @@ Every component file is structured the same way:
 - **Risks** — rated CRITICAL / HIGH / MEDIUM / LOW, focused on silent failures
 - **Resolved questions** — every question surfaced during research, answered from a live URL
 
+The `final-report.md` opens with two scannable sections for human reviewers:
+
+- **Executive Summary** — the 30-second version: what's being built, a go/no-go verdict, the top risk, the one irreversible decision, and the biggest spec gap.
+- **Risk Heatmap** — a component × severity (Critical / High / Medium / Low) count table, with the CRITICAL and HIGH risks listed by name.
+
+When the run finishes, Brainblast **auto-injects** a pointer to the report into the project's
+agent-instructions file (`CLAUDE.md`, or `AGENTS.md` on Codex) as an idempotent, marker-delimited
+block. The next coding session loads that file automatically, so the research travels to the
+implementer with no copy-paste. Remove the `BRAINBLAST:REPORT` block to opt out.
+
 ## What it catches
 
 **Example: Bags API (Solana token launch)** — full run in [`examples/bags-api/`](examples/bags-api/).
@@ -107,6 +117,17 @@ Brainblast caught both. Straight from the committed [`final-report.md`](examples
 > Fee sharing BPS must sum to 10,000 and the creator must be explicitly included. An agent that builds the fee share config without the creator wallet in the array will deploy a token where the creator earns zero fees forever. This cannot be corrected after launch.
 
 It also surfaced six other things the agent would have hallucinated: the Jito bundle requirement, the slot-wait for LUTs, four specific fee mode UUIDs (immutable after launch), the exact npm package name (`@bagsfm/bags-sdk`), the dual rate limit (per-user AND per-IP), and the three supported social providers.
+
+**Example: Stripe + Privy (web2 payments + auth)** — full run in [`examples/stripe-privy/`](examples/stripe-privy/).
+
+Requirements: *"Log users in with Privy, take payments with Stripe, fulfill via webhooks."*
+
+Brainblast flagged two silent, critical traps: a Stripe webhook handler that verifies on a parsed
+(not raw) body accepts **forged `payment_intent.succeeded` events** and unlocks paid features for
+free; and a backend that decodes a Privy access token without verifying its ES256 signature and
+`aud`/`iss` claims is an **auth bypass**. It also caught the two-package Privy server SDK split
+(`@privy-io/node` vs `@privy-io/server-auth`) and a Privy docs page that tries to instruct the
+reading agent directly — quoted and flagged, never acted on.
 
 ## Supported agents
 
@@ -163,7 +184,7 @@ curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh 
 
 **Specific version:**
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.1.2 sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.1.3 sh
 ```
 
 The installer is idempotent: the Claude Code skill is overwritten in place, and the Codex adapter block is replaced (not duplicated) via its `<!-- BRAINBLAST:START/END -->` markers.
@@ -191,7 +212,7 @@ These are baked into every adapter:
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for what is planned beyond v0.1.2 — machine-readable `report.json`, incremental cached runs, provenance/freshness metadata, a two-source rule for CRITICAL claims, repo auto-seeding from lockfiles, and a non-interactive `--ci` mode.
+See [ROADMAP.md](ROADMAP.md) for what is planned beyond v0.1.3 — machine-readable `report.json`, incremental cached runs, provenance/freshness metadata, a two-source rule for CRITICAL claims, repo auto-seeding from lockfiles, and a non-interactive `--ci` mode.
 
 ## License
 

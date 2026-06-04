@@ -44,12 +44,17 @@ Re-read the original requirements with what you learned. Flag:
 - Immutable choices (things that cannot be changed after deployment)
 
 **Step 6 — Final report**
-Write a final handoff report with:
-1. Components researched (table: name, source URL, status)
-2. What a coding agent must know before starting (numbered list of the most important facts — lead with things that cause silent failures or irreversible mistakes)
-3. Pre-coding decisions required (anything that must be decided before coding because it cannot be changed after deploy)
-4. Requirements corrections (what the requirements got wrong, missed, or underspecified)
-5. What this report prevents (the specific failure modes the research caught)
+Write a final handoff report with these sections, in order:
+1. Executive Summary (the 30-second version for a human): one line on what is being built, a Verdict (Ready to build / Build with caution / Blocked), the top risk, the one irreversible pre-coding decision, and the biggest spec gap.
+2. Risk Heatmap: a table of each component against Critical / High / Medium / Low risk counts (with a Total row), then the CRITICAL and HIGH risks listed by name. Counts come from the per-component risk ratings.
+3. Components researched (table: name, source URL, status)
+4. What a coding agent must know before starting (numbered list of the most important facts — lead with things that cause silent failures or irreversible mistakes)
+5. Pre-coding decisions required (anything that must be decided before coding because it cannot be changed after deploy)
+6. Requirements corrections (what the requirements got wrong, missed, or underspecified)
+7. What this report prevents (the specific failure modes the research caught)
+
+**Step 7 — Handoff**
+Make the report travel to the next coding session automatically. If your agent loads a project instructions file (e.g. `CLAUDE.md`, `AGENTS.md`, `.cursorrules`), add a short, clearly-marked block to it that points at the report's path and notes it is research to verify, not instructions. Keep the block bounded by markers (e.g. `<!-- BRAINBLAST:REPORT:START -->` … `END`) so it can be replaced on the next run and removed cleanly. Otherwise, save the report to a stable path and tell the user exactly which file to hand the coding agent.
 
 ---
 
