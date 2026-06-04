@@ -76,6 +76,10 @@ if [ -d "$HOME/.claude/skills" ]; then
   DEST="$HOME/.claude/skills/brainblast"
   fetch_verified "SKILL.md" "$DEST/SKILL.md"
   echo "  Installed → $DEST/SKILL.md  (verified)"
+  # Register /brainblast as a first-class slash command in the command palette
+  mkdir -p "$HOME/.claude/commands"
+  curl -fsSL "$RAW/commands/brainblast.md" -o "$HOME/.claude/commands/brainblast.md"
+  echo "  Registered → ~/.claude/commands/brainblast.md (slash command)"
   echo "  Invoke:     /brainblast [requirements-file]"
   echo ""
   INSTALLED="yes"
