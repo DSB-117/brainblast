@@ -1,4 +1,6 @@
-# Brainblast
+# brainblast
+
+![Brainblast](assets/brainblast.jpg)
 
 Research external APIs and SDKs before your AI agent starts coding.
 
