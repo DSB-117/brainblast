@@ -48,13 +48,27 @@ Set `$B` and `$_RUN_DIR` from preamble output. Use them throughout.
 
 ## Step 0 — Locate requirements
 
-**Args:** The skill may be invoked with a file path argument (e.g. `/brainblast requirements.md`). If an arg is given, use it. Otherwise:
+**Args:** The skill may be invoked with a file path argument (e.g. `/brainblast prd.md`). If an arg is given, use it directly.
 
-1. Look for any of these in the current directory: `requirements.md`, `REQUIREMENTS.md`, `requirements.txt`, `REQUIREMENTS.txt`, `brief.md`, `BRIEF.md`, `spec.md`, `SPEC.md`
-2. If exactly one is found, use it without asking
-3. If multiple are found, or none, ask the user
+Otherwise, auto-detect:
 
-Read the requirements file. Save a copy to `$_RUN_DIR/requirements.md`.
+```bash
+# Common convention names — case-insensitive, any extension (.md, .txt, .rst)
+find . -maxdepth 2 \( \
+  -iname "requirements*" -o -iname "prd*" -o -iname "spec*" -o -iname "brief*" \
+  -o -iname "product*" -o -iname "design-doc*" -o -iname "rfc*" \
+  -o -iname "overview*" -o -iname "scope*" -o -iname "functional*" \
+\) -not -path '*/node_modules/*' -not -path '*/.git/*' \
+   -not -path '*/.agent-research/*' 2>/dev/null | sort
+```
+
+**Decision rules:**
+
+1. **Exactly one file found** → use it, tell the user which file was picked
+2. **Multiple files found** → show the list and ask the user which to use (do not guess)
+3. **Nothing found** → scan for any `.md` files in the project root (maxdepth 1), show up to 10, and ask the user which contains their requirements; if still nothing, ask the user to create one or pass a path
+
+The internal output artifact is always saved as `$_RUN_DIR/requirements.md` regardless of the source filename.
 
 ---
 

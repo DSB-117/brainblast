@@ -14,6 +14,8 @@ Run Brainblast when:
 **Setup**
 Create `.agent-research/runs/YYYYMMDD-HHMMSS/components/` in the working directory. Use this as the output location throughout.
 
+If a file path was not given, auto-detect the requirements file: search for any file (maxdepth 2, excluding `node_modules`, `.git`, `.agent-research`) whose name matches common conventions case-insensitively — `requirements*`, `prd*`, `spec*`, `brief*`, `product*`, `design-doc*`, `rfc*`, `overview*`, `scope*`, `functional*` — with extensions `.md`, `.txt`, or `.rst`. If exactly one match: use it silently. If multiple: show the list and ask. If none: show any `.md` files in the root and ask which contains the requirements.
+
 **Step 1 — Component inventory**
 Read the requirements. List every external system involved: APIs, SDKs, auth providers, databases, payment processors, cloud platforms, blockchain networks. For each: name, type, role, confidence (explicitly named / implied / inferred). Write `component-inventory.md`.
 

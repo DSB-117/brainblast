@@ -1,7 +1,7 @@
 # Brainblast Research Prompt
 
 Use this prompt with any AI agent (ChatGPT, Gemini, Claude, etc.) that has web access.
-Replace `[REQUIREMENTS]` with your actual requirements text before sending.
+Replace `[REQUIREMENTS]` with your actual requirements text before sending. The file you copy from might be called `requirements.md`, `prd.md`, `spec.md`, `brief.md`, `rfc.md`, or anything else — the name does not matter.
 
 ---
 

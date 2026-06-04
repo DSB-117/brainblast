@@ -50,7 +50,7 @@ Write a requirements file, then run:
 /brainblast requirements.md
 ```
 
-Or just `/brainblast` — Brainblast looks for `requirements.md`, `REQUIREMENTS.md`, `spec.md`, or `brief.md` automatically.
+Or just `/brainblast` — Brainblast auto-detects common spec filenames (`requirements.md`, `prd.md`, `spec.md`, `brief.md`, `rfc.md`, etc., case-insensitive, `.md`/`.txt`/`.rst`). If it finds exactly one match it uses it silently; if it finds several it asks you to pick.
 
 Brainblast will:
 
@@ -139,10 +139,10 @@ This is defense in depth on top of whatever protections your host agent and brow
 gstack's `browse` engine is not installed. Run the gstack install command from [Prerequisites](#prerequisites), then retry.
 
 **"Multiple requirements files found"**
-Brainblast found more than one candidate (e.g. both `requirements.md` and `spec.md`) and will ask which to use. Pass one explicitly: `/brainblast path/to/requirements.md`.
+Brainblast found more than one candidate (e.g. both `prd.md` and `spec.md`) and will ask which to use. Pass one explicitly: `/brainblast prd.md`.
 
 **"No requirements file found"**
-Create a `requirements.md` describing what you are building, or pass a path explicitly.
+No file with a recognised spec name exists. Brainblast will show any `.md` files in the project root and ask which to use. If there are none, create a file describing what you are building and pass it explicitly.
 
 **Checksum mismatch during install**
 The installer refuses to write files whose SHA-256 does not match the tagged release. If you see this, you may be behind a proxy that rewrites content, or the ref is mistyped. Verify the ref and retry.
