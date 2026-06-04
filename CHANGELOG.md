@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.1.1 — 2026-06-04
+
+- Full Codex support: `adapters/codex-skill/` (SKILL.md + `agents/openai.yaml`) installs to `~/.codex/skills/brainblast/`, registering `/brainblast` in Codex's skill UI
+- Remove `AskUserQuestion` from `allowed-tools`; all interactive steps fall back to plain-text output when the tool is unavailable
+- Flexible spec-file detection: `find`-based scan for common naming conventions (`requirements*`, `prd*`, `spec*`, `brief*`, `rfc*`, etc.), any case, `.md`/`.txt`/`.rst`
+- Installer hard-checks gstack dependency and corrects link to `garrytan/gstack`
+- Installer pins to release tag and verifies SHA-256 checksums
+- Complete committed example run: `examples/bags-api/`
+- `scripts/validate.sh` self-check
+- `ROADMAP.md`
+
 ## v0.1.0 — 2026-06-04
 
 Initial release.

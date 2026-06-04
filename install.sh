@@ -7,7 +7,7 @@
 set -e
 
 REPO="DSB-117/brainblast"
-REF="${BRAINBLAST_REF:-v0.1.0}"
+REF="${BRAINBLAST_REF:-v0.1.1}"
 RAW="https://raw.githubusercontent.com/$REPO/$REF"
 INSTALLED=""
 GSTACK_BIN="$HOME/.claude/skills/gstack/browse/dist/browse"
