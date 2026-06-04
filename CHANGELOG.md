@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.2 — 2026-06-04
+
+- `/brainblast-update` command (`commands/brainblast-update.md`) — updates Brainblast to the latest release from inside Claude Code or Codex
+- `BRAINBLAST_REF=latest` resolver in `install.sh` — resolves to the newest release tag via the GitHub API before fetching
+- README: install commands pin to the current release tag; added Updating and Uninstall sections
+
 ## v0.1.1 — 2026-06-04
 
 - Full Codex support: `adapters/codex-skill/` (SKILL.md + `agents/openai.yaml`) installs to `~/.codex/skills/brainblast/`, registering `/brainblast` in Codex's skill UI

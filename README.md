@@ -33,14 +33,14 @@ Install gstack: run git clone --single-branch --depth 1 https://github.com/garry
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.1.1/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.1.2/install.sh | sh
 ```
 
 The installer pins to a tagged release, verifies SHA-256 checksums before writing any file, and auto-detects Claude Code, OpenClaw, and Codex. If gstack is missing, it warns you with the exact command to fix it. (It installs the Brainblast skill, but it does **not** install gstack for you — that is a one-time prerequisite above.)
 
 **Or tell your agent:**
 
-> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.1.1/install.sh | sh`
+> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.1.2/install.sh | sh`
 
 For the bleeding edge instead of a pinned release, prefix with `BRAINBLAST_REF=main`.
 
@@ -163,7 +163,7 @@ curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh 
 
 **Specific version:**
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.1.1 sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.1.2 sh
 ```
 
 The installer is idempotent: the Claude Code skill is overwritten in place, and the Codex adapter block is replaced (not duplicated) via its `<!-- BRAINBLAST:START/END -->` markers.
@@ -191,7 +191,7 @@ These are baked into every adapter:
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for what is planned beyond v0.1.1 — machine-readable `report.json`, incremental cached runs, provenance/freshness metadata, a two-source rule for CRITICAL claims, repo auto-seeding from lockfiles, and a non-interactive `--ci` mode.
+See [ROADMAP.md](ROADMAP.md) for what is planned beyond v0.1.2 — machine-readable `report.json`, incremental cached runs, provenance/freshness metadata, a two-source rule for CRITICAL claims, repo auto-seeding from lockfiles, and a non-interactive `--ci` mode.
 
 ## License
 
