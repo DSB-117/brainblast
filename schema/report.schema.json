@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/DSB-117/brainblast/main/schema/report.schema.json",
+  "title": "Brainblast Research Report",
+  "description": "Machine-readable emission written alongside final-report.md. Stable, versioned surface that tools and CI gates target instead of parsing prose.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "run", "summary", "components", "riskTotals"],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema contract version. Consumers should reject a major they do not understand.",
+      "type": "string",
+      "const": "1.0"
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "date", "requirements"],
+      "properties": {
+        "id": { "type": "string", "description": "Run directory id, e.g. 20260604-120000." },
+        "date": { "type": "string", "format": "date" },
+        "requirements": { "type": "string", "description": "One-line summary of what is being built." },
+        "generator": { "type": "string", "description": "Tool + version that produced the report." }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["building", "verdict"],
+      "properties": {
+        "building": { "type": "string" },
+        "verdict": { "type": "string", "enum": ["ready", "caution", "blocked"] },
+        "topRisk": { "type": ["string", "null"] },
+        "mustDecideFirst": { "type": ["string", "null"] },
+        "watchOutFor": { "type": ["string", "null"] }
+      }
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "type", "version", "status", "risks"],
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string", "enum": ["API", "SDK", "Auth", "Database", "Infra", "Blockchain", "Other"] },
+          "version": { "type": "string", "description": "Resolved version, or 'unversioned'." },
+          "sourceUrl": { "type": ["string", "null"] },
+          "status": { "type": "string", "enum": ["fresh", "cached", "partial", "not_found"] },
+          "risks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["severity", "title"],
+              "properties": {
+                "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+                "title": { "type": "string" },
+                "detail": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "riskTotals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["critical", "high", "medium", "low"],
+      "description": "Counts across all component risks. MUST equal the sum of every component's risks by severity.",
+      "properties": {
+        "critical": { "type": "integer", "minimum": 0 },
+        "high": { "type": "integer", "minimum": 0 },
+        "medium": { "type": "integer", "minimum": 0 },
+        "low": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "preCodingDecisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string" },
+          "detail": { "type": "string" },
+          "immutable": { "type": "boolean", "description": "True if the choice cannot be changed after deploy." }
+        }
+      }
+    },
+    "requirementsCorrections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "detail"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["missing_constraint", "wrong_assumption", "underspecified", "immutable_choice"] },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "openQuestions": {
+      "type": "array",
+      "description": "Questions that could not be resolved from public sources.",
+      "items": { "type": "string" }
+    }
+  }
+}

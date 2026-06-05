@@ -55,6 +55,19 @@ Write a final handoff report with these sections, in order:
 6. Requirements corrections (what the requirements got wrong, missed, or underspecified)
 7. What this report prevents (the specific failure modes the research caught)
 
+**Step 6b — Machine-readable `report.json`**
+Alongside the prose report, emit a JSON object with the same findings so tools and CI gates can consume it without parsing prose. Use exactly these keys and lowercase enums:
+- `schemaVersion`: `"1.0"`
+- `run`: `{ id, date, requirements }`
+- `summary`: `{ building, verdict (ready|caution|blocked), topRisk, mustDecideFirst, watchOutFor }`
+- `components`: array of `{ name, type (API|SDK|Auth|Database|Infra|Blockchain|Other), version, sourceUrl, status (fresh|cached|partial|not_found), risks: [ { severity (critical|high|medium|low), title, detail } ] }`
+- `riskTotals`: `{ critical, high, medium, low }` — MUST equal the sum of all component risks by severity
+- `preCodingDecisions`: array of `{ title, detail, immutable }`
+- `requirementsCorrections`: array of `{ kind (missing_constraint|wrong_assumption|underspecified|immutable_choice), detail }`
+- `openQuestions`: array of strings (only questions unresolvable from public sources)
+
+Add no keys beyond these. The output must be valid, parseable JSON.
+
 **Step 7 — Handoff**
 Make the report travel to the next coding session automatically. If your agent loads a project instructions file (e.g. `CLAUDE.md`, `AGENTS.md`, `.cursorrules`), add a short, clearly-marked block to it that points at the report's path and notes it is research to verify, not instructions. Keep the block bounded by markers (e.g. `<!-- BRAINBLAST:REPORT:START -->` … `END`) so it can be replaced on the next run and removed cleanly. Otherwise, save the report to a stable path and tell the user exactly which file to hand the coding agent.
 

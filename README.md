@@ -35,6 +35,7 @@ Everything Brainblast does today, at a glance.
 - A single `final-report.md` opening with an **Executive Summary** (what's being built, a Ready / Caution / Blocked verdict, the top risk, the one irreversible decision, the biggest spec gap) and a **Risk Heatmap** (component × severity counts, with CRITICAL/HIGH risks named).
 - Followed by the components table, what a coding agent must know before starting, required pre-coding decisions, requirements corrections, and the specific failure modes the run prevents.
 - **Auto-injects** a pointer to the report into the project's agent-instructions file (`CLAUDE.md`, or `AGENTS.md` on Codex) as an idempotent, marker-delimited, reversible block — so the research travels to the next coding session with no copy-paste.
+- **Emits a machine-readable `report.json`** alongside the prose — a stable, versioned (`schemaVersion: "1.0"`) schema with components, severity-tagged risks, pre-coding decisions, and requirements corrections, so other tools and CI gates can build on a contract instead of parsing prose.
 
 **Safety**
 - **Prompt-injection resistant by design.** Browsed docs are treated as untrusted data; imperative content ("ignore previous instructions", "run this") is quoted and flagged, never propagated as fact or action.
@@ -117,6 +118,7 @@ Brainblast will:
       coverage-review.md
       requirements-rereview.md
       final-report.md
+      report.json                # machine-readable — same findings, for tools & CI gates
 ```
 
 The `cache/` directory persists between runs. On a re-run, any component whose `name@version` is
@@ -137,6 +139,13 @@ The `final-report.md` opens with two scannable sections for human reviewers:
 
 - **Executive Summary** — the 30-second version: what's being built, a go/no-go verdict, the top risk, the one irreversible decision, and the biggest spec gap.
 - **Risk Heatmap** — a component × severity (Critical / High / Medium / Low) count table, with the CRITICAL and HIGH risks listed by name.
+
+Alongside the prose, every run emits **`report.json`** — the same findings as structured data
+(components, each risk with a `severity` enum, pre-coding decisions, requirements corrections, run
+metadata). It is a stable, versioned contract (`schemaVersion: "1.0"`) so tools and CI gates can
+target a schema instead of parsing prose. The schema is committed at
+[`schema/report.schema.json`](schema/report.schema.json) and every example run is validated against
+it in `scripts/validate.sh`.
 
 When the run finishes, Brainblast **auto-injects** a pointer to the report into the project's
 agent-instructions file (`CLAUDE.md`, or `AGENTS.md` on Codex) as an idempotent, marker-delimited

@@ -43,12 +43,13 @@ stable schema, a CI gate, a public benchmark). We are not chasing doc-retrieval 
 
 *Theme: Brainblast becomes something other tools can build on.*
 
-- **Machine-readable `report.json`.** A structured emission written alongside `final-report.md`:
-  components, each risk with a `severity` enum, each pre-coding decision, each requirements
-  correction, plus run metadata. This is the **strategic surface** — integrations and gates
-  target a stable schema, not prose. Versioned (`schemaVersion`) from day one so downstream
-  consumers don't break. *Done when:* every example run emits a valid `report.json` checked
-  against a committed JSON Schema in `scripts/validate.sh`.
+- **Machine-readable `report.json`.** ✅ **Shipped** (on `main`). A structured emission alongside
+  `final-report.md`: components, each risk with a `severity` enum, each pre-coding decision, each
+  requirements correction, plus run metadata. Versioned (`schemaVersion: "1.0"`) so downstream
+  consumers don't break. The committed JSON Schema lives at `schema/report.schema.json`, and
+  `scripts/validate.sh` validates it plus every `examples/*/report.json` against it (full Draft-07
+  check when `jsonschema` is present, a schema-driven fallback otherwise, plus a riskTotals
+  cross-check).
 
 - **`--ci` mode + exit-code gate.** A non-interactive path that never calls `AskUserQuestion`,
   picks documented defaults, and **exits non-zero if any unresolved CRITICAL risk remains**

@@ -436,6 +436,54 @@ coding from the requirements alone would have gotten wrong.]
 
 ---
 
+## Step 6b — Machine-readable report (`report.json`)
+
+Also write `$_RUN_DIR/report.json` — the same findings as structured data, so tools and CI gates
+can consume the run without parsing prose. This is a **stable, versioned contract**
+(`schemaVersion: "1.0"`); the schema lives at [`schema/report.schema.json`](schema/report.schema.json)
+in the Brainblast repo.
+
+Rules — the gate and downstream consumers depend on these:
+
+- **All enums are lowercase.** `verdict` ∈ `ready | caution | blocked`; risk `severity` ∈ `critical | high | medium | low`; component `status` ∈ `fresh | cached | partial | not_found`; component `type` ∈ `API | SDK | Auth | Database | Infra | Blockchain | Other`.
+- **`riskTotals` MUST equal the sum of every component's risks by severity.** A consumer reads `riskTotals.critical` directly; if it disagrees with the listed risks, the report is wrong.
+- **No extra keys.** The schema is strict (`additionalProperties: false`). Map `cached` status to components reused from cache (Step 3 HIT), `fresh` to ones researched this run.
+- Emit `preCodingDecisions`, `requirementsCorrections`, and `openQuestions` from Steps 5 and 3; `openQuestions` lists only questions marked "Unresolvable from public sources" (usually empty).
+
+Shape:
+
+```json
+{
+  "schemaVersion": "1.0",
+  "run": { "id": "YYYYMMDD-HHMMSS", "date": "YYYY-MM-DD", "requirements": "one-line", "generator": "brainblast" },
+  "summary": {
+    "building": "one line",
+    "verdict": "caution",
+    "topRisk": "…", "mustDecideFirst": "…", "watchOutFor": "…"
+  },
+  "components": [
+    {
+      "name": "Stripe API", "type": "API", "version": "2026-05-27.dahlia",
+      "sourceUrl": "https://docs.stripe.com/", "status": "fresh",
+      "risks": [
+        { "severity": "critical", "title": "Forged payments accepted", "detail": "…" }
+      ]
+    }
+  ],
+  "riskTotals": { "critical": 1, "high": 0, "medium": 0, "low": 0 },
+  "preCodingDecisions": [ { "title": "…", "detail": "…", "immutable": true } ],
+  "requirementsCorrections": [ { "kind": "missing_constraint", "detail": "…" } ],
+  "openQuestions": []
+}
+```
+
+`requirementsCorrections[].kind` ∈ `missing_constraint | wrong_assumption | underspecified | immutable_choice`.
+Validate your output before finishing: it must be parseable JSON and satisfy the rules above. Two
+complete, valid examples ship in the repo: [`examples/bags-api/report.json`](examples/bags-api/report.json)
+and [`examples/stripe-privy/report.json`](examples/stripe-privy/report.json).
+
+---
+
 ## Step 7 — Handoff (auto-inject the report into the next coding session)
 
 Make the report travel automatically. The next coding agent should not have to be told the
@@ -498,6 +546,7 @@ Report auto-injected into: [path to CLAUDE.md]
 
 Key artifacts:
   [_RUN_DIR]/final-report.md
+  [_RUN_DIR]/report.json          (machine-readable — for tools / CI gates)
   [_RUN_DIR]/components/
   [_RUN_DIR]/requirements-rereview.md
 ```

@@ -1,0 +1,155 @@
+{
+  "schemaVersion": "1.0",
+  "run": {
+    "id": "20260604-130000",
+    "date": "2026-06-04",
+    "requirements": "Paid SaaS — Privy login + embedded wallets, Stripe checkout, webhook-driven fulfillment",
+    "generator": "brainblast v0.1.3 (committed demo run)"
+  },
+  "summary": {
+    "building": "A Node backend that authenticates users via Privy access tokens and fulfills Stripe payments from verified webhooks.",
+    "verdict": "caution",
+    "topRisk": "A Stripe webhook handler that skips raw-body signature verification will accept forged payment_intent.succeeded events and grant premium access for payments that never happened.",
+    "mustDecideFirst": "Pin the Stripe apiVersion in the SDK and on the webhook endpoint, and pick the Privy server SDK (@privy-io/node).",
+    "watchOutFor": "Two Privy server packages with different APIs, a raw-body requirement that default JSON middleware breaks, and a Privy docs page that tries to instruct the AI agent directly."
+  },
+  "components": [
+    {
+      "name": "Stripe API",
+      "type": "API",
+      "version": "2026-05-27.dahlia",
+      "sourceUrl": "https://docs.stripe.com/",
+      "status": "fresh",
+      "risks": [
+        {
+          "severity": "critical",
+          "title": "Forged payments accepted silently",
+          "detail": "If the webhook route does not call stripe.webhooks.constructEvent against the raw body with the whsec_ secret (or parses the body first, breaking verification), an attacker can POST a fake payment_intent.succeeded event and unlock premium access for a payment that never happened. Verify every event on the raw body before acting."
+        },
+        {
+          "severity": "high",
+          "title": "API version drift between SDK and webhook payloads",
+          "detail": "stripe-node is pinned to the API version current at its release, but webhook events use the account's default version unless the endpoint is pinned. Mismatched versions make typed fields silently undefined. Pin apiVersion in the SDK and on the webhook endpoint."
+        },
+        {
+          "severity": "medium",
+          "title": "Double charges on retry",
+          "detail": "Creating a PaymentIntent without an Idempotency-Key means a network retry can create a second intent and double-charge. Generate a V4 UUID idempotency key per checkout attempt."
+        },
+        {
+          "severity": "low",
+          "title": "Rate limiting under burst",
+          "detail": "Live mode allows 100 ops/sec (25 in sandbox), 25/sec per endpoint. High-burst flows can hit 429; handle Stripe-Rate-Limited-Reason with backoff."
+        }
+      ]
+    },
+    {
+      "name": "stripe (stripe-node)",
+      "type": "SDK",
+      "version": "22.2.0",
+      "sourceUrl": "https://registry.npmjs.org/stripe/latest",
+      "status": "fresh",
+      "risks": []
+    },
+    {
+      "name": "Privy auth + access tokens",
+      "type": "Auth",
+      "version": "unversioned",
+      "sourceUrl": "https://docs.privy.io/authentication/user-authentication/access-tokens",
+      "status": "fresh",
+      "risks": [
+        {
+          "severity": "critical",
+          "title": "Authentication bypass via unverified token",
+          "detail": "Decoding the access token without cryptographically verifying it (or verifying the signature but not aud/iss) accepts a forged or wrong-app token and runs the request as an arbitrary user. Verify the ES256 signature against the dashboard verification key and assert iss === 'privy.io' and aud === <your app id>."
+        },
+        {
+          "severity": "high",
+          "title": "Forged Privy webhooks",
+          "detail": "Trusting req.body without calling privy.webhooks().verify(...) (Svix svix-id/svix-timestamp/svix-signature headers vs webhookSigningSecret) lets an attacker POST fake user.created/wallet_created events and trigger provisioning. Verify before acting; reject on InvalidWebhookError."
+        },
+        {
+          "severity": "medium",
+          "title": "Wrong server package",
+          "detail": "Two server SDKs exist: @privy-io/node (0.20.0, current docs, exposes webhooks().verify) and @privy-io/server-auth (1.32.5, older). Picking the wrong one yields missing methods or snippets that don't compile. Use @privy-io/node and don't mix snippets."
+        },
+        {
+          "severity": "medium",
+          "title": "Embedded wallets silently not created",
+          "detail": "Omitting embeddedWallets.<chain>.createOnLogin (or setting an invalid value) means users who log in without an external wallet get no embedded wallet and downstream wallet code fails for exactly those users. Set createOnLogin explicitly."
+        },
+        {
+          "severity": "low",
+          "title": "Token expiry handling",
+          "detail": "Access tokens expire ~1 hour after issue. Treating any expired token as a hard failure (instead of signaling the client to refresh) logs users out unexpectedly during long sessions."
+        }
+      ]
+    },
+    {
+      "name": "@privy-io/react-auth",
+      "type": "SDK",
+      "version": "3.29.1",
+      "sourceUrl": "https://registry.npmjs.org/@privy-io/react-auth/latest",
+      "status": "fresh",
+      "risks": []
+    },
+    {
+      "name": "@privy-io/node",
+      "type": "SDK",
+      "version": "0.20.0",
+      "sourceUrl": "https://docs.privy.io/api-reference/webhooks/overview",
+      "status": "fresh",
+      "risks": []
+    },
+    {
+      "name": "Svix (Privy webhook transport)",
+      "type": "Infra",
+      "version": "unversioned",
+      "sourceUrl": "https://docs.privy.io/api-reference/webhooks/overview",
+      "status": "partial",
+      "risks": []
+    }
+  ],
+  "riskTotals": { "critical": 2, "high": 2, "medium": 3, "low": 2 },
+  "preCodingDecisions": [
+    {
+      "title": "Stripe API version",
+      "detail": "Pin 2026-05-27.dahlia (current) on the SDK and the webhook endpoint. Hard to change later — shifts request and webhook payload shapes across the integration.",
+      "immutable": true
+    },
+    {
+      "title": "Privy token transport",
+      "detail": "Bearer header vs HTTP-only cookie. Changes how the backend reads the token; cookie mode auto-includes it same-domain.",
+      "immutable": false
+    },
+    {
+      "title": "Embedded wallet policy",
+      "detail": "users-without-wallets vs all-users, and which chains. Determines who gets a wallet; affects all downstream wallet code.",
+      "immutable": false
+    },
+    {
+      "title": "Idempotency strategy",
+      "detail": "Per-checkout UUID vs none. Prevents double charges on retry.",
+      "immutable": false
+    }
+  ],
+  "requirementsCorrections": [
+    {
+      "kind": "wrong_assumption",
+      "detail": "'Don't trust the client' was only applied to payments. The Privy access token is equally untrusted until verified server-side (signature + aud/iss); the spec implicitly trusts it."
+    },
+    {
+      "kind": "missing_constraint",
+      "detail": "The webhook raw-body constraint is unstated but mandatory for Stripe signature verification."
+    },
+    {
+      "kind": "immutable_choice",
+      "detail": "API version pinning is unstated but must be decided before launch because it is effectively immutable."
+    },
+    {
+      "kind": "underspecified",
+      "detail": "'A Privy server library' is ambiguous — there are two with different APIs; pick @privy-io/node."
+    }
+  ],
+  "openQuestions": []
+}

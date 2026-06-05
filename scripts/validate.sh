@@ -76,7 +76,7 @@ for EX in "$ROOT"/examples/*/; do
   [ -d "$EX" ] || continue
   name=$(basename "$EX")
   for f in requirements.md component-inventory.md research-plan.md \
-           coverage-review.md requirements-rereview.md final-report.md; do
+           coverage-review.md requirements-rereview.md final-report.md report.json; do
     if [ -f "$EX/$f" ]; then ok "example $name/$f present"; else bad "example $name/$f missing"; fi
   done
 
@@ -99,6 +99,24 @@ for EX in "$ROOT"/examples/*/; do
     fi
   done
 done
+
+# ── 4. report.json conforms to the committed JSON Schema ───────────────────
+# Validates schema/report.schema.json and every examples/*/report.json against
+# it. Uses jsonschema for a full Draft-07 check when available; otherwise a
+# structural fallback (required keys, enum values, additionalProperties) plus a
+# riskTotals == summed-severities cross-check that runs either way.
+SCHEMA="$ROOT/schema/report.schema.json"
+if [ ! -f "$SCHEMA" ]; then
+  bad "schema/report.schema.json missing"
+elif ! command -v python3 >/dev/null 2>&1; then
+  note "python3 not available — skipping report.json schema validation"
+else
+  if python3 "$ROOT/scripts/validate_reports.py" "$SCHEMA" "$ROOT"/examples/*/report.json; then
+    ok "report.json schema validation"
+  else
+    bad "report.json schema validation"
+  fi
+fi
 
 echo "====================="
 if [ "$FAIL" -eq 0 ]; then

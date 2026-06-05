@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "1.0",
+  "run": {
+    "id": "20260604-120000",
+    "date": "2026-06-04",
+    "requirements": "Launch a Solana token via Bags API, earn and claim creator fees",
+    "generator": "brainblast (committed demo run)"
+  },
+  "summary": {
+    "building": "Launch a Solana token through the Bags API and earn + claim creator trading fees.",
+    "verdict": "caution",
+    "topRisk": "Omitting the creator wallet from the fee-share array launches a token where the creator earns 0% of all trading fees, forever, with no fix after launch.",
+    "mustDecideFirst": "The fee mode UUID (bagsConfigType) and the fee-share array — both are immutable on-chain after launch.",
+    "watchOutFor": "Mainnet-only (no devnet — testing costs real SOL), a mandatory fee-share step with no skip path, and a Jito-bundle submission that needs a tip."
+  },
+  "components": [
+    {
+      "name": "Bags API",
+      "type": "API",
+      "version": "v2",
+      "sourceUrl": "https://docs.bags.fm/",
+      "status": "fresh",
+      "risks": [
+        {
+          "severity": "critical",
+          "title": "Zero-revenue fee-share config",
+          "detail": "Fee sharing BPS must sum to 10,000 and the creator must be explicitly included. Omitting the creator wallet from feeClaimers deploys a token where the creator earns zero fees forever; the bagsConfigType and claimer structure are immutable on-chain after launch."
+        },
+        {
+          "severity": "high",
+          "title": "Launch fails without fee-share config",
+          "detail": "Calling createLaunchTransaction before a fee share config exists returns an error. The fee-share step cannot be skipped."
+        },
+        {
+          "severity": "medium",
+          "title": "Unsupported social provider fails at claimer lookup",
+          "detail": "Using 'discord' or 'telegram' fails at fee-claimer lookup. Only 'twitter', 'kick', and 'github' are supported."
+        },
+        {
+          "severity": "medium",
+          "title": "LUT slot-timing race",
+          "detail": "When LUTs are required (>15 claimers), the extend transaction must wait one Solana slot after LUT creation. Parallelizing or skipping the wait causes the extend to fail silently or revert."
+        },
+        {
+          "severity": "low",
+          "title": "Jito tip may be too low under load",
+          "detail": "Tip uses the 95th percentile; during high network load bundles may not land. The 0.015 SOL fallback is conservative but can be expensive at high SOL prices."
+        }
+      ]
+    },
+    {
+      "name": "@bagsfm/bags-sdk",
+      "type": "SDK",
+      "version": "1.3.7",
+      "sourceUrl": "https://docs.bags.fm/how-to-guides/launch-token.md",
+      "status": "fresh",
+      "risks": []
+    },
+    {
+      "name": "Solana / Jito bundles",
+      "type": "Blockchain",
+      "version": "unversioned",
+      "sourceUrl": null,
+      "status": "partial",
+      "risks": []
+    },
+    {
+      "name": "Meteora DAMM V2",
+      "type": "Blockchain",
+      "version": "v2",
+      "sourceUrl": null,
+      "status": "partial",
+      "risks": []
+    }
+  ],
+  "riskTotals": { "critical": 1, "high": 1, "medium": 2, "low": 1 },
+  "preCodingDecisions": [
+    {
+      "title": "Fee mode UUID (bagsConfigType)",
+      "detail": "Four modes exist; the choice is stored on-chain and permanent. For a straightforward launch use Default (fa29606e-5e48-4c37-827f-4b03d58ee23d) or omit to get the default.",
+      "immutable": true
+    },
+    {
+      "title": "Fee-share array must include the creator",
+      "detail": "The creator wallet must appear in feeClaimers with userBps summing to 10000. Set on-chain at launch and not correctable afterward.",
+      "immutable": true
+    }
+  ],
+  "requirementsCorrections": [
+    {
+      "kind": "missing_constraint",
+      "detail": "No RPC endpoint is specified. The public api.mainnet-beta.solana.com is rate-limited; a paid RPC (Helius, QuickNode, etc.) is needed for repeated runs."
+    },
+    {
+      "kind": "immutable_choice",
+      "detail": "The spec says 'creator keeps 100% of trading fees' but does not name the fee mode. The mode must be chosen explicitly before launch because it cannot be changed after deployment."
+    }
+  ],
+  "openQuestions": []
+}

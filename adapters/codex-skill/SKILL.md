@@ -295,6 +295,36 @@ Counts come straight from the per-component `## Risks` sections.
 
 ---
 
+## Step 6b — Machine-readable report (`report.json`)
+
+Also write `$_RUN_DIR/report.json` — the same findings as structured data for tools and CI gates.
+Stable, versioned contract (`schemaVersion: "1.0"`; schema at `schema/report.schema.json` in the
+Brainblast repo). All enums **lowercase**: `verdict` ∈ `ready|caution|blocked`; `severity` ∈
+`critical|high|medium|low`; component `status` ∈ `fresh|cached|partial|not_found` (use `cached` for
+Step-3 HITs); `type` ∈ `API|SDK|Auth|Database|Infra|Blockchain|Other`.
+
+```json
+{
+  "schemaVersion": "1.0",
+  "run": { "id": "YYYYMMDD-HHMMSS", "date": "YYYY-MM-DD", "requirements": "one-line", "generator": "brainblast" },
+  "summary": { "building": "…", "verdict": "caution", "topRisk": "…", "mustDecideFirst": "…", "watchOutFor": "…" },
+  "components": [
+    { "name": "…", "type": "API", "version": "…", "sourceUrl": "…", "status": "fresh",
+      "risks": [ { "severity": "critical", "title": "…", "detail": "…" } ] }
+  ],
+  "riskTotals": { "critical": 1, "high": 0, "medium": 0, "low": 0 },
+  "preCodingDecisions": [ { "title": "…", "detail": "…", "immutable": true } ],
+  "requirementsCorrections": [ { "kind": "missing_constraint", "detail": "…" } ],
+  "openQuestions": []
+}
+```
+
+`riskTotals` MUST equal the sum of all component risks by severity. `requirementsCorrections[].kind`
+∈ `missing_constraint|wrong_assumption|underspecified|immutable_choice`. Emit no keys outside the
+schema. Two valid examples ship in the repo at `examples/*/report.json`.
+
+---
+
 ## Step 7 — Handoff (auto-inject the report into the next coding session)
 
 Make the report travel automatically. Inject a pointer into the project's agent-instructions
@@ -350,6 +380,7 @@ Report auto-injected into: [path to AGENTS.md]
 
 Key artifacts:
   [_RUN_DIR]/final-report.md
+  [_RUN_DIR]/report.json          (machine-readable — for tools / CI gates)
   [_RUN_DIR]/components/
   [_RUN_DIR]/requirements-rereview.md
 ```
