@@ -26,6 +26,7 @@ Everything Brainblast does today, at a glance.
 - **Runs a questions loop** — every open question that surfaces is answered from a live URL, or explicitly marked unresolvable with a note on where it looked.
 - **Reviews its own coverage** and flags gaps before finishing.
 - **Re-reads the requirements against the research** to surface wrong assumptions, missing constraints, underspecified choices, and decisions that are immutable after deploy.
+- **Caches research per component, keyed by `name@version`.** Re-runs are incremental — unchanged components are reused from `.agent-research/cache/` and only new or version-bumped components are re-researched; `--fresh` forces a full re-research.
 
 **Per-component output**
 - Each component file is structured identically: **Facts** (each with a source URL), **Assumptions**, **Inferences**, **Risks** (rated CRITICAL / HIGH / MEDIUM / LOW, biased toward silent failures), and **Resolved questions**.
@@ -85,6 +86,8 @@ Write a requirements file, then run:
 
 Or just `/brainblast` — Brainblast auto-detects common spec filenames (`requirements.md`, `prd.md`, `spec.md`, `brief.md`, `rfc.md`, etc., case-insensitive, `.md`/`.txt`/`.rst`). If it finds exactly one match it uses it silently; if it finds several it asks you to pick.
 
+Re-runs are **incremental**: Brainblast caches each component's research keyed by `name@version` and only re-researches what changed — a new component, or a version bump. Pass `/brainblast --fresh` (or set `BRAINBLAST_FRESH=1`) to ignore the cache and re-research everything.
+
 Brainblast will:
 
 1. Read the requirements and list every external component
@@ -99,6 +102,9 @@ Brainblast will:
 
 ```
 .agent-research/
+  cache/                       # persistent, keyed by name@version — reused across runs
+    stripe@12.4.0.md
+    supabase@2.39.0.md
   runs/
     20260604-120000/
       requirements.md
@@ -112,6 +118,12 @@ Brainblast will:
       requirements-rereview.md
       final-report.md
 ```
+
+The `cache/` directory persists between runs. On a re-run, any component whose `name@version` is
+unchanged is reused from cache instead of re-browsed, so only new or version-bumped components are
+researched. Components with no resolvable version are always re-researched. It is pure
+documentation — safe to delete (`rm -rf .agent-research/cache`) and never committed (the whole
+`.agent-research/` tree is gitignored by default).
 
 Every component file is structured the same way:
 

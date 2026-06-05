@@ -92,10 +92,11 @@ stable schema, a CI gate, a public benchmark). We are not chasing doc-retrieval 
   OpenAPI parsing beats scraping HTML. The spec still adds intent and components not yet in
   code. *Done when:* a repo with a lockfile produces a versioned inventory before any browsing.
 
-- **Incremental / cached runs.** Key research by component + version; diff against the last run
-  and re-research only what changed, carrying forward unchanged component files. This finally
-  delivers the core promise — *research is not repeated*. *Done when:* a second run on an
-  unchanged spec reuses prior files and reports what it skipped and why.
+- **Incremental / cached runs.** ✅ **Shipped early** (on `main`, ahead of schedule). Research is
+  cached per component, keyed by `name@version`, in `.agent-research/cache/`; a re-run reuses
+  unchanged components and re-researches only what changed (new components or bumped versions),
+  with `--fresh` to force a full pass. This delivers the core promise — *research is not repeated*.
+  Still to fold in here: version-aware *diffing* driven by the auto-seeded inventory above.
 
 - *Buffer:* run twice on a real evolving repo; confirm the diff is correct and the cache never
   serves a stale CRITICAL.

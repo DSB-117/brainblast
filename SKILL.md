@@ -18,6 +18,13 @@ triggers:
 
 Research every external component in a requirements file before an agent starts coding. Produces `.agent-research/runs/YYYYMMDD-HHMMSS/` with per-component notes and a final handoff report.
 
+> **Incremental runs (caching).** Brainblast caches research per component, keyed by
+> `name@version`, in `.agent-research/cache/`. A re-run reuses cached components whose version is
+> unchanged and only re-researches what actually changed — a new component, or a bumped version.
+> Components with no resolvable version are always re-researched (no reliable change signal). Pass
+> `--fresh` (or set `BRAINBLAST_FRESH=1`) to ignore the cache and re-research everything. The cache
+> is documentation only; it never holds secrets and is safe to delete (`rm -rf .agent-research/cache`).
+
 ## Preamble (run first)
 
 ```bash
@@ -35,9 +42,20 @@ fi
 # Run directory
 _RUN_DIR="$(pwd)/.agent-research/runs/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$_RUN_DIR/components"
+
+# Component cache (incremental runs): persists across runs, keyed by name@version
+_CACHE_DIR="$(pwd)/.agent-research/cache"
+mkdir -p "$_CACHE_DIR"
+
+# Cache bypass: re-research everything if the user passed --fresh or set BRAINBLAST_FRESH=1
+_FRESH="${BRAINBLAST_FRESH:-0}"
+
 echo "RUN_DIR: $_RUN_DIR"
+echo "CACHE_DIR: $_CACHE_DIR  (fresh=$_FRESH)"
 echo "DATE: $(date +%Y-%m-%d)"
 ```
+
+If the invocation included a `--fresh` token, set `_FRESH=1`. Use `$_CACHE_DIR` and `$_FRESH` throughout.
 
 If `BROWSE_MISSING`: tell the user that Brainblast requires the gstack browse tool. Run `~/.claude/skills/gstack/setup` and retry. Do not proceed without browse.
 
@@ -47,7 +65,7 @@ Set `$B` and `$_RUN_DIR` from preamble output. Use them throughout.
 
 ## Step 0 — Locate requirements
 
-**Args:** The skill may be invoked with a file path argument (e.g. `/brainblast prd.md`). If an arg is given, use it directly.
+**Args:** The skill may be invoked with a file path argument (e.g. `/brainblast prd.md`). If an arg is given, use it directly. Ignore a `--fresh` token when resolving the path — it controls caching (see Preamble), not file selection.
 
 Otherwise, auto-detect:
 
@@ -92,17 +110,24 @@ Read the requirements carefully. Identify every external system the implementati
 For each component, record:
 - **Name** — canonical name
 - **Type** — API / SDK / Auth / Database / Infra / Blockchain / Other
+- **Version** — the version this run is pinned to (see below). This is half of the cache key.
 - **Role** — one sentence on why it is in scope
 - **Confidence** — High (explicitly named in requirements) / Medium (strongly implied) / Low (inferred)
+
+**Resolving the version** (this keys the cache in Step 3):
+1. If the repo pins it, use the **exact** pinned version — check `package.json`/`package-lock.json`/`yarn.lock`/`pnpm-lock.yaml`, `requirements.txt`/`poetry.lock`, `Cargo.toml`/`Cargo.lock`, `go.mod`, `Gemfile.lock`, `composer.lock`.
+2. Else, for an SDK/library on a public registry, use the **latest** version number shown there (record the actual number, e.g. `12.4.0` — not the word "latest").
+3. Else, for an API with a version concept (a dated REST version, a `v2` path, an API-version header), use that string.
+4. Else, record `unversioned` — there is no reliable change signal, so this component is **always re-researched** and never served from cache.
 
 Write this to `$_RUN_DIR/component-inventory.md` using this format:
 
 ```markdown
 # Component Inventory
 
-| Component | Type | Role | Confidence |
-|---|---|---|---|
-| [name] | [type] | [role] | [High/Medium/Low] |
+| Component | Type | Version | Role | Confidence |
+|---|---|---|---|---|
+| [name] | [type] | [version or `unversioned`] | [role] | [High/Medium/Low] |
 ```
 
 Output the inventory to the user and ask if anything is missing or wrong. Use `AskUserQuestion` if available; otherwise print the table and ask as plain text. If no response is possible (automated/CI context), proceed with the discovered inventory and note it as an assumption.
@@ -140,9 +165,37 @@ Write this to `$_RUN_DIR/research-plan.md`:
 
 ## Step 3 — Research (one component at a time)
 
-Work through each component in the research plan sequentially. For each:
+Work through each component in the research plan sequentially. For each, **run the cache check first** — only browse (3a–3d) on a cache miss.
+
+### Cache check (incremental runs — do this first)
+
+Compute a filename-safe cache key from the component name and its resolved version:
+
+```bash
+# $slug = lowercase component name, non-alphanumerics → "-"
+# $ver  = resolved version from the inventory (or "unversioned")
+_key="$slug@$ver"
+_safe=$(printf '%s' "$_key" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9.@_-' '-')
+_cache_file="$_CACHE_DIR/$_safe.md"
+```
+
+Decide the disposition:
+
+- **`_FRESH=1`** (user passed `--fresh`) → **MISS**. Re-research; overwrite the cache.
+- **`$ver` is `unversioned`** → **MISS** (always). No reliable change signal — never trust a cached copy.
+- **`$_cache_file` exists** (and neither rule above applies) → **HIT**. Reuse it and skip 3a–3d:
+  ```bash
+  cp "$_cache_file" "$_RUN_DIR/components/$slug.md"
+  echo "CACHE HIT: $_key (reused, not re-browsed)"
+  ```
+  Tell the user: "Reused from cache: [name] @ [version] (last fetched [date from the file's `BRAINBLAST:CACHE` header])."
+- **Otherwise** → **MISS**. Browse it fresh (3a–3d below).
+
+This is how *"only re-research what changed"* works: an unchanged component keeps the same `name@version` key and is reused; a bumped version or a brand-new component yields a new key and is researched. Record each component's disposition — **HIT**, **MISS (new)**, **MISS (version A→B)**, **MISS (--fresh)**, or **MISS (unversioned)** — it feeds the final report's Components table and the completion summary.
 
 ### 3a — Initial browse
+
+*(Cache MISS only — skip 3a–3d on a HIT.)*
 
 Browse the first source. If the page has an `llms.txt` file (check `[domain]/llms.txt`), fetch it first — it gives a full index of docs pages and lets you navigate to exactly the right sub-pages without guessing.
 
@@ -222,6 +275,20 @@ Write to `$_RUN_DIR/components/[slug].md`:
 [Answer, with source URL]
 ```
 
+Then **update the cache** so the next run can reuse this work (skip for `unversioned`):
+
+```bash
+if [ "$ver" != "unversioned" ]; then
+  {
+    printf '<!-- BRAINBLAST:CACHE slug=%s version=%s fetched=%s -->\n' "$slug" "$ver" "$(date +%Y-%m-%d)"
+    cat "$_RUN_DIR/components/$slug.md"
+  } > "$_cache_file"
+  echo "CACHED: $_key"
+fi
+```
+
+The `BRAINBLAST:CACHE` header records when these facts were fetched, so a future run that reuses this file can report its age.
+
 Tell the user when each component is done. One-line update: "Done: [name] — [one key fact or risk worth flagging immediately]".
 
 ---
@@ -236,7 +303,7 @@ Re-read the component inventory. For each component, verify the research file co
 - [ ] At least one breaking change or gotcha in the last 12 months (or explicit confirmation there are none)
 - [ ] At least one CRITICAL or HIGH risk (or explicit confirmation that none were found)
 
-Flag any component that is missing a category. If something is missing, go back and browse for it before continuing.
+Flag any component that is missing a category. If something is missing, go back and browse for it before continuing. Components reused from cache (Step 3 HIT) already passed this review when they were first researched — accept their existing sections, but if a cached file is itself missing a category, treat it as a miss and re-research that component fresh.
 
 Write to `$_RUN_DIR/coverage-review.md`:
 
@@ -331,9 +398,12 @@ CRITICAL or HIGH risk, that is a positive signal worth stating, not an empty row
 
 ## Components researched
 
-| Component | Source found | Status |
-|---|---|---|
-| [name] | [URL] | Verified / Partially verified / Official source not found |
+| Component | Version | Source found | Status |
+|---|---|---|---|
+| [name] | [version] | [URL] | Fresh this run / Reused from cache (fetched [date]) / Partially verified / Official source not found |
+
+Rows marked *Reused from cache* were not re-fetched this run — their facts were verified for that
+pinned version on the date shown. Re-run with `--fresh` to re-verify everything.
 
 ---
 
@@ -417,9 +487,11 @@ Print a completion summary:
 Brainblast complete.
 
 Run: [path to run dir]
-Components researched: [N]
+Components: [N] total — [X] researched fresh, [Y] reused from cache
 Risks flagged: [N critical, N high, N medium, N low]
 Requirements corrections: [N]
+
+Cache: [path to .agent-research/cache]  (re-run with --fresh to ignore it)
 
 Report auto-injected into: [path to CLAUDE.md]
   (next coding session will see it; remove the BRAINBLAST:REPORT block to opt out)
