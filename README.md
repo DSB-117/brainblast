@@ -290,7 +290,13 @@ These are baked into every adapter:
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for the firm 4-week plan to **v0.2.0**: a machine-readable `report.json` and CI exit-code gate (Week 1), provenance/freshness metadata and a two-source rule for CRITICAL claims (Week 2), auto-seeding from lockfiles and incremental cached runs (Week 3), and `/brainblast-verify` — a post-code guardrail that checks the written implementation against every CRITICAL risk — plus a public catch-rate benchmark (Week 4).
+See [ROADMAP.md](ROADMAP.md) for the full thesis — turning documentation into *enforcement* along a
+**Predict → Enforce → Watch → Compound** ladder. Shipped: `report.json`, the `--ci` exit-code gate,
+and incremental cached runs. Next, toward **v0.2.0**: **executable guardrails** (generate a committed
+test from each CRITICAL so it can't silently regress) and `/brainblast-verify`; evidence-grade
+provenance, a two-source rule, and **OSV security-advisory cross-check**; a **drift watch** that
+re-researches pinned dependencies after merge and alerts on material change; lockfile auto-seeding and
+portable component-intel packs; and a public catch-rate benchmark.
 
 ## License
 

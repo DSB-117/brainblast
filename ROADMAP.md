@@ -1,159 +1,176 @@
 # Roadmap
 
-v0.1.4 ships the core workflow: a 7-step research loop, a structured handoff report
-(executive summary + risk heatmap), and automatic injection of that report into the next
-coding session.
+## Where we are
 
-This roadmap is a **firm 4-week plan** — 1–2 shippable features per week, each tied to a
-weekly theme, with deliberate buffer for dogfooding between ships. The whole arc lands as a
-single **v0.2.0** release at the end; this document stays internal until then, so the public
-story is one substantial release rather than four churny point bumps.
+Brainblast today is a **pre-flight check for AI-written integrations**: it reads requirements,
+browses official docs for every external component, and produces a report — facts, severity-rated
+risks, answered questions — that catches the silent, irreversible failures an agent would otherwise
+ship (a zero-revenue fee config, an auth bypass, an immutable wrong choice).
 
-The arc is intentional:
+Shipped, on `main`:
 
-> **Week 1** makes Brainblast *machine-consumable*. **Week 2** makes it *provably trustworthy*.
-> **Week 3** makes it *smarter about input and faster on repeat*. **Week 4** closes the loop
-> with a *post-code guardrail* and publishes a *catch-rate benchmark* that proves it works.
+- The 7-step research loop, executive summary + risk heatmap, and auto-injection of the report into
+  the next coding session.
+- **`report.json`** — a stable, versioned (`schemaVersion 1.0`) machine-readable surface with a
+  committed JSON Schema.
+- **`--ci` mode + exit-code gate** — block a build when a CRITICAL risk remains.
+- **Incremental runs** — research cached per `name@version`; a re-run only re-researches what changed.
 
-Why this order: the market for AI coding tools is crowded with "live docs" retrievers
-(Context7, `llms.txt` bridges) that fetch current docs and stop there. Brainblast's edge is
-that it produces **risk analysis and catches irreversible mistakes**. Every item below either
-deepens that moat (trust, verifiability, the post-code guardrail) or widens distribution (a
-stable schema, a CI gate, a public benchmark). We are not chasing doc-retrieval parity.
+That makes Brainblast a good *utility*. The rest of this roadmap is about making it an *amazing
+product*.
 
----
+## The thesis: make AI integrations correct-by-default — and keep them that way
 
-## Design principles (what keeps this powerful, not complicated)
+Most "AI + docs" tools (Context7, `llms.txt` bridges, RAG-over-docs) **retrieve** current
+documentation and stop. Retrieval is a feature, not a moat, and it prevents nothing. Brainblast's job
+is bigger: **turn documentation into enforcement.** Predict the failure, prove the code didn't ship
+it, and keep watching as the docs and advisories move.
 
-- **One new surface per week.** Each week adds at most one thing a user has to learn; the
-  second feature, when there is one, is enforcement or plumbing behind it.
-- **Buffer is part of the plan.** Each week reserves time to dogfood the new behavior against a
-  real spec before moving on. A feature isn't "shipped" until it has caught something real.
-- **Backwards-compatible by default.** New behavior is additive; existing `/brainblast` runs
-  unchanged unless a flag is passed.
-- **The report stays the source of truth.** `report.json`, the CI gate, and the verifier all
-  derive from the same run — no parallel formats to keep in sync.
-- **Non-goals (explicitly out of scope this cycle):** writing or running implementation code,
-  a hosted SaaS backend, a web dashboard, and any feature that requires an account or API key
-  of our own. Brainblast stays a local, file-based workflow.
+Four escalating capabilities, each one making the last more valuable:
 
----
+> **Predict → Enforce → Watch → Compound**
+>
+> **Predict** the silent failure before code (today). **Enforce** it — gate the build *and generate
+> the durable test that fails forever if the code regresses.* **Watch** the pinned dependencies after
+> merge and re-research on change. **Compound** every run into a portable knowledge base that makes
+> the next run faster, sharper, and shareable.
 
-## Week 1 — The integration surface *(Jun 5–11)*
+The first two make Brainblast trustworthy and sticky inside one project. The last two are where it
+stops being a script you run once and becomes infrastructure you keep — and, eventually, a data moat
+that a retrieval tool can't copy by adding a fetch step.
 
-*Theme: Brainblast becomes something other tools can build on.*
+## Design principles (keep it powerful, not complicated)
 
-- **Machine-readable `report.json`.** ✅ **Shipped** (on `main`). A structured emission alongside
-  `final-report.md`: components, each risk with a `severity` enum, each pre-coding decision, each
-  requirements correction, plus run metadata. Versioned (`schemaVersion: "1.0"`) so downstream
-  consumers don't break. The committed JSON Schema lives at `schema/report.schema.json`, and
-  `scripts/validate.sh` validates it plus every `examples/*/report.json` against it (full Draft-07
-  check when `jsonschema` is present, a schema-driven fallback otherwise, plus a riskTotals
-  cross-check).
+- **One new surface at a time.** Each rung adds at most one thing a user must learn; the rest is
+  enforcement or plumbing behind it.
+- **The report is the single source of truth.** `report.json` is the contract; the gate, the
+  verifier, the generated tests, the watcher, and the intel packs all derive from it — never a
+  parallel format.
+- **Backwards-compatible and additive.** Existing `/brainblast` runs are unchanged unless a flag is
+  passed.
+- **Not shipped until it has caught something real.** Every rung carries a buffer to dogfood it
+  against a live spec.
+- **Earn trust before reach.** Evidence and corroboration come before distribution; a tool people
+  gate their builds on cannot afford a confident wrong answer.
 
-- **`--ci` mode + exit-code gate.** ✅ **Shipped** (on `main`). A non-interactive mode (`--ci` /
-  `BRAINBLAST_CI=1`) that never calls `AskUserQuestion`, picks documented defaults, and runs
-  end-to-end to a `report.json`. The deterministic gate `scripts/brainblast-gate.sh` **exits
-  non-zero if any risk at/above `--fail-on` (default `critical`) remains** or the verdict is
-  `blocked`. A documented GitHub Actions one-liner (`examples/ci/github-actions.yml`) gates the
-  build, and the committed `examples/bags-api/report.json` (seeded CRITICAL) fails the gate as
-  expected.
-
-- *Buffer:* dogfood the gate against the Bags and Stripe+Privy specs; confirm the schema
-  survives both without ad-hoc fields.
+Near-term order: **Rung 2 → Trust → Rung 4 → Rung 5 → benchmark**, landing as **v0.2.0**. The rungs
+are a capability ladder, not a calendar — Rung 1 and the cache (part of Rung 5) already shipped ahead
+of the original week-by-week plan.
 
 ---
 
-## Week 2 — Provable trust *(Jun 12–18)*
+## Rung 1 — Predict  ✅ (shipped)
 
-*Theme: every scary claim is auditable, not just plausible.*
+The core loop, the report, the schema, the cache. The foundation everything else reads from. Done —
+kept honest by the benchmark below.
 
-- **Provenance & freshness metadata.** Capture fetch timestamp and page `last-modified` per
-  fact; attach a confidence level and a `staleAfterDays` marker, surfaced in both the markdown
-  and `report.json`, so a report read weeks later carries its own expiry. *Done when:* each
-  Fact shows when it was fetched and how stale it may be.
+## Rung 2 — Enforce: from "flagged" to "can't regress"
 
-- **Two-source rule for CRITICAL claims (with enforced coverage linter).** No risk is asserted
-  as CRITICAL on a single page — require a second independent source or downgrade to HIGH with
-  a note. Fold this into a promoted coverage linter: the Step 4 checklist becomes a script that
-  asserts every Fact has a URL, every component has auth / version / limits / risk sections,
-  and every CRITICAL cites two sources. The product *is* trust; this is the cheapest trust we
-  can buy. *Done when:* the linter fails a deliberately incomplete or single-sourced-CRITICAL run.
+The gate already blocks a build on a CRITICAL. The leap is to stop *re-checking* and start
+*guaranteeing*.
 
-- *Buffer:* re-run the examples so every committed CRITICAL carries two sources and a freshness
-  marker.
+- **`/brainblast-verify` — check the code against the report.** After the agent writes code, run each
+  CRITICAL from `report.json` back against the implementation: did the creator wallet reach the
+  fee-share array? Is the Stripe webhook verifying the *raw* body? Report PASS / FAIL / CAN'T-TELL per
+  critical, with file and line. *Done when:* it flags the zero-fee misconfiguration in a deliberately
+  broken Bags implementation.
+- **Executable guardrails — generate the durable check (headline).** For each CRITICAL, emit a
+  committed test or CI assertion in the project's own stack, so the failure mode is guarded *forever*,
+  not just audited once. "CAN'T-TELL" disappears — a test either passes or fails. This is the
+  difference between an audit and a guardrail, and the single highest-leverage item on this roadmap.
+  *Done when:* a generated test fails against the broken Bags impl and passes once the creator wallet
+  is added — proven on one JS (vitest/jest) and one Python (pytest) target to establish the pattern.
+- **Make the gate communicate.** When the gate fails in CI, post the risk heatmap and the supporting
+  evidence (quoted doc + URL) as a PR comment / line annotation — not just a red ✗. A reviewer should
+  see *what* and *why* without opening logs. *Done when:* the Actions sample posts a PR comment with
+  the heatmap and evidence links.
+
+## Rung 3 — Trust: evidence-grade, corroborated, advisory-aware
+
+Trust *is* the product. These make every scary claim auditable in seconds and grounded in more than
+one page.
+
+- **Evidence-grade provenance.** Each fact and each CRITICAL carries the exact quoted snippet, source
+  URL, and fetch date in `report.json`; a `staleAfterDays` marker gives the report its own expiry.
+  *Done when:* a reviewer can verify any CRITICAL from the report alone, without re-browsing.
+- **Two-source rule + coverage linter.** No claim is asserted CRITICAL on a single page — corroborate
+  with a second independent source or downgrade to HIGH with a note. Promote the Step-4 checklist into
+  a script that fails a run missing a section, an un-sourced fact, or a single-sourced CRITICAL.
+  *Done when:* the linter fails a seeded incomplete run.
+- **Security-advisory cross-check (OSV).** For each resolved `name@version`, query the public OSV.dev
+  API (no account, no key) and fold real CVEs, deprecations, and yanked versions into the risk output.
+  This adds an *authoritative* risk source on top of docs. *Done when:* a component pinned to a
+  version with a known advisory surfaces it as a CRITICAL/HIGH with the advisory ID and link.
+
+## Rung 4 — Watch: standing protection after merge
+
+A project's dependencies keep moving; a report from three months ago may now be wrong. This is the
+retention lever — Brainblast that keeps working.
+
+- **Drift watch.** A scheduled `--ci` re-research of the *pinned* components, diffed against the
+  committed baseline `report.json`. Alert or gate when something material changes: a new breaking
+  change, a fresh deprecation, a new advisory, or a version bump that invalidates a cached CRITICAL.
+  Runs in the user's own CI on a cron — no hosting. *Done when:* bumping a dependency (or seeding a new
+  advisory) produces a diff report that names exactly what changed and why it matters.
+- **Staleness diff (the hero proof).** Quantify the gap between what an agent's *training data* would
+  believe and the *live* truth — "thinks Stripe `apiVersion` is X; current is Y; here's the field that
+  moved." A visceral, repeatable demo of why pre-flight research exists at all. *Done when:* a
+  committed example shows a real training-vs-live delta on a fast-moving SDK.
+
+## Rung 5 — Compound: knowledge that gets better with use
+
+Today every run's research is discarded after the project. The asset *is* the research.
+
+- **Auto-seed the inventory from the repo.** Read lockfiles (`package-lock.json`, `poetry.lock`,
+  `Cargo.lock`, `go.mod`, …) and committed OpenAPI specs to seed components with *exact* names and
+  *pinned* versions before any browsing — more reliable than inferring from prose, and it makes the
+  cache key precise. *Done when:* a repo with a lockfile yields a versioned inventory with zero prose
+  inference.
+- **Portable component-intel packs.** Formalize the per-`name@version` cache into a committable,
+  schema'd "intel pack" (verified facts, risks, evidence) that a team can share across repos and that
+  seeds future runs instantly. Local-first today; the seed of a genuine data network effect tomorrow.
+  *Done when:* one project's intel pack, dropped into a second project, pre-populates matching
+  components with full provenance.
+
+## Prove it — the benchmark that doubles as a regression guard
+
+- **Public catch-rate benchmark.** 10–20 real specs with known traps; publish **precision** (a
+  flagged CRITICAL is real) and **false-negative rate** (known traps caught). The artifact that tells
+  the market this is serious *and* a regression guard for the prompt itself. *Done when:*
+  `examples/benchmark/` holds the specs, expected catches, and a results table linked from the README,
+  runnable in CI.
 
 ---
 
-## Week 3 — Smarter input, faster on repeat *(Jun 19–25)*
+## Bigger bets (phase 2 — these cross today's local-first line)
 
-*Theme: stop inferring from prose, and stop re-researching what hasn't changed.*
+Deliberately out of scope *this cycle* because each needs hosting, an account, or a service of ours —
+they change the product's nature and should be a conscious decision, not a drift:
 
-- **Auto-seed the inventory from the repo.** Read `package.json`, `requirements.txt`,
-  `Cargo.toml`, `go.mod`, lockfiles, and committed OpenAPI specs to seed the inventory with
-  *exact* names and *pinned* versions — far more reliable than inferring from prose, and
-  OpenAPI parsing beats scraping HTML. The spec still adds intent and components not yet in
-  code. *Done when:* a repo with a lockfile produces a versioned inventory before any browsing.
+- **Networked community intel registry.** Pool anonymized, verified `name@version` intel across users
+  so the corpus — and every catch — compounds across the whole community. This is the real,
+  copy-proof moat (a data network effect a retrieval tool can't bolt on) and the natural business
+  surface. Needs hosting, curation, and a trust/abuse model. Rung 5's local intel packs are the
+  on-ramp to exactly this.
+- **MCP server for reports.** Expose `report.json` over MCP so Cursor, Copilot, and other agents query
+  a project's research without reading files — distribution into the tools teams already use.
+- **Portfolio view.** For an org, one dashboard of unaddressed CRITICALs across every service — sells
+  to the buyer (the eng lead), not just the IC.
 
-- **Incremental / cached runs.** ✅ **Shipped early** (on `main`, ahead of schedule). Research is
-  cached per component, keyed by `name@version`, in `.agent-research/cache/`; a re-run reuses
-  unchanged components and re-researches only what changed (new components or bumped versions),
-  with `--fresh` to force a full pass. This delivers the core promise — *research is not repeated*.
-  Still to fold in here: version-aware *diffing* driven by the auto-seeded inventory above.
+## Non-goals (this cycle)
 
-- *Buffer:* run twice on a real evolving repo; confirm the diff is correct and the cache never
-  serves a stale CRITICAL.
-
----
-
-## Week 4 — Close the loop + prove it works *(Jun 26–Jul 2)*
-
-*Theme: Brainblast stops being a pre-flight memo and becomes a guardrail — and we publish the
-evidence. This week ships and the whole arc tags as **v0.2.0**.*
-
-- **`/brainblast-verify` — the post-code guardrail (headline feature).** After the agent writes
-  code, run the report's CRITICAL decisions back *against the implementation*. Each CRITICAL
-  becomes a checkable assertion: did the creator wallet actually make it into the fee-share
-  array? Is the Stripe webhook verifying the *raw* body? Is the Privy token's signature
-  verified? It reads the `report.json` from Week 1 and reports PASS / FAIL / CAN'T-TELL per
-  critical, with the file and line it checked. This turns the two demos into round-trips —
-  *predict the silent failure, then confirm the code didn't ship it* — and makes Brainblast a
-  loop, not a one-shot. *Done when:* running it against a deliberately broken Bags
-  implementation flags the zero-fee misconfiguration. *(Given buffer this week, the benchmark
-  below is the natural thing to slip if the verifier needs more polish.)*
-
-- **Public catch-rate benchmark.** Dogfood Brainblast against 10–20 real specs and publish
-  **precision** (how often a flagged CRITICAL is real) and **false-negative rate** on known
-  traps (the Bags fee-config catch, the forged-webhook catch). A committed, reproducible
-  benchmark is the artifact that tells the market this is serious — and it doubles as a
-  regression guard for the prompt itself. *Done when:* `examples/benchmark/` holds the specs,
-  expected catches, and a results table linked from the README.
-
----
-
-## Stretch / next cycle (post-v0.2.0)
-
-Deferred deliberately so the four weeks stay focused. Strong candidates for the following
-sprint:
-
-- **Parallel sub-agent fan-out + bounded per-component budget.** Fan out research for
-  many-component specs instead of the sequential loop, with a per-component source/time ceiling
-  so "never leave a question open" can't produce a runaway run. (Pairs with Week 3's
-  incremental runs.)
-- **MCP server for reports.** Expose `report.json` over MCP so Cursor, Copilot, and other
-  agents can query a project's research without reading files — distribution into the tools
-  teams already use.
-- **Staleness diff.** Show what an agent's training data *would have believed* (e.g. "thinks
-  SDK is v3, current is v5") versus the live truth — a sharp, quantified demo of the value.
-
----
+Writing or running production implementation code; a hosted SaaS backend; a web dashboard; anything
+requiring an account or API key of ours. Brainblast stays a **local, file-based workflow** — the
+phase-2 bets above are the explicit, deliberate exception, to be picked up only after Rungs 2–5 prove
+the value locally.
 
 ## How we'll know it worked
 
-Two signals, tracked across the cycle:
-
-1. **Catch-rate (correctness).** From the Week 4 benchmark: precision on flagged CRITICALs and
-   false-negative rate on known traps. This is the real proof and the regression guard.
-2. **Adoption surface (seriousness).** `report.json` consumed by a real CI gate, and at least
-   one external project running `--ci` in its pipeline. A tool people gate their builds on is a
-   tool that has arrived.
+1. **Correctness** — benchmark precision on flagged CRITICALs and false-negative rate on known traps.
+   The real proof.
+2. **Permanence** — generated guardrails committed in a real repo; a CRITICAL that *cannot* silently
+   regress because a test now fails on it.
+3. **Retention** — drift watch running on a schedule in at least one external project. A tool you
+   keep, not a tool you ran once.
+4. **Adoption** — `report.json` consumed by a real CI gate (and, phase 2, an MCP client). A tool
+   people gate their builds on has arrived.
