@@ -243,7 +243,7 @@ These are baked into every adapter:
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for what is planned beyond v0.1.4 — machine-readable `report.json`, incremental cached runs, provenance/freshness metadata, a two-source rule for CRITICAL claims, repo auto-seeding from lockfiles, and a non-interactive `--ci` mode.
+See [ROADMAP.md](ROADMAP.md) for the firm 4-week plan to **v0.2.0**: a machine-readable `report.json` and CI exit-code gate (Week 1), provenance/freshness metadata and a two-source rule for CRITICAL claims (Week 2), auto-seeding from lockfiles and incremental cached runs (Week 3), and `/brainblast-verify` — a post-code guardrail that checks the written implementation against every CRITICAL risk — plus a public catch-rate benchmark (Week 4).
 
 ## License
 
