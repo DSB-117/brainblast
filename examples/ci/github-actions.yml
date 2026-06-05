@@ -1,0 +1,37 @@
+# Example: gate a pull request on Brainblast's findings.
+#
+# This is a documentation sample — copy it to .github/workflows/ in your own
+# repo and adapt the "Run Brainblast" step to however you invoke your
+# Brainblast-capable agent headless. The gate step is concrete and runnable.
+name: brainblast-gate
+
+on:
+  pull_request:
+    paths: ["requirements.md", "prd.md", "spec.md"]
+
+jobs:
+  research-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1) Produce report.json non-interactively.
+      #    Environment-specific: run your agent headless in --ci mode so it
+      #    writes .agent-research/runs/<timestamp>/report.json. For example,
+      #    with Claude Code:
+      #
+      #      claude -p "/brainblast requirements.md --ci"
+      #
+      #    (--ci => never prompts, picks documented defaults. Needs the gstack
+      #    browse engine available on the runner.)
+      - name: Run Brainblast (non-interactive)
+        run: |
+          echo "Invoke your Brainblast agent here; it must write"
+          echo ".agent-research/runs/<ts>/report.json"
+
+      # 2) Gate the build on the report. Exit non-zero blocks the PR.
+      #    Pin to a release tag (e.g. v0.2.0) instead of main for reproducibility.
+      - name: Gate on the Brainblast report
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/scripts/brainblast-gate.sh \
+            | sh -s -- --fail-on=critical

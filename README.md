@@ -36,6 +36,7 @@ Everything Brainblast does today, at a glance.
 - Followed by the components table, what a coding agent must know before starting, required pre-coding decisions, requirements corrections, and the specific failure modes the run prevents.
 - **Auto-injects** a pointer to the report into the project's agent-instructions file (`CLAUDE.md`, or `AGENTS.md` on Codex) as an idempotent, marker-delimited, reversible block — so the research travels to the next coding session with no copy-paste.
 - **Emits a machine-readable `report.json`** alongside the prose — a stable, versioned (`schemaVersion: "1.0"`) schema with components, severity-tagged risks, pre-coding decisions, and requirements corrections, so other tools and CI gates can build on a contract instead of parsing prose.
+- **Gates CI.** A `--ci` mode runs non-interactively (no prompts, documented defaults), and a dependency-free gate script turns `report.json` into an exit code — fail the build if any CRITICAL risk remains (`--fail-on=critical|high|…`) or the verdict is `blocked`.
 
 **Safety**
 - **Prompt-injection resistant by design.** Browsed docs are treated as untrusted data; imperative content ("ignore previous instructions", "run this") is quoted and flagged, never propagated as fact or action.
@@ -189,6 +190,31 @@ reading agent directly — quoted and flagged, never acted on.
 | OpenClaw | `SKILL.md` | `~/.claude/skills/brainblast/` |
 | Codex | `AGENTS.md` | marker-delimited block in `~/.codex/AGENTS.md` |
 | Hermes / any agent | `PROMPT.md` | [`adapters/generic/PROMPT.md`](adapters/generic/PROMPT.md) |
+
+## Continuous integration
+
+Brainblast can gate a pipeline on its own findings — block a merge until a human has dealt with every CRITICAL risk. Two pieces:
+
+1. **`--ci` mode** runs Brainblast non-interactively: it never asks a question, picks documented defaults (e.g. a deterministic requirements-file precedence), and writes `report.json`. Invoke your agent headless — `/brainblast requirements.md --ci`, or set `BRAINBLAST_CI=1`.
+2. **The gate** — [`scripts/brainblast-gate.sh`](scripts/brainblast-gate.sh) — turns that `report.json` into an exit code:
+
+```sh
+# exit 1 if any CRITICAL risk remains (--fail-on=high also counts HIGH, etc.)
+sh scripts/brainblast-gate.sh .agent-research/runs/<ts>/report.json --fail-on=critical
+```
+
+Exit codes: **0** pass · **1** gated (a risk at/above the threshold, or `verdict: blocked`) · **2** usage error (no report found / bad option). With no path argument it gates the newest run under `.agent-research/runs/`. The gate needs only `python3` — no install, no network.
+
+A ready-to-adapt GitHub Actions workflow is in [`examples/ci/github-actions.yml`](examples/ci/github-actions.yml); the gate step is a one-liner:
+
+```yaml
+- name: Gate on the Brainblast report
+  run: |
+    curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/scripts/brainblast-gate.sh \
+      | sh -s -- --fail-on=critical
+```
+
+In production, pin the URL to a release tag (e.g. `/v0.2.0/`) rather than `/main/`, or vendor [`scripts/brainblast-gate.sh`](scripts/brainblast-gate.sh) into your repo, so the gate can't change underneath you.
 
 ## Limitations
 

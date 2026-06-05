@@ -34,10 +34,20 @@ mkdir -p "$_RUN_DIR/components"
 _CACHE_DIR="$(pwd)/.agent-research/cache"
 mkdir -p "$_CACHE_DIR"
 _FRESH="${BRAINBLAST_FRESH:-0}"   # set to 1 if the invocation included --fresh
+_CI="${BRAINBLAST_CI:-0}"         # set to 1 if the invocation included --ci
 echo "RUN_DIR: $_RUN_DIR"
 echo "CACHE_DIR: $_CACHE_DIR  (fresh=$_FRESH)"
-echo "DATE: $(date +%Y-%m-%d)"
+echo "DATE: $(date +%Y-%m-%d)  (ci=$_CI)"
 ```
+
+**CI mode + gate.** In `--ci` mode (`_CI=1`, or `BRAINBLAST_CI=1`) run **non-interactively**: never
+ask a question or wait. On multiple requirement-file matches, pick the highest-precedence one
+deterministically (`requirements` > `prd` > `spec` > `brief` > `rfc` > `product` > `design-doc` >
+`overview` > `scope` > `functional`, then lexicographic) and say which; if none, stop BLOCKED and
+write no `report.json`. Don't prompt for inventory confirmation. The pipeline's exit code comes from
+the deterministic gate `scripts/brainblast-gate.sh` (Brainblast repo), which fails when a risk
+at/above `--fail-on` (default `critical`) remains or the verdict is `blocked`; state PASS/FAIL
+yourself after writing the report.
 
 If `BROWSE_MISSING`: tell the user Brainblast requires gstack for Codex. Run:
 `git clone --single-branch --depth 1 https://github.com/garrytan/gstack.git ~/.codex/skills/gstack && cd ~/.codex/skills/gstack && ./setup --host codex`
@@ -49,7 +59,7 @@ Set `$B` and `$_RUN_DIR` from preamble output. Use them throughout.
 
 ## Step 0 — Locate requirements
 
-**Args:** If invoked with a file path (e.g. `brainblast prd.md`), use it directly. Ignore a `--fresh` token when resolving the path — it controls caching, not file selection.
+**Args:** If invoked with a file path (e.g. `brainblast prd.md`), use it directly. Ignore control tokens (`--fresh`, `--ci`, `--fail-on=…`) when resolving the path — they are flags, not filenames. (See CI mode in the preamble for `--ci` behavior.)
 
 Otherwise, auto-detect:
 

@@ -75,6 +75,12 @@ done
 for EX in "$ROOT"/examples/*/; do
   [ -d "$EX" ] || continue
   name=$(basename "$EX")
+  # Only directories that are actual research runs (have requirements.md) are
+  # validated as runs; other example assets (e.g. examples/ci/) are skipped.
+  if [ ! -f "$EX/requirements.md" ]; then
+    note "skipping examples/$name (not a run — no requirements.md)"
+    continue
+  fi
   for f in requirements.md component-inventory.md research-plan.md \
            coverage-review.md requirements-rereview.md final-report.md report.json; do
     if [ -f "$EX/$f" ]; then ok "example $name/$f present"; else bad "example $name/$f missing"; fi

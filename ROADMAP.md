@@ -51,11 +51,13 @@ stable schema, a CI gate, a public benchmark). We are not chasing doc-retrieval 
   check when `jsonschema` is present, a schema-driven fallback otherwise, plus a riskTotals
   cross-check).
 
-- **`--ci` mode + exit-code gate.** A non-interactive path that never calls `AskUserQuestion`,
-  picks documented defaults, and **exits non-zero if any unresolved CRITICAL risk remains**
-  (configurable, e.g. `--fail-on=critical|high`). This is the answer to "half of orgs shipped
-  an outage from outdated AI-generated code" — a pipeline can now *block* on it. *Done when:* a
-  documented one-liner runs in GitHub Actions and fails a sample spec with a seeded CRITICAL.
+- **`--ci` mode + exit-code gate.** ✅ **Shipped** (on `main`). A non-interactive mode (`--ci` /
+  `BRAINBLAST_CI=1`) that never calls `AskUserQuestion`, picks documented defaults, and runs
+  end-to-end to a `report.json`. The deterministic gate `scripts/brainblast-gate.sh` **exits
+  non-zero if any risk at/above `--fail-on` (default `critical`) remains** or the verdict is
+  `blocked`. A documented GitHub Actions one-liner (`examples/ci/github-actions.yml`) gates the
+  build, and the committed `examples/bags-api/report.json` (seeded CRITICAL) fails the gate as
+  expected.
 
 - *Buffer:* dogfood the gate against the Bags and Stripe+Privy specs; confirm the schema
   survives both without ad-hoc fields.

@@ -50,12 +50,24 @@ mkdir -p "$_CACHE_DIR"
 # Cache bypass: re-research everything if the user passed --fresh or set BRAINBLAST_FRESH=1
 _FRESH="${BRAINBLAST_FRESH:-0}"
 
+# CI mode: run non-interactively (no questions, pick documented defaults)
+_CI="${BRAINBLAST_CI:-0}"
+
 echo "RUN_DIR: $_RUN_DIR"
 echo "CACHE_DIR: $_CACHE_DIR  (fresh=$_FRESH)"
-echo "DATE: $(date +%Y-%m-%d)"
+echo "DATE: $(date +%Y-%m-%d)  (ci=$_CI)"
 ```
 
-If the invocation included a `--fresh` token, set `_FRESH=1`. Use `$_CACHE_DIR` and `$_FRESH` throughout.
+If the invocation included a `--fresh` token, set `_FRESH=1`; if it included `--ci`, set `_CI=1`. Use `$_CACHE_DIR`, `$_FRESH`, and `$_CI` throughout.
+
+## Continuous integration (`--ci` + the gate)
+
+Brainblast runs in a pipeline as two pieces:
+
+1. **`--ci` mode** (`_CI=1`): run end-to-end **non-interactively** — never call `AskUserQuestion` and never wait for a reply. At every decision point, pick the documented default (Steps 0 and 1). The deliverable is a complete `report.json`.
+2. **The exit-code gate** — `scripts/brainblast-gate.sh` in the Brainblast repo. A deterministic script the pipeline runs on `report.json`: it exits non-zero if any risk at or above a threshold remains (`--fail-on=critical|high|medium|low`, default `critical`) or the verdict is `blocked`. This is what *blocks the build* — the agent does not control the process exit code.
+
+In `--ci` mode, after writing `report.json`, also state the gate outcome yourself (PASS/FAIL at the default `critical` threshold) so the run is self-describing — but treat `scripts/brainblast-gate.sh` as the canonical exit-code authority.
 
 If `BROWSE_MISSING`: tell the user that Brainblast requires the gstack browse tool. Run `~/.claude/skills/gstack/setup` and retry. Do not proceed without browse.
 
@@ -65,7 +77,7 @@ Set `$B` and `$_RUN_DIR` from preamble output. Use them throughout.
 
 ## Step 0 — Locate requirements
 
-**Args:** The skill may be invoked with a file path argument (e.g. `/brainblast prd.md`). If an arg is given, use it directly. Ignore a `--fresh` token when resolving the path — it controls caching (see Preamble), not file selection.
+**Args:** The skill may be invoked with a file path argument (e.g. `/brainblast prd.md`). If an arg is given, use it directly. Ignore control tokens (`--fresh`, `--ci`, `--fail-on=…`) when resolving the path — they are flags, not filenames.
 
 Otherwise, auto-detect:
 
@@ -84,6 +96,10 @@ find . -maxdepth 2 \( \
 1. **Exactly one file found** → use it, tell the user which file was picked
 2. **Multiple files found** → show the list; use `AskUserQuestion` if available, otherwise output the list as plain text and wait for the user to reply before continuing
 3. **Nothing found** → scan for any `.md` files in the project root (maxdepth 1), show up to 10; use `AskUserQuestion` if available, otherwise ask as plain text. If still nothing, ask the user to create a spec file or pass a path explicitly
+
+**In `--ci` mode (`_CI=1`), never wait for input:**
+- For (2), pick the highest-precedence match deterministically — order `requirements` > `prd` > `spec` > `brief` > `rfc` > `product` > `design-doc` > `overview` > `scope` > `functional`, then lexicographic — and print which file was chosen and why.
+- For (3) with nothing found, stop with a **BLOCKED** status and a clear message. Do not write `report.json`; its absence makes the gate (and the pipeline) fail.
 
 The internal output artifact is always saved as `$_RUN_DIR/requirements.md` regardless of the source filename.
 
@@ -130,7 +146,7 @@ Write this to `$_RUN_DIR/component-inventory.md` using this format:
 | [name] | [type] | [version or `unversioned`] | [role] | [High/Medium/Low] |
 ```
 
-Output the inventory to the user and ask if anything is missing or wrong. Use `AskUserQuestion` if available; otherwise print the table and ask as plain text. If no response is possible (automated/CI context), proceed with the discovered inventory and note it as an assumption.
+Output the inventory to the user and ask if anything is missing or wrong. Use `AskUserQuestion` if available; otherwise print the table and ask as plain text. **In `--ci` mode (or any automated context where no response is possible), do not prompt** — proceed with the discovered inventory and note it as an assumption.
 
 ---
 
