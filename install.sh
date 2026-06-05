@@ -2,13 +2,13 @@
 # Brainblast installer / updater
 # Install:  curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | sh
 # Update:   curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=latest sh
-# Specific: curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.1.3 sh
+# Specific: curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.1.4 sh
 #
 # Pins to a tagged release and verifies SHA-256 checksums before writing any file.
 set -e
 
 REPO="DSB-117/brainblast"
-REF="${BRAINBLAST_REF:-v0.1.3}"
+REF="${BRAINBLAST_REF:-v0.1.4}"
 
 # Resolve "latest" to the actual newest release tag via GitHub API
 if [ "$REF" = "latest" ]; then
@@ -92,9 +92,8 @@ if [ -d "$HOME/.claude/skills" ]; then
   fetch_verified "SKILL.md" "$DEST/SKILL.md"
   echo "  Installed → $DEST/SKILL.md  (verified)"
   # Register /brainblast as a first-class slash command in the command palette
-  mkdir -p "$HOME/.claude/commands"
-  curl -fsSL "$RAW/commands/brainblast.md" -o "$HOME/.claude/commands/brainblast.md"
-  curl -fsSL "$RAW/commands/brainblast-update.md" -o "$HOME/.claude/commands/brainblast-update.md"
+  fetch_verified "commands/brainblast.md" "$HOME/.claude/commands/brainblast.md"
+  fetch_verified "commands/brainblast-update.md" "$HOME/.claude/commands/brainblast-update.md"
   echo "  Registered → ~/.claude/commands/brainblast.md"
   echo "  Registered → ~/.claude/commands/brainblast-update.md"
   echo "  Invoke:     /brainblast [requirements-file]"
@@ -132,9 +131,8 @@ if command -v codex >/dev/null 2>&1 || [ -d "$HOME/.codex" ]; then
   rm -f "$BLOCK"
   # Install the Codex skill package (registers /brainblast in Codex's skill UI)
   CODEX_SKILL="$HOME/.codex/skills/brainblast"
-  mkdir -p "$CODEX_SKILL/agents"
-  curl -fsSL "$RAW/adapters/codex-skill/SKILL.md" -o "$CODEX_SKILL/SKILL.md"
-  curl -fsSL "$RAW/adapters/codex-skill/agents/openai.yaml" -o "$CODEX_SKILL/agents/openai.yaml"
+  fetch_verified "adapters/codex-skill/SKILL.md" "$CODEX_SKILL/SKILL.md"
+  fetch_verified "adapters/codex-skill/agents/openai.yaml" "$CODEX_SKILL/agents/openai.yaml"
   echo "  Installed → $CODEX_SKILL/  (skill + openai.yaml)"
   echo "  Invoke:     /brainblast [requirements-file]"
   echo ""

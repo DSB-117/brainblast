@@ -1,8 +1,10 @@
 # Roadmap
 
-v0.1.0 ships the core workflow and a trustworthy first run. These are the planned
-upgrades beyond it, roughly in priority order. The first is the strategic one — a
-stable machine-readable schema is what other tools and CI gates build against.
+v0.1.4 ships the core workflow, a structured handoff report (executive summary +
+risk heatmap), and automatic injection of that report into the next coding session.
+These are the planned upgrades beyond it, roughly in priority order. The first is the
+strategic one — a stable machine-readable schema is what other tools and CI gates
+build against.
 
 ## Planned
 

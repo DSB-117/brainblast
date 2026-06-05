@@ -1,6 +1,6 @@
 ---
 name: brainblast
-version: 0.1.3
+version: 0.1.4
 description: Pre-implementation research layer — identifies external components in requirements, researches each one from official sources, and produces a structured handoff report before any code is written.
 allowed-tools:
   - Bash

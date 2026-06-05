@@ -14,6 +14,37 @@ The report travels with the project. Any coding agent can use it without repeati
 
 > **See it for real:** [`examples/bags-api/`](examples/bags-api/) is a complete committed run against the Bags API (Solana token launch), including the [final report](examples/bags-api/final-report.md). It caught a permanent, silent, zero-revenue misconfiguration an agent would have shipped.
 
+## Capabilities
+
+Everything Brainblast does today, at a glance.
+
+**Research workflow**
+- **Auto-detects the requirements file** from common spec names (`requirements`, `prd`, `spec`, `brief`, `rfc`, and more — any case, `.md`/`.txt`/`.rst`), or takes an explicit path.
+- **Builds a component inventory** — every external API, SDK, auth provider, database, payment processor, cloud platform, or chain in the spec, each tagged by how confident the identification is (named / implied / inferred).
+- **Plans a source set per component** — official docs, package registry, changelog, rate limits — before browsing.
+- **Browses live sources, never recalls.** Every fact comes from a URL fetched during the run, so it reflects the current docs, not stale training data.
+- **Runs a questions loop** — every open question that surfaces is answered from a live URL, or explicitly marked unresolvable with a note on where it looked.
+- **Reviews its own coverage** and flags gaps before finishing.
+- **Re-reads the requirements against the research** to surface wrong assumptions, missing constraints, underspecified choices, and decisions that are immutable after deploy.
+
+**Per-component output**
+- Each component file is structured identically: **Facts** (each with a source URL), **Assumptions**, **Inferences**, **Risks** (rated CRITICAL / HIGH / MEDIUM / LOW, biased toward silent failures), and **Resolved questions**.
+
+**Handoff report**
+- A single `final-report.md` opening with an **Executive Summary** (what's being built, a Ready / Caution / Blocked verdict, the top risk, the one irreversible decision, the biggest spec gap) and a **Risk Heatmap** (component × severity counts, with CRITICAL/HIGH risks named).
+- Followed by the components table, what a coding agent must know before starting, required pre-coding decisions, requirements corrections, and the specific failure modes the run prevents.
+- **Auto-injects** a pointer to the report into the project's agent-instructions file (`CLAUDE.md`, or `AGENTS.md` on Codex) as an idempotent, marker-delimited, reversible block — so the research travels to the next coding session with no copy-paste.
+
+**Safety**
+- **Prompt-injection resistant by design.** Browsed docs are treated as untrusted data; imperative content ("ignore previous instructions", "run this") is quoted and flagged, never propagated as fact or action.
+- Reaches **gated docs** when needed via gstack's cookie import.
+
+**Platforms & install**
+- Runs on **Claude Code, OpenClaw, Codex** (native skill + adapter block), and **any agent with web access** via a generic prompt.
+- Exposes `/brainblast` and `/brainblast-update` slash commands.
+- **Secure installer**: pins to a tagged release and verifies the SHA-256 of *every* file before writing it, checks the gstack dependency, and re-installs idempotently (`BRAINBLAST_REF=latest` or a specific version).
+- Ships **two complete committed example runs** and a release self-check (`scripts/validate.sh`).
+
 ## Prerequisites
 
 Brainblast is a workflow that runs *inside* a host agent. It needs a browser engine to fetch live docs.
@@ -33,14 +64,14 @@ Install gstack: run git clone --single-branch --depth 1 https://github.com/garry
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.1.3/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.1.4/install.sh | sh
 ```
 
 The installer pins to a tagged release, verifies SHA-256 checksums before writing any file, and auto-detects Claude Code, OpenClaw, and Codex. If gstack is missing, it warns you with the exact command to fix it. (It installs the Brainblast skill, but it does **not** install gstack for you — that is a one-time prerequisite above.)
 
 **Or tell your agent:**
 
-> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.1.3/install.sh | sh`
+> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.1.4/install.sh | sh`
 
 For the bleeding edge instead of a pinned release, prefix with `BRAINBLAST_REF=main`.
 
@@ -184,7 +215,7 @@ curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh 
 
 **Specific version:**
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.1.3 sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.1.4 sh
 ```
 
 The installer is idempotent: the Claude Code skill is overwritten in place, and the Codex adapter block is replaced (not duplicated) via its `<!-- BRAINBLAST:START/END -->` markers.
@@ -212,7 +243,7 @@ These are baked into every adapter:
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for what is planned beyond v0.1.3 — machine-readable `report.json`, incremental cached runs, provenance/freshness metadata, a two-source rule for CRITICAL claims, repo auto-seeding from lockfiles, and a non-interactive `--ci` mode.
+See [ROADMAP.md](ROADMAP.md) for what is planned beyond v0.1.4 — machine-readable `report.json`, incremental cached runs, provenance/freshness metadata, a two-source rule for CRITICAL claims, repo auto-seeding from lockfiles, and a non-interactive `--ci` mode.
 
 ## License
 

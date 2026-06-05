@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.4 — 2026-06-04
+
+- Installer now verifies the SHA-256 of **every** fetched file: the slash-command files (`commands/brainblast.md`, `commands/brainblast-update.md`) and the Codex skill package (`adapters/codex-skill/SKILL.md`, `agents/openai.yaml`) now route through `fetch_verified` instead of plain `curl`, closing a gap where those four files were written unverified
+- README: added a **Capabilities** section summarizing the full feature set
+- ROADMAP: refreshed the intro to reflect the shipped v0.1.x state
+
 ## v0.1.3 — 2026-06-04
 
 - **Executive Summary** at the top of `final-report.md` — a 30-second human read: what's being built, a go/no-go verdict, the top risk, the one irreversible decision, and the biggest spec gap
