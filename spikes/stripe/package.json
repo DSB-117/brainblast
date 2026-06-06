@@ -1,0 +1,20 @@
+{
+  "name": "brainblast-spike-stripe",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "T1 spike: deterministic Stripe-webhook signature-verification auditor + behavioral contract test generator.",
+  "bin": { "brainblast-spike": "src/cli.ts" },
+  "scripts": {
+    "audit": "tsx src/cli.ts",
+    "prove": "tsx scripts/prove.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "stripe": "^17",
+    "ts-morph": "^23",
+    "tsx": "^4",
+    "typescript": "^5",
+    "vitest": "^2"
+  }
+}
