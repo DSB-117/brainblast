@@ -107,17 +107,19 @@ for EX in "$ROOT"/examples/*/; do
 done
 
 # ── 4. report.json conforms to the committed JSON Schema ───────────────────
-# Validates schema/report.schema.json and every examples/*/report.json against
-# it. Uses jsonschema for a full Draft-07 check when available; otherwise a
-# structural fallback (required keys, enum values, additionalProperties) plus a
-# riskTotals == summed-severities cross-check that runs either way.
+# Validates schema/report.schema.json against the committed example reports and
+# the canonical schema/example-report.json (which exercises the checks[] /
+# checkTotals fields the audit emits). Uses jsonschema for a full Draft-07 check
+# when available; otherwise a schema-driven structural fallback. Both paths also
+# run the riskTotals and checkTotals consistency cross-checks.
 SCHEMA="$ROOT/schema/report.schema.json"
 if [ ! -f "$SCHEMA" ]; then
   bad "schema/report.schema.json missing"
 elif ! command -v python3 >/dev/null 2>&1; then
   note "python3 not available — skipping report.json schema validation"
 else
-  if python3 "$ROOT/scripts/validate_reports.py" "$SCHEMA" "$ROOT"/examples/*/report.json; then
+  if python3 "$ROOT/scripts/validate_reports.py" "$SCHEMA" \
+       "$ROOT"/examples/*/report.json "$ROOT/schema/example-report.json"; then
     ok "report.json schema validation"
   else
     bad "report.json schema validation"

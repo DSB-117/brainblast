@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0",
+  "run": {
+    "id": "20260606000000",
+    "date": "2026-06-06",
+    "requirements": "Catastrophic-integration audit of an example repo",
+    "generator": "@brainblast/core"
+  },
+  "summary": {
+    "building": "external integrations",
+    "verdict": "blocked",
+    "topRisk": "No stripe.webhooks.constructEvent call in the handler. Signatures are not verified; forged events are accepted.",
+    "mustDecideFirst": null,
+    "watchOutFor": null
+  },
+  "components": [
+    {
+      "name": "Stripe webhook",
+      "type": "API",
+      "version": "unversioned",
+      "sourceUrl": "https://docs.stripe.com/webhooks/signature",
+      "status": "fresh",
+      "risks": [
+        {
+          "severity": "critical",
+          "title": "Stripe webhook signature verified on the raw body",
+          "detail": "No stripe.webhooks.constructEvent call in the handler. Signatures are not verified; forged events are accepted."
+        }
+      ]
+    },
+    {
+      "name": "Privy auth",
+      "type": "Auth",
+      "version": "unversioned",
+      "sourceUrl": "https://docs.privy.io/authentication/user-authentication/access-tokens",
+      "status": "fresh",
+      "risks": []
+    }
+  ],
+  "riskTotals": { "critical": 1, "high": 0, "medium": 0, "low": 0 },
+  "checks": [
+    {
+      "ruleId": "stripe-webhook-raw-body-verification",
+      "severity": "critical",
+      "result": "fail",
+      "file": "src/webhook.ts",
+      "line": 4,
+      "title": "Stripe webhook signature verified on the raw body",
+      "detail": "No stripe.webhooks.constructEvent call in the handler. Signatures are not verified; forged events are accepted."
+    },
+    {
+      "ruleId": "privy-jwt-verification",
+      "severity": "critical",
+      "result": "pass",
+      "file": "src/auth.ts",
+      "line": 4,
+      "title": "Privy access token verified (signature + aud + iss)",
+      "detail": "Token signature is verified and both aud and iss are asserted."
+    }
+  ],
+  "checkTotals": { "pass": 1, "fail": 1, "cant_tell": 0 },
+  "openQuestions": []
+}

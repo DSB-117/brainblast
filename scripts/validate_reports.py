@@ -72,6 +72,9 @@ def _type_ok(jtype, data):
 
 
 def cross_check(data):
+    errs = []
+
+    # riskTotals must equal the sum of every component's risks by severity.
     sums = {"critical": 0, "high": 0, "medium": 0, "low": 0}
     for comp in data.get("components", []):
         for risk in comp.get("risks", []):
@@ -80,8 +83,21 @@ def cross_check(data):
                 sums[sev] += 1
     totals = data.get("riskTotals")
     if totals != sums:
-        return [f"riskTotals {totals} != summed component risks {sums}"]
-    return []
+        errs.append(f"riskTotals {totals} != summed component risks {sums}")
+
+    # checkTotals (when present) must equal the count of checks[] by result.
+    checks = data.get("checks")
+    if isinstance(checks, list):
+        csums = {"pass": 0, "fail": 0, "cant_tell": 0}
+        for c in checks:
+            r = c.get("result")
+            if r in csums:
+                csums[r] += 1
+        ctotals = data.get("checkTotals")
+        if ctotals is not None and ctotals != csums:
+            errs.append(f"checkTotals {ctotals} != counted checks {csums}")
+
+    return errs
 
 
 def main(argv):
