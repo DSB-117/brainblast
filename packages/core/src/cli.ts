@@ -4,10 +4,12 @@ import { join } from "node:path";
 import { audit } from "./audit.ts";
 import { rules } from "../rules/index.ts";
 
-// Usage: brainblast <targetDir> [--ci]
-// Runs every bundled rule. CANT_TELL warns and does NOT fail --ci (eng review D4).
+// Usage: brainblast <targetDir> [--ci] [--strict]
+// Runs every bundled rule. With --ci, a confirmed FAIL exits 1. CANT_TELL warns
+// and does NOT fail unless --strict is passed (eng review D4).
 const args = process.argv.slice(2);
 const ci = args.includes("--ci");
+const strict = args.includes("--strict");
 const targetDir = args.find((a) => !a.startsWith("--")) ?? process.cwd();
 
 const { checks, report } = audit(targetDir, rules);
@@ -27,6 +29,12 @@ for (const c of checks) {
 const fails = checks.filter((c) => c.result === "fail").length;
 const cantTell = checks.filter((c) => c.result === "cant_tell").length;
 console.log(`  verdict: ${report.summary.verdict}  (fail=${fails}, cant_tell=${cantTell})`);
+if (cantTell > 0 && !strict) {
+  console.log(`  warning: ${cantTell} cant_tell (not gating — pass --strict to fail on these)`);
+}
 console.log(`  report:  ${reportPath}`);
 
-if (ci) process.exit(fails > 0 ? 1 : 0);
+if (ci) {
+  const gateFail = fails > 0 || (strict && cantTell > 0);
+  process.exit(gateFail ? 1 : 0);
+}
