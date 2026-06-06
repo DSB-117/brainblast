@@ -1,0 +1,29 @@
+import type { Rule } from "../src/types.ts";
+
+// PURE DATA (LLM-authorable as facts.yaml). Binds to vetted templates by kind.
+export const stripeWebhookRawBody: Rule = {
+  id: "stripe-webhook-raw-body-verification",
+  severity: "critical",
+  title: "Stripe webhook signature verified on the raw body",
+  component: {
+    name: "Stripe webhook",
+    type: "API",
+    version: "unversioned",
+    sourceUrl: "https://docs.stripe.com/webhooks/signature",
+  },
+  detect: { modules: ["stripe"], nameRegex: "webhook", triggerCalls: ["constructEvent"] },
+  check: {
+    kind: "positional-arg-identity",
+    params: {
+      call: "constructEvent",
+      argIndex: 0,
+      paramIndex: 0,
+      absentDetail:
+        "No stripe.webhooks.constructEvent call in the handler. Signatures are not verified; forged 'payment_intent.succeeded' events are accepted.",
+      parsedDetail:
+        "constructEvent is called on a parsed/derived value, not the raw request body. Verification is bypassed.",
+      passDetail: "constructEvent verifies the raw body parameter '{param}'.",
+    },
+  },
+  test: { kind: "stripe-webhook-signature" },
+};

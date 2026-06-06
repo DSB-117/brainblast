@@ -1,0 +1,23 @@
+{
+  "name": "@brainblast/core",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Shared engine extracted from the T1/T2 spikes: detect -> check (vetted templates) -> emit report.json -> generate behavioral contract tests. Rules are pure data.",
+  "bin": { "brainblast": "src/cli.ts" },
+  "scripts": {
+    "audit": "tsx src/cli.ts",
+    "prove": "tsx scripts/prove.ts"
+  },
+  "dependencies": {
+    "ts-morph": "^23"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "jose": "^5",
+    "stripe": "^17",
+    "tsx": "^4",
+    "typescript": "^5",
+    "vitest": "^2"
+  }
+}
