@@ -1,5 +1,0 @@
-node_modules/
-.gen/
-.agent-research/
-fixtures/*/.agent-research/
-package-lock.json
