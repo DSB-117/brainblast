@@ -38,6 +38,12 @@ Everything Brainblast does today, at a glance.
 - **Emits a machine-readable `report.json`** alongside the prose — a stable, versioned (`schemaVersion: "1.0"`) schema with components, severity-tagged risks, pre-coding decisions, and requirements corrections, so other tools and CI gates can build on a contract instead of parsing prose.
 - **Gates CI.** A `--ci` mode runs non-interactively (no prompts, documented defaults), and a dependency-free gate script turns `report.json` into an exit code — fail the build if any CRITICAL risk remains (`--fail-on=critical|high|…`) or the verdict is `blocked`.
 
+**Deterministic auditor**
+- Includes a Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code offline for the first built-in integration traps: Stripe webhook raw-body signature verification and Privy/JWT signature + `aud` + `iss` verification.
+- Emits CI-readable `checks[]` and `checkTotals` into `report.json`, and can generate behavioral contract tests that fail on the vulnerable fixtures and pass on the fixed ones.
+- Loads project-local `.agent-research/rules/*.yaml` rules as data, without executing scanned code or allowing project rules to shadow bundled rules.
+- The CLI package is versioned in this repo as `brainblast@0.2.0`; npm publishing is deferred, so install Brainblast from the GitHub release for now.
+
 **Safety**
 - **Prompt-injection resistant by design.** Browsed docs are treated as untrusted data; imperative content ("ignore previous instructions", "run this") is quoted and flagged, never propagated as fact or action.
 - Reaches **gated docs** when needed via gstack's cookie import.
@@ -221,9 +227,10 @@ In production, pin the URL to a release tag (e.g. `/v0.2.0/`) rather than `/main
 Be clear-eyed about what this is and is not:
 
 - **It is prompt-driven and non-deterministic.** Two runs on the same spec can differ. It is a research assistant, not a compiler.
-- **It only writes research. It does not write or run code,** and it makes no completeness guarantee — it surfaces what it can find, not everything that exists.
+- **The research workflow writes research artifacts, not production implementation code.** The deterministic auditor in `packages/core` can generate behavioral test files for supported traps, but Brainblast does not implement the feature for you.
 - **Its output is only as good as the docs.** Undocumented behavior, wrong official docs, or missing changelogs limit what it can catch.
 - **It cannot reach private or authenticated docs** out of the box. For gated docs, use gstack's cookie import (`/setup-browser-cookies`) before running.
+- **The deterministic auditor is intentionally narrow today.** The first bundled checks cover Stripe webhook raw-body verification and Privy/JWT verification; broader generated guardrails are the next direction.
 - **It costs tokens and time.** A typical 3–5 component run is a few minutes and a meaningful chunk of tokens because it browses many pages. Budget accordingly for large specs.
 
 ## Security
@@ -292,10 +299,11 @@ These are baked into every adapter:
 
 See [ROADMAP.md](ROADMAP.md) for the full thesis — turning documentation into *enforcement* along a
 **Predict → Enforce → Watch → Compound** ladder. Shipped through **v0.2.0**: `report.json`, the
-`--ci` exit-code gate, incremental cached runs, and the deterministic `npx brainblast` auditor for
-the first Stripe webhook and Privy/JWT traps. Next: broader executable guardrails, evidence-grade
-provenance, a two-source rule, **OSV security-advisory cross-check**, drift watch, lockfile
-auto-seeding, portable component-intel packs, and a public catch-rate benchmark.
+`--ci` exit-code gate, incremental cached runs, and the deterministic offline auditor in
+[`packages/core`](packages/core/) for the first Stripe webhook and Privy/JWT traps. The npm CLI
+publish is deferred until npm account setup is resolved. Next: broader executable guardrails,
+evidence-grade provenance, a two-source rule, **OSV security-advisory cross-check**, drift watch,
+lockfile auto-seeding, portable component-intel packs, and a public catch-rate benchmark.
 
 ## License
 
