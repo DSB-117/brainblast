@@ -4,8 +4,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { renderTest } from "../src/testTemplates/index.ts";
 import { generateTestForResult } from "../src/generate.ts";
-import { stripeWebhookRawBody } from "../rules/stripe-webhook-raw-body.ts";
+import { rules } from "../rules/index.ts";
 import type { CheckResult } from "../src/types.ts";
+
+const stripeWebhookRawBody = rules.find((r) => r.id === "stripe-webhook-raw-body-verification")!;
 
 describe("test templates", () => {
   it("renders the Stripe contract referencing the handler import + export", () => {

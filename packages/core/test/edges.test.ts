@@ -4,8 +4,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildReport } from "../src/emit.ts";
 import { findCandidates } from "../src/finder.ts";
-import { stripeWebhookRawBody } from "../rules/stripe-webhook-raw-body.ts";
+import { rules } from "../rules/index.ts";
 import type { CheckResult } from "../src/types.ts";
+
+const stripeWebhookRawBody = rules.find((r) => r.id === "stripe-webhook-raw-body-verification")!;
 
 const STRIPE_SRC = `import Stripe from "stripe"; const s = new Stripe("x");
 export function handleStripeWebhook(rawBody: string, sig: string) { return s.webhooks.constructEvent(rawBody, sig, "sec"); }`;

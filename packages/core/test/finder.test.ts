@@ -4,8 +4,10 @@ import { fileURLToPath } from "node:url";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { findCandidates } from "../src/finder.ts";
-import { stripeWebhookRawBody } from "../rules/stripe-webhook-raw-body.ts";
-import { privyJwtVerification } from "../rules/privy-jwt-verification.ts";
+import { rules } from "../rules/index.ts";
+
+const stripeWebhookRawBody = rules.find((r) => r.id === "stripe-webhook-raw-body-verification")!;
+const privyJwtVerification = rules.find((r) => r.id === "privy-jwt-verification")!;
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fx = (p: string) => resolve(here, "..", "fixtures", p);

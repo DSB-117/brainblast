@@ -16,7 +16,12 @@ mkdirSync(genDir, { recursive: true });
 
 function runVitest(file: string): number {
   try {
-    execFileSync("npx", ["vitest", "run", file], { cwd: root, stdio: "inherit" });
+    // Use the gen-only config so the test/** include in vitest.config.ts does
+    // not exclude the generated contract test under .gen/.
+    execFileSync("npx", ["vitest", "run", "--config", "vitest.gen.config.ts", file], {
+      cwd: root,
+      stdio: "inherit",
+    });
     return 0;
   } catch (e: any) {
     return typeof e?.status === "number" ? e.status : 1;

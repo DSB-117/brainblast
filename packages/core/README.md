@@ -16,15 +16,17 @@ detect ──► check ──► emit report.json
 ```
 
 - **Skeleton (shared):** `walk`, `finder`, `audit`, `emit`, `cli`, `--ci` gate.
-- **Rules are PURE DATA** (`rules/*.ts`, LLM-authorable as facts.yaml): id,
-  severity, component, `detect` facts, and a `check.kind` + `test.kind` that bind
-  to vetted templates. No executable code in a rule.
+- **Rules are PURE DATA** — `rules/*.yaml` (facts.yaml), loaded and validated at
+  runtime by `src/loadRules.ts`: id, severity, component, `detect` facts, and a
+  `check.kind` + `test.kind` that bind to vetted templates. No executable code in
+  a rule; the loader rejects a rule that binds to an unknown kind or has an
+  invalid regex (the safety net for agent-authored rules, T9).
 - **Vetted templates (human-maintained, in core):**
   - checkers: `positional-arg-identity` (T1), `required-call-with-options` (T2)
   - tests: `stripe-webhook-signature` (T1), `privy-jwt-claims` (T2)
 
-Adding a trap that fits an existing template kind = a new pure-data rule, zero
-engine changes. A genuinely new shape = one new vetted template, then data.
+Adding a trap that fits an existing template kind = a new `rules/*.yaml` file,
+zero engine changes. A genuinely new shape = one new vetted template, then data.
 
 ## Run
 
