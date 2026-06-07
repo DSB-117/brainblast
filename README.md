@@ -1,8 +1,14 @@
 # brainblast
 
+[![npm version](https://img.shields.io/npm/v/brainblast.svg)](https://www.npmjs.com/package/brainblast)
+[![provenance](https://img.shields.io/badge/provenance-SLSA%20v1-blue)](https://www.npmjs.com/package/brainblast?activeTab=code)
+[![ci](https://github.com/DSB-117/brainblast/actions/workflows/ci.yml/badge.svg)](https://github.com/DSB-117/brainblast/actions/workflows/ci.yml)
+[![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 ![Brainblast](assets/brainblast.jpg)
 
-Research external APIs and SDKs before your AI agent starts coding.
+Research external APIs and SDKs before your AI agent starts coding — then enforce, in CI, that
+what got written matches.
 
 ---
 
@@ -11,6 +17,19 @@ AI coding agents start implementing before they actually know the systems they a
 Brainblast runs first. It reads your requirements, identifies every external component, browses official docs and package registries, and produces a structured research report — with facts, risks, and answered questions — before any code is written.
 
 The report travels with the project. Any coding agent can use it without repeating the research.
+
+**Two entry points, one product.** Brainblast *predicts* the failure before any code exists — the
+`/brainblast` research skill, run inside your coding agent — then *enforces* that the fix stays
+shipped, forever — the `brainblast` npm CLI, run in CI. Same traps (Stripe, Privy/JWT, Bags/Solana
+fee-share, …), same `report.json` contract, two moments in the lifecycle:
+
+```sh
+# Predict — research before coding (inside Claude Code, OpenClaw, Codex, ...)
+/brainblast requirements.md
+
+# Enforce — statically scan the code that got written, gate the build on what it finds
+npx brainblast .
+```
 
 > **See it for real:** [`examples/bags-api/`](examples/bags-api/) is a complete committed run against the Bags API (Solana token launch), including the [final report](examples/bags-api/final-report.md). It caught a permanent, silent, zero-revenue misconfiguration an agent would have shipped.
 
@@ -38,11 +57,11 @@ Everything Brainblast does today, at a glance.
 - **Emits a machine-readable `report.json`** alongside the prose — a stable, versioned (`schemaVersion: "1.0"`) schema with components, severity-tagged risks, pre-coding decisions, and requirements corrections, so other tools and CI gates can build on a contract instead of parsing prose.
 - **Gates CI.** A `--ci` mode runs non-interactively (no prompts, documented defaults), and a dependency-free gate script turns `report.json` into an exit code — fail the build if any CRITICAL risk remains (`--fail-on=critical|high|…`) or the verdict is `blocked`.
 
-**Deterministic auditor**
-- Includes a Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code offline for the first built-in integration traps: Stripe webhook raw-body signature verification and Privy/JWT signature + `aud` + `iss` verification.
-- Emits CI-readable `checks[]` and `checkTotals` into `report.json`, and can generate behavioral contract tests that fail on the vulnerable fixtures and pass on the fixed ones.
+**Deterministic auditor — `npx brainblast`**
+- Published to npm as [`brainblast@0.2.0`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
+- A Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code *offline* (no network, no LLM) for the first built-in integration traps: Stripe webhook raw-body signature verification, Privy/JWT signature + `aud` + `iss` verification, and the Bags/Solana fee-share creator-inclusion trap (the same zero-revenue misconfiguration the research example below caught).
+- Emits CI-readable `checks[]` and `checkTotals` into `report.json`, and can generate behavioral contract tests that fail on the vulnerable fixtures and pass on the fixed ones — the durable guardrail that keeps a fixed trap fixed.
 - Loads project-local `.agent-research/rules/*.yaml` rules as data, without executing scanned code or allowing project rules to shadow bundled rules.
-- The CLI package is versioned in this repo as `brainblast@0.2.0`; npm publishing is deferred, so install Brainblast from the GitHub release for now.
 
 **Safety**
 - **Prompt-injection resistant by design.** Browsed docs are treated as untrusted data; imperative content ("ignore previous instructions", "run this") is quoted and flagged, never propagated as fact or action.
@@ -299,11 +318,12 @@ These are baked into every adapter:
 
 See [ROADMAP.md](ROADMAP.md) for the full thesis — turning documentation into *enforcement* along a
 **Predict → Enforce → Watch → Compound** ladder. Shipped through **v0.2.0**: `report.json`, the
-`--ci` exit-code gate, incremental cached runs, and the deterministic offline auditor in
-[`packages/core`](packages/core/) for the first Stripe webhook and Privy/JWT traps. The npm CLI
-publish is deferred until npm account setup is resolved. Next: broader executable guardrails,
-evidence-grade provenance, a two-source rule, **OSV security-advisory cross-check**, drift watch,
-lockfile auto-seeding, portable component-intel packs, and a public catch-rate benchmark.
+`--ci` exit-code gate, incremental cached runs, and the deterministic offline auditor — published to
+npm as [`brainblast`](https://www.npmjs.com/package/brainblast) (`npx brainblast .`, with provenance)
+and covering the Stripe webhook, Privy/JWT, and Bags/Solana fee-share traps. Next: broader executable
+guardrails, evidence-grade provenance, a two-source rule, **OSV security-advisory cross-check**,
+drift watch, lockfile auto-seeding, portable component-intel packs, and a public catch-rate
+benchmark.
 
 ## License
 
