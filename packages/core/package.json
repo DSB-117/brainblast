@@ -7,13 +7,17 @@
   "bin": { "brainblast": "src/cli.ts" },
   "scripts": {
     "audit": "tsx src/cli.ts",
-    "prove": "tsx scripts/prove.ts"
+    "prove": "tsx scripts/prove.ts",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "ts-morph": "^23"
   },
   "devDependencies": {
     "@types/node": "^22",
+    "@vitest/coverage-v8": "^2",
     "jose": "^5",
     "stripe": "^17",
     "tsx": "^4",

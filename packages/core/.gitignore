@@ -1,5 +1,6 @@
 node_modules/
 .gen/
+coverage/
 .agent-research/
 fixtures/**/.agent-research/
 package-lock.json

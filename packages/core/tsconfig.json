@@ -10,5 +10,5 @@
     "esModuleInterop": true,
     "types": ["node"]
   },
-  "include": ["src", "rules", "fixtures", "scripts"]
+  "include": ["src", "rules", "fixtures", "scripts", "test"]
 }
