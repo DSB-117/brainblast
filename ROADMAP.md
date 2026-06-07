@@ -7,7 +7,7 @@ browses official docs for every external component, and produces a report — fa
 risks, answered questions — that catches the silent, irreversible failures an agent would otherwise
 ship (a zero-revenue fee config, an auth bypass, an immutable wrong choice).
 
-Shipped, on `main`:
+Shipped through **v0.2.0**:
 
 - The 7-step research loop, executive summary + risk heatmap, and auto-injection of the report into
   the next coding session.
@@ -15,6 +15,9 @@ Shipped, on `main`:
   committed JSON Schema.
 - **`--ci` mode + exit-code gate** — block a build when a CRITICAL risk remains.
 - **Incremental runs** — research cached per `name@version`; a re-run only re-researches what changed.
+- **Deterministic auditor + `npx brainblast` CLI** — an offline static scanner for the first
+  Stripe webhook and Privy/JWT traps, backed by data rules, generated behavioral tests, and CI-ready
+  `checks[]` / `checkTotals` in `report.json`.
 
 That makes Brainblast a good *utility*. The rest of this roadmap is about making it an *amazing
 product*.
@@ -53,9 +56,9 @@ that a retrieval tool can't copy by adding a fetch step.
 - **Earn trust before reach.** Evidence and corroboration come before distribution; a tool people
   gate their builds on cannot afford a confident wrong answer.
 
-Near-term order: **Rung 2 → Trust → Rung 4 → Rung 5 → benchmark**, landing as **v0.2.0**. The rungs
-are a capability ladder, not a calendar — Rung 1 and the cache (part of Rung 5) already shipped ahead
-of the original week-by-week plan.
+Near-term order after v0.2.0: broaden **Rung 2** guardrails, then Trust, Rung 4, Rung 5, and the
+benchmark. The rungs are a capability ladder, not a calendar — Rung 1, the cache, and the first
+deterministic auditor shipped ahead of the original week-by-week plan.
 
 ---
 

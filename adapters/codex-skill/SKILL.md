@@ -1,6 +1,6 @@
 ---
 name: brainblast
-version: 0.1.4
+version: 0.2.0
 description: "Research external APIs and SDKs before coding. Identifies every external component in a requirements file, browses official sources, and produces a structured handoff report with facts, risks, and answered questions."
 ---
 
