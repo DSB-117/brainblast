@@ -3,9 +3,12 @@
   "version": "0.2.0",
   "type": "module",
   "description": "Deterministic auditor for catastrophic AI-integration bugs: scan a repo, find the silent money/auth traps, and generate the behavioral test that proves they're fixed.",
-  "keywords": ["security", "static-analysis", "stripe", "webhook", "jwt", "ci", "ai", "audit"],
+  "keywords": ["security", "static-analysis", "stripe", "webhook", "jwt", "solana", "bags", "ci", "ai", "audit"],
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/DSB-117/brainblast", "directory": "packages/core" },
+  "author": "DSB-117",
+  "homepage": "https://github.com/DSB-117/brainblast/tree/main/packages/core#readme",
+  "bugs": { "url": "https://github.com/DSB-117/brainblast/issues" },
+  "repository": { "type": "git", "url": "git+https://github.com/DSB-117/brainblast.git", "directory": "packages/core" },
   "bin": { "brainblast": "dist/cli.js" },
   "exports": {
     ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
@@ -15,7 +18,7 @@
   "publishConfig": { "access": "public", "provenance": true },
   "scripts": {
     "build": "tsup",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
     "audit": "tsx src/cli.ts",
     "prove": "tsx scripts/prove.ts",
     "test": "vitest run",

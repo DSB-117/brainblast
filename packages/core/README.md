@@ -22,6 +22,9 @@ is a warning by default (a red build always means a real, confirmed problem).
   forged `payment_intent.succeeded` events accepted.
 - **Privy / JWT** access tokens decoded without verifying the signature, or
   without asserting `aud` + `iss` → auth bypass / cross-app token reuse.
+- **Bags (Solana token launch)** fee-share configs that omit the creator from
+  `feeClaimers`, or whose `userBps` don't sum to 10000 → the creator earns **zero
+  fees forever** (the config is immutable on-chain after launch).
 
 Each finding lands in `report.json` (stable, versioned `schemaVersion: "1.0"`)
 with a `checks[]` array a CI gate can read.

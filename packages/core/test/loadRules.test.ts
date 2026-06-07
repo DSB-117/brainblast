@@ -12,7 +12,11 @@ describe("loadRules", () => {
   it("loads the bundled yaml rule pack", () => {
     const rules = loadRules(rulesDir);
     const ids = rules.map((r) => r.id).sort();
-    expect(ids).toEqual(["privy-jwt-verification", "stripe-webhook-raw-body-verification"]);
+    expect(ids).toEqual([
+      "bags-fee-share-creator-included",
+      "privy-jwt-verification",
+      "stripe-webhook-raw-body-verification",
+    ]);
     const stripe = rules.find((r) => r.id === "stripe-webhook-raw-body-verification")!;
     expect(stripe.check.kind).toBe("positional-arg-identity");
     expect(stripe.detect.modules).toContain("stripe");

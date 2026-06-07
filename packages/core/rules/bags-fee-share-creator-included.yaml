@@ -1,0 +1,40 @@
+# Pure-data rule (facts). Binds to vetted templates by `check.kind`/`test.kind`.
+id: bags-fee-share-creator-included
+severity: critical
+title: Bags fee-share config includes the creator wallet and BPS sum to 10000
+component:
+  name: Bags Token Launch v2
+  type: API
+  version: unversioned
+  sourceUrl: https://docs.bags.fm/changelog/changelog
+detect:
+  modules: ["@bagsfm/bags-sdk"]
+  nameRegex: "feeshare|feeclaimer|bagsfee|launchtoken|tokenlaunch"
+  triggerCalls: [createBagsFeeShareConfig]
+check:
+  kind: fee-allocation-shape
+  params:
+    configCall: createBagsFeeShareConfig
+    arrayProp: feeClaimers
+    walletProp: user
+    bpsProp: userBps
+    bpsTotal: 10000
+    creatorParamRegex: "creator"
+    absentDetail: >-
+      No createBagsFeeShareConfig call in the builder. Token Launch v2 requires a
+      fee-share config for every launch; without one the launch cannot proceed.
+    dynamicDetail: >-
+      feeClaimers is assembled dynamically (variable, spread, or .map), so creator
+      inclusion and the 10000-BPS total can't be confirmed statically. Verify by
+      hand that the creator wallet is present with a non-zero userBps.
+    creatorMissingDetail: >-
+      The creator wallet is not in feeClaimers. The creator must be an explicit
+      entry — omitting them does NOT default them to any share; they earn zero
+      fees forever, and the fee config is immutable on-chain after launch.
+    bpsSumDetail: >-
+      feeClaimers userBps sum to {sum}, not 10000. Bags requires the allocation to
+      total exactly 10000 (100%); a mismatch is rejected at config creation.
+    passDetail: >-
+      Creator wallet '{param}' is an explicit feeClaimers entry and userBps sum to 10000.
+test:
+  kind: bags-fee-share

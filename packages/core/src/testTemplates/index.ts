@@ -1,11 +1,13 @@
 import { stripeWebhookSignature } from "./stripeWebhookSignature.ts";
 import { privyJwtClaims } from "./privyJwtClaims.ts";
+import { bagsFeeShare } from "./bagsFeeShare.ts";
 import type { TestTemplate } from "../types.ts";
 
 // Registry of human-vetted behavioral-contract templates. Rules bind by `kind`.
 const registry: Record<string, TestTemplate> = {
   "stripe-webhook-signature": stripeWebhookSignature,
   "privy-jwt-claims": privyJwtClaims,
+  "bags-fee-share": bagsFeeShare,
 };
 
 // Defense-in-depth: the export name is interpolated raw into generated TS source.

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Project } from "ts-morph";
 import { positionalArgIdentity } from "../src/checkers/positionalArgIdentity.ts";
 import { requiredCallWithOptions } from "../src/checkers/requiredCallWithOptions.ts";
+import { feeAllocationShape } from "../src/checkers/feeAllocationShape.ts";
 import type { Candidate } from "../src/types.ts";
 
 function candidate(code: string, fnName: string): Candidate {
@@ -109,5 +110,93 @@ describe("requiredCallWithOptions (Privy/JWT rule template)", () => {
       "h",
     );
     expect(requiredCallWithOptions(c, JWT).result).toBe("cant_tell");
+  });
+});
+
+const BAGS = {
+  configCall: "createBagsFeeShareConfig",
+  arrayProp: "feeClaimers",
+  walletProp: "user",
+  bpsProp: "userBps",
+  bpsTotal: 10000,
+  creatorParamRegex: "creator",
+  absentDetail: "absent",
+  dynamicDetail: "dynamic",
+  creatorMissingDetail: "creator-missing",
+  bpsSumDetail: "sum {sum}",
+  passDetail: "ok {param}",
+};
+
+describe("feeAllocationShape (Bags fee-share rule template)", () => {
+  it("PASS when the creator is an explicit entry and userBps sum to 10000", () => {
+    const c = candidate(
+      `import { createBagsFeeShareConfig } from "@bagsfm/bags-sdk";
+       export function h(creatorWallet: string) {
+         const feeClaimers = [{ user: creatorWallet, userBps: 6000 }, { user: "P", userBps: 4000 }];
+         return createBagsFeeShareConfig({ feeClaimers });
+       }`,
+      "h",
+    );
+    const r = feeAllocationShape(c, BAGS);
+    expect(r.result).toBe("pass");
+    expect(r.detail).toContain("creatorWallet");
+  });
+
+  it("FAIL when the creator wallet is omitted from feeClaimers", () => {
+    const c = candidate(
+      `import { createBagsFeeShareConfig } from "@bagsfm/bags-sdk";
+       export function h(creatorWallet: string) {
+         const feeClaimers = [{ user: "A", userBps: 6000 }, { user: "B", userBps: 4000 }];
+         return createBagsFeeShareConfig({ feeClaimers });
+       }`,
+      "h",
+    );
+    expect(feeAllocationShape(c, BAGS).result).toBe("fail");
+  });
+
+  it("FAIL when userBps do not sum to 10000", () => {
+    const c = candidate(
+      `import { createBagsFeeShareConfig } from "@bagsfm/bags-sdk";
+       export function h(creatorWallet: string) {
+         const feeClaimers = [{ user: creatorWallet, userBps: 5000 }, { user: "P", userBps: 4000 }];
+         return createBagsFeeShareConfig({ feeClaimers });
+       }`,
+      "h",
+    );
+    const r = feeAllocationShape(c, BAGS);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("9000");
+  });
+
+  it("FAIL when createBagsFeeShareConfig is absent", () => {
+    const c = candidate(
+      `export function h(creatorWallet: string) { return { feeClaimers: [] }; }`,
+      "h",
+    );
+    expect(feeAllocationShape(c, BAGS).result).toBe("fail");
+  });
+
+  it("CANT_TELL when feeClaimers is built dynamically (.map)", () => {
+    const c = candidate(
+      `import { createBagsFeeShareConfig } from "@bagsfm/bags-sdk";
+       export function h(creatorWallet: string, partners: any[]) {
+         const feeClaimers = partners.map((p) => ({ user: p.w, userBps: p.b }));
+         return createBagsFeeShareConfig({ feeClaimers });
+       }`,
+      "h",
+    );
+    expect(feeAllocationShape(c, BAGS).result).toBe("cant_tell");
+  });
+
+  it("CANT_TELL when an entry's userBps is non-literal", () => {
+    const c = candidate(
+      `import { createBagsFeeShareConfig } from "@bagsfm/bags-sdk";
+       export function h(creatorWallet: string, share: number) {
+         const feeClaimers = [{ user: creatorWallet, userBps: share }, { user: "P", userBps: 4000 }];
+         return createBagsFeeShareConfig({ feeClaimers });
+       }`,
+      "h",
+    );
+    expect(feeAllocationShape(c, BAGS).result).toBe("cant_tell");
   });
 });

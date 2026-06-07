@@ -6,8 +6,8 @@ import { audit } from "../src/audit.ts";
 import { generateTestForResult } from "../src/generate.ts";
 import { rules } from "../rules/index.ts";
 
-// Proves the EXTRACTION holds: the two traps, now pure-data rules over one
-// engine, still produce RED-on-vulnerable / GREEN-on-fixed — AND the unified
+// Proves the EXTRACTION holds: every trap, now a pure-data rule over one
+// engine, still produces RED-on-vulnerable / GREEN-on-fixed — AND the unified
 // audit raises exactly one (correct) check per fixture (no cross-contamination).
 const root = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const genDir = join(root, ".gen");
@@ -33,6 +33,8 @@ const cases = [
   { dir: "fixtures/stripe/fixed", ruleId: "stripe-webhook-raw-body-verification", expect: "pass" },
   { dir: "fixtures/jwt/vulnerable", ruleId: "privy-jwt-verification", expect: "fail" },
   { dir: "fixtures/jwt/fixed", ruleId: "privy-jwt-verification", expect: "pass" },
+  { dir: "fixtures/bags/vulnerable", ruleId: "bags-fee-share-creator-included", expect: "fail" },
+  { dir: "fixtures/bags/fixed", ruleId: "bags-fee-share-creator-included", expect: "pass" },
 ] as const;
 
 let ok = true;
@@ -57,5 +59,5 @@ for (const tc of cases) {
   ok = ok && good;
 }
 
-console.log(`\nPROOF: ${ok ? "all 4 cases correct through @brainblast/core — VERIFIED ✅" : "FAILED ❌"}`);
+console.log(`\nPROOF: ${ok ? `all ${cases.length} cases correct through @brainblast/core — VERIFIED ✅` : "FAILED ❌"}`);
 process.exit(ok ? 0 : 1);
