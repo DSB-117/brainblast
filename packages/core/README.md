@@ -28,6 +28,11 @@ detect ──► check ──► emit report.json
 Adding a trap that fits an existing template kind = a new `rules/*.yaml` file,
 zero engine changes. A genuinely new shape = one new vetted template, then data.
 
+**Project-local rules (T9).** `brainblast <dir>` also loads validated rules from
+`<dir>/.agent-research/rules/*.yaml` on top of the bundled pack, so the research
+agent can grow coverage for a project without touching the engine. Project rules
+cannot shadow a bundled rule id; invalid rules are rejected at load.
+
 ## Run
 
 ```sh

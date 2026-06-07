@@ -335,6 +335,21 @@ schema. Two valid examples ship in the repo at `examples/*/report.json`.
 
 ---
 
+## Step 6c — Author guardrail rules (`facts.yaml`)
+
+When a CRITICAL trap is checkable in source code and fits an existing checker AND test template,
+author a rule at `.agent-research/rules/<id>.yaml`. The deterministic auditor (`brainblast`) loads
+project-local rules on top of its bundled pack with no code change, so coverage grows by adding
+facts, not code. A rule is **facts only, never code**, binding by `kind`: checker kinds
+`positional-arg-identity` | `required-call-with-options`; test kinds `stripe-webhook-signature` |
+`privy-jwt-claims`. Shape: `id`, `severity`, `title`, `component {name,type}`,
+`detect {modules[],nameRegex,triggerCalls[]}`, `check {kind,params}`, `test {kind}`. The loader
+rejects unknown kinds / bad regexes. If no existing template fits, do NOT invent a checker/test —
+record the shape in `.agent-research/rules/PROPOSED-templates.md` for a maintainer. Working
+examples: `packages/core/rules/*.yaml`.
+
+---
+
 ## Step 7 — Handoff (auto-inject the report into the next coding session)
 
 Make the report travel automatically. Inject a pointer into the project's agent-instructions

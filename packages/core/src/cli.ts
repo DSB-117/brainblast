@@ -2,7 +2,7 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { audit } from "./audit.ts";
-import { rules } from "../rules/index.ts";
+import { resolveRules } from "./resolveRules.ts";
 
 // Usage: brainblast <targetDir> [--ci] [--strict]
 // Runs every bundled rule. With --ci, a confirmed FAIL exits 1. CANT_TELL warns
@@ -12,6 +12,7 @@ const ci = args.includes("--ci");
 const strict = args.includes("--strict");
 const targetDir = args.find((a) => !a.startsWith("--")) ?? process.cwd();
 
+const rules = resolveRules(targetDir);
 const { checks, report } = audit(targetDir, rules);
 
 const outDir = join(targetDir, ".agent-research");

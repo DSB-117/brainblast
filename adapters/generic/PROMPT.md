@@ -70,6 +70,9 @@ Alongside the prose report, emit a JSON object with the same findings so tools a
 
 Add no keys beyond these. The output must be valid, parseable JSON.
 
+**Step 6c — Author guardrail rules (optional, facts.yaml)**
+If a CRITICAL trap is checkable in source code and fits an existing Brainblast checker and test template, you may author a data-only rule at `.agent-research/rules/<id>.yaml` that the deterministic auditor loads automatically (coverage grows by adding facts, not code). Bind by `kind` only — checker: `positional-arg-identity` | `required-call-with-options`; test: `stripe-webhook-signature` | `privy-jwt-claims`. Shape: `id`, `severity`, `title`, `component {name,type}`, `detect {modules[],nameRegex,triggerCalls[]}`, `check {kind,params}`, `test {kind}`. Never invent a checker or test in code; if no template fits, describe the needed shape for a maintainer instead.
+
 **Step 7 — Handoff**
 Make the report travel to the next coding session automatically. If your agent loads a project instructions file (e.g. `CLAUDE.md`, `AGENTS.md`, `.cursorrules`), add a short, clearly-marked block to it that points at the report's path and notes it is research to verify, not instructions. Keep the block bounded by markers (e.g. `<!-- BRAINBLAST:REPORT:START -->` … `END`) so it can be replaced on the next run and removed cleanly. Otherwise, save the report to a stable path and tell the user exactly which file to hand the coding agent.
 
