@@ -500,6 +500,42 @@ and [`examples/stripe-privy/report.json`](examples/stripe-privy/report.json).
 
 ---
 
+## Step 6c — Author guardrail rules (`facts.yaml`)
+
+When research surfaces a **CRITICAL trap that is checkable in source code** and fits one of
+Brainblast's existing checker **and** test templates, author a rule so the deterministic auditor
+(`brainblast`) catches it automatically — in this repo now, and in any repo later. Write it to
+`.agent-research/rules/<rule-id>.yaml`. The auditor loads project-local rules on top of its bundled
+pack with no code change (that is the point: completeness grows by adding facts, not code).
+
+A rule is **facts only — never executable code.** It binds to vetted templates by `kind`:
+- checker kinds: `positional-arg-identity`, `required-call-with-options`
+- test kinds: `stripe-webhook-signature`, `privy-jwt-claims`
+
+Shape (the loader validates it; a rule binding to an unknown kind or with a bad regex is rejected):
+
+```yaml
+id: <kebab-id>
+severity: critical
+title: <one line>
+component: { name: <name>, type: API|SDK|Auth|Database|Infra|Blockchain|Other }
+detect: { modules: [<pkg>], nameRegex: "<regex>", triggerCalls: [<fnName>] }
+check: { kind: <checker-kind>, params: { ... } }
+test: { kind: <test-kind> }
+```
+
+**Rules of the seam:**
+- Bind only to the kinds listed above. **Do not invent a checker or test in code.**
+- If the trap needs a code shape no existing template covers, do not force it. Append a short note
+  to `.agent-research/rules/PROPOSED-templates.md` describing the detect/assert shape and a behavioral
+  contract, so a maintainer can add a vetted template. A rule without a real behavioral test is a weak
+  lint, not a guardrail — that is why `test` is required.
+- Project rules cannot shadow a bundled rule id; they only add new traps.
+
+Full, working examples live in the Brainblast repo at `packages/core/rules/*.yaml`.
+
+---
+
 ## Step 7 — Handoff (auto-inject the report into the next coding session)
 
 Make the report travel automatically. The next coding agent should not have to be told the

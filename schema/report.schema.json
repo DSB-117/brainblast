@@ -104,6 +104,35 @@
       "type": "array",
       "description": "Questions that could not be resolved from public sources.",
       "items": { "type": "string" }
+    },
+    "checks": {
+      "type": "array",
+      "description": "Per-rule verification results from the deterministic auditor (npx brainblast). Each entry is one rule checked against the implementation.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ruleId", "severity", "result", "title"],
+        "properties": {
+          "ruleId": { "type": "string" },
+          "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+          "result": { "type": "string", "enum": ["pass", "fail", "cant_tell"] },
+          "file": { "type": ["string", "null"] },
+          "line": { "type": ["integer", "null"], "minimum": 0 },
+          "title": { "type": "string" },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "checkTotals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pass", "fail", "cant_tell"],
+      "description": "Counts across all checks by result. MUST equal the count of checks[] by result.",
+      "properties": {
+        "pass": { "type": "integer", "minimum": 0 },
+        "fail": { "type": "integer", "minimum": 0 },
+        "cant_tell": { "type": "integer", "minimum": 0 }
+      }
     }
   }
 }
