@@ -1,4 +1,4 @@
-#!/usr/bin/env -S npx tsx
+#!/usr/bin/env node
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { audit } from "./audit.ts";

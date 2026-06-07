@@ -8,12 +8,20 @@ const registry: Record<string, TestTemplate> = {
   "privy-jwt-claims": privyJwtClaims,
 };
 
+// Defense-in-depth: the export name is interpolated raw into generated TS source.
+// Today it always comes from ts-morph (a parser-bound identifier), but guard it
+// so a future detection path can never inject code via a non-identifier name.
+const JS_IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
+
 export function renderTest(
   kind: string,
   opts: { handlerImportPath: string; handlerExport: string; params?: any },
 ): string {
   const tpl = registry[kind];
   if (!tpl) throw new Error(`Unknown test template kind '${kind}'.`);
+  if (!JS_IDENTIFIER.test(opts.handlerExport)) {
+    throw new Error(`Unsafe handler export name '${opts.handlerExport}' (not a JS identifier).`);
+  }
   return tpl(opts);
 }
 

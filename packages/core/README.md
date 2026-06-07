@@ -1,46 +1,63 @@
-# @brainblast/core (T3)
+# brainblast
 
-The shared engine, extracted from the T1 (Stripe) and T2 (Privy/JWT) spikes once
-two structurally different traps existed (eng review D9). One `brainblast <dir>`
-now runs every bundled rule.
+Deterministic auditor for catastrophic AI-integration bugs. Point it at a repo;
+it finds the silent money/auth traps an AI agent ships, and generates the
+behavioral test that proves they're fixed. No LLM, no API key, no network — it
+parses your code statically and runs offline.
 
-## Shape
+## Use
 
-```
-detect ──► check ──► emit report.json
-   │         │              │
- finder   checker      + generate behavioral
- (rule.   template     contract test
-  detect) (rule.check  (rule.test.kind)
-          .kind)
+```sh
+npx brainblast .            # scan the repo, write .agent-research/report.json
+npx brainblast . --ci       # exit 1 if a confirmed CRITICAL remains
+npx brainblast . --ci --strict   # also fail on CANT_TELL (can't statically prove)
 ```
 
-- **Skeleton (shared):** `walk`, `finder`, `audit`, `emit`, `cli`, `--ci` gate.
-- **Rules are PURE DATA** — `rules/*.yaml` (facts.yaml), loaded and validated at
-  runtime by `src/loadRules.ts`: id, severity, component, `detect` facts, and a
-  `check.kind` + `test.kind` that bind to vetted templates. No executable code in
-  a rule; the loader rejects a rule that binds to an unknown kind or has an
-  invalid regex (the safety net for agent-authored rules, T9).
-- **Vetted templates (human-maintained, in core):**
-  - checkers: `positional-arg-identity` (T1), `required-call-with-options` (T2)
-  - tests: `stripe-webhook-signature` (T1), `privy-jwt-claims` (T2)
+Exit codes: **0** clean · **1** a confirmed FAIL at/above the threshold · CANT_TELL
+is a warning by default (a red build always means a real, confirmed problem).
 
-Adding a trap that fits an existing template kind = a new `rules/*.yaml` file,
-zero engine changes. A genuinely new shape = one new vetted template, then data.
+## What it catches (today, Node/TypeScript)
 
-**Project-local rules (T9).** `brainblast <dir>` also loads validated rules from
-`<dir>/.agent-research/rules/*.yaml` on top of the bundled pack, so the research
-agent can grow coverage for a project without touching the engine. Project rules
-cannot shadow a bundled rule id; invalid rules are rejected at load.
+- **Stripe webhooks** that don't verify the signature on the **raw** body →
+  forged `payment_intent.succeeded` events accepted.
+- **Privy / JWT** access tokens decoded without verifying the signature, or
+  without asserting `aud` + `iss` → auth bypass / cross-app token reuse.
 
-## Run
+Each finding lands in `report.json` (stable, versioned `schemaVersion: "1.0"`)
+with a `checks[]` array a CI gate can read.
+
+## Rules are data
+
+Detection lives in `*.yaml` rules (facts) that bind to a small set of vetted,
+human-maintained checker + test templates by `kind` — never executable code in a
+rule. Drop project-specific rules in `.agent-research/rules/*.yaml` and the
+auditor loads them on top of the bundled pack (they can add traps, not shadow
+bundled ones). Invalid rules are rejected at load.
+
+## Library API
+
+```ts
+import { audit, resolveRules } from "brainblast";
+const { checks, report } = audit(process.cwd(), resolveRules(process.cwd()));
+```
+
+## Security model
+
+- **The audit is static.** `brainblast <dir>` parses source with ts-morph and
+  never executes it, so auditing untrusted code does not run it. YAML rules are
+  data only (no code execution, no prototype pollution).
+- **Generated behavioral tests execute the audited repo's code when you run
+  them.** That's expected when you audit your own repo. If you run brainblast on
+  untrusted code (e.g. a fork PR) and then run the generated tests, run them in a
+  sandbox — the same caution as running any untrusted test suite.
+
+## Develop
 
 ```sh
 npm install
-npm run prove                         # matrix: 4 cases, RED/GREEN through the engine
-npm run audit -- fixtures/stripe/vulnerable --ci   # exit 1
-npm run audit -- fixtures/jwt/fixed --ci           # exit 0
+npm test         # unit suite
+npm run prove    # end-to-end: generated tests RED on vulnerable, GREEN on fixed
+npm run build    # produce dist/ (the published artifact)
 ```
 
-`prove` also asserts each fixture raises exactly one (correct) check — the
-unified engine does not cross-contaminate Stripe and JWT traps.
+MIT.

@@ -35,6 +35,15 @@ describe("test templates", () => {
     expect(() => renderTest("nope", { handlerImportPath: "x", handlerExport: "h" })).toThrow();
   });
 
+  it("rejects a non-identifier handler export name (injection guard)", () => {
+    expect(() =>
+      renderTest("stripe-webhook-signature", {
+        handlerImportPath: "/x/webhook.ts",
+        handlerExport: "h)(); maliciousCode(",
+      }),
+    ).toThrow(/not a JS identifier/);
+  });
+
   it("generateTestForResult writes a test file with the handler wired in", () => {
     const d = mkdtempSync(join(tmpdir(), "bb-gen-"));
     const result: CheckResult = {
