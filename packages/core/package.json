@@ -21,6 +21,8 @@
     "prepublishOnly": "npm run typecheck && npm test && npm run build",
     "audit": "tsx src/cli.ts",
     "prove": "tsx scripts/prove.ts",
+    "synth": "tsx scripts/synth-prove.ts",
+    "synth:bags": "tsx scripts/synth-prove.ts findings/bags-known-answer.json",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit -p tsconfig.json"

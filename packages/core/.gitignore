@@ -4,3 +4,8 @@ coverage/
 dist/
 .agent-research/
 fixtures/**/.agent-research/
+
+# synth pipeline (proof-as-classifier)
+.synth/
+drafts/*
+!drafts/.gitkeep
