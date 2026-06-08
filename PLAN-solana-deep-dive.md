@@ -139,28 +139,52 @@ proof-as-classifier wins first, hardest last):
 5. **Mint/freeze authority never revoked** — cross-call trace (does `setAuthority(...,
    null)` appear anywhere downstream of `createMint` for the same mint?). The hardest
    of the five technically, and — per our calibration — weaker on "good-faith builder
-   would want this caught" than the other four. Sequence it last, and frame it as a
-   *trust-graph* finding (Phase 1) as much as a code-pattern finding — its real value
-   may be in the report, not as a committed guardrail.
+   would want this caught" than the other four. **Decision (locked 2026-06-08):**
+   ships as an **optional guardrail**, not a report-only finding:
+   - `severity: medium` (not `critical`), so `--ci` does not block by default.
+   - Surfaces verbatim in the Risk Report's trust-graph section (Phase 1).
+   - A consumer who *does* want it as a gate opts in via the rule's
+     `severity` override path the resolver already supports (project-level
+     rules can re-bind severities of bundled rules).
+   This honors the calibration: treasury programs, governance-controlled
+   mints, and other legitimate "authority retained on purpose" patterns
+   don't get their build broken uninvited, but the trap is enforceable for
+   anyone who declares "I never want a launched token to retain mint or
+   freeze authority."
 
 *Done when:* at least 3 of the 5 land via proof-as-classifier with no new checker-kind
 code, validating that the Bags-shaped checkers really do generalize — and the other
 1–2 produce well-formed draft findings that a human can vet into new checker kinds.
 
-### Phase 2.5 — Address the Rust/Anchor gap (a real architectural fork, name it now)
-Every checker built so far analyzes **TypeScript** (ts-morph). Traps #2 and #4 above
-live in **on-chain program source — Rust/Anchor**, not the client SDK calls. That's a
-different AST entirely. Two honest paths:
-- (a) Build a Rust-aware checker layer (real cost: a new parsing toolchain, new
-  `Candidate` shape, likely a new checker-kind *family*, not just new kinds) — but it's
-  the only way to catch the highest-severity class of trap (program-level
-  vulnerabilities, not just client misuse).
-- (b) Stay TS/client-side for v1, and treat Rust/Anchor program-source analysis as its
-  own deliberate phase-2 bet — scoped, named, and not snuck in as "just one more
-  checker kind" the way Phase 2 framing might tempt you to.
+### Phase 2.5 — Rust/Anchor checker family (DECIDED: option (a), in scope for v1)
 
-Pick (a) or (b) explicitly before Phase 2 lands #2 or #4 — don't let scope drift
-decide it for you.
+**Decision (locked 2026-06-08):** option (a) — build the Rust-aware checker layer
+for v1. This makes Phase 2.5 not a fork but a committed scope expansion of
+Phase 2: traps #2 (Anchor `Signer<'info>`) and #4 (`init_if_needed`
+reinitialization) become first-class deliverables, not deferred to a phase 2
+bet. Concrete consequences:
+
+- **New `Candidate` shape for Rust source** — fields beyond what ts-morph
+  surfaces (struct + field idents, attribute macros like `#[account(...)]`,
+  the handler fn body for companion-call detection).
+- **Parser dependency: `tree-sitter-rust`** via the Node `tree-sitter` binding.
+  Embeddable, no `rustc` shell-out, no `cargo`-on-the-user's-box requirement.
+  *Open sub-decision (defer to Phase 2):* do **generated contract tests** for
+  Anchor rules run via `cargo test` / `anchor test` (real but adds toolchain),
+  or do we keep tests TS-side and run them against a Codama-generated client
+  hitting the program in LiteSVM/bankrun? Defaulting to the latter unless
+  Phase 2 surfaces a reason — keeps the v1 install footprint TS-only.
+- **New checker-kind *family*** — at minimum
+  `anchor-account-typed-as-signer` and `anchor-init-if-needed-guarded`. These
+  add to the registry the same way TS checker kinds do: human-vetted,
+  whitelisted in `loadRules`, never LLM-authored. The same proof-as-classifier
+  loop applies — once a kind is vetted, every future Anchor finding that fits
+  its shape closes automatically.
+- **Synth pipeline already accommodates this** — `Finding.fixtures.filename`
+  can be `*.rs`, and `binding.check.kind` can name an Anchor kind once
+  registered. Today, an Anchor-shaped Finding correctly lands in the draft
+  queue (proven in `findings/example-draft-unknown-kind.json`), and will start
+  auto-closing the moment the first Anchor checker kind ships.
 
 ### Phase 3 — Cost & rent analysis (as a Risk Report section, not a forensic audit)
 Per the discussion: don't drop this, and don't over-build it into its own subsystem.
@@ -212,16 +236,25 @@ first project's cache, with provenance intact (when it was researched, what was 
   a real corpus of trust-graph and rule data to compound *from*. Building it first
   would mean building infrastructure for an empty store.
 
-## 5. Open decisions to make explicitly (don't let them resolve by drift)
+## 5. Open decisions
 
-1. **Phase 2.5's fork (Rust/Anchor vs. TS-only for v1)** — the single highest-leverage
-   "decide this on purpose" moment in the whole plan.
-2. **Where #5 (mint/freeze authority) lands** — guardrail or trust-graph/report-only
-   finding? Per calibration, it may be more valuable as the latter.
-3. **Draft-queue UX** — when a finding doesn't fit an existing checker kind, who reviews
-   it, on what cadence, and what's the bar for promoting a draft checker to vetted?
-   This is the human-in-the-loop hinge the entire safety model depends on; it deserves
-   a real design pass, not an afterthought.
+1. **Phase 2.5's fork (Rust/Anchor vs. TS-only for v1)** — **DECIDED 2026-06-08:
+   option (a), Rust/Anchor in scope for v1.** See revised Phase 2.5 above.
+2. **Where #5 (mint/freeze authority) lands** — **DECIDED 2026-06-08:
+   optional guardrail.** Severity `medium`, not in default `--ci` blockers,
+   opt-in to gate. See revised #5 above.
+3. **Draft-queue UX** *(still open)* — when a finding doesn't fit an existing
+   checker kind, who reviews it, on what cadence, and what's the bar for
+   promoting a draft checker to vetted? This is the human-in-the-loop hinge
+   the entire safety model depends on; it deserves a real design pass, not an
+   afterthought. **Recommended forcing function:** revisit at the end of
+   Phase 1, when the first batch of non-Bags-shaped findings is actually
+   landing in `drafts/` and the question goes from theoretical to concrete.
+4. **(New, from decision #1)** Anchor contract tests: run via `cargo test` /
+   `anchor test` (extra toolchain) or stay TS-side against a Codama client
+   hitting LiteSVM/bankrun (smaller install footprint)? Defer to Phase 2
+   first-Anchor-trap landing; default to TS-side unless a real reason
+   surfaces to switch.
 
 ## 6. What "done" looks like for this whole effort
 
