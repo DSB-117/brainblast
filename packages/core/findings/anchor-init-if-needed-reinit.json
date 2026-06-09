@@ -1,0 +1,44 @@
+{
+  "id": "anchor-init-if-needed-reinit-synth",
+  "severity": "critical",
+  "title": "Anchor init_if_needed account lacks a reinitialization guard",
+  "component": {
+    "name": "Anchor Framework",
+    "type": "Blockchain",
+    "version": ">=0.26.0",
+    "sourceUrl": "https://www.anchor-lang.com/docs/the-accounts-struct#init_if_needed"
+  },
+  "detect": {
+    "modules": ["@coral-xyz/anchor", "@project-serum/anchor"],
+    "nameRegex": "anchor|init.*needed|reinit",
+    "triggerCalls": ["initialize", "initIfNeeded"]
+  },
+  "binding": {
+    "check": {
+      "kind": "anchor-init-if-needed-guarded",
+      "params": {
+        "attribute": "init_if_needed",
+        "requiredGuard": "if account.data_is_empty() { return err!(MyError::AlreadyInitialized); }",
+        "passDetail": "Account with init_if_needed has an explicit reinitialization guard.",
+        "failAbsentDetail": "Account uses #[account(init_if_needed)] without checking whether it is already initialized. A malicious caller can invoke the instruction a second time to overwrite the account's data — a full state-wipe with no on-chain recourse.",
+        "failDynamicDetail": "Reinitialization guard is present but uses a dynamic expression; cannot confirm it covers all paths statically."
+      }
+    },
+    "test": {
+      "kind": "anchor-program-test",
+      "params": {
+        "scenario": "reinit-attempt",
+        "description": "Calls the instruction twice on the same account; second call must fail with AlreadyInitialized."
+      }
+    }
+  },
+  "fixtures": {
+    "filename": "counter.rs",
+    "vulnerable": "use anchor_lang::prelude::*;\n\ndeclare_id!(\"Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS\");\n\n#[program]\npub mod counter {\n    use super::*;\n\n    pub fn initialize(ctx: Context<Initialize>, start: u64) -> Result<()> {\n        // VULNERABLE: init_if_needed without a guard — second call overwrites state\n        ctx.accounts.counter.count = start;\n        Ok(())\n    }\n}\n\n#[derive(Accounts)]\npub struct Initialize<'info> {\n    #[account(\n        init_if_needed,\n        payer = payer,\n        space = 8 + 8,\n    )]\n    pub counter: Account<'info, Counter>,\n    #[account(mut)]\n    pub payer: Signer<'info>,\n    pub system_program: Program<'info, System>,\n}\n\n#[account]\npub struct Counter {\n    pub count: u64,\n}\n",
+    "fixed": "use anchor_lang::prelude::*;\n\ndeclare_id!(\"Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS\");\n\n#[program]\npub mod counter {\n    use super::*;\n\n    pub fn initialize(ctx: Context<Initialize>, start: u64) -> Result<()> {\n        // FIXED: guard against reinitialization before writing\n        require!(ctx.accounts.counter.count == 0, CounterError::AlreadyInitialized);\n        ctx.accounts.counter.count = start;\n        Ok(())\n    }\n}\n\n#[derive(Accounts)]\npub struct Initialize<'info> {\n    #[account(\n        init_if_needed,\n        payer = payer,\n        space = 8 + 8,\n    )]\n    pub counter: Account<'info, Counter>,\n    #[account(mut)]\n    pub payer: Signer<'info>,\n    pub system_program: Program<'info, System>,\n}\n\n#[account]\npub struct Counter {\n    pub count: u64,\n}\n\n#[error_code]\npub enum CounterError {\n    #[msg(\"Account is already initialized\")]\n    AlreadyInitialized,\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://www.anchor-lang.com/docs/the-accounts-struct#init_if_needed",
+    "note": "init_if_needed re-runs the instruction body on every call including re-invocations against already-initialized accounts. Without an explicit guard (require! or equivalent), a second call can overwrite the account state. This requires Rust AST inspection (tree-sitter-rust) and is deferred to Phase 2.5. Expected to route to DRAFT in Phase 2."
+  }
+}

@@ -7,9 +7,15 @@ import { renderRuleYaml, stageFinding, writeDraft } from "../src/synth/index.ts"
 import type { Finding } from "../src/synth/index.ts";
 import { loadRules } from "../src/loadRules.ts";
 import { audit } from "../src/audit.ts";
+import { checkerKinds } from "../src/checkers/index.ts";
+import { testKinds } from "../src/testTemplates/index.ts";
 
 const bagsFinding: Finding = JSON.parse(
   readFileSync(new URL("../findings/bags-known-answer.json", import.meta.url), "utf8"),
+);
+
+const anchorFinding: Finding = JSON.parse(
+  readFileSync(new URL("../findings/anchor-init-if-needed-reinit.json", import.meta.url), "utf8"),
 );
 
 describe("synth.renderRuleYaml", () => {
@@ -52,6 +58,42 @@ describe("synth.writeDraft", () => {
       const sketch = readFileSync(join(dir, "sketch.md"), "utf8");
       expect(sketch).toContain("DRAFT");
       expect(sketch).toContain("test: unfit binding");
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+});
+
+// Negative-path regression: a Finding that binds to an unvetted checker kind
+// (anchor-init-if-needed-guarded / anchor-program-test) must be blocked at Gate 1.
+// This ensures the vetted-kind safety net stays intact as new checker kinds are
+// added — any accidental removal from the registry would surface here first.
+describe("synth.draft-gate (trap #4: init_if_needed)", () => {
+  it("routes to DRAFT because both kinds are outside the vetted registries", () => {
+    expect(checkerKinds).not.toContain(anchorFinding.binding.check.kind);
+    expect(testKinds).not.toContain(anchorFinding.binding.test.kind);
+  });
+
+  it("writeDraft produces a sketch.md that names both missing kinds", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "synth-anchor-draft-"));
+    try {
+      const reason = [
+        !checkerKinds.includes(anchorFinding.binding.check.kind)
+          ? `check.kind '${anchorFinding.binding.check.kind}' is not in the vetted registry`
+          : null,
+        !testKinds.includes(anchorFinding.binding.test.kind)
+          ? `test.kind '${anchorFinding.binding.test.kind}' is not in the vetted registry`
+          : null,
+      ]
+        .filter(Boolean)
+        .join("; ");
+      const dir = writeDraft(tmp, anchorFinding, reason);
+      const sketch = readFileSync(join(dir, "sketch.md"), "utf8");
+      expect(sketch).toContain("anchor-init-if-needed-guarded");
+      expect(sketch).toContain("anchor-program-test");
+      expect(sketch).toContain("DRAFT");
+      // The candidate YAML should document the intended shape for Phase 2.5
+      expect(sketch).toContain("init_if_needed");
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
