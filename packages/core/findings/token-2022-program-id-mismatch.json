@@ -1,0 +1,47 @@
+{
+  "id": "token-2022-program-id-pinned-synth",
+  "severity": "critical",
+  "title": "Token-2022 createMint passes TOKEN_2022_PROGRAM_ID as the program ID argument",
+  "component": {
+    "name": "SPL Token-2022",
+    "type": "Blockchain",
+    "version": "unversioned",
+    "sourceUrl": "https://spl.solana.com/token-2022"
+  },
+  "detect": {
+    "modules": ["@solana/spl-token"],
+    "nameRegex": "mint|token|launch|createMint",
+    "triggerCalls": ["createMint"]
+  },
+  "binding": {
+    "check": {
+      "kind": "arg-equals-constant-identifier",
+      "params": {
+        "call": "createMint",
+        "argIndex": 7,
+        "expectedIdentifier": "TOKEN_2022_PROGRAM_ID",
+        "forbiddenIdentifiers": ["TOKEN_PROGRAM_ID"],
+        "requireImport": "TOKEN_2022_PROGRAM_ID",
+        "passDetail": "createMint passes {expected} as its programId argument — Token-2022 features will work as designed.",
+        "failForbiddenDetail": "createMint passes {got} (legacy Token program) where Token-2022 was intended. The mint will be owned by the legacy program; Token-2022 features (transfer hooks, transfer fees, confidential transfers) will not work and there is NO on-chain fix — a mint's owner program is part of its identity.",
+        "failMissingDetail": "createMint omits its programId argument (or passes undefined), which silently defaults to the LEGACY Token program even though the file imports {expected}. Pass {expected} explicitly.",
+        "failOtherDetail": "createMint passes '{got}' as programId; expected {expected}. If this is a custom constant, alias it to {expected} or pass the canonical name so the trap detector and downstream readers agree.",
+        "absentCallDetail": "Handler is in the SPL-token scope but does not call createMint; the Token-2022 pin rule does not apply here.",
+        "scopeNotMetDetail": "File does not import TOKEN_2022_PROGRAM_ID; legacy-token codebase — Token-2022 pin rule does not apply."
+      }
+    },
+    "test": {
+      "kind": "token-program-consistency"
+    }
+  },
+  "fixtures": {
+    "filename": "mint.ts",
+    "vulnerable": "// VULNERABLE: file imports TOKEN_2022_PROGRAM_ID (signal of intent) but the\n// createMint call passes TOKEN_PROGRAM_ID (legacy). The mint deploys, looks\n// fine in explorers, and silently lacks every Token-2022 feature the project\n// presumably picked Token-2022 for. There is no on-chain fix.\nimport {\n  createMint,\n  TOKEN_PROGRAM_ID,\n  TOKEN_2022_PROGRAM_ID,\n} from \"@solana/spl-token\";\nimport type { Connection, Keypair, PublicKey } from \"@solana/web3.js\";\n\nexport async function launchToken(opts: {\n  connection: Connection;\n  payer: Keypair;\n  mintAuthority: PublicKey;\n  freezeAuthority: PublicKey | null;\n  decimals: number;\n}): Promise<PublicKey> {\n  return createMint(\n    opts.connection,\n    opts.payer,\n    opts.mintAuthority,\n    opts.freezeAuthority,\n    opts.decimals,\n    undefined,\n    undefined,\n    TOKEN_PROGRAM_ID,\n  );\n}\n",
+    "fixed": "// FIXED: createMint's 8th argument is TOKEN_2022_PROGRAM_ID, matching the\n// import the file already declared. Token-2022 features (transfer hooks,\n// transfer fees, confidential transfers) are available on this mint.\nimport {\n  createMint,\n  TOKEN_PROGRAM_ID,\n  TOKEN_2022_PROGRAM_ID,\n} from \"@solana/spl-token\";\nimport type { Connection, Keypair, PublicKey } from \"@solana/web3.js\";\n\nexport async function launchToken(opts: {\n  connection: Connection;\n  payer: Keypair;\n  mintAuthority: PublicKey;\n  freezeAuthority: PublicKey | null;\n  decimals: number;\n}): Promise<PublicKey> {\n  return createMint(\n    opts.connection,\n    opts.payer,\n    opts.mintAuthority,\n    opts.freezeAuthority,\n    opts.decimals,\n    undefined,\n    undefined,\n    TOKEN_2022_PROGRAM_ID,\n  );\n}\n"
+  },
+  "provenance": {
+    "researchRun": "PLAN-solana-deep-dive.md — Phase 2 trap #1",
+    "sourceUrl": "https://spl.solana.com/token-2022",
+    "note": "Trap #1 of the Tier-1 five. Closes via proof-as-classifier once the new vetted checker kind argEqualsConstantIdentifier is in the registry. The -synth suffix on the id keeps the staged rule distinct from the production-promoted version."
+  }
+}

@@ -3,19 +3,49 @@
   "version": "0.2.0",
   "type": "module",
   "description": "Deterministic auditor for catastrophic AI-integration bugs: scan a repo, find the silent money/auth traps, and generate the behavioral test that proves they're fixed.",
-  "keywords": ["security", "static-analysis", "stripe", "webhook", "jwt", "solana", "bags", "ci", "ai", "audit"],
+  "keywords": [
+    "security",
+    "static-analysis",
+    "stripe",
+    "webhook",
+    "jwt",
+    "solana",
+    "bags",
+    "ci",
+    "ai",
+    "audit"
+  ],
   "license": "MIT",
   "author": "DSB-117",
   "homepage": "https://github.com/DSB-117/brainblast/tree/main/packages/core#readme",
-  "bugs": { "url": "https://github.com/DSB-117/brainblast/issues" },
-  "repository": { "type": "git", "url": "git+https://github.com/DSB-117/brainblast.git", "directory": "packages/core" },
-  "bin": { "brainblast": "dist/cli.js" },
-  "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+  "bugs": {
+    "url": "https://github.com/DSB-117/brainblast/issues"
   },
-  "files": ["dist", "README.md"],
-  "engines": { "node": ">=18" },
-  "publishConfig": { "access": "public", "provenance": true },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DSB-117/brainblast.git",
+    "directory": "packages/core"
+  },
+  "bin": {
+    "brainblast": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsup",
     "prepublishOnly": "npm run typecheck && npm test && npm run build",
@@ -32,6 +62,7 @@
     "yaml": "^2"
   },
   "devDependencies": {
+    "@solana/spl-token": "^0.4.14",
     "@types/node": "^22",
     "@vitest/coverage-v8": "^2",
     "jose": "^5",

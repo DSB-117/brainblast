@@ -9,7 +9,11 @@ component:
   sourceUrl: https://docs.privy.io/authentication/user-authentication/access-tokens
 detect:
   modules: [jose, jsonwebtoken, "@privy-io/node", "@privy-io/server-auth"]
-  nameRegex: "token|auth|verify|privy|jwt"
+  # Brand-specific terms only. Bare "token"/"auth" cross-match unrelated
+  # Solana handlers (launchToken, etc.) and produce spurious cant_tell noise.
+  # Privy handlers are still picked up by the @privy-io/* / jose / jsonwebtoken
+  # imports, and by triggerCalls like decodeJwt / jwtVerify.
+  nameRegex: "privy|jwt"
   triggerCalls: [decodeJwt, jwtVerify, verify, decode]
 check:
   kind: required-call-with-options

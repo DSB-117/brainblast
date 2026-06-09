@@ -3,6 +3,7 @@ import { Project } from "ts-morph";
 import { positionalArgIdentity } from "../src/checkers/positionalArgIdentity.ts";
 import { requiredCallWithOptions } from "../src/checkers/requiredCallWithOptions.ts";
 import { feeAllocationShape } from "../src/checkers/feeAllocationShape.ts";
+import { argEqualsConstantIdentifier } from "../src/checkers/argEqualsConstantIdentifier.ts";
 import type { Candidate } from "../src/types.ts";
 
 function candidate(code: string, fnName: string): Candidate {
@@ -198,5 +199,82 @@ describe("feeAllocationShape (Bags fee-share rule template)", () => {
       "h",
     );
     expect(feeAllocationShape(c, BAGS).result).toBe("cant_tell");
+  });
+});
+
+const T22 = {
+  call: "createMint",
+  argIndex: 7,
+  expectedIdentifier: "TOKEN_2022_PROGRAM_ID",
+  forbiddenIdentifiers: ["TOKEN_PROGRAM_ID"],
+  requireImport: "TOKEN_2022_PROGRAM_ID",
+  passDetail: "ok {expected}",
+  failForbiddenDetail: "named-bad {got} (expected {expected})",
+  failMissingDetail: "missing {expected}",
+  failOtherDetail: "other {got} (expected {expected})",
+  absentCallDetail: "no createMint",
+  scopeNotMetDetail: "no TOKEN_2022 import",
+};
+
+describe("argEqualsConstantIdentifier (Token-2022 program-ID pin)", () => {
+  it("PASS when createMint's programId arg is the expected constant", () => {
+    const c = candidate(
+      `import { createMint, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+       export function h(opts: any) {
+         return createMint(opts.c, opts.p, opts.m, opts.f, opts.d, undefined, undefined, TOKEN_2022_PROGRAM_ID);
+       }`,
+      "h",
+    );
+    const r = argEqualsConstantIdentifier(c, T22);
+    expect(r.result).toBe("pass");
+    expect(r.detail).toContain("TOKEN_2022_PROGRAM_ID");
+  });
+
+  it("FAIL when createMint passes a forbidden constant (legacy)", () => {
+    const c = candidate(
+      `import { createMint, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+       export function h(opts: any) {
+         return createMint(opts.c, opts.p, opts.m, opts.f, opts.d, undefined, undefined, TOKEN_PROGRAM_ID);
+       }`,
+      "h",
+    );
+    const r = argEqualsConstantIdentifier(c, T22);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("TOKEN_PROGRAM_ID");
+  });
+
+  it("CANT_TELL when the file does not import TOKEN_2022_PROGRAM_ID (scope predicate)", () => {
+    const c = candidate(
+      `import { createMint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+       export function h(opts: any) {
+         return createMint(opts.c, opts.p, opts.m, opts.f, opts.d, undefined, undefined, TOKEN_PROGRAM_ID);
+       }`,
+      "h",
+    );
+    const r = argEqualsConstantIdentifier(c, T22);
+    expect(r.result).toBe("cant_tell");
+    expect(r.detail).toContain("TOKEN_2022");
+  });
+
+  it("CANT_TELL when the candidate doesn't call the target", () => {
+    const c = candidate(
+      `import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+       export function h() { return TOKEN_2022_PROGRAM_ID; }`,
+      "h",
+    );
+    expect(argEqualsConstantIdentifier(c, T22).result).toBe("cant_tell");
+  });
+
+  it("FAIL when the programId arg is missing entirely (defaults to legacy)", () => {
+    const c = candidate(
+      `import { createMint, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+       export function h(opts: any) {
+         return createMint(opts.c, opts.p, opts.m, opts.f, opts.d);
+       }`,
+      "h",
+    );
+    const r = argEqualsConstantIdentifier(c, T22);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("TOKEN_2022_PROGRAM_ID");
   });
 });

@@ -9,7 +9,12 @@ component:
   sourceUrl: https://docs.bags.fm/changelog/changelog
 detect:
   modules: ["@bagsfm/bags-sdk"]
-  nameRegex: "feeshare|feeclaimer|bagsfee|launchtoken|tokenlaunch"
+  # Keep the regex tight to Bags-specific terms; broad terms like
+  # "launchtoken"/"tokenlaunch" cross-matched non-Bags Solana handlers
+  # (e.g. Token-2022 launch helpers) and produced spurious "no Bags fee
+  # config" failures. Bags candidates still resolve via the import or the
+  # createBagsFeeShareConfig trigger call.
+  nameRegex: "feeshare|feeclaimer|bagsfee"
   triggerCalls: [createBagsFeeShareConfig]
 check:
   kind: fee-allocation-shape

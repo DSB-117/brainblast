@@ -1,0 +1,55 @@
+# Pure-data rule (facts). Binds to vetted templates by `check.kind`/`test.kind`.
+# Promoted from findings/token-2022-program-id-mismatch.json after the
+# proof-as-classifier loop (synth-prove) closed RED->GREEN against the
+# new `arg-equals-constant-identifier` checker kind.
+id: token-2022-program-id-pinned
+severity: critical
+title: Token-2022 createMint passes TOKEN_2022_PROGRAM_ID as the program ID argument
+component:
+  name: SPL Token-2022
+  type: Blockchain
+  version: unversioned
+  sourceUrl: https://spl.solana.com/token-2022
+detect:
+  modules: ["@solana/spl-token"]
+  # Keep the regex narrow to terms specific to SPL-token-mint construction;
+  # bare "token"/"launch" would cross-match unrelated handlers (Privy
+  # verifyPrivyToken, etc.). Real Token-2022 handlers still resolve via the
+  # @solana/spl-token import or the createMint trigger call.
+  nameRegex: "createMint|mint22|token2022"
+  triggerCalls: [createMint]
+check:
+  kind: arg-equals-constant-identifier
+  params:
+    call: createMint
+    argIndex: 7
+    expectedIdentifier: TOKEN_2022_PROGRAM_ID
+    forbiddenIdentifiers: [TOKEN_PROGRAM_ID]
+    # Scope predicate: only enforce when the file imports TOKEN_2022_PROGRAM_ID.
+    # Without this, every legacy-mint codebase would false-positive.
+    requireImport: TOKEN_2022_PROGRAM_ID
+    passDetail: >-
+      createMint passes {expected} as its programId argument — Token-2022
+      features will work as designed.
+    failForbiddenDetail: >-
+      createMint passes {got} (legacy Token program) where Token-2022 was
+      intended. The mint will be owned by the legacy program; Token-2022
+      features (transfer hooks, transfer fees, confidential transfers) will
+      not work and there is NO on-chain fix — a mint's owner program is part
+      of its identity.
+    failMissingDetail: >-
+      createMint omits its programId argument (or passes undefined), which
+      silently defaults to the LEGACY Token program even though the file
+      imports {expected}. Pass {expected} explicitly.
+    failOtherDetail: >-
+      createMint passes '{got}' as programId; expected {expected}. If this is
+      a custom constant, alias it to {expected} or pass the canonical name so
+      the trap detector and downstream readers agree.
+    absentCallDetail: >-
+      Handler is in the SPL-token scope but does not call createMint; the
+      Token-2022 pin rule does not apply here.
+    scopeNotMetDetail: >-
+      File does not import TOKEN_2022_PROGRAM_ID; legacy-token codebase — the
+      Token-2022 pin rule does not apply.
+test:
+  kind: token-program-consistency

@@ -35,6 +35,8 @@ const cases = [
   { dir: "fixtures/jwt/fixed", ruleId: "privy-jwt-verification", expect: "pass" },
   { dir: "fixtures/bags/vulnerable", ruleId: "bags-fee-share-creator-included", expect: "fail" },
   { dir: "fixtures/bags/fixed", ruleId: "bags-fee-share-creator-included", expect: "pass" },
+  { dir: "fixtures/token2022/vulnerable", ruleId: "token-2022-program-id-pinned", expect: "fail" },
+  { dir: "fixtures/token2022/fixed", ruleId: "token-2022-program-id-pinned", expect: "pass" },
 ] as const;
 
 let ok = true;

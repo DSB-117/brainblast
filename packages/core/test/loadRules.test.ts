@@ -16,6 +16,7 @@ describe("loadRules", () => {
       "bags-fee-share-creator-included",
       "privy-jwt-verification",
       "stripe-webhook-raw-body-verification",
+      "token-2022-program-id-pinned",
     ]);
     const stripe = rules.find((r) => r.id === "stripe-webhook-raw-body-verification")!;
     expect(stripe.check.kind).toBe("positional-arg-identity");
