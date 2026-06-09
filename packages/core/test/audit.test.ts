@@ -16,6 +16,8 @@ const cases: [string, string, CheckResultKind][] = [
   ["jwt/cant_tell", "privy-jwt-verification", "cant_tell"],
   ["metaplex/vulnerable", "metaplex-metadata-immutable", "fail"],
   ["metaplex/fixed", "metaplex-metadata-immutable", "pass"],
+  ["anchor/init-if-needed/vulnerable", "anchor-init-if-needed-guarded", "fail"],
+  ["anchor/init-if-needed/fixed", "anchor-init-if-needed-guarded", "pass"],
 ];
 
 describe("audit (unified, all rules)", () => {

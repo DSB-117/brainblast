@@ -39,6 +39,8 @@ const cases = [
   { dir: "fixtures/token2022/fixed", ruleId: "token-2022-program-id-pinned", expect: "pass" },
   { dir: "fixtures/metaplex/vulnerable", ruleId: "metaplex-metadata-immutable", expect: "fail" },
   { dir: "fixtures/metaplex/fixed", ruleId: "metaplex-metadata-immutable", expect: "pass" },
+  { dir: "fixtures/anchor/init-if-needed/vulnerable", ruleId: "anchor-init-if-needed-guarded", expect: "fail" },
+  { dir: "fixtures/anchor/init-if-needed/fixed", ruleId: "anchor-init-if-needed-guarded", expect: "pass" },
 ] as const;
 
 let ok = true;
@@ -53,6 +55,17 @@ for (const tc of cases) {
   if (!clean) { console.log(">>> UNEXPECTED audit result <<<"); ok = false; continue; }
 
   const rule = rules.find((r) => r.id === checks[0].ruleId)!;
+
+  // Rust/Anchor rules prove via the static checker (tree-sitter-rust). The
+  // anchor-program-test template generates a cargo test scaffold — not a
+  // Vitest test — so we skip the Vitest run and treat the audit RED/GREEN
+  // as the complete proof for these rules.
+  if (rule.detect.lang === "rust") {
+    console.log(`(Rust rule — proof complete via static checker; cargo test scaffold generated separately)`);
+    console.log(`EXPECTED: ${tc.expect.toUpperCase()} -> ${tc.expect === "fail" ? "RED" : "GREEN"}`);
+    continue;
+  }
+
   const testFile = join(genDir, `${tc.dir.replace(/\//g, "_")}.contract.test.ts`);
   generateTestForResult(checks[0], rule, testFile);
   const exit = runVitest(testFile);

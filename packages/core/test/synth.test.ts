@@ -64,36 +64,33 @@ describe("synth.writeDraft", () => {
   });
 });
 
-// Negative-path regression: a Finding that binds to an unvetted checker kind
-// (anchor-init-if-needed-guarded / anchor-program-test) must be blocked at Gate 1.
-// This ensures the vetted-kind safety net stays intact as new checker kinds are
-// added — any accidental removal from the registry would surface here first.
-describe("synth.draft-gate (trap #4: init_if_needed)", () => {
-  it("routes to DRAFT because both kinds are outside the vetted registries", () => {
-    expect(checkerKinds).not.toContain(anchorFinding.binding.check.kind);
-    expect(testKinds).not.toContain(anchorFinding.binding.test.kind);
+// Phase 2.5 promotion: anchor-init-if-needed-guarded and anchor-program-test are
+// now in the vetted registries. The trap #4 Finding must PROVE (not DRAFT) —
+// tree-sitter-rust finds the candidate, the checker fires RED on vulnerable
+// and GREEN on fixed, and the loop closes automatically.
+describe("synth.proof-as-classifier (known answer: Anchor init_if_needed)", () => {
+  it("both kinds are now in the vetted registries (Phase 2.5)", () => {
+    expect(checkerKinds).toContain(anchorFinding.binding.check.kind);
+    expect(testKinds).toContain(anchorFinding.binding.test.kind);
   });
 
-  it("writeDraft produces a sketch.md that names both missing kinds", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "synth-anchor-draft-"));
+  it("re-derives the init_if_needed rule with RED on vulnerable and GREEN on fixed", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "synth-anchor-proven-"));
     try {
-      const reason = [
-        !checkerKinds.includes(anchorFinding.binding.check.kind)
-          ? `check.kind '${anchorFinding.binding.check.kind}' is not in the vetted registry`
-          : null,
-        !testKinds.includes(anchorFinding.binding.test.kind)
-          ? `test.kind '${anchorFinding.binding.test.kind}' is not in the vetted registry`
-          : null,
-      ]
-        .filter(Boolean)
-        .join("; ");
-      const dir = writeDraft(tmp, anchorFinding, reason);
-      const sketch = readFileSync(join(dir, "sketch.md"), "utf8");
-      expect(sketch).toContain("anchor-init-if-needed-guarded");
-      expect(sketch).toContain("anchor-program-test");
-      expect(sketch).toContain("DRAFT");
-      // The candidate YAML should document the intended shape for Phase 2.5
-      expect(sketch).toContain("init_if_needed");
+      const { vulnerableDir, fixedDir } = stageFinding(tmp, anchorFinding);
+      const rules = loadRules(join(tmp, anchorFinding.id, "rules"));
+      expect(rules).toHaveLength(1);
+      expect(rules[0].id).toBe(anchorFinding.id);
+
+      const vuln = audit(vulnerableDir, rules);
+      expect(vuln.checks).toHaveLength(1);
+      expect(vuln.checks[0].ruleId).toBe(anchorFinding.id);
+      expect(vuln.checks[0].result).toBe("fail");
+
+      const fixed = audit(fixedDir, rules);
+      expect(fixed.checks).toHaveLength(1);
+      expect(fixed.checks[0].ruleId).toBe(anchorFinding.id);
+      expect(fixed.checks[0].result).toBe("pass");
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

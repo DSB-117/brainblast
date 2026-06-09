@@ -13,6 +13,7 @@ describe("loadRules", () => {
     const rules = loadRules(rulesDir);
     const ids = rules.map((r) => r.id).sort();
     expect(ids).toEqual([
+      "anchor-init-if-needed-guarded",
       "bags-fee-share-creator-included",
       "metaplex-metadata-immutable",
       "privy-jwt-verification",

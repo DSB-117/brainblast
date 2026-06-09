@@ -1,0 +1,47 @@
+# Pure-data rule (facts). Binds to vetted templates by `check.kind`/`test.kind`.
+# Promoted from findings/anchor-init-if-needed-reinit.json after the
+# proof-as-classifier loop (synth-prove) closed RED->GREEN against the
+# new `anchor-init-if-needed-guarded` checker kind (tree-sitter-rust based).
+id: anchor-init-if-needed-guarded
+severity: critical
+title: Anchor init_if_needed account has a reinitialization guard
+component:
+  name: Anchor Framework
+  type: Blockchain
+  version: ">=0.26.0"
+  sourceUrl: https://www.anchor-lang.com/docs/the-accounts-struct#init_if_needed
+detect:
+  # This rule operates on Rust source files — requires tree-sitter-rust.
+  lang: rust
+  modules:
+    - "@coral-xyz/anchor"
+    - "@project-serum/anchor"
+  # Match instruction handlers that initialize accounts. Detection also
+  # triggers on any function whose Accounts struct has init_if_needed.
+  nameRegex: "initialize|init_if_needed"
+  triggerCalls:
+    - init_if_needed
+check:
+  kind: anchor-init-if-needed-guarded
+  params:
+    passDetail: >-
+      Handler has #[account(init_if_needed)] and a reinitialization guard
+      (require!, data_is_empty, or is_initialized check). A second invocation
+      will be rejected before writing to the account.
+    failAbsentDetail: >-
+      Handler uses #[account(init_if_needed)] without a reinitialization guard.
+      A malicious caller can invoke the instruction a second time to overwrite
+      the account's data — a full state-wipe with no on-chain recourse.
+      Add: require!(account_field.field == initial_value, ErrorCode::AlreadyInitialized)
+      at the top of the handler body.
+    absentDetail: >-
+      Handler has no #[account(init_if_needed)] fields; the reinit-guard rule
+      does not apply.
+test:
+  kind: anchor-program-test
+  params:
+    scenario: reinit-attempt
+    description: >-
+      Calls the instruction twice on the same account; the second call must
+      fail with AlreadyInitialized (or equivalent). If it succeeds, the
+      account state has been silently overwritten.

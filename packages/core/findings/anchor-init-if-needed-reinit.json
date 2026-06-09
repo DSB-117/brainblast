@@ -10,8 +10,9 @@
   },
   "detect": {
     "modules": ["@coral-xyz/anchor", "@project-serum/anchor"],
-    "nameRegex": "anchor|init.*needed|reinit",
-    "triggerCalls": ["initialize", "initIfNeeded"]
+    "nameRegex": "initialize|init_if_needed",
+    "triggerCalls": ["init_if_needed"],
+    "lang": "rust"
   },
   "binding": {
     "check": {

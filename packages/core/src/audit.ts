@@ -1,10 +1,26 @@
 import { findCandidates } from "./finder.ts";
+import { findRustCandidates } from "./rustFinder.ts";
 import { runChecker } from "./checkers/index.ts";
 import { buildReport } from "./emit.ts";
 import type { CheckResult, Rule } from "./types.ts";
 
 // detect -> check, for a single rule.
 export function auditWithRule(targetDir: string, rule: Rule): CheckResult[] {
+  if (rule.detect.lang === "rust") {
+    return findRustCandidates(targetDir, rule).map((c) => {
+      const outcome = runChecker(rule.check.kind, c, rule.check.params);
+      return {
+        ruleId: rule.id,
+        severity: rule.severity,
+        title: rule.title,
+        file: c.filePath,
+        line: 1, // tree-sitter line numbers available via fnBodyNode.startPosition.row + 1
+        exportName: c.fnName,
+        ...outcome,
+      };
+    });
+  }
+
   return findCandidates(targetDir, rule).map((c) => {
     const outcome = runChecker(rule.check.kind, c, rule.check.params);
     return {

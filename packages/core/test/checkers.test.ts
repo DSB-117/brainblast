@@ -5,7 +5,8 @@ import { requiredCallWithOptions } from "../src/checkers/requiredCallWithOptions
 import { feeAllocationShape } from "../src/checkers/feeAllocationShape.ts";
 import { argEqualsConstantIdentifier } from "../src/checkers/argEqualsConstantIdentifier.ts";
 import { objectArgPropertyLiteralEquals } from "../src/checkers/objectArgPropertyLiteralEquals.ts";
-import type { Candidate } from "../src/types.ts";
+import { anchorInitIfNeededGuarded } from "../src/checkers/anchorInitIfNeededGuarded.ts";
+import type { Candidate, RustCandidate } from "../src/types.ts";
 
 function candidate(code: string, fnName: string): Candidate {
   const project = new Project({ useInMemoryFileSystem: true });
@@ -382,5 +383,88 @@ describe("objectArgPropertyLiteralEquals (Metaplex isMutable)", () => {
     const r = objectArgPropertyLiteralEquals(c, MPL);
     expect(r.result).toBe("fail");
     expect(r.detail).toContain("absent");
+  });
+});
+
+// ── anchorInitIfNeededGuarded ──────────────────────────────────────────────
+// These tests build RustCandidate objects directly (no tree-sitter at test
+// time) to keep the unit tests fast and hermetic.
+
+function rustCandidate(
+  fnName: string,
+  accountFields: RustCandidate["accountFields"],
+  fnBodyText: string,
+): RustCandidate {
+  return {
+    filePath: "test.rs",
+    fnName,
+    accountStructName: "TestAccounts",
+    accountFields,
+    fnBodyText,
+    fnBodyNode: null,
+  };
+}
+
+describe("anchorInitIfNeededGuarded (Anchor init_if_needed reinit)", () => {
+  it("PASS when init_if_needed account has a require! guard", () => {
+    const c = rustCandidate(
+      "initialize",
+      [{ name: "counter", typeName: "Account<'info, Counter>", attrText: "#[account(init_if_needed, payer = payer, space = 8+8)]", hasInitIfNeeded: true }],
+      "{ require!(ctx.accounts.counter.count == 0, CounterError::AlreadyInitialized); ctx.accounts.counter.count = start; Ok(()) }",
+    );
+    const r = anchorInitIfNeededGuarded(c, {});
+    expect(r.result).toBe("pass");
+    expect(r.detail).toContain("counter");
+  });
+
+  it("PASS when init_if_needed account uses data_is_empty() check", () => {
+    const c = rustCandidate(
+      "initialize",
+      [{ name: "data", typeName: "AccountInfo<'info>", attrText: "#[account(init_if_needed)]", hasInitIfNeeded: true }],
+      "{ if ctx.accounts.data.data_is_empty() { return err!(MyError::Done); } *ctx.accounts.data.try_borrow_mut_data()? = &[1]; Ok(()) }",
+    );
+    expect(anchorInitIfNeededGuarded(c, {}).result).toBe("pass");
+  });
+
+  it("FAIL when init_if_needed account has no guard", () => {
+    const c = rustCandidate(
+      "initialize",
+      [{ name: "counter", typeName: "Account<'info, Counter>", attrText: "#[account(init_if_needed, payer = payer, space = 8+8)]", hasInitIfNeeded: true }],
+      "{ ctx.accounts.counter.count = start; Ok(()) }",
+    );
+    const r = anchorInitIfNeededGuarded(c, {});
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("counter");
+    expect(r.detail).toContain("require!");
+  });
+
+  it("CANT_TELL when no account has init_if_needed", () => {
+    const c = rustCandidate(
+      "update",
+      [{ name: "counter", typeName: "Account<'info, Counter>", attrText: "#[account(mut)]", hasInitIfNeeded: false }],
+      "{ ctx.accounts.counter.count += 1; Ok(()) }",
+    );
+    const r = anchorInitIfNeededGuarded(c, {});
+    expect(r.result).toBe("cant_tell");
+  });
+
+  it("PASS when is_initialized flag is checked", () => {
+    const c = rustCandidate(
+      "initialize",
+      [{ name: "state", typeName: "Account<'info, State>", attrText: "#[account(init_if_needed, payer = payer, space = 64)]", hasInitIfNeeded: true }],
+      "{ if ctx.accounts.state.is_initialized { return err!(MyError::AlreadyInit); } ctx.accounts.state.is_initialized = true; Ok(()) }",
+    );
+    expect(anchorInitIfNeededGuarded(c, {}).result).toBe("pass");
+  });
+
+  it("FAIL respects custom failAbsentDetail message param", () => {
+    const c = rustCandidate(
+      "setup",
+      [{ name: "vault", typeName: "Account<'info, Vault>", attrText: "#[account(init_if_needed)]", hasInitIfNeeded: true }],
+      "{ ctx.accounts.vault.amount = 0; Ok(()) }",
+    );
+    const r = anchorInitIfNeededGuarded(c, { failAbsentDetail: "CUSTOM_FAIL_MSG" });
+    expect(r.result).toBe("fail");
+    expect(r.detail).toBe("CUSTOM_FAIL_MSG");
   });
 });

@@ -58,6 +58,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "tree-sitter": "^0.22.4",
+    "tree-sitter-rust": "^0.24.0",
     "ts-morph": "^23",
     "yaml": "^2"
   },
