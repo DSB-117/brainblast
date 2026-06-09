@@ -6,14 +6,19 @@
   "keywords": [
     "security",
     "static-analysis",
+    "audit",
     "stripe",
     "webhook",
     "jwt",
     "solana",
+    "anchor",
+    "metaplex",
+    "token-2022",
+    "trust-graph",
     "bags",
+    "rent",
     "ci",
-    "ai",
-    "audit"
+    "ai"
   ],
   "license": "MIT",
   "author": "DSB-117",
