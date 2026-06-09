@@ -166,7 +166,7 @@ describe("buildTrustGraph", () => {
     const g = await buildTrustGraph([fake], { probeRpc: false });
     expect(g.programs).toEqual([]);
     expect(g.unresolved).toHaveLength(1);
-    expect(g.unresolved[0].reason).toBe("not_in_directory_and_rpc_disabled");
+    expect(g.unresolved[0].reason).toBe("not_in_directory_or_cache_and_rpc_disabled");
   });
 });
 

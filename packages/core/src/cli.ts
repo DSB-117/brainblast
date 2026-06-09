@@ -3,7 +3,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { audit } from "./audit.ts";
 import { resolveRules } from "./resolveRules.ts";
-import { buildTrustGraph, renderTrustGraphMd, isValidSolanaAddress } from "./trustGraph/index.ts";
+import { buildTrustGraph, renderTrustGraphMd, isValidSolanaAddress, cacheSize, loadProgramCache, defaultCachePath } from "./trustGraph/index.ts";
 import { analyzeCosts, renderCostReportMd } from "./costAnalysis.ts";
 
 // Usage:
@@ -15,7 +15,9 @@ import { analyzeCosts, renderCostReportMd } from "./costAnalysis.ts";
 //
 // `trust-graph` resolves upgrade authority + verified-build status for each
 // program id (Phase 1 of PLAN-solana-deep-dive.md). Reads the bundled program
-// directory first; falls back to a live RPC probe for anything unknown.
+// directory first, then the program cache (~/.brainblast/program-cache.json),
+// and falls back to a live RPC probe for anything unknown. Pass --no-cache to
+// skip the cache entirely (always re-probe from RPC).
 const args = process.argv.slice(2);
 
 if (args[0] === "trust-graph") {
@@ -99,10 +101,21 @@ async function runTrustGraph(argv: string[]) {
     }
   }
 
-  const graph = await buildTrustGraph(ids, { rpcUrl, probeRpc: !noProbe });
+  const noCache = argv.includes("--no-cache");
+
+  const graph = await buildTrustGraph(ids, {
+    rpcUrl,
+    probeRpc: !noProbe,
+    cachePath: noCache ? null : undefined,
+  });
   if (jsonOut) {
     console.log(JSON.stringify(graph, null, 2));
   } else {
     console.log(renderTrustGraphMd(graph));
+  }
+  if (!noCache) {
+    const cp = defaultCachePath();
+    const count = cacheSize(loadProgramCache(cp));
+    console.error(`  program-cache: ${count} entries  (${cp})`);
   }
 }
