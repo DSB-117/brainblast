@@ -32,7 +32,24 @@ export function findCandidates(targetDir: string, rule: Rule): Candidate[] {
       .some((d) => modules.has(d.getModuleSpecifierValue()));
 
     const consider = (fn: FunctionDeclaration | ArrowFunction, name: string) => {
-      if (!(importsModule || (name && nameRe.test(name)) || bodyCallsAnyOf(fn, triggers))) return;
+      const hasName = !!(name && nameRe.test(name));
+      const hasTrigger = bodyCallsAnyOf(fn, triggers);
+
+      // requiresImport: true  →  file must import the module AND (name matches OR
+      //   body calls trigger).  This prevents generic name-only matches from firing
+      //   on rules that are module-specific (e.g. the Privy/jose rule should not flag
+      //   a Fastify middleware named "verifyJwt" that never imports jose).
+      //
+      // requiresImport: false (default)  →  name match OR trigger call is sufficient.
+      //   The previous "importsModule OR hasName OR hasTrigger" logic flagged every
+      //   function in a stripe-importing file (sub-handlers, helpers, server actions).
+      //   Dropping importsModule as a standalone criterion eliminates those false
+      //   positives while still catching named entry points and direct trigger calls.
+      if (rule.detect.requiresImport) {
+        if (!(importsModule && (hasName || hasTrigger))) return;
+      } else {
+        if (!(hasName || hasTrigger)) return;
+      }
       out.push({
         filePath: file,
         fnName: name || "(anonymous)",

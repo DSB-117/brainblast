@@ -11,6 +11,11 @@ detect:
   modules: [stripe]
   nameRegex: webhook
   triggerCalls: [constructEvent]
+  # Require the file to import stripe.  Without this guard, any function whose
+  # name contains "webhook" — even LemonSqueezy, Polar, or Sendgrid handlers —
+  # is flagged for missing stripe.webhooks.constructEvent, producing false
+  # positives on non-Stripe payment integrations.
+  requiresImport: true
 check:
   kind: positional-arg-identity
   params:

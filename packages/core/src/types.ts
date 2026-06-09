@@ -73,6 +73,19 @@ export interface Rule {
     triggerCalls: string[];
     /** Defaults to "typescript". Set to "rust" for Anchor/Rust checker kinds. */
     lang?: "typescript" | "rust";
+    /**
+     * When true, a module import from `modules` is a REQUIRED condition for
+     * detection: a candidate must be in a file that imports one of the listed
+     * modules, AND either its name matches nameRegex or its body calls a
+     * triggerCall.  This prevents generic name-only matches (e.g. a Fastify
+     * middleware named "verifyJwt" that calls `request.jwtVerify()`) from
+     * triggering jose-specific rules.
+     *
+     * When false or omitted (default), detection is: nameRegex match OR
+     * triggerCall in body.  Module import is not required, so rules like
+     * stripe-webhook can still catch handlers that don't import stripe directly.
+     */
+    requiresImport?: boolean;
   };
   check: { kind: string; params: Record<string, any> };
   test: { kind: string; params?: Record<string, any> };
