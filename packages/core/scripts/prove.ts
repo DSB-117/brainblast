@@ -37,6 +37,8 @@ const cases = [
   { dir: "fixtures/bags/fixed", ruleId: "bags-fee-share-creator-included", expect: "pass" },
   { dir: "fixtures/token2022/vulnerable", ruleId: "token-2022-program-id-pinned", expect: "fail" },
   { dir: "fixtures/token2022/fixed", ruleId: "token-2022-program-id-pinned", expect: "pass" },
+  { dir: "fixtures/metaplex/vulnerable", ruleId: "metaplex-metadata-immutable", expect: "fail" },
+  { dir: "fixtures/metaplex/fixed", ruleId: "metaplex-metadata-immutable", expect: "pass" },
 ] as const;
 
 let ok = true;

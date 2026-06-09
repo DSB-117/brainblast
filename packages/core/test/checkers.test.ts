@@ -4,6 +4,7 @@ import { positionalArgIdentity } from "../src/checkers/positionalArgIdentity.ts"
 import { requiredCallWithOptions } from "../src/checkers/requiredCallWithOptions.ts";
 import { feeAllocationShape } from "../src/checkers/feeAllocationShape.ts";
 import { argEqualsConstantIdentifier } from "../src/checkers/argEqualsConstantIdentifier.ts";
+import { objectArgPropertyLiteralEquals } from "../src/checkers/objectArgPropertyLiteralEquals.ts";
 import type { Candidate } from "../src/types.ts";
 
 function candidate(code: string, fnName: string): Candidate {
@@ -276,5 +277,110 @@ describe("argEqualsConstantIdentifier (Token-2022 program-ID pin)", () => {
     const r = argEqualsConstantIdentifier(c, T22);
     expect(r.result).toBe("fail");
     expect(r.detail).toContain("TOKEN_2022_PROGRAM_ID");
+  });
+});
+
+const MPL = {
+  call: "createV1",
+  argIndex: 1,
+  propName: "isMutable",
+  expectedValue: false,
+  passDetail: "sealed",
+  failAbsentDetail: "absent-defaults-true",
+  failWrongDetail: "explicit-true",
+  failArgDetail: "not-object-literal",
+  failDynamicDetail: "dynamic-value",
+  absentCallDetail: "no-createV1",
+};
+
+describe("objectArgPropertyLiteralEquals (Metaplex isMutable)", () => {
+  it("PASS when createV1 passes isMutable: false", () => {
+    const c = candidate(
+      `import { createV1 } from "@metaplex-foundation/mpl-token-metadata";
+       export async function h(umi: any) {
+         await createV1(umi, { name: "T", isMutable: false });
+       }`,
+      "h",
+    );
+    const r = objectArgPropertyLiteralEquals(c, MPL);
+    expect(r.result).toBe("pass");
+    expect(r.detail).toContain("sealed");
+  });
+
+  it("FAIL when isMutable is absent (defaults to true)", () => {
+    const c = candidate(
+      `import { createV1 } from "@metaplex-foundation/mpl-token-metadata";
+       export async function h(umi: any) {
+         await createV1(umi, { name: "T" });
+       }`,
+      "h",
+    );
+    const r = objectArgPropertyLiteralEquals(c, MPL);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("absent");
+  });
+
+  it("FAIL when isMutable is explicitly true", () => {
+    const c = candidate(
+      `import { createV1 } from "@metaplex-foundation/mpl-token-metadata";
+       export async function h(umi: any) {
+         await createV1(umi, { name: "T", isMutable: true });
+       }`,
+      "h",
+    );
+    const r = objectArgPropertyLiteralEquals(c, MPL);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("explicit-true");
+  });
+
+  it("CANT_TELL when isMutable is a variable", () => {
+    const c = candidate(
+      `import { createV1 } from "@metaplex-foundation/mpl-token-metadata";
+       export async function h(umi: any, lock: boolean) {
+         await createV1(umi, { name: "T", isMutable: lock });
+       }`,
+      "h",
+    );
+    const r = objectArgPropertyLiteralEquals(c, MPL);
+    expect(r.result).toBe("cant_tell");
+    expect(r.detail).toContain("dynamic");
+  });
+
+  it("CANT_TELL when the options arg is a variable, not an inline literal", () => {
+    const c = candidate(
+      `import { createV1 } from "@metaplex-foundation/mpl-token-metadata";
+       export async function h(umi: any) {
+         const opts = { name: "T", isMutable: false };
+         await createV1(umi, opts);
+       }`,
+      "h",
+    );
+    const r = objectArgPropertyLiteralEquals(c, MPL);
+    expect(r.result).toBe("cant_tell");
+    expect(r.detail).toContain("not-object-literal");
+  });
+
+  it("CANT_TELL when createV1 is not called", () => {
+    const c = candidate(
+      `import { createV1 } from "@metaplex-foundation/mpl-token-metadata";
+       export function h(umi: any) { return umi; }`,
+      "h",
+    );
+    const r = objectArgPropertyLiteralEquals(c, MPL);
+    expect(r.result).toBe("cant_tell");
+    expect(r.detail).toContain("no-createV1");
+  });
+
+  it("FAIL when the options arg (index 1) is missing entirely", () => {
+    const c = candidate(
+      `import { createV1 } from "@metaplex-foundation/mpl-token-metadata";
+       export async function h(umi: any) {
+         await createV1(umi);
+       }`,
+      "h",
+    );
+    const r = objectArgPropertyLiteralEquals(c, MPL);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("absent");
   });
 });

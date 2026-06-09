@@ -2,6 +2,7 @@ import { positionalArgIdentity } from "./positionalArgIdentity.ts";
 import { requiredCallWithOptions } from "./requiredCallWithOptions.ts";
 import { feeAllocationShape } from "./feeAllocationShape.ts";
 import { argEqualsConstantIdentifier } from "./argEqualsConstantIdentifier.ts";
+import { objectArgPropertyLiteralEquals } from "./objectArgPropertyLiteralEquals.ts";
 import type { Candidate, CheckOutcome, Checker } from "../types.ts";
 
 // Registry of human-vetted checker templates. Rules bind to these by `kind`.
@@ -10,6 +11,7 @@ const registry: Record<string, Checker> = {
   "required-call-with-options": requiredCallWithOptions,
   "fee-allocation-shape": feeAllocationShape,
   "arg-equals-constant-identifier": argEqualsConstantIdentifier,
+  "object-arg-property-literal-equals": objectArgPropertyLiteralEquals,
 };
 
 export function runChecker(kind: string, c: Candidate, params: any): CheckOutcome {

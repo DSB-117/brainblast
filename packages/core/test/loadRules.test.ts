@@ -14,6 +14,7 @@ describe("loadRules", () => {
     const ids = rules.map((r) => r.id).sort();
     expect(ids).toEqual([
       "bags-fee-share-creator-included",
+      "metaplex-metadata-immutable",
       "privy-jwt-verification",
       "stripe-webhook-raw-body-verification",
       "token-2022-program-id-pinned",

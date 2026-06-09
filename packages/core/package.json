@@ -62,6 +62,7 @@
     "yaml": "^2"
   },
   "devDependencies": {
+    "@metaplex-foundation/mpl-token-metadata": "^3.4.0",
     "@solana/spl-token": "^0.4.14",
     "@types/node": "^22",
     "@vitest/coverage-v8": "^2",
