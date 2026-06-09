@@ -1,7 +1,13 @@
 import type { CheckResult, Rule } from "./types.ts";
+import type { CostReport } from "./costAnalysis.ts";
 
 // report.json: schemaVersion "1.0" + additive checks[]/checkTotals (eng review D4/T5).
-export function buildReport(target: string, checks: CheckResult[], rules: Rule[]) {
+export function buildReport(
+  target: string,
+  checks: CheckResult[],
+  rules: Rule[],
+  costReport?: CostReport,
+) {
   const byId = new Map(rules.map((r) => [r.id, r]));
   const checkTotals = { pass: 0, fail: 0, cant_tell: 0 };
   for (const c of checks) checkTotals[c.result]++;
@@ -54,5 +60,6 @@ export function buildReport(target: string, checks: CheckResult[], rules: Rule[]
     })),
     checkTotals,
     openQuestions: [],
+    costAnalysis: costReport ?? null,
   };
 }

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { audit } from "./audit.ts";
 import { resolveRules } from "./resolveRules.ts";
 import { buildTrustGraph, renderTrustGraphMd, isValidSolanaAddress } from "./trustGraph/index.ts";
+import { analyzeCosts, renderCostReportMd } from "./costAnalysis.ts";
 
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict]
@@ -28,11 +29,18 @@ const targetDir = args.find((a) => !a.startsWith("--")) ?? process.cwd();
 
 const rules = resolveRules(targetDir);
 const { checks, report } = audit(targetDir, rules);
+const costReport = analyzeCosts(targetDir);
+// Attach cost analysis as a named section — additive, never mutates security results.
+(report as any).costAnalysis = costReport;
 
 const outDir = join(targetDir, ".agent-research");
 mkdirSync(outDir, { recursive: true });
+
 const reportPath = join(outDir, "report.json");
 writeFileSync(reportPath, JSON.stringify(report, null, 2));
+
+const costMdPath = join(outDir, "cost-analysis.md");
+writeFileSync(costMdPath, renderCostReportMd(costReport));
 
 console.log(`brainblast: scanned ${targetDir} with ${rules.length} rule(s)`);
 if (checks.length === 0) console.log("  (no catastrophic components detected)");
@@ -47,7 +55,26 @@ console.log(`  verdict: ${report.summary.verdict}  (fail=${fails}, cant_tell=${c
 if (cantTell > 0 && !strict) {
   console.log(`  warning: ${cantTell} cant_tell (not gating — pass --strict to fail on these)`);
 }
-console.log(`  report:  ${reportPath}`);
+
+// Cost & rent summary
+console.log("\n── Cost & Rent ──────────────────────────────────────────────");
+if (!costReport.priorityFee.found) {
+  console.log("  [HIGH ] priority fee not configured — add setComputeUnitPrice to critical paths");
+}
+if (costReport.accountFlows.length === 0) {
+  console.log("  (no account-creation flows from tracked modules detected)");
+} else {
+  for (const f of costReport.accountFlows) {
+    const file = f.file.split("/").slice(-2).join("/");
+    const scaleMark = f.scalable ? " [SCALABLE]" : "";
+    console.log(`  ${f.accountType}${scaleMark}  ${file}:${f.line}  +${f.lamports.toLocaleString()} lamports (${f.sol} SOL)`);
+  }
+  if (costReport.totalLockupLamports > 0) {
+    console.log(`  ─── static lockup total: ${costReport.totalLockupLamports.toLocaleString()} lamports (~${costReport.totalLockupSol} SOL)`);
+  }
+}
+console.log(`  cost report: ${costMdPath}`);
+console.log(`  report:      ${reportPath}`);
 
 if (ci) {
   const gateFail = fails > 0 || (strict && cantTell > 0);
