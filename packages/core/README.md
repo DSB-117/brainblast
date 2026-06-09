@@ -9,25 +9,64 @@ parses your code statically and runs offline.
 
 ```sh
 npx brainblast .            # scan the repo, write .agent-research/report.json
-npx brainblast . --ci       # exit 1 if a confirmed CRITICAL remains
+npx brainblast . --ci       # exit 1 if a confirmed FAIL remains
 npx brainblast . --ci --strict   # also fail on CANT_TELL (can't statically prove)
 ```
 
-Exit codes: **0** clean · **1** a confirmed FAIL at/above the threshold · CANT_TELL
-is a warning by default (a red build always means a real, confirmed problem).
+Exit codes: **0** clean · **1** a confirmed FAIL · CANT_TELL is a warning by
+default (a red build always means a real, confirmed problem).
 
-## What it catches (today, Node/TypeScript)
+## What it catches
 
-- **Stripe webhooks** that don't verify the signature on the **raw** body →
-  forged `payment_intent.succeeded` events accepted.
-- **Privy / JWT** access tokens decoded without verifying the signature, or
-  without asserting `aud` + `iss` → auth bypass / cross-app token reuse.
-- **Bags (Solana token launch)** fee-share configs that omit the creator from
-  `feeClaimers`, or whose `userBps` don't sum to 10000 → the creator earns **zero
-  fees forever** (the config is immutable on-chain after launch).
+### Web2 / Node.js
 
-Each finding lands in `report.json` (stable, versioned `schemaVersion: "1.0"`)
-with a `checks[]` array a CI gate can read.
+| Rule | What's wrong | Consequence |
+|------|--------------|-------------|
+| `stripe-webhook-raw-body` | `constructEvent` called on the parsed body, not the raw buffer | Any `payment_intent.succeeded` can be forged |
+| `privy-jwt-verification` | JWT decoded without signature verification, or without `aud`+`iss` claims | Auth bypass / cross-app token reuse |
+
+### Solana / Anchor (TypeScript + Rust)
+
+| Rule | What's wrong | Consequence |
+|------|--------------|-------------|
+| `bags-fee-share-creator-included` | Creator wallet omitted from `feeClaimers`, or `userBps` don't sum to 10000 | Creator earns zero fees forever — the config is immutable on-chain |
+| `token-2022-program-id-pinned` | `createMint` passes the legacy `TOKEN_PROGRAM_ID` where Token-2022 was intended | Mint is owned by the wrong program; Token-2022 features (transfer hooks, fees, confidential transfers) are silently absent with no on-chain fix |
+| `metaplex-metadata-immutable` | `createV1` / `createNft` omits `isMutable: false` | Metadata defaults to mutable; any update authority can change the token's name, image, or attributes after launch |
+| `anchor-init-if-needed-guarded` | Anchor instruction uses `init_if_needed` without a re-initialization guard | Any user can reinitialize another user's account, overwriting its state |
+
+Each finding lands in `.agent-research/report.json` (stable `schemaVersion: "1.0"`)
+with a `checks[]` array a CI gate can read. Each confirmed FAIL ships a
+generated behavioral test (RED on vulnerable, GREEN on fixed).
+
+## Cost & Rent Analysis
+
+Every run also produces `.agent-research/cost-analysis.md` — a breakdown of
+rent-exempt lamport lockups, scalable flows (calls inside loops that grow with N),
+and a priority-fee posture check:
+
+```
+── Cost & Rent ──────────────────────────────────────────────
+  [HIGH ] priority fee not configured — add setComputeUnitPrice to critical paths
+  Metaplex Token Metadata  src/mint.ts:42  +5,312,760 lamports (0.00531276 SOL)  [non-recoverable]
+  ─── static lockup total: 5,312,760 lamports (~0.00531276 SOL)
+```
+
+## Trust Graph
+
+Resolve on-chain upgrade-authority and verified-build status for any Solana
+program:
+
+```sh
+npx brainblast trust-graph TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb
+npx brainblast trust-graph <id1> <id2> --rpc https://api.mainnet-beta.solana.com
+npx brainblast trust-graph <id> --no-probe   # directory + cache only, no RPC
+npx brainblast trust-graph <id> --json       # machine-readable output
+```
+
+Program metadata is cached in `~/.brainblast/program-cache.json` (keyed by
+program ID, TTL 1 week). A program researched for one project pre-populates
+all future runs — no repeat RPC probes needed. Override with
+`BRAINBLAST_CACHE_PATH` or pass `--no-cache` to skip entirely.
 
 ## Rules are data
 
@@ -40,9 +79,26 @@ bundled ones). Invalid rules are rejected at load.
 ## Library API
 
 ```ts
-import { audit, resolveRules } from "brainblast";
+import {
+  audit, resolveRules,
+  analyzeCosts, renderCostReportMd,
+  buildTrustGraph,
+  loadProgramCache, getCacheEntry,
+} from "brainblast";
+
+// Static audit
 const { checks, report } = audit(process.cwd(), resolveRules(process.cwd()));
+
+// Cost analysis
+const costReport = analyzeCosts(process.cwd());
+console.log(renderCostReportMd(costReport));
+
+// Trust graph (program-keyed cache is consulted automatically)
+const graph = await buildTrustGraph(["TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"]);
 ```
+
+All types are exported: `Rule`, `CheckResult`, `CostReport`, `AccountFlow`,
+`OnChainProgram`, `TrustGraph`, `ProgramCache`, and more.
 
 ## Security model
 
@@ -53,12 +109,14 @@ const { checks, report } = audit(process.cwd(), resolveRules(process.cwd()));
   them.** That's expected when you audit your own repo. If you run brainblast on
   untrusted code (e.g. a fork PR) and then run the generated tests, run them in a
   sandbox — the same caution as running any untrusted test suite.
+- **Trust-graph RPC probes are read-only.** `getAccountInfo` calls only; no
+  transactions are sent.
 
 ## Develop
 
 ```sh
 npm install
-npm test         # unit suite
+npm test         # unit suite (135 tests)
 npm run prove    # end-to-end: generated tests RED on vulnerable, GREEN on fixed
 npm run build    # produce dist/ (the published artifact)
 ```
