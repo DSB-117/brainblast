@@ -1,6 +1,6 @@
 {
   "name": "brainblast",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "type": "module",
   "description": "Deterministic auditor for catastrophic AI-integration bugs: scan a repo, find the silent money/auth traps, and generate the behavioral test that proves they're fixed.",
   "keywords": [

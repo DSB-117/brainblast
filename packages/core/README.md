@@ -99,7 +99,8 @@ the applied changes.
 | Rule | What's wrong | Consequence |
 |------|--------------|-------------|
 | `env-secrets-committed` | A `.env*` file (not `.env.example`/`.sample`/`.template`) is tracked by git and contains a secret-shaped key (`SECRET`, `*_PRIVATE_KEY`, `*_API_KEY`, `*_TOKEN`, `*_PASSWORD`, etc.) with a real-looking (non-placeholder) value | Anyone with read access to the repo — including forks of a public repo — can read the live credential |
-| `env-secret-leaked-to-sink` | A secret-shaped `process.env.X` value (directly, via a local variable, or one hop through a same-file helper) is passed to `console.log`/`res.json`/`res.send`/etc. | Credentials end up in logs, error trackers, or API responses — readable by anyone with log/response access |
+| `env-secret-leaked-to-sink` | A secret-shaped `process.env.X` value flows — directly, via a local variable, forward through helper functions (same-file or imported from another file), or backward into a function that's called elsewhere in the project with a tainted argument — into `console.log`/`res.json`/`res.send`/etc., up to 2 hops across the whole project | Credentials end up in logs, error trackers, or API responses — readable by anyone with log/response access |
+| `request-input-command-injection` | Untrusted `req.body`/`req.query`/`req.params`/`req.headers` data flows — directly or across files — into `exec`/`execSync`/`spawn`/`spawnSync`/`execFile`/`execFileSync` | A malicious request can run arbitrary shell commands on the server |
 
 Each finding lands in `.agent-research/report.json` (stable `schemaVersion: "1.0"`)
 with a `checks[]` array a CI gate can read. Each confirmed FAIL ships a
@@ -183,7 +184,7 @@ All types are exported: `Rule`, `CheckResult`, `CostReport`, `AccountFlow`,
 
 ```sh
 npm install
-npm test         # unit suite (173 tests)
+npm test         # unit suite (180 tests)
 npm run prove    # end-to-end: generated tests RED on vulnerable, GREEN on fixed
 npm run build    # produce dist/ (the published artifact)
 ```

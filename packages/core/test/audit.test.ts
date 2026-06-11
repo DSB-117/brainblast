@@ -22,6 +22,10 @@ const cases: [string, string, CheckResultKind][] = [
   ["env/fixed", "env-secrets-committed", "pass"],
   ["taint/vulnerable", "env-secret-leaked-to-sink", "fail"],
   ["taint/fixed", "env-secret-leaked-to-sink", "pass"],
+  ["cmdinject/vulnerable", "request-input-command-injection", "fail"],
+  ["cmdinject/fixed", "request-input-command-injection", "pass"],
+  ["taint-crossfile/vulnerable", "env-secret-leaked-to-sink", "fail"],
+  ["taint-crossfile/fixed", "env-secret-leaked-to-sink", "pass"],
 ];
 
 describe("audit (unified, all rules)", () => {

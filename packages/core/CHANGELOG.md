@@ -2,6 +2,26 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.4.3 — 2026-06-11
+
+- **Generalized, project-wide `taint-to-sink` checker** — replaces the v0.4.2 intra-file
+  `env-taint-to-sink` checker with a true graph-based, multi-hop, cross-file taint analysis:
+  - **Direct**: a source expression (or local variable initialized from one) is passed
+    straight to a sink call within the candidate function.
+  - **Forward**: the candidate function calls another function — same-file or, via import
+    resolution, in a different file — passing a tainted value into a parameter that itself
+    reaches a sink, recursively up to `maxHops` (default 2).
+  - **Backward**: the candidate function sinks one of its own parameters directly, and is
+    called *anywhere else in the project* with a tainted argument.
+  - Configured per-rule via `params: { sources: [{ name, pattern }], sinkCalls, maxHops }`.
+- **`env-secret-leaked-to-sink`** now uses `taint-to-sink`, gaining cross-file detection for
+  secret-shaped `process.env.X` values.
+- **New rule `request-input-command-injection`** (critical, `taint-to-sink`): flags untrusted
+  `req.body`/`req.query`/`req.params`/`req.headers` flowing into `exec`/`execSync`/`spawn`/
+  `spawnSync`/`execFile`/`execFileSync`.
+- New fixtures: `fixtures/cmdinject/{vulnerable,fixed}` and
+  `fixtures/taint-crossfile/{vulnerable,fixed}` (cross-file backward leak).
+
 ## 0.4.2 — 2026-06-11
 
 - **Cross-file taint tracking** — new `"env-taint-to-sink"` checker kind and

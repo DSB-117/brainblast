@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.4.3 — 2026-06-11
+
+- **Graph-based, project-wide cross-file taint tracking**: `env-secret-leaked-to-sink` now
+  tracks tainted values across the *entire project*, not just within a file — forward
+  through helper functions (same-file or cross-file via imports) and backward into functions
+  that are called elsewhere with a tainted argument, up to 2 hops.
+- **New rule `request-input-command-injection`** (critical): flags untrusted
+  `req.body`/`req.query`/`req.params`/`req.headers` data flowing into `exec`/`execSync`/
+  `spawn`/`spawnSync`/`execFile`/`execFileSync`, including across files.
+- New generalized `taint-to-sink` checker kind powers both rules.
+
+See `packages/core/CHANGELOG.md` for details.
+
 ## v0.4.2 — 2026-06-11
 
 - **Cross-file taint tracking**: new `env-secret-leaked-to-sink` rule catches secret-shaped

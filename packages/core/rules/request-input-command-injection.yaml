@@ -1,0 +1,42 @@
+# Pure-data rule (facts). Binds to vetted templates by `check.kind`/`test.kind`.
+id: request-input-command-injection
+severity: critical
+title: Untrusted request input flows into a shell command
+component:
+  name: Node.js child_process
+  type: API
+  version: unversioned
+  sourceUrl: https://nodejs.org/api/child_process.html
+detect:
+  lang: typescript
+  modules: []
+  # Never matches by name alone — only the triggerCalls (sink calls) below
+  # select candidates.
+  nameRegex: "(?!)"
+  triggerCalls:
+    - exec
+    - execSync
+    - spawn
+    - spawnSync
+    - execFile
+    - execFileSync
+  requiresImport: false
+check:
+  kind: taint-to-sink
+  params:
+    sources:
+      - name: request-input
+        # req.body / req.query / req.params / req.headers (any object named
+        # req/request) — the canonical "untrusted user input" surface for an
+        # HTTP handler.
+        pattern: "\\b(req|request)\\.(body|query|params|headers)\\b"
+    sinkCalls:
+      - exec
+      - execSync
+      - spawn
+      - spawnSync
+      - execFile
+      - execFileSync
+    maxHops: 2
+test:
+  kind: none

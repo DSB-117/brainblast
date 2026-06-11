@@ -5,7 +5,7 @@ import { argEqualsConstantIdentifier } from "./argEqualsConstantIdentifier.ts";
 import { objectArgPropertyLiteralEquals } from "./objectArgPropertyLiteralEquals.ts";
 import { anchorInitIfNeededGuarded } from "./anchorInitIfNeededGuarded.ts";
 import { envSecretsCommitted } from "./envSecretsCommitted.ts";
-import { envTaintToSink } from "./envTaintToSink.ts";
+import { taintToSink } from "./taintToSink.ts";
 import type { Candidate, RustCandidate, ConfigCandidate, CheckOutcome, Checker, RustChecker, ConfigChecker } from "../types.ts";
 
 // Registry of human-vetted checker templates. Rules bind to these by `kind`.
@@ -19,7 +19,7 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker> = {
   "object-arg-property-literal-equals": objectArgPropertyLiteralEquals,
   "anchor-init-if-needed-guarded": anchorInitIfNeededGuarded as RustChecker,
   "env-secrets-committed": envSecretsCommitted,
-  "env-taint-to-sink": envTaintToSink,
+  "taint-to-sink": taintToSink,
 };
 
 export function runChecker(kind: string, c: Candidate | RustCandidate | ConfigCandidate, params: any): CheckOutcome {

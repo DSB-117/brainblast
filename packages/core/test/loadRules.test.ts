@@ -19,6 +19,7 @@ describe("loadRules", () => {
       "env-secrets-committed",
       "metaplex-metadata-immutable",
       "privy-jwt-verification",
+      "request-input-command-injection",
       "stripe-webhook-raw-body-verification",
       "token-2022-program-id-pinned",
     ]);

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { Project } from "ts-morph";
 import { positionalArgIdentity } from "../src/checkers/positionalArgIdentity.ts";
 import { requiredCallWithOptions } from "../src/checkers/requiredCallWithOptions.ts";
@@ -7,7 +7,10 @@ import { argEqualsConstantIdentifier } from "../src/checkers/argEqualsConstantId
 import { objectArgPropertyLiteralEquals } from "../src/checkers/objectArgPropertyLiteralEquals.ts";
 import { anchorInitIfNeededGuarded } from "../src/checkers/anchorInitIfNeededGuarded.ts";
 import { envSecretsCommitted } from "../src/checkers/envSecretsCommitted.ts";
-import { envTaintToSink } from "../src/checkers/envTaintToSink.ts";
+import { taintToSink } from "../src/checkers/taintToSink.ts";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { Candidate, RustCandidate, ConfigCandidate } from "../src/types.ts";
 
 function candidate(code: string, fnName: string): Candidate {
@@ -528,10 +531,13 @@ describe("envSecretsCommitted", () => {
   });
 });
 
-describe("envTaintToSink", () => {
+describe("taintToSink", () => {
   const params = {
+    sources: [
+      { name: "env-secret", pattern: "process\\.env\\.[A-Za-z0-9_]*(SECRET|PRIVATE_KEY|API_KEY|ACCESS_KEY|TOKEN|PASSWORD|CREDENTIAL)[A-Za-z0-9_]*" },
+    ],
     sinkCalls: ["log", "error", "warn", "info", "debug", "json", "send", "write", "end"],
-    secretKeyPattern: "(SECRET|PRIVATE_KEY|API_KEY|ACCESS_KEY|TOKEN|PASSWORD|CREDENTIAL)",
+    maxHops: 2,
   };
 
   it("fails when process.env.X is logged directly", () => {
@@ -541,7 +547,7 @@ describe("envTaintToSink", () => {
       }`,
       "h",
     );
-    const r = envTaintToSink(c, params);
+    const r = taintToSink(c, params);
     expect(r.result).toBe("fail");
     expect(r.detail).toContain("STRIPE_SECRET_KEY");
   });
@@ -554,12 +560,12 @@ describe("envTaintToSink", () => {
       }`,
       "h",
     );
-    const r = envTaintToSink(c, params);
+    const r = taintToSink(c, params);
     expect(r.result).toBe("fail");
     expect(r.detail).toContain("apiKey");
   });
 
-  it("fails on a one-hop leak through a same-file helper", () => {
+  it("fails on a one-hop leak through a same-file helper (forward)", () => {
     const c = candidate(
       `function logIt(x: string) {
         console.log("debug", x);
@@ -570,7 +576,7 @@ describe("envTaintToSink", () => {
       }`,
       "h",
     );
-    const r = envTaintToSink(c, params);
+    const r = taintToSink(c, params);
     expect(r.result).toBe("fail");
     expect(r.detail).toContain("logIt");
   });
@@ -583,7 +589,7 @@ describe("envTaintToSink", () => {
       }`,
       "h",
     );
-    const r = envTaintToSink(c, params);
+    const r = taintToSink(c, params);
     expect(r.result).toBe("pass");
   });
 
@@ -596,7 +602,97 @@ describe("envTaintToSink", () => {
       }`,
       "h",
     );
-    const r = envTaintToSink(c, params);
+    const r = taintToSink(c, params);
     expect(r.result).toBe("pass");
+  });
+
+  describe("cross-file analysis", () => {
+    let dir: string;
+
+    afterEach(() => {
+      rmSync(dir, { recursive: true, force: true });
+    });
+
+    it("fails on a forward leak through a cross-file helper", () => {
+      dir = mkdtempSync(join(tmpdir(), "taint-fwd-"));
+      writeFileSync(
+        join(dir, "helper.ts"),
+        `export function logIt(x: unknown) {
+          console.log("debug:", x);
+        }`,
+      );
+      writeFileSync(
+        join(dir, "handler.ts"),
+        `import { logIt } from "./helper.ts";
+        export function h() {
+          logIt(process.env.STRIPE_API_KEY);
+        }`,
+      );
+
+      const project = new Project();
+      project.addSourceFileAtPath(join(dir, "helper.ts"));
+      const sf = project.addSourceFileAtPath(join(dir, "handler.ts"));
+      const fn = sf.getFunctionOrThrow("h");
+      const c: Candidate = { filePath: join(dir, "handler.ts"), fnName: "h", params: [], fn };
+
+      const r = taintToSink(c, params);
+      expect(r.result).toBe("fail");
+      expect(r.detail).toContain("logIt");
+    });
+
+    it("fails on a backward leak when a tainted value is passed in from another file", () => {
+      dir = mkdtempSync(join(tmpdir(), "taint-bwd-"));
+      writeFileSync(
+        join(dir, "helper.ts"),
+        `export function logIt(value: unknown) {
+          console.log("debug:", value);
+        }`,
+      );
+      writeFileSync(
+        join(dir, "handler.ts"),
+        `import { logIt } from "./helper.ts";
+        export function h() {
+          logIt(process.env.STRIPE_API_KEY);
+        }`,
+      );
+
+      const project = new Project();
+      const handlerSf = project.addSourceFileAtPath(join(dir, "handler.ts"));
+      const helperSf = project.addSourceFileAtPath(join(dir, "helper.ts"));
+      void handlerSf;
+      const fn = helperSf.getFunctionOrThrow("logIt");
+      const c: Candidate = { filePath: join(dir, "helper.ts"), fnName: "logIt", params: ["value"], fn };
+
+      const r = taintToSink(c, params);
+      expect(r.result).toBe("fail");
+      expect(r.detail).toContain("logIt");
+    });
+
+    it("passes when only a non-secret value crosses files", () => {
+      dir = mkdtempSync(join(tmpdir(), "taint-ok-"));
+      writeFileSync(
+        join(dir, "helper.ts"),
+        `export function logIt(value: unknown) {
+          console.log("debug:", value);
+        }`,
+      );
+      writeFileSync(
+        join(dir, "handler.ts"),
+        `import { logIt } from "./helper.ts";
+        export function h() {
+          logIt("handler called");
+        }`,
+      );
+
+      const project = new Project();
+      const handlerSf = project.addSourceFileAtPath(join(dir, "handler.ts"));
+      const helperSf = project.addSourceFileAtPath(join(dir, "helper.ts"));
+      void handlerSf;
+      const fn = helperSf.getFunctionOrThrow("logIt");
+      const c: Candidate = { filePath: join(dir, "helper.ts"), fnName: "logIt", params: ["value"], fn };
+
+      const r = taintToSink(c, params);
+      expect(r.result).toBe("pass");
+    });
   });
 });
