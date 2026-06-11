@@ -66,6 +66,16 @@ export interface Fix {
   suggestion?: string;
 }
 
+// Living memory: a prior fix of the same rule, recorded in a different file
+// during an earlier run (see memory.ts). Lets brainblast say "you fixed this
+// exact issue in <file> on <fixedAt> — this file has the same gap."
+export interface Precedent {
+  file: string;
+  exportName: string;
+  fixedAt: string;
+  detail: string;
+}
+
 export interface CheckResult extends CheckOutcome {
   ruleId: string;
   severity: Severity;
@@ -75,6 +85,8 @@ export interface CheckResult extends CheckOutcome {
   exportName: string;
   /** Present when result === "fail" and a vetted fixer for check.kind produced one. */
   fix?: Fix;
+  /** Present when result === "fail" and the same rule was previously fixed elsewhere. */
+  precedent?: Precedent;
 }
 
 // A Rule is PURE DATA — LLM-authorable as facts.yaml. It carries no executable

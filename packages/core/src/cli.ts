@@ -2,6 +2,7 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { audit } from "./audit.ts";
+import { loadMemory, saveMemory, updateMemory, precedentKey } from "./memory.ts";
 import { resolveRules } from "./resolveRules.ts";
 import { buildTrustGraph, renderTrustGraphMd, isValidSolanaAddress, cacheSize, loadProgramCache, defaultCachePath } from "./trustGraph/index.ts";
 import { analyzeCosts, renderCostReportMd } from "./costAnalysis.ts";
@@ -31,6 +32,21 @@ const targetDir = args.find((a) => !a.startsWith("--")) ?? process.cwd();
 
 const rules = resolveRules(targetDir);
 const { checks, report } = audit(targetDir, rules);
+
+// Living memory: detect fixes since the last run, and surface precedents for
+// current fails (same rule already fixed elsewhere in this repo).
+const memory = loadMemory(targetDir);
+const { memory: nextMemory, precedents } = updateMemory(memory, checks);
+for (const c of checks) {
+  const p = precedents.get(precedentKey(c));
+  if (p) c.precedent = p;
+}
+for (const rc of report.checks as Array<{ ruleId: string; file: string; precedent?: unknown }>) {
+  const p = precedents.get(precedentKey(rc as { ruleId: string; file: string }));
+  if (p) rc.precedent = p;
+}
+saveMemory(targetDir, nextMemory);
+
 const costReport = analyzeCosts(targetDir);
 // Attach cost analysis as a named section — additive, never mutates security results.
 (report as any).costAnalysis = costReport;
@@ -50,6 +66,11 @@ for (const c of checks) {
   const tag = c.result === "pass" ? "PASS " : c.result === "fail" ? "FAIL " : "WARN ";
   console.log(`  [${tag}] ${c.ruleId}  ${c.file}:${c.line}`);
   console.log(`          ${c.detail}`);
+  if (c.precedent) {
+    console.log(
+      `          memory: same issue (${c.ruleId}) was fixed in ${c.precedent.file} on ${c.precedent.fixedAt}`,
+    );
+  }
   if (c.fix) {
     console.log(`          fix: ${c.fix.summary}`);
     if (c.fix.diff) {
