@@ -57,6 +57,7 @@ export function buildReport(
       line: c.line,
       title: c.title,
       detail: c.detail,
+      ...(c.fix ? { fix: c.fix } : {}),
     })),
     checkTotals,
     openQuestions: [],

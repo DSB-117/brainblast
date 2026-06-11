@@ -49,6 +49,23 @@ export interface CheckOutcome {
   detail: string;
 }
 
+// Fix-it mode: an actionable remediation for a "fail" CheckOutcome.
+//
+// `diff` (when present) is a unified diff hunk for a single file that an
+// agent can apply directly (e.g. via `git apply` or by locating the `-`/`+`
+// lines and editing in place) to mechanically resolve the finding.
+//
+// `suggestion` (when present, usually instead of `diff`) is human/agent
+// readable guidance for findings that require structural changes brainblast
+// cannot safely synthesize (e.g. adding a missing verification call from
+// scratch). Both may be present if a partial mechanical fix still leaves
+// follow-up work.
+export interface Fix {
+  summary: string;
+  diff?: string;
+  suggestion?: string;
+}
+
 export interface CheckResult extends CheckOutcome {
   ruleId: string;
   severity: Severity;
@@ -56,6 +73,8 @@ export interface CheckResult extends CheckOutcome {
   file: string;
   line: number;
   exportName: string;
+  /** Present when result === "fail" and a vetted fixer for check.kind produced one. */
+  fix?: Fix;
 }
 
 // A Rule is PURE DATA — LLM-authorable as facts.yaml. It carries no executable
@@ -93,6 +112,11 @@ export interface Rule {
 
 export type Checker = (candidate: Candidate, params: any) => CheckOutcome;
 export type RustChecker = (candidate: RustCandidate, params: any) => CheckOutcome;
+// Fix-it mode: human-vetted fixer template, bound to the same `check.kind` as
+// its checker counterpart. Receives the same candidate/params plus the
+// checker's "fail" outcome, and returns a Fix or undefined if no vetted
+// remediation applies to this particular fail detail.
+export type Fixer = (candidate: Candidate, params: any, outcome: CheckOutcome) => Fix | undefined;
 export type TestTemplate = (opts: {
   handlerImportPath: string;
   handlerExport: string;

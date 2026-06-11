@@ -1,6 +1,7 @@
 import { findCandidates } from "./finder.ts";
 import { findRustCandidates } from "./rustFinder.ts";
 import { runChecker } from "./checkers/index.ts";
+import { runFixer } from "./fixers/index.ts";
 import { buildReport } from "./emit.ts";
 import type { CheckResult, Rule } from "./types.ts";
 
@@ -23,6 +24,7 @@ export function auditWithRule(targetDir: string, rule: Rule): CheckResult[] {
 
   return findCandidates(targetDir, rule).map((c) => {
     const outcome = runChecker(rule.check.kind, c, rule.check.params);
+    const fix = runFixer(rule.check.kind, c, rule.check.params, outcome);
     return {
       ruleId: rule.id,
       severity: rule.severity,
@@ -31,6 +33,7 @@ export function auditWithRule(targetDir: string, rule: Rule): CheckResult[] {
       line: c.fn.getStartLineNumber(),
       exportName: c.fnName,
       ...outcome,
+      ...(fix ? { fix } : {}),
     };
   });
 }

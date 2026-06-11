@@ -50,6 +50,15 @@ for (const c of checks) {
   const tag = c.result === "pass" ? "PASS " : c.result === "fail" ? "FAIL " : "WARN ";
   console.log(`  [${tag}] ${c.ruleId}  ${c.file}:${c.line}`);
   console.log(`          ${c.detail}`);
+  if (c.fix) {
+    console.log(`          fix: ${c.fix.summary}`);
+    if (c.fix.diff) {
+      for (const line of c.fix.diff.split("\n")) console.log(`            ${line}`);
+    }
+    if (c.fix.suggestion) {
+      for (const line of c.fix.suggestion.split("\n")) console.log(`            ${line}`);
+    }
+  }
 }
 const fails = checks.filter((c) => c.result === "fail").length;
 const cantTell = checks.filter((c) => c.result === "cant_tell").length;
