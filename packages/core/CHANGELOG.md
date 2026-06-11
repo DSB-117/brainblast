@@ -2,6 +2,33 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.4.0 — 2026-06-11
+
+- **Precision pass — eliminated ~48 false positives** across 7 real-world repos (open-saas, plotwist,
+  OneStopShop, ai_saas_app, desciersol, hospital-mgmt, dev_desk). Every repo now scans clean
+  (`verdict: ready`, 0 unexpected FAILs).
+  - New `Rule.detect.requiresImport` flag: when set, a candidate must import the rule's module
+    *and* match by name or trigger call — preventing generic name matches (e.g. a Fastify
+    `verifyJwt` middleware) from tripping module-specific rules (Privy/jose, Stripe).
+  - `positional-arg-identity` (Stripe webhook) now returns `cant_tell` instead of a hard `fail`
+    when `constructEvent` is called elsewhere in the file (delegation pattern brainblast can't
+    statically follow), instead of a false FAIL.
+  - Privy/jose and Stripe rules tightened to `requiresImport: true`, removing cross-matches with
+    LemonSqueezy/Polar/Sendgrid webhooks and Fastify JWT middleware.
+- **Fix-it mode** — FAIL results now carry an additive `fix` field (`report.json` `checks[].fix`,
+  also printed by the CLI):
+  - `diff`: a unified-diff hunk an agent can apply directly for mechanical fixes — e.g. swap
+    `JSON.parse(rawBody)` for `rawBody` in `stripe.webhooks.constructEvent`, or merge
+    `audience`/`issuer` into a Privy `jwtVerify` options object.
+  - `suggestion`: guidance text for fails that need structural changes brainblast won't
+    auto-synthesize (a missing `constructEvent` call; decode-only JWT verification).
+  - New `src/fixers/` registry, mirrored from `src/checkers/` and keyed by the same `check.kind`.
+- **Living memory** — brainblast now persists `.agent-research/memory.json` per repo. Each run
+  diffs against the prior snapshot, records `fail → pass/cant_tell` transitions as fix events, and
+  annotates current FAILs with an additive `precedent` field when the same rule was already fixed
+  in a different file ("you fixed this exact issue in `<file>` on `<date>` — this file has the
+  same gap").
+
 ## 0.2.0 — 2026-06-07
 
 First public release, published to npm with [SLSA provenance](https://slsa.dev/) attestation via

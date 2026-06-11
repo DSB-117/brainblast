@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.4.0 — 2026-06-11
+
+- **Precision pass**: eliminated ~48 false positives across 7 real-world repos via a new
+  `requiresImport` detection guard, a `cant_tell` fallback for unresolvable delegation patterns in
+  the Stripe webhook checker, and tightened Stripe/Privy rule scoping. See
+  `packages/core/CHANGELOG.md` for details.
+- **Fix-it mode**: FAIL results now include an additive `fix` field — a unified-diff patch for
+  mechanical fixes (Stripe raw-body, Privy `audience`/`issuer`) or guidance text where an automatic
+  patch isn't safe to synthesize. New `packages/core/src/fixers/` registry.
+- **Living memory**: brainblast persists `.agent-research/memory.json` per repo, recording fix
+  history across runs and annotating new FAILs with a `precedent` when the same rule was already
+  fixed elsewhere in the repo.
+
 ## v0.2.0 — 2026-06-07
 
 - **`brainblast` deterministic auditor + `npx brainblast` CLI (`packages/core`).** A zero-LLM, offline static auditor that scans a Node/TS repo for catastrophic AI-integration traps and generates the behavioral contract test that proves each is fixed. Ships two rules today (Stripe webhook raw-body signature verification; Privy/JWT signature + `aud` + `iss`), each a pure-data `rules/*.yaml` (facts) bound to human-vetted checker + test templates by `kind` — no executable code in a rule. `brainblast <dir> [--ci] [--strict]` emits `report.json` (with `checks[]`/`checkTotals`) and a pass/fail exit code; the committed gate consumes it (confirmed FAIL gates; CANT_TELL warns unless `--strict`). The schema gained additive `checks[]`/`checkTotals` (still `schemaVersion "1.0"`). The research agent can grow coverage by authoring project-local `.agent-research/rules/*.yaml` (validated, can't shadow bundled rules; new skill **Step 6c**). Packaged for npm (tsup build, `engines node>=18`, provenance) with a `brainblast-v*` publish workflow. Engine is unit-tested (50 tests, ~97% stmt coverage), CSO-reviewed (static audit never executes scanned code; YAML loading is RCE- and prototype-pollution-safe), and proven end-to-end from a packed tarball.
