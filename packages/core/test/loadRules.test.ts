@@ -15,6 +15,7 @@ describe("loadRules", () => {
     expect(ids).toEqual([
       "anchor-init-if-needed-guarded",
       "bags-fee-share-creator-included",
+      "env-secret-leaked-to-sink",
       "env-secrets-committed",
       "metaplex-metadata-immutable",
       "privy-jwt-verification",

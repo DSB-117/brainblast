@@ -8,6 +8,8 @@ import { resolveRules } from "./resolveRules.ts";
 import { buildTrustGraph, renderTrustGraphMd, isValidSolanaAddress, cacheSize, loadProgramCache, defaultCachePath } from "./trustGraph/index.ts";
 import { analyzeCosts, renderCostReportMd } from "./costAnalysis.ts";
 import { startWatch } from "./watch.ts";
+import { execFileSync } from "node:child_process";
+import { applyDiffToFile, parseDiff } from "./fixers/applyDiff.ts";
 
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
@@ -28,6 +30,13 @@ import { startWatch } from "./watch.ts";
 // `watch_started`) — for an agent daemon to tail directly, no report.json
 // polling needed.
 //
+// `fix [targetDir] [--apply]` lists every confirmed FAIL that ships a
+// mechanical `fix.diff` (RED). Without `--apply` it's a dry run (prints what
+// would change). With `--apply`, it writes each diff to disk, then re-audits
+// to confirm those findings now pass or cant_tell (GREEN) and reports any
+// that didn't take. Pass `--branch` to also create a new git branch and
+// commit the changes (`brainblast/auto-fix-<timestamp>`).
+//
 // `trust-graph` resolves upgrade authority + verified-build status for each
 // program id (Phase 1 of PLAN-solana-deep-dive.md). Reads the bundled program
 // directory first, then the program cache (~/.brainblast/program-cache.json),
@@ -47,6 +56,11 @@ if (args[0] === "watch") {
   process.on("SIGINT", () => process.exit(0));
   process.on("SIGTERM", () => process.exit(0));
   await new Promise(() => {});
+}
+
+if (args[0] === "fix") {
+  await runFix(args.slice(1));
+  process.exit(0);
 }
 
 const ci = args.includes("--ci");
@@ -204,5 +218,87 @@ async function runTrustGraph(argv: string[]) {
     const cp = defaultCachePath();
     const count = cacheSize(loadProgramCache(cp));
     console.error(`  program-cache: ${count} entries  (${cp})`);
+  }
+}
+
+async function runFix(argv: string[]) {
+  const apply = argv.includes("--apply");
+  const branch = argv.includes("--branch");
+  const targetDir = argv.find((a) => !a.startsWith("--")) ?? process.cwd();
+
+  const rules = resolveRules(targetDir);
+  const { checks: before } = audit(targetDir, rules);
+  const fixable = before.filter((c) => c.result === "fail" && c.fix?.diff);
+
+  if (fixable.length === 0) {
+    console.log("brainblast fix: no mechanical fixes available (no FAIL ships a fix.diff).");
+    const others = before.filter((c) => c.result === "fail" && c.fix?.suggestion);
+    for (const c of others) {
+      console.log(`  [GUIDANCE] ${c.ruleId}  ${c.file}:${c.line}`);
+      console.log(`             ${c.fix!.summary}`);
+    }
+    return;
+  }
+
+  console.log(`brainblast fix: ${fixable.length} mechanical fix(es) found.`);
+  for (const c of fixable) {
+    console.log(`  [${apply ? "APPLY" : "DRY-RUN"}] ${c.ruleId}  ${c.file}:${c.line} — ${c.fix!.summary}`);
+  }
+
+  if (!apply) {
+    console.log("\nRe-run with --apply to write these changes to disk.");
+    return;
+  }
+
+  // Apply bottom-up per file so earlier hunks don't shift later line numbers.
+  const byFile = new Map<string, typeof fixable>();
+  for (const c of fixable) {
+    const file = parseDiff(c.fix!.diff!).filePath;
+    byFile.set(file, [...(byFile.get(file) ?? []), c]);
+  }
+
+  let applied = 0;
+  let skipped = 0;
+  for (const [, group] of byFile) {
+    const sorted = [...group].sort((a, b) => parseDiff(b.fix!.diff!).oldStart - parseDiff(a.fix!.diff!).oldStart);
+    for (const c of sorted) {
+      const ok = applyDiffToFile(c.fix!.diff!);
+      if (ok) applied++;
+      else {
+        skipped++;
+        console.log(`  [SKIP] ${c.ruleId}  ${c.file}:${c.line} — file no longer matches the fix's expected range`);
+      }
+    }
+  }
+  console.log(`\nApplied ${applied} fix(es)${skipped ? `, skipped ${skipped}` : ""}.`);
+
+  // Re-audit to confirm RED -> GREEN for the fixes we applied.
+  const { checks: after } = audit(targetDir, rules);
+  const stillFailing = fixable.filter((c) => {
+    const a = after.find((x) => x.ruleId === c.ruleId && x.file === c.file && x.exportName === c.exportName);
+    return a?.result === "fail";
+  });
+  if (stillFailing.length > 0) {
+    console.log(`\nWarning: ${stillFailing.length} fix(es) applied but the rule still fails:`);
+    for (const c of stillFailing) console.log(`  ${c.ruleId}  ${c.file}:${c.line}`);
+  } else if (applied > 0) {
+    console.log("All applied fixes now pass (or cant_tell) on re-audit. ✓");
+  }
+
+  if (branch && applied > 0) {
+    const ts = new Date().toISOString().replace(/[:.]/g, "-");
+    const branchName = `brainblast/auto-fix-${ts}`;
+    try {
+      execFileSync("git", ["checkout", "-b", branchName], { cwd: targetDir, stdio: "ignore" });
+      execFileSync("git", ["add", "-A"], { cwd: targetDir, stdio: "ignore" });
+      execFileSync(
+        "git",
+        ["commit", "-q", "-m", `brainblast fix: apply ${applied} mechanical fix(es)`],
+        { cwd: targetDir, stdio: "ignore" },
+      );
+      console.log(`\nCommitted to new branch '${branchName}'.`);
+    } catch (e: any) {
+      console.error(`\nWarning: could not create branch/commit: ${e.message ?? e}`);
+    }
   }
 }

@@ -20,6 +20,8 @@ const cases: [string, string, CheckResultKind][] = [
   ["anchor/init-if-needed/fixed", "anchor-init-if-needed-guarded", "pass"],
   ["env/vulnerable", "env-secrets-committed", "fail"],
   ["env/fixed", "env-secrets-committed", "pass"],
+  ["taint/vulnerable", "env-secret-leaked-to-sink", "fail"],
+  ["taint/fixed", "env-secret-leaked-to-sink", "pass"],
 ];
 
 describe("audit (unified, all rules)", () => {

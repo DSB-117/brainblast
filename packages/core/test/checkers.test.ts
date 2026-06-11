@@ -7,6 +7,7 @@ import { argEqualsConstantIdentifier } from "../src/checkers/argEqualsConstantId
 import { objectArgPropertyLiteralEquals } from "../src/checkers/objectArgPropertyLiteralEquals.ts";
 import { anchorInitIfNeededGuarded } from "../src/checkers/anchorInitIfNeededGuarded.ts";
 import { envSecretsCommitted } from "../src/checkers/envSecretsCommitted.ts";
+import { envTaintToSink } from "../src/checkers/envTaintToSink.ts";
 import type { Candidate, RustCandidate, ConfigCandidate } from "../src/types.ts";
 
 function candidate(code: string, fnName: string): Candidate {
@@ -524,5 +525,78 @@ describe("envSecretsCommitted", () => {
     expect(r.result).toBe("fail");
     expect(r.detail).toContain("DATABASE_PASSWORD");
     expect(r.detail).toContain("STRIPE_API_KEY");
+  });
+});
+
+describe("envTaintToSink", () => {
+  const params = {
+    sinkCalls: ["log", "error", "warn", "info", "debug", "json", "send", "write", "end"],
+    secretKeyPattern: "(SECRET|PRIVATE_KEY|API_KEY|ACCESS_KEY|TOKEN|PASSWORD|CREDENTIAL)",
+  };
+
+  it("fails when process.env.X is logged directly", () => {
+    const c = candidate(
+      `export function h() {
+        console.log("key", process.env.STRIPE_SECRET_KEY);
+      }`,
+      "h",
+    );
+    const r = envTaintToSink(c, params);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("STRIPE_SECRET_KEY");
+  });
+
+  it("fails when a secret read into a local variable is logged", () => {
+    const c = candidate(
+      `export function h() {
+        const apiKey = process.env.STRIPE_API_KEY;
+        console.log("using key", apiKey);
+      }`,
+      "h",
+    );
+    const r = envTaintToSink(c, params);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("apiKey");
+  });
+
+  it("fails on a one-hop leak through a same-file helper", () => {
+    const c = candidate(
+      `function logIt(x: string) {
+        console.log("debug", x);
+      }
+      export function h() {
+        const apiKey = process.env.STRIPE_API_KEY;
+        logIt(apiKey);
+      }`,
+      "h",
+    );
+    const r = envTaintToSink(c, params);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("logIt");
+  });
+
+  it("passes when no secret-shaped env value reaches a sink", () => {
+    const c = candidate(
+      `export function h() {
+        const mode = process.env.NODE_ENV;
+        console.log("mode", mode);
+      }`,
+      "h",
+    );
+    const r = envTaintToSink(c, params);
+    expect(r.result).toBe("pass");
+  });
+
+  it("passes when a non-secret value is logged alongside an unrelated secret read", () => {
+    const c = candidate(
+      `export function h() {
+        const apiKey = process.env.STRIPE_API_KEY;
+        console.log("ready");
+        return apiKey;
+      }`,
+      "h",
+    );
+    const r = envTaintToSink(c, params);
+    expect(r.result).toBe("pass");
   });
 });

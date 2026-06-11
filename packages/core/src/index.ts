@@ -13,6 +13,7 @@ export { findCandidates } from "./finder.ts";
 export { findConfigCandidates } from "./configFinder.ts";
 export { getChangedRanges, getWorkingTreeChanges, fileChanged, rangeChanged, type ChangedRanges } from "./gitDiff.ts";
 export { startWatch, runIncrementalScan, type WatchEvent, type WatchOptions } from "./watch.ts";
+export { applyDiffToFile, parseDiff, type ParsedDiff } from "./fixers/applyDiff.ts";
 
 // ── Cost & Rent Analysis (Phase 3) ───────────────────────────────────────────
 export { analyzeCosts, renderCostReportMd, rentExemptMinimum, lamportsToSol } from "./costAnalysis.ts";

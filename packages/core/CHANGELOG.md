@@ -2,6 +2,23 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## Unreleased
+
+- **Cross-file taint tracking** — new `"env-taint-to-sink"` checker kind and
+  bundled rule `env-secret-leaked-to-sink`: a shallow (1-2 hop), intra-file
+  data-flow pass that flags secret-shaped `process.env.X` values (directly,
+  via a local variable, or one hop through a same-file helper function) that
+  reach a logging/response sink (`console.log`, `res.json`, `res.send`, etc.).
+  Catches the "secret flows through 2-3 functions and gets logged" class of
+  bug that single-function rules miss entirely.
+- **`brainblast fix [--apply] [--branch]`** — auto-remediation for mechanical
+  fixes. Dry run lists every confirmed FAIL that ships a `fix.diff`; `--apply`
+  writes each diff to disk and re-audits to confirm RED -> GREEN, reporting
+  any fix that didn't take (e.g. stale diff). `--branch` additionally creates
+  `brainblast/auto-fix-<timestamp>` and commits the applied changes. New
+  `src/fixers/applyDiff.ts` (`parseDiff`/`applyDiffToFile`), exported from the
+  library API.
+
 ## 0.4.1 — 2026-06-11
 
 - **Diff-aware scanning (`--since <ref>`)** — audit only what changed relative to any git

@@ -12,6 +12,8 @@ npx brainblast .            # scan the repo, write .agent-research/report.json
 npx brainblast . --ci       # exit 1 if a confirmed FAIL remains
 npx brainblast . --ci --strict   # also fail on CANT_TELL (can't statically prove)
 npx brainblast . --since origin/main   # diff-aware: only audit what changed
+npx brainblast fix .                   # dry run: list mechanical fixes
+npx brainblast fix . --apply           # write fixes, re-audit RED -> GREEN
 ```
 
 Exit codes: **0** clean · **1** a confirmed FAIL · CANT_TELL is a warning by
@@ -58,6 +60,22 @@ git work tree). This is the integration point for an agent daemon — tail
 stdout for structured findings instead of polling `.agent-research/report.json`.
 Exit with Ctrl-C / SIGTERM.
 
+### Auto-fix (`brainblast fix`)
+
+```sh
+npx brainblast fix .            # dry run: list available mechanical fixes
+npx brainblast fix . --apply    # write each fix.diff to disk, then re-audit
+npx brainblast fix . --apply --branch   # also commit to brainblast/auto-fix-<ts>
+```
+
+Every confirmed FAIL that ships a mechanical `fix.diff` (e.g. Stripe raw-body,
+Privy `audience`/`issuer`) can be applied directly. `--apply` writes each diff,
+then re-runs the audit to confirm the finding now passes (RED -> GREEN) — any
+fix that doesn't take is reported, not silently dropped. Findings with only a
+`suggestion` (structural fixes brainblast won't auto-synthesize) are listed as
+guidance, not applied. `--branch` additionally creates a new branch and commits
+the applied changes.
+
 ## What it catches
 
 ### Web2 / Node.js
@@ -81,6 +99,7 @@ Exit with Ctrl-C / SIGTERM.
 | Rule | What's wrong | Consequence |
 |------|--------------|-------------|
 | `env-secrets-committed` | A `.env*` file (not `.env.example`/`.sample`/`.template`) is tracked by git and contains a secret-shaped key (`SECRET`, `*_PRIVATE_KEY`, `*_API_KEY`, `*_TOKEN`, `*_PASSWORD`, etc.) with a real-looking (non-placeholder) value | Anyone with read access to the repo — including forks of a public repo — can read the live credential |
+| `env-secret-leaked-to-sink` | A secret-shaped `process.env.X` value (directly, via a local variable, or one hop through a same-file helper) is passed to `console.log`/`res.json`/`res.send`/etc. | Credentials end up in logs, error trackers, or API responses — readable by anyone with log/response access |
 
 Each finding lands in `.agent-research/report.json` (stable `schemaVersion: "1.0"`)
 with a `checks[]` array a CI gate can read. Each confirmed FAIL ships a
@@ -164,7 +183,7 @@ All types are exported: `Rule`, `CheckResult`, `CostReport`, `AccountFlow`,
 
 ```sh
 npm install
-npm test         # unit suite (164 tests)
+npm test         # unit suite (173 tests)
 npm run prove    # end-to-end: generated tests RED on vulnerable, GREEN on fixed
 npm run build    # produce dist/ (the published artifact)
 ```
