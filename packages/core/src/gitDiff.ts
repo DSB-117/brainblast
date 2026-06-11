@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 // Diff-aware scanning support: maps each changed file (absolute path) to the
@@ -48,6 +49,35 @@ export function getChangedRanges(targetDir: string, ref: string): ChangedRanges 
       arr.push([start, end]);
       ranges.set(currentFile, arr);
     }
+  }
+  return ranges;
+}
+
+// Working-tree changes relative to HEAD: tracked-file edits (staged or not,
+// via `git diff HEAD`) plus untracked files (whole file treated as changed).
+// This is the "what did I just save?" view used by `brainblast watch`.
+export function getWorkingTreeChanges(targetDir: string): ChangedRanges {
+  const ranges = getChangedRanges(targetDir, "HEAD");
+
+  let untracked: string;
+  try {
+    untracked = execFileSync("git", ["ls-files", "--others", "--exclude-standard", "--", "."], {
+      cwd: targetDir,
+      encoding: "utf8",
+    });
+  } catch {
+    return ranges;
+  }
+
+  for (const rel of untracked.split("\n").map((s) => s.trim()).filter(Boolean)) {
+    const abs = join(targetDir, rel);
+    let lineCount = 1;
+    try {
+      lineCount = readFileSync(abs, "utf8").split("\n").length;
+    } catch {
+      continue; // unreadable/binary — skip
+    }
+    ranges.set(abs, [[1, lineCount]]);
   }
   return ranges;
 }

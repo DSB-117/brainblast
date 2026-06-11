@@ -7,9 +7,11 @@ import { loadMemory, saveMemory, updateMemory, precedentKey } from "./memory.ts"
 import { resolveRules } from "./resolveRules.ts";
 import { buildTrustGraph, renderTrustGraphMd, isValidSolanaAddress, cacheSize, loadProgramCache, defaultCachePath } from "./trustGraph/index.ts";
 import { analyzeCosts, renderCostReportMd } from "./costAnalysis.ts";
+import { startWatch } from "./watch.ts";
 
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
+//   brainblast watch [targetDir]
 //   brainblast trust-graph <programId> [<programId>...] [--rpc URL] [--no-probe] [--json]
 //
 // `audit` runs every bundled rule (default). With --ci, a confirmed FAIL exits
@@ -19,6 +21,12 @@ import { analyzeCosts, renderCostReportMd } from "./costAnalysis.ts";
 // line range overlaps a change in `git diff <ref>`, and config/env files that
 // changed at all, are audited. Pairs naturally with CI ("--since origin/main")
 // or a pre-commit/save hook ("--since HEAD").
+//
+// `watch` runs as a daemon: on every file save, it re-scans only the working-
+// tree changes (vs HEAD, including untracked files) and emits one NDJSON
+// event per line on stdout (`finding` / `scan_complete` / `scan_error` /
+// `watch_started`) — for an agent daemon to tail directly, no report.json
+// polling needed.
 //
 // `trust-graph` resolves upgrade authority + verified-build status for each
 // program id (Phase 1 of PLAN-solana-deep-dive.md). Reads the bundled program
@@ -30,6 +38,15 @@ const args = process.argv.slice(2);
 if (args[0] === "trust-graph") {
   await runTrustGraph(args.slice(1));
   process.exit(0);
+}
+
+if (args[0] === "watch") {
+  const watchDir = args.find((a, i) => i > 0 && !a.startsWith("--")) ?? process.cwd();
+  startWatch(watchDir);
+  // Keep the process alive; Ctrl-C / SIGTERM exits cleanly.
+  process.on("SIGINT", () => process.exit(0));
+  process.on("SIGTERM", () => process.exit(0));
+  await new Promise(() => {});
 }
 
 const ci = args.includes("--ci");

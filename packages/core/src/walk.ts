@@ -1,7 +1,7 @@
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-const SKIP_DIRS = new Set(["node_modules", ".git", ".gen", "dist", ".next", ".agent-research"]);
+export const SKIP_DIRS = new Set(["node_modules", ".git", ".gen", "dist", ".next", ".agent-research"]);
 
 // Collect candidate .ts source files, skipping deps, vcs, and generated/test files.
 export function walk(dir: string, out: string[] = []): string[] {

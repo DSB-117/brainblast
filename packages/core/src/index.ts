@@ -11,7 +11,8 @@ export { renderTest, testKinds } from "./testTemplates/index.ts";
 export { runChecker, checkerKinds } from "./checkers/index.ts";
 export { findCandidates } from "./finder.ts";
 export { findConfigCandidates } from "./configFinder.ts";
-export { getChangedRanges, fileChanged, rangeChanged, type ChangedRanges } from "./gitDiff.ts";
+export { getChangedRanges, getWorkingTreeChanges, fileChanged, rangeChanged, type ChangedRanges } from "./gitDiff.ts";
+export { startWatch, runIncrementalScan, type WatchEvent, type WatchOptions } from "./watch.ts";
 
 // ── Cost & Rent Analysis (Phase 3) ───────────────────────────────────────────
 export { analyzeCosts, renderCostReportMd, rentExemptMinimum, lamportsToSol } from "./costAnalysis.ts";

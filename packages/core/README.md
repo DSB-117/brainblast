@@ -35,6 +35,29 @@ Living-memory precedents (see below) are still looked up and shown in
 `--since` mode, but the memory snapshot itself is only written on full
 (non-`--since`) runs — a partial diff-scan never overwrites the full picture.
 
+### Watch mode (`brainblast watch`)
+
+```sh
+npx brainblast watch .
+```
+
+Runs as a daemon: every time a file is saved, brainblast re-scans only the
+working-tree changes (uncommitted edits vs `HEAD`, plus untracked files —
+the "what did I just save?" view) and emits one **NDJSON event per line** on
+stdout:
+
+```json
+{"type":"watch_started","targetDir":"."}
+{"type":"finding","ruleId":"stripe-webhook-raw-body-verification","severity":"critical","result":"fail","file":"src/webhook.ts","line":3,"detail":"...","fix":{...}}
+{"type":"scan_complete","filesChanged":1,"findings":1,"durationMs":62}
+```
+
+Event types: `watch_started`, `finding` (one per FAIL/CANT_TELL), `scan_complete`
+(per debounced save, even if nothing changed), and `scan_error` (e.g. not a
+git work tree). This is the integration point for an agent daemon — tail
+stdout for structured findings instead of polling `.agent-research/report.json`.
+Exit with Ctrl-C / SIGTERM.
+
 ## What it catches
 
 ### Web2 / Node.js
@@ -141,7 +164,7 @@ All types are exported: `Rule`, `CheckResult`, `CostReport`, `AccountFlow`,
 
 ```sh
 npm install
-npm test         # unit suite (158 tests)
+npm test         # unit suite (164 tests)
 npm run prove    # end-to-end: generated tests RED on vulnerable, GREEN on fixed
 npm run build    # produce dist/ (the published artifact)
 ```
