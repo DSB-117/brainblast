@@ -2,7 +2,7 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
-## Unreleased
+## 0.4.2 — 2026-06-11
 
 - **Cross-file taint tracking** — new `"env-taint-to-sink"` checker kind and
   bundled rule `env-secret-leaked-to-sink`: a shallow (1-2 hop), intra-file

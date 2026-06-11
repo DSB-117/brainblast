@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.4.2 — 2026-06-11
+
+- **Cross-file taint tracking**: new `env-secret-leaked-to-sink` rule catches secret-shaped
+  `process.env.X` values that flow — directly, via a local variable, or one hop through a
+  same-file helper — into a logging/response sink (`console.log`, `res.json`, `res.send`, etc.).
+- **`brainblast fix [--apply] [--branch]`**: lists (and, with `--apply`, applies) every confirmed
+  FAIL's mechanical `fix.diff`, re-audits to confirm RED -> GREEN, and optionally commits the
+  result to a new `brainblast/auto-fix-<timestamp>` branch.
+
+See `packages/core/CHANGELOG.md` for details.
+
 ## v0.4.1 — 2026-06-11
 
 - **Diff-aware scanning (`brainblast --since <ref>`)**: audit only what changed in `git diff <ref>`
