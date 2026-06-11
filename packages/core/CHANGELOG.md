@@ -2,6 +2,25 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.4.1 — 2026-06-11
+
+- **Diff-aware scanning (`--since <ref>`)** — audit only what changed relative to any git
+  revision (a branch, `HEAD~1`, a commit SHA): TS/Rust functions whose line range overlaps
+  `git diff <ref>`, and config/env files that changed at all. Makes brainblast fast enough to
+  run on every commit/PR instead of a full-repo scan. Exits `2` if `--since` can't run `git diff`
+  (bad ref, or not a git work tree). The living-memory snapshot is only written on full
+  (non-`--since`) runs, but precedents are still looked up and shown.
+- **Config/env auditing** — new `"config"` detection lang for whole-file audits outside function
+  scope (`detect.filePatterns`, matched via `findConfigCandidates` + git-tracked status).
+  - New bundled rule `env-secrets-committed`: flags git-tracked `.env*` files (excluding
+    `.env.example`/`.sample`/`.template`) containing secret-shaped keys (`SECRET`, `*_API_KEY`,
+    `*_PASSWORD`, `*_TOKEN`, etc.) with real-looking (non-placeholder) values.
+  - New `none` test-template kind for rules with no behavioral-contract test.
+- **`brainblast watch`** — new daemon mode. On every file save, re-scans only the working-tree
+  changes (uncommitted edits vs `HEAD`, plus untracked files) and emits one NDJSON event per line
+  on stdout (`watch_started` / `finding` / `scan_complete` / `scan_error`) — an agent daemon can
+  tail this directly instead of polling `.agent-research/report.json`.
+
 ## 0.4.0 — 2026-06-11
 
 - **Precision pass — eliminated ~48 false positives** across 7 real-world repos (open-saas, plotwist,

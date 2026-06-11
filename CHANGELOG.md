@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.4.1 — 2026-06-11
+
+- **Diff-aware scanning (`brainblast --since <ref>`)**: audit only what changed in `git diff <ref>`
+  — function-scoped for TS/Rust, whole-file for config/env. Fast enough for per-commit/PR CI.
+- **Config/env auditing**: new `"config"` detection lang and bundled rule
+  `env-secrets-committed`, flagging real-looking secrets committed in tracked `.env*` files.
+- **`brainblast watch`**: new daemon mode that re-scans on file save and streams structured
+  NDJSON findings on stdout for an agent daemon to consume directly.
+
+See `packages/core/CHANGELOG.md` for details.
+
 ## v0.4.0 — 2026-06-11
 
 - **Precision pass**: eliminated ~48 false positives across 7 real-world repos via a new
