@@ -10,6 +10,8 @@ export { generateTestForResult } from "./generate.ts";
 export { renderTest, testKinds } from "./testTemplates/index.ts";
 export { runChecker, checkerKinds } from "./checkers/index.ts";
 export { findCandidates } from "./finder.ts";
+export { findConfigCandidates } from "./configFinder.ts";
+export { getChangedRanges, fileChanged, rangeChanged, type ChangedRanges } from "./gitDiff.ts";
 
 // ── Cost & Rent Analysis (Phase 3) ───────────────────────────────────────────
 export { analyzeCosts, renderCostReportMd, rentExemptMinimum, lamportsToSol } from "./costAnalysis.ts";
@@ -60,4 +62,8 @@ export type {
   Candidate,
   RustCandidate,
   RustAccountField,
+  ConfigCandidate,
+  Checker,
+  RustChecker,
+  ConfigChecker,
 } from "./types.ts";

@@ -18,6 +18,8 @@ const cases: [string, string, CheckResultKind][] = [
   ["metaplex/fixed", "metaplex-metadata-immutable", "pass"],
   ["anchor/init-if-needed/vulnerable", "anchor-init-if-needed-guarded", "fail"],
   ["anchor/init-if-needed/fixed", "anchor-init-if-needed-guarded", "pass"],
+  ["env/vulnerable", "env-secrets-committed", "fail"],
+  ["env/fixed", "env-secrets-committed", "pass"],
 ];
 
 describe("audit (unified, all rules)", () => {

@@ -6,7 +6,8 @@ import { feeAllocationShape } from "../src/checkers/feeAllocationShape.ts";
 import { argEqualsConstantIdentifier } from "../src/checkers/argEqualsConstantIdentifier.ts";
 import { objectArgPropertyLiteralEquals } from "../src/checkers/objectArgPropertyLiteralEquals.ts";
 import { anchorInitIfNeededGuarded } from "../src/checkers/anchorInitIfNeededGuarded.ts";
-import type { Candidate, RustCandidate } from "../src/types.ts";
+import { envSecretsCommitted } from "../src/checkers/envSecretsCommitted.ts";
+import type { Candidate, RustCandidate, ConfigCandidate } from "../src/types.ts";
 
 function candidate(code: string, fnName: string): Candidate {
   const project = new Project({ useInMemoryFileSystem: true });
@@ -466,5 +467,62 @@ describe("anchorInitIfNeededGuarded (Anchor init_if_needed reinit)", () => {
     const r = anchorInitIfNeededGuarded(c, { failAbsentDetail: "CUSTOM_FAIL_MSG" });
     expect(r.result).toBe("fail");
     expect(r.detail).toBe("CUSTOM_FAIL_MSG");
+  });
+});
+
+describe("envSecretsCommitted", () => {
+  const params = {
+    secretKeyPattern: "(SECRET|PRIVATE_KEY|API_KEY|ACCESS_KEY|TOKEN|PASSWORD|CREDENTIAL)",
+    placeholderPattern:
+      "^(your[_-]|xxx|changeme|change[_-]?me|replace|example|<|sk_test_|pk_test_|test[_-]|dummy|placeholder|\\*+$|\\.\\.\\.$)",
+    ignoredDetail: "File is git-ignored and not committed to source control.",
+    passDetail: "File is tracked but contains no secret-looking values (placeholders only).",
+    failDetailPrefix: "This file is committed to source control and contains what look like real secret values.",
+  };
+
+  function configCandidate(content: string, tracked: boolean, filePath = ".env"): ConfigCandidate {
+    return { filePath, content, tracked };
+  }
+
+  it("PASS when file is git-ignored, regardless of content", () => {
+    const c = configCandidate("DATABASE_PASSWORD=Sup3rSecretPass!23\n", false);
+    const r = envSecretsCommitted(c, params);
+    expect(r.result).toBe("pass");
+    expect(r.detail).toBe(params.ignoredDetail);
+  });
+
+  it("FAIL when tracked file has a secret-shaped key with a real-looking value", () => {
+    const c = configCandidate("DATABASE_PASSWORD=Sup3rSecretPass!23\nNODE_ENV=production\n", true);
+    const r = envSecretsCommitted(c, params);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("DATABASE_PASSWORD");
+    expect(r.detail).not.toContain("NODE_ENV");
+  });
+
+  it("PASS when tracked file only contains placeholder values", () => {
+    const c = configCandidate(
+      "DATABASE_PASSWORD=changeme\nAPI_KEY=your_api_key_here\nSTRIPE_SECRET_KEY=sk_test_123\n",
+      true,
+    );
+    const r = envSecretsCommitted(c, params);
+    expect(r.result).toBe("pass");
+    expect(r.detail).toBe(params.passDetail);
+  });
+
+  it("ignores comments, blank lines, and non-secret keys", () => {
+    const c = configCandidate("# comment\n\nNODE_ENV=production\nPORT=3000\n", true);
+    const r = envSecretsCommitted(c, params);
+    expect(r.result).toBe("pass");
+  });
+
+  it("FAIL lists multiple offending keys", () => {
+    const c = configCandidate(
+      "DATABASE_PASSWORD=Sup3rSecretPass!23\nSTRIPE_API_KEY=actual_live_value_here\n",
+      true,
+    );
+    const r = envSecretsCommitted(c, params);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("DATABASE_PASSWORD");
+    expect(r.detail).toContain("STRIPE_API_KEY");
   });
 });

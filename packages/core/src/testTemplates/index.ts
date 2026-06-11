@@ -4,6 +4,7 @@ import { bagsFeeShare } from "./bagsFeeShare.ts";
 import { tokenProgramConsistency } from "./tokenProgramConsistency.ts";
 import { metaplexImmutableMetadata } from "./metaplexImmutableMetadata.ts";
 import { anchorProgramTest } from "./anchorProgramTest.ts";
+import { none } from "./none.ts";
 import type { TestTemplate } from "../types.ts";
 
 // Registry of human-vetted behavioral-contract templates. Rules bind by `kind`.
@@ -14,6 +15,7 @@ const registry: Record<string, TestTemplate> = {
   "token-program-consistency": tokenProgramConsistency,
   "metaplex-immutable-metadata": metaplexImmutableMetadata,
   "anchor-program-test": anchorProgramTest,
+  none,
 };
 
 // Defense-in-depth: the export name is interpolated raw into generated TS source.

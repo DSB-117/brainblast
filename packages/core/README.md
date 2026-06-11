@@ -11,10 +11,29 @@ parses your code statically and runs offline.
 npx brainblast .            # scan the repo, write .agent-research/report.json
 npx brainblast . --ci       # exit 1 if a confirmed FAIL remains
 npx brainblast . --ci --strict   # also fail on CANT_TELL (can't statically prove)
+npx brainblast . --since origin/main   # diff-aware: only audit what changed
 ```
 
 Exit codes: **0** clean · **1** a confirmed FAIL · CANT_TELL is a warning by
-default (a red build always means a real, confirmed problem).
+default (a red build always means a real, confirmed problem). `2` means
+`--since <ref>` could not run `git diff` (bad ref, or not a git work tree).
+
+### Diff-aware scanning (`--since <ref>`)
+
+`--since <ref>` audits only what's changed relative to `<ref>` (any git
+revision: a branch, `HEAD~1`, a commit SHA): TS/Rust functions whose line
+range overlaps `git diff <ref>`, and config/env files that changed at all.
+This makes brainblast fast enough to run on every commit or PR instead of a
+full-repo scan:
+
+```sh
+npx brainblast . --since origin/main   # CI: only the PR's diff
+npx brainblast . --since HEAD          # pre-commit/save hook: working tree changes
+```
+
+Living-memory precedents (see below) are still looked up and shown in
+`--since` mode, but the memory snapshot itself is only written on full
+(non-`--since`) runs — a partial diff-scan never overwrites the full picture.
 
 ## What it catches
 
@@ -33,6 +52,12 @@ default (a red build always means a real, confirmed problem).
 | `token-2022-program-id-pinned` | `createMint` passes the legacy `TOKEN_PROGRAM_ID` where Token-2022 was intended | Mint is owned by the wrong program; Token-2022 features (transfer hooks, fees, confidential transfers) are silently absent with no on-chain fix |
 | `metaplex-metadata-immutable` | `createV1` / `createNft` omits `isMutable: false` | Metadata defaults to mutable; any update authority can change the token's name, image, or attributes after launch |
 | `anchor-init-if-needed-guarded` | Anchor instruction uses `init_if_needed` without a re-initialization guard | Any user can reinitialize another user's account, overwriting its state |
+
+### Config / env
+
+| Rule | What's wrong | Consequence |
+|------|--------------|-------------|
+| `env-secrets-committed` | A `.env*` file (not `.env.example`/`.sample`/`.template`) is tracked by git and contains a secret-shaped key (`SECRET`, `*_PRIVATE_KEY`, `*_API_KEY`, `*_TOKEN`, `*_PASSWORD`, etc.) with a real-looking (non-placeholder) value | Anyone with read access to the repo — including forks of a public repo — can read the live credential |
 
 Each finding lands in `.agent-research/report.json` (stable `schemaVersion: "1.0"`)
 with a `checks[]` array a CI gate can read. Each confirmed FAIL ships a
@@ -116,7 +141,7 @@ All types are exported: `Rule`, `CheckResult`, `CostReport`, `AccountFlow`,
 
 ```sh
 npm install
-npm test         # unit suite (135 tests)
+npm test         # unit suite (158 tests)
 npm run prove    # end-to-end: generated tests RED on vulnerable, GREEN on fixed
 npm run build    # produce dist/ (the published artifact)
 ```

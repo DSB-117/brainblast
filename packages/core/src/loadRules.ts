@@ -20,7 +20,19 @@ function validateRule(r: any, file: string): void {
   if (!SEVERITIES.includes(r.severity)) errs.push(`bad severity '${r.severity}'`);
   if (!r.title || typeof r.title !== "string") errs.push("missing title");
   if (!r.component || !r.component.name || !r.component.type) errs.push("missing component.name/type");
-  if (
+  if (r.detect?.lang === "config") {
+    if (!Array.isArray(r.detect.filePatterns) || r.detect.filePatterns.length === 0) {
+      errs.push("detect.filePatterns must be a non-empty array when detect.lang is 'config'");
+    } else {
+      for (const pat of r.detect.filePatterns) {
+        try {
+          new RegExp(pat);
+        } catch {
+          errs.push(`detect.filePatterns contains an invalid regex: ${pat}`);
+        }
+      }
+    }
+  } else if (
     !r.detect ||
     !Array.isArray(r.detect.modules) ||
     typeof r.detect.nameRegex !== "string" ||

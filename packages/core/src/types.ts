@@ -44,6 +44,18 @@ export interface RustCandidate {
   fnBodyNode: any;
 }
 
+// Config/env candidate — a whole file matched by `detect.filePatterns`
+// (e.g. `.env`, `next.config.js`, `vercel.json`). Unlike Candidate/RustCandidate
+// these aren't function-scoped: the "finding" is about the file as a whole.
+export interface ConfigCandidate {
+  /** Source file (absolute path) */
+  filePath: string;
+  /** Raw file contents */
+  content: string;
+  /** Whether this file is tracked by git / not covered by .gitignore */
+  tracked: boolean;
+}
+
 export interface CheckOutcome {
   result: CheckResultKind;
   detail: string;
@@ -102,8 +114,17 @@ export interface Rule {
     modules: string[];
     nameRegex: string;
     triggerCalls: string[];
-    /** Defaults to "typescript". Set to "rust" for Anchor/Rust checker kinds. */
-    lang?: "typescript" | "rust";
+    /**
+     * Defaults to "typescript". Set to "rust" for Anchor/Rust checker kinds,
+     * or "config" for whole-file config/env audits (see `filePatterns`).
+     */
+    lang?: "typescript" | "rust" | "config";
+    /**
+     * Required when `lang: "config"`. Regexes (matched against the file path
+     * relative to the scan root) selecting which files this rule audits,
+     * e.g. `["(^|/)\\.env(\\.[^/]+)?$"]`. Ignored for "typescript"/"rust".
+     */
+    filePatterns?: string[];
     /**
      * When true, a module import from `modules` is a REQUIRED condition for
      * detection: a candidate must be in a file that imports one of the listed
@@ -124,6 +145,7 @@ export interface Rule {
 
 export type Checker = (candidate: Candidate, params: any) => CheckOutcome;
 export type RustChecker = (candidate: RustCandidate, params: any) => CheckOutcome;
+export type ConfigChecker = (candidate: ConfigCandidate, params: any) => CheckOutcome;
 // Fix-it mode: human-vetted fixer template, bound to the same `check.kind` as
 // its checker counterpart. Receives the same candidate/params plus the
 // checker's "fail" outcome, and returns a Fix or undefined if no vetted

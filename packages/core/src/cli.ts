@@ -2,17 +2,23 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { audit } from "./audit.ts";
+import { getChangedRanges } from "./gitDiff.ts";
 import { loadMemory, saveMemory, updateMemory, precedentKey } from "./memory.ts";
 import { resolveRules } from "./resolveRules.ts";
 import { buildTrustGraph, renderTrustGraphMd, isValidSolanaAddress, cacheSize, loadProgramCache, defaultCachePath } from "./trustGraph/index.ts";
 import { analyzeCosts, renderCostReportMd } from "./costAnalysis.ts";
 
 // Usage:
-//   brainblast <targetDir> [--ci] [--strict]
+//   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
 //   brainblast trust-graph <programId> [<programId>...] [--rpc URL] [--no-probe] [--json]
 //
 // `audit` runs every bundled rule (default). With --ci, a confirmed FAIL exits
 // 1. CANT_TELL warns and does NOT fail unless --strict is passed.
+//
+// `--since <ref>` enables diff-aware scanning: only functions (TS/Rust) whose
+// line range overlaps a change in `git diff <ref>`, and config/env files that
+// changed at all, are audited. Pairs naturally with CI ("--since origin/main")
+// or a pre-commit/save hook ("--since HEAD").
 //
 // `trust-graph` resolves upgrade authority + verified-build status for each
 // program id (Phase 1 of PLAN-solana-deep-dive.md). Reads the bundled program
@@ -28,24 +34,58 @@ if (args[0] === "trust-graph") {
 
 const ci = args.includes("--ci");
 const strict = args.includes("--strict");
-const targetDir = args.find((a) => !a.startsWith("--")) ?? process.cwd();
+const sinceIdx = args.indexOf("--since");
+const since = sinceIdx >= 0 ? args[sinceIdx + 1] : undefined;
+const targetDir =
+  args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--since") ?? process.cwd();
+
+if (sinceIdx >= 0 && !since) {
+  console.error("error: --since requires a <ref> argument, e.g. --since origin/main");
+  process.exit(2);
+}
 
 const rules = resolveRules(targetDir);
-const { checks, report } = audit(targetDir, rules);
+let changedRanges;
+if (since) {
+  try {
+    changedRanges = getChangedRanges(targetDir, since);
+  } catch (e: any) {
+    console.error(e.message ?? String(e));
+    process.exit(2);
+  }
+}
+const { checks, report } = audit(targetDir, rules, changedRanges);
 
 // Living memory: detect fixes since the last run, and surface precedents for
-// current fails (same rule already fixed elsewhere in this repo).
-const memory = loadMemory(targetDir);
-const { memory: nextMemory, precedents } = updateMemory(memory, checks);
-for (const c of checks) {
-  const p = precedents.get(precedentKey(c));
-  if (p) c.precedent = p;
+// current fails (same rule already fixed elsewhere in this repo). Skipped in
+// `--since` mode: a diff-scoped run only sees a subset of checks, and writing
+// that partial snapshot back would make the next full run re-derive fix
+// events it already has.
+if (!changedRanges) {
+  const memory = loadMemory(targetDir);
+  const { memory: nextMemory, precedents } = updateMemory(memory, checks);
+  for (const c of checks) {
+    const p = precedents.get(precedentKey(c));
+    if (p) c.precedent = p;
+  }
+  for (const rc of report.checks as Array<{ ruleId: string; file: string; precedent?: unknown }>) {
+    const p = precedents.get(precedentKey(rc as { ruleId: string; file: string }));
+    if (p) rc.precedent = p;
+  }
+  saveMemory(targetDir, nextMemory);
+} else {
+  // Still surface precedents (read-only) against the existing snapshot.
+  const memory = loadMemory(targetDir);
+  const { precedents } = updateMemory(memory, checks);
+  for (const c of checks) {
+    const p = precedents.get(precedentKey(c));
+    if (p) c.precedent = p;
+  }
+  for (const rc of report.checks as Array<{ ruleId: string; file: string; precedent?: unknown }>) {
+    const p = precedents.get(precedentKey(rc as { ruleId: string; file: string }));
+    if (p) rc.precedent = p;
+  }
 }
-for (const rc of report.checks as Array<{ ruleId: string; file: string; precedent?: unknown }>) {
-  const p = precedents.get(precedentKey(rc as { ruleId: string; file: string }));
-  if (p) rc.precedent = p;
-}
-saveMemory(targetDir, nextMemory);
 
 const costReport = analyzeCosts(targetDir);
 // Attach cost analysis as a named section — additive, never mutates security results.
