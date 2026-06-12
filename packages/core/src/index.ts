@@ -16,6 +16,14 @@ export { startWatch, runIncrementalScan, type WatchEvent, type WatchOptions } fr
 export { applyDiffToFile, parseDiff, type ParsedDiff } from "./fixers/applyDiff.ts";
 export { loadPack, loadPacksFromDir, validatePackManifest, PACK_MANIFEST_FILE } from "./packs.ts";
 export { initPack, validatePack, type PackInitOptions, type PackValidateResult, type PackRuleValidation } from "./pack.ts";
+export {
+  isTelemetryEnabled,
+  getUserHash,
+  getRepoHash,
+  telemetryFilePath,
+  recordGraduationEvents,
+  type GraduationEvent,
+} from "./telemetry.ts";
 
 // ── Cost & Rent Analysis (Phase 3) ───────────────────────────────────────────
 export { analyzeCosts, renderCostReportMd, rentExemptMinimum, lamportsToSol } from "./costAnalysis.ts";

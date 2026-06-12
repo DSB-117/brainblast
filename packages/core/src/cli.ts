@@ -11,6 +11,7 @@ import { startWatch } from "./watch.ts";
 import { execFileSync } from "node:child_process";
 import { applyDiffToFile, parseDiff } from "./fixers/applyDiff.ts";
 import { initPack, validatePack } from "./pack.ts";
+import { isTelemetryEnabled, recordGraduationEvents, telemetryFilePath } from "./telemetry.ts";
 
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
@@ -361,6 +362,18 @@ async function runFix(argv: string[]) {
     for (const c of stillFailing) console.log(`  ${c.ruleId}  ${c.file}:${c.line}`);
   } else if (applied > 0) {
     console.log("All applied fixes now pass (or cant_tell) on re-audit. ✓");
+  }
+
+  if (isTelemetryEnabled(targetDir)) {
+    const graduated = fixable.filter((c) => !stillFailing.includes(c));
+    const events = graduated
+      .map((c) => rules.find((r) => r.id === c.ruleId))
+      .filter((r): r is (typeof rules)[number] & { pack: NonNullable<(typeof rules)[number]["pack"]> } => !!r?.pack)
+      .map((r) => ({ pack_id: r.pack.id, rule_id: r.id }));
+    if (events.length > 0) {
+      recordGraduationEvents(targetDir, events);
+      console.log(`\nTelemetry: recorded ${events.length} graduation event(s) to ${telemetryFilePath(targetDir)}`);
+    }
   }
 
   if (branch && applied > 0) {
