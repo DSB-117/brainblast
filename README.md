@@ -58,9 +58,12 @@ Everything Brainblast does today, at a glance.
 - **Gates CI.** A `--ci` mode runs non-interactively (no prompts, documented defaults), and a dependency-free gate script turns `report.json` into an exit code — fail the build if any CRITICAL risk remains (`--fail-on=critical|high|…`) or the verdict is `blocked`.
 
 **Deterministic auditor — `npx brainblast`**
-- Published to npm as [`brainblast@0.2.0`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
-- A Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code *offline* (no network, no LLM) for the first built-in integration traps: Stripe webhook raw-body signature verification, Privy/JWT signature + `aud` + `iss` verification, and the Bags/Solana fee-share creator-inclusion trap (the same zero-revenue misconfiguration the research example below caught).
+- Published to npm as [`brainblast@0.4.3`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
+- A Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code *offline* (no network, no LLM) for nine built-in integration traps: Stripe webhook raw-body signature verification, Privy/JWT signature + `aud` + `iss` verification, Bags/Solana fee-share creator-inclusion, Token-2022 program-ID pinning, Metaplex metadata immutability, Anchor `init_if_needed` guards, committed `.env*` secrets, and **graph-based, project-wide cross-file taint tracking** for secret leaks (`env-secret-leaked-to-sink`) and command injection (`request-input-command-injection`).
 - Emits CI-readable `checks[]` and `checkTotals` into `report.json`, and can generate behavioral contract tests that fail on the vulnerable fixtures and pass on the fixed ones — the durable guardrail that keeps a fixed trap fixed.
+- **`--since <ref>` diff-aware scanning** audits only what changed in `git diff <ref>` — fast enough for every commit or PR. **`brainblast watch`** re-scans on every save and streams NDJSON findings for an agent daemon to tail.
+- **`brainblast fix [--apply] [--branch]`** lists (and, with `--apply`, applies) mechanical fixes for confirmed FAILs, re-audits to confirm RED → GREEN, and can commit the result to a new branch.
+- **`brainblast trust-graph`** resolves on-chain upgrade-authority and verified-build status for Solana programs, with a local TTL cache. Every run also emits a cost & rent analysis (`.agent-research/cost-analysis.md`).
 - Loads project-local `.agent-research/rules/*.yaml` rules as data, without executing scanned code or allowing project rules to shadow bundled rules.
 
 **Safety**
@@ -92,14 +95,14 @@ Install gstack: run git clone --single-branch --depth 1 https://github.com/garry
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.2.0/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.4.3/install.sh | sh
 ```
 
 The installer pins to a tagged release, verifies SHA-256 checksums before writing any file, and auto-detects Claude Code, OpenClaw, and Codex. If gstack is missing, it warns you with the exact command to fix it. (It installs the Brainblast skill, but it does **not** install gstack for you — that is a one-time prerequisite above.)
 
 **Or tell your agent:**
 
-> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.2.0/install.sh | sh`
+> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.4.3/install.sh | sh`
 
 For the bleeding edge instead of a pinned release, prefix with `BRAINBLAST_REF=main`.
 
@@ -239,7 +242,7 @@ A ready-to-adapt GitHub Actions workflow is in [`examples/ci/github-actions.yml`
       | sh -s -- --fail-on=critical
 ```
 
-In production, pin the URL to a release tag (e.g. `/v0.2.0/`) rather than `/main/`, or vendor [`scripts/brainblast-gate.sh`](scripts/brainblast-gate.sh) into your repo, so the gate can't change underneath you.
+In production, pin the URL to a release tag (e.g. `/v0.4.3/`) rather than `/main/`, or vendor [`scripts/brainblast-gate.sh`](scripts/brainblast-gate.sh) into your repo, so the gate can't change underneath you.
 
 ## Limitations
 
@@ -249,7 +252,7 @@ Be clear-eyed about what this is and is not:
 - **The research workflow writes research artifacts, not production implementation code.** The deterministic auditor in `packages/core` can generate behavioral test files for supported traps, but Brainblast does not implement the feature for you.
 - **Its output is only as good as the docs.** Undocumented behavior, wrong official docs, or missing changelogs limit what it can catch.
 - **It cannot reach private or authenticated docs** out of the box. For gated docs, use gstack's cookie import (`/setup-browser-cookies`) before running.
-- **The deterministic auditor is intentionally narrow today.** The first bundled checks cover Stripe webhook raw-body verification and Privy/JWT verification; broader generated guardrails are the next direction.
+- **The deterministic auditor's bundled rule set is still growing.** It covers nine traps today (Stripe, Privy/JWT, Bags/Solana fee-share, Token-2022, Metaplex, Anchor `init_if_needed`, committed `.env*` secrets, and cross-file taint tracking for secret leaks and command injection); broader generated guardrails are the next direction.
 - **It costs tokens and time.** A typical 3–5 component run is a few minutes and a meaningful chunk of tokens because it browses many pages. Budget accordingly for large specs.
 
 ## Security
@@ -288,7 +291,7 @@ curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh 
 
 **Specific version:**
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.2.0 sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.4.3 sh
 ```
 
 The installer is idempotent: the Claude Code skill is overwritten in place, and the Codex adapter block is replaced (not duplicated) via its `<!-- BRAINBLAST:START/END -->` markers.
@@ -317,13 +320,16 @@ These are baked into every adapter:
 ## Roadmap
 
 See [ROADMAP.md](ROADMAP.md) for the full thesis — turning documentation into *enforcement* along a
-**Predict → Enforce → Watch → Compound** ladder. Shipped through **v0.2.0**: `report.json`, the
+**Predict → Enforce → Watch → Compound** ladder. Shipped through **v0.4.3**: `report.json`, the
 `--ci` exit-code gate, incremental cached runs, and the deterministic offline auditor — published to
 npm as [`brainblast`](https://www.npmjs.com/package/brainblast) (`npx brainblast .`, with provenance)
-and covering the Stripe webhook, Privy/JWT, and Bags/Solana fee-share traps. Next: broader executable
-guardrails, evidence-grade provenance, a two-source rule, **OSV security-advisory cross-check**,
-drift watch, lockfile auto-seeding, portable component-intel packs, and a public catch-rate
-benchmark.
+— now covering nine bundled traps (Stripe webhook, Privy/JWT, Bags/Solana fee-share, Token-2022,
+Metaplex, Anchor `init_if_needed`, committed `.env*` secrets, and graph-based cross-file taint
+tracking for secret leaks and command injection), plus diff-aware scanning (`--since`), watch mode,
+auto-fix (`fix [--apply] [--branch]`), living memory, cost & rent analysis, and Solana trust-graph
+resolution. Next: broader executable guardrails, evidence-grade provenance, a two-source rule,
+**OSV security-advisory cross-check**, drift watch, lockfile auto-seeding, portable component-intel
+packs, and a public catch-rate benchmark.
 
 ## License
 
