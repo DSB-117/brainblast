@@ -15,6 +15,7 @@ export { getChangedRanges, getWorkingTreeChanges, fileChanged, rangeChanged, typ
 export { startWatch, runIncrementalScan, type WatchEvent, type WatchOptions } from "./watch.ts";
 export { applyDiffToFile, parseDiff, type ParsedDiff } from "./fixers/applyDiff.ts";
 export { loadPack, loadPacksFromDir, validatePackManifest, PACK_MANIFEST_FILE } from "./packs.ts";
+export { initPack, validatePack, type PackInitOptions, type PackValidateResult, type PackRuleValidation } from "./pack.ts";
 
 // ── Cost & Rent Analysis (Phase 3) ───────────────────────────────────────────
 export { analyzeCosts, renderCostReportMd, rentExemptMinimum, lamportsToSol } from "./costAnalysis.ts";

@@ -10,6 +10,7 @@ import { analyzeCosts, renderCostReportMd } from "./costAnalysis.ts";
 import { startWatch } from "./watch.ts";
 import { execFileSync } from "node:child_process";
 import { applyDiffToFile, parseDiff } from "./fixers/applyDiff.ts";
+import { initPack, validatePack } from "./pack.ts";
 
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
@@ -48,6 +49,17 @@ import { applyDiffToFile, parseDiff } from "./fixers/applyDiff.ts";
 // a rules/ directory), on top of bundled rules, project-local
 // .agent-research/rules/, and any packs auto-discovered under
 // .agent-research/packs/. Works with both the main audit command and `fix`.
+//
+// `pack init <dir> --id <pack-id> [--name <name>] [--author <author>]
+// [--version <semver>] [--description <text>]` scaffolds a new rule pack:
+// brainblast-pack.yaml, rules/, fixtures/.
+//
+// `pack validate <dir>` loads the pack's manifest + rules (failing on any
+// malformed manifest/rule) and runs the prove gate: for each rule with a
+// fixtures/<rule-id>/{vulnerable,fixed}/ pair, the rule must FAIL against
+// vulnerable/ and must NOT FAIL against fixed/ (RED -> GREEN). Rules with no
+// fixtures are reported as a warning, not a hard failure. Exits 1 if any
+// rule fails its prove gate or the manifest/rules don't load.
 const args = process.argv.slice(2);
 
 function parsePackDirs(argv: string[]): string[] {
@@ -60,6 +72,11 @@ function parsePackDirs(argv: string[]): string[] {
 
 if (args[0] === "trust-graph") {
   await runTrustGraph(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "pack") {
+  runPack(args.slice(1));
   process.exit(0);
 }
 
@@ -196,6 +213,53 @@ console.log(`  report:      ${reportPath}`);
 if (ci) {
   const gateFail = fails > 0 || (strict && cantTell > 0);
   process.exit(gateFail ? 1 : 0);
+}
+
+function runPack(argv: string[]) {
+  const sub = argv[0];
+
+  if (sub === "init") {
+    const dir = argv.find((a, i) => i > 0 && !a.startsWith("--") && argv[i - 1] !== "--id" && argv[i - 1] !== "--name" && argv[i - 1] !== "--author" && argv[i - 1] !== "--version" && argv[i - 1] !== "--description");
+    const flag = (name: string) => {
+      const idx = argv.indexOf(`--${name}`);
+      return idx >= 0 ? argv[idx + 1] : undefined;
+    };
+    const id = flag("id");
+    if (!dir || !id) {
+      console.error("usage: brainblast pack init <dir> --id <pack-id> [--name <name>] [--author <author>] [--version <semver>] [--description <text>]");
+      process.exit(2);
+    }
+    const manifestFile = initPack(dir, {
+      id,
+      name: flag("name"),
+      author: flag("author"),
+      version: flag("version"),
+      description: flag("description"),
+    });
+    console.log(`brainblast pack init: wrote ${manifestFile}`);
+    console.log(`  rules:    ${join(dir, "rules")}/`);
+    console.log(`  fixtures: ${join(dir, "fixtures")}/`);
+    return;
+  }
+
+  if (sub === "validate") {
+    const dir = argv.find((a, i) => i > 0 && !a.startsWith("--"));
+    if (!dir) {
+      console.error("usage: brainblast pack validate <dir>");
+      process.exit(2);
+    }
+    const result = validatePack(dir);
+    console.log(`pack: ${result.manifest.id} v${result.manifest.version} (${result.manifest.author})`);
+    console.log(`  ${result.rules.length} rule(s)`);
+    for (const r of result.ruleResults) {
+      const marker = r.status === "ok" ? "OK" : r.status === "missing-fixtures" ? "WARN" : "FAIL";
+      console.log(`  [${marker}] ${r.ruleId}: ${r.detail}`);
+    }
+    process.exit(result.ok ? 0 : 1);
+  }
+
+  console.error("usage: brainblast pack <init|validate> ...");
+  process.exit(2);
 }
 
 async function runTrustGraph(argv: string[]) {
