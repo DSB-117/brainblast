@@ -42,7 +42,21 @@ import { applyDiffToFile, parseDiff } from "./fixers/applyDiff.ts";
 // directory first, then the program cache (~/.brainblast/program-cache.json),
 // and falls back to a live RPC probe for anything unknown. Pass --no-cache to
 // skip the cache entirely (always re-probe from RPC).
+//
+// `--packs <dir1>,<dir2>,...` loads additional pluggable rule packs from the
+// given directories (each must contain a brainblast-pack.yaml manifest plus
+// a rules/ directory), on top of bundled rules, project-local
+// .agent-research/rules/, and any packs auto-discovered under
+// .agent-research/packs/. Works with both the main audit command and `fix`.
 const args = process.argv.slice(2);
+
+function parsePackDirs(argv: string[]): string[] {
+  const idx = argv.indexOf("--packs");
+  if (idx < 0) return [];
+  const value = argv[idx + 1];
+  if (!value || value.startsWith("--")) return [];
+  return value.split(",").map((s) => s.trim()).filter(Boolean);
+}
 
 if (args[0] === "trust-graph") {
   await runTrustGraph(args.slice(1));
@@ -75,7 +89,7 @@ if (sinceIdx >= 0 && !since) {
   process.exit(2);
 }
 
-const rules = resolveRules(targetDir);
+const rules = resolveRules(targetDir, parsePackDirs(args));
 let changedRanges;
 if (since) {
   try {
@@ -226,7 +240,7 @@ async function runFix(argv: string[]) {
   const branch = argv.includes("--branch");
   const targetDir = argv.find((a) => !a.startsWith("--")) ?? process.cwd();
 
-  const rules = resolveRules(targetDir);
+  const rules = resolveRules(targetDir, parsePackDirs(argv));
   const { checks: before } = audit(targetDir, rules);
   const fixable = before.filter((c) => c.result === "fail" && c.fix?.diff);
 

@@ -141,6 +141,22 @@ export interface Rule {
   };
   check: { kind: string; params: Record<string, any> };
   test: { kind: string; params?: Record<string, any> };
+  /**
+   * Provenance for rules loaded from a third-party rule pack (see
+   * src/packs.ts). Absent for bundled rules. Stamped by the pack loader from
+   * the pack's brainblast-pack.yaml manifest, not set by the rule author.
+   */
+  pack?: { id: string; version: string; author?: string };
+}
+
+// A rule pack: a bundle of rules + fixtures distributed independently of
+// @brainblast/core, identified by `brainblast-pack.yaml` at its root.
+export interface PackManifest {
+  id: string;
+  name: string;
+  version: string;
+  author: string;
+  description?: string;
 }
 
 export type Checker = (candidate: Candidate, params: any) => CheckOutcome;
