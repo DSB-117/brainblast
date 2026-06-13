@@ -22,7 +22,10 @@ export {
   getRepoHash,
   telemetryFilePath,
   recordGraduationEvents,
+  submitTelemetry,
+  DEFAULT_REGISTRY_URL,
   type GraduationEvent,
+  type TelemetrySubmitResult,
 } from "./telemetry.ts";
 
 // ── Cost & Rent Analysis (Phase 3) ───────────────────────────────────────────

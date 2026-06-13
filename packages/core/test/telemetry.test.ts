@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -8,6 +8,7 @@ import {
   getRepoHash,
   telemetryFilePath,
   recordGraduationEvents,
+  submitTelemetry,
 } from "../src/telemetry.ts";
 
 const ORIGINAL_ENV = process.env.BRAINBLAST_TELEMETRY;
@@ -112,5 +113,81 @@ describe("recordGraduationEvents", () => {
     expect(lines).toHaveLength(2);
     expect(JSON.parse(lines[0]).rule_id).toBe("rule-a");
     expect(JSON.parse(lines[1]).rule_id).toBe("rule-b");
+  });
+});
+
+describe("submitTelemetry", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("is a no-op when telemetry.ndjson doesn't exist", async () => {
+    const d = mkdtempSync(join(tmpdir(), "bb-tel-"));
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await submitTelemetry(d, "https://registry.example");
+    expect(result).toEqual({ submitted: 0, accepted: 0, rejected: 0, graduations: [] });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("POSTs recorded events to <registryUrl>/api/telemetry", async () => {
+    const d = mkdtempSync(join(tmpdir(), "bb-tel-"));
+    recordGraduationEvents(d, [{ pack_id: "acme-pack", rule_id: "acme-custom-trap" }]);
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        accepted: 1,
+        rejected: 0,
+        graduations: [{ pack_id: "acme-pack", rule_id: "acme-custom-trap", distinct_pairs: 1, graduated: false }],
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await submitTelemetry(d, "https://registry.example");
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://registry.example/api/telemetry");
+    expect(init.method).toBe("POST");
+    const body = JSON.parse(init.body);
+    expect(body.events).toHaveLength(1);
+    expect(body.events[0].pack_id).toBe("acme-pack");
+
+    expect(result.submitted).toBe(1);
+    expect(result.accepted).toBe(1);
+    expect(result.graduations[0].rule_id).toBe("acme-custom-trap");
+  });
+
+  it("throws when the registry responds with an error", async () => {
+    const d = mkdtempSync(join(tmpdir(), "bb-tel-"));
+    recordGraduationEvents(d, [{ pack_id: "acme-pack", rule_id: "rule-a" }]);
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      text: async () => "boom",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(submitTelemetry(d, "https://registry.example")).rejects.toThrow(/500/);
+  });
+
+  it("defaults to BRAINBLAST_REGISTRY_URL or DEFAULT_REGISTRY_URL", async () => {
+    const d = mkdtempSync(join(tmpdir(), "bb-tel-"));
+    recordGraduationEvents(d, [{ pack_id: "acme-pack", rule_id: "rule-a" }]);
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ accepted: 1, rejected: 0, graduations: [] }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await submitTelemetry(d);
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://registry.brainblast.tech/api/telemetry");
   });
 });

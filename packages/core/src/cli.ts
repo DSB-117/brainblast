@@ -11,7 +11,7 @@ import { startWatch } from "./watch.ts";
 import { execFileSync } from "node:child_process";
 import { applyDiffToFile, parseDiff } from "./fixers/applyDiff.ts";
 import { initPack, validatePack } from "./pack.ts";
-import { isTelemetryEnabled, recordGraduationEvents, telemetryFilePath } from "./telemetry.ts";
+import { isTelemetryEnabled, recordGraduationEvents, telemetryFilePath, submitTelemetry } from "./telemetry.ts";
 
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
@@ -61,6 +61,13 @@ import { isTelemetryEnabled, recordGraduationEvents, telemetryFilePath } from ".
 // vulnerable/ and must NOT FAIL against fixed/ (RED -> GREEN). Rules with no
 // fixtures are reported as a warning, not a hard failure. Exits 1 if any
 // rule fails its prove gate or the manifest/rules don't load.
+//
+// `telemetry submit [targetDir]` is an explicit, opt-in step that POSTs the
+// local .agent-research/telemetry.ndjson (graduation events recorded by
+// `fix --apply` when telemetry is enabled, see src/telemetry.ts) to the
+// registry at BRAINBLAST_REGISTRY_URL (default https://registry.brainblast.tech).
+// Reports each (pack_id, rule_id)'s graduation progress (5 distinct
+// repo/user pairs within 90 days graduates a rule).
 const args = process.argv.slice(2);
 
 function parsePackDirs(argv: string[]): string[] {
@@ -78,6 +85,11 @@ if (args[0] === "trust-graph") {
 
 if (args[0] === "pack") {
   runPack(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "telemetry") {
+  await runTelemetry(args.slice(1));
   process.exit(0);
 }
 
@@ -261,6 +273,35 @@ function runPack(argv: string[]) {
 
   console.error("usage: brainblast pack <init|validate> ...");
   process.exit(2);
+}
+
+async function runTelemetry(argv: string[]) {
+  const sub = argv[0];
+  if (sub !== "submit") {
+    console.error("usage: brainblast telemetry submit [targetDir]");
+    process.exit(2);
+  }
+
+  const targetDir = argv.find((a, i) => i > 0 && !a.startsWith("--")) ?? process.cwd();
+
+  try {
+    const result = await submitTelemetry(targetDir);
+    if (result.submitted === 0) {
+      console.log(`brainblast telemetry submit: no events to submit (${telemetryFilePath(targetDir)} is empty or missing)`);
+      return;
+    }
+    console.log(`brainblast telemetry submit: sent ${result.submitted} event(s) — ${result.accepted} accepted, ${result.rejected} rate-limited`);
+    for (const g of result.graduations) {
+      if (g.graduated) {
+        console.log(`  [GRADUATED] ${g.pack_id}/${g.rule_id}  (${g.distinct_pairs} distinct repo/user pairs)`);
+      } else {
+        console.log(`  [PROGRESS]  ${g.pack_id}/${g.rule_id}  ${g.distinct_pairs}/5 distinct repo/user pairs`);
+      }
+    }
+  } catch (e: any) {
+    console.error(`brainblast telemetry submit: ${e.message ?? String(e)}`);
+    process.exit(1);
+  }
 }
 
 async function runTrustGraph(argv: string[]) {

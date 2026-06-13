@@ -82,6 +82,54 @@ export function telemetryFilePath(targetDir: string): string {
   return join(targetDir, ".agent-research", "telemetry.ndjson");
 }
 
+export const DEFAULT_REGISTRY_URL = "https://registry.brainblast.tech";
+
+export interface TelemetrySubmitResult {
+  submitted: number;
+  accepted: number;
+  rejected: number;
+  graduations: { pack_id: string; rule_id: string; distinct_pairs: number; graduated: boolean }[];
+}
+
+// Reads <targetDir>/.agent-research/telemetry.ndjson and POSTs every event to
+// <registryUrl>/api/telemetry. This is a separate, explicit step from
+// `recordGraduationEvents` (which only writes locally) — running `brainblast
+// telemetry submit` is itself the opt-in to share this repo/user's graduation
+// events with the registry.
+export async function submitTelemetry(
+  targetDir: string,
+  registryUrl: string = process.env.BRAINBLAST_REGISTRY_URL || DEFAULT_REGISTRY_URL,
+): Promise<TelemetrySubmitResult> {
+  const file = telemetryFilePath(targetDir);
+  if (!existsSync(file)) {
+    return { submitted: 0, accepted: 0, rejected: 0, graduations: [] };
+  }
+
+  const events = readFileSync(file, "utf8")
+    .trim()
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as GraduationEvent);
+
+  if (events.length === 0) {
+    return { submitted: 0, accepted: 0, rejected: 0, graduations: [] };
+  }
+
+  const res = await fetch(`${registryUrl.replace(/\/$/, "")}/api/telemetry`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ events }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`telemetry submit failed: ${res.status} ${res.statusText} ${body}`.trim());
+  }
+
+  const json = (await res.json()) as Omit<TelemetrySubmitResult, "submitted">;
+  return { submitted: events.length, ...json };
+}
+
 // Append one graduation event per `{ pack_id, rule_id }` pair to
 // <targetDir>/.agent-research/telemetry.ndjson. No-op if `events` is empty.
 export function recordGraduationEvents(
