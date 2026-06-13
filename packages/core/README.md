@@ -184,7 +184,7 @@ All types are exported: `Rule`, `CheckResult`, `CostReport`, `AccountFlow`,
 
 ```sh
 npm install
-npm test         # unit suite (180 tests)
+npm test         # unit suite (214 tests)
 npm run prove    # end-to-end: generated tests RED on vulnerable, GREEN on fixed
 npm run build    # produce dist/ (the published artifact)
 ```

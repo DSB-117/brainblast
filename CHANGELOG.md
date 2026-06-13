@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## v0.5.0 — 2026-06-13
+
+- **Pluggable rule packs**: `--packs <dir1>,<dir2>,...` loads third-party rule packs
+  (`brainblast-pack.yaml` manifest + `rules/` + `fixtures/`) alongside bundled rules and
+  project-local `.agent-research/rules/`, with shadow protection (a pack cannot override a
+  bundled or project rule id).
+- **`brainblast pack init`** scaffolds a new pack (manifest, `rules/`, `fixtures/`).
+  **`brainblast pack validate`** loads a pack's manifest + rules and runs the same RED → GREEN
+  prove gate as bundled rules.
+- **Opt-in graduation telemetry**: `brainblast fix --apply` can record one-way-hashed
+  `{pack_id, rule_id, repo_hash, user_hash}` events to `.agent-research/telemetry.ndjson` when
+  enabled via `BRAINBLAST_TELEMETRY=1` or `.agent-research/config.json`.
+- **`brainblast telemetry submit`** sends recorded events to the registry server
+  ([registry.brainblast.tech](https://registry.brainblast.tech)), which tracks per-rule
+  graduation progress (5 distinct repo/user pairs within 90 days) — the basis for the
+  pack-author bounty pool.
+- New companion repos: [brainblast-registry](https://github.com/DSB-117/brainblast-registry)
+  (telemetry ingestion, pack registry mirror, memo+indexer submission staking) and
+  [brainblast-pack-registry](https://github.com/DSB-117/brainblast-pack-registry) (public pack
+  index).
+
+See `packages/core/CHANGELOG.md` for details.
+
 ## v0.4.3 — 2026-06-11
 
 - **Graph-based, project-wide cross-file taint tracking**: `env-secret-leaked-to-sink` now

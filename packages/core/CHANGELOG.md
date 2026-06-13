@@ -2,6 +2,33 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.5.0 — 2026-06-13
+
+- **Rule packs**: `Rule.pack?: { id, version, author? }`, a `brainblast-pack.yaml` manifest
+  format (`validatePackManifest`, `loadPack`, `loadPacksFromDir` in `src/packs.ts`), and
+  `resolveRules(targetDir, extraPackDirs)` extended to auto-discover packs under
+  `.agent-research/packs/` and load packs passed via `--packs`. Pack rules are merged with
+  shadow protection — they cannot override a bundled or project-local rule id.
+- **`brainblast pack init <dir> --id <pack-id> [--name] [--author] [--version]
+  [--description]`** scaffolds `brainblast-pack.yaml`, `rules/`, and `fixtures/`
+  (`initPack` in `src/pack.ts`).
+- **`brainblast pack validate <dir>`** loads a pack and runs the prove gate: for each rule
+  with `fixtures/<rule-id>/{vulnerable,fixed}/`, the rule must FAIL on `vulnerable/` and not
+  FAIL on `fixed/` (`validatePack` in `src/pack.ts`). Rules without fixtures warn rather than
+  hard-fail. Exits 1 on any prove-gate failure or manifest/rule load error.
+- **Opt-in telemetry** (`src/telemetry.ts`): `isTelemetryEnabled`, `getUserHash`,
+  `getRepoHash`, `recordGraduationEvents` — `brainblast fix --apply` appends NDJSON
+  `{pack_id, rule_id, repo_hash, user_hash, timestamp}` events to
+  `.agent-research/telemetry.ndjson` for confirmed RED → GREEN fixes of pack rules, when
+  enabled via `BRAINBLAST_TELEMETRY=1`/`0` or `.agent-research/config.json`'s
+  `{"telemetry": true}`. Both hashes are one-way (sha256, truncated) — no repo URLs, paths,
+  or identities are recorded.
+- **`brainblast telemetry submit [targetDir]`** (`submitTelemetry` in `src/telemetry.ts`)
+  POSTs `.agent-research/telemetry.ndjson` to `<registryUrl>/api/telemetry`
+  (`BRAINBLAST_REGISTRY_URL`, default `https://registry.brainblast.tech`) and prints each
+  `(pack_id, rule_id)`'s graduation progress (graduates at 5 distinct repo/user pairs within
+  90 days, rate-limited to one accepted event per user/rule per 30 days).
+
 ## 0.4.3 — 2026-06-11
 
 - **Generalized, project-wide `taint-to-sink` checker** — replaces the v0.4.2 intra-file
