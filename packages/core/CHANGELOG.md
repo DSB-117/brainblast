@@ -2,6 +2,18 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.5.2 — 2026-06-13
+
+- **New fixer `literal-multiplier-wrong-constant`** (`src/fixers/literalMultiplierWrongConstant.ts`):
+  Fix-it counterpart to the 0.5.1 checker of the same name. When the rule's
+  `expectedIdentifiers` (e.g. `decimals`) is already a parameter of the
+  enclosing function, produces a mechanical diff swapping the forbidden
+  constant (e.g. `LAMPORTS_PER_SOL`) for `10 ** decimals`. Otherwise returns
+  guidance to add the missing parameter, since synthesizing and threading a
+  new parameter isn't a safe mechanical change. Lets `brainblast fix --apply`
+  (and its opt-in graduation telemetry) work for `literal-multiplier-wrong-constant`
+  rule packs, e.g. `spl-amount-scaling`.
+
 ## 0.5.1 — 2026-06-13
 
 - **New checker `literal-multiplier-wrong-constant`** (`src/checkers/literalMultiplierWrongConstant.ts`):

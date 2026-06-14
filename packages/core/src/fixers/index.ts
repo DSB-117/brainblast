@@ -1,5 +1,6 @@
 import { fixPositionalArgIdentity } from "./positionalArgIdentity.ts";
 import { fixRequiredCallWithOptions } from "./requiredCallWithOptions.ts";
+import { fixLiteralMultiplierWrongConstant } from "./literalMultiplierWrongConstant.ts";
 import type { Candidate, RustCandidate, CheckOutcome, Fix, Fixer } from "../types.ts";
 
 // Registry of human-vetted fixer templates, keyed by the same `check.kind`
@@ -8,6 +9,7 @@ import type { Candidate, RustCandidate, CheckOutcome, Fix, Fixer } from "../type
 const registry: Record<string, Fixer> = {
   "positional-arg-identity": fixPositionalArgIdentity,
   "required-call-with-options": fixRequiredCallWithOptions,
+  "literal-multiplier-wrong-constant": fixLiteralMultiplierWrongConstant,
 };
 
 export function runFixer(

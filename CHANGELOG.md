@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v0.5.2 — 2026-06-13
+
+- **New fixer for `literal-multiplier-wrong-constant`**: `brainblast fix --apply`
+  can now mechanically fix the `spl-amount-scaling` pack's
+  `spl-token-amount-lamports-per-sol` rule (swap `LAMPORTS_PER_SOL` for
+  `10 ** decimals` when `decimals` is in scope), enabling opt-in graduation
+  telemetry for that rule.
+
+See `packages/core/CHANGELOG.md` for details.
+
 ## v0.5.1 — 2026-06-13
 
 - **New checker kind `literal-multiplier-wrong-constant`**, enabling pure-data
