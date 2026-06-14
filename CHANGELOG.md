@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.5.1 — 2026-06-13
+
+- **New checker kind `literal-multiplier-wrong-constant`**, enabling pure-data
+  rule packs that catch "amount scaled by the wrong constant" traps (e.g.
+  `LAMPORTS_PER_SOL` used where `10**decimals` was intended). First consumer:
+  the [spl-amount-scaling](https://github.com/DSB-117/brainblast-spl-amount-pack)
+  pack, which found a real instance of this bug in a public SPL token-launcher
+  dapp.
+
+See `packages/core/CHANGELOG.md` for details.
+
 ## v0.5.0 — 2026-06-13
 
 - **Pluggable rule packs**: `--packs <dir1>,<dir2>,...` loads third-party rule packs

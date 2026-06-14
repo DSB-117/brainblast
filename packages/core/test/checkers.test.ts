@@ -8,6 +8,7 @@ import { objectArgPropertyLiteralEquals } from "../src/checkers/objectArgPropert
 import { anchorInitIfNeededGuarded } from "../src/checkers/anchorInitIfNeededGuarded.ts";
 import { envSecretsCommitted } from "../src/checkers/envSecretsCommitted.ts";
 import { taintToSink } from "../src/checkers/taintToSink.ts";
+import { literalMultiplierWrongConstant } from "../src/checkers/literalMultiplierWrongConstant.ts";
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -283,6 +284,64 @@ describe("argEqualsConstantIdentifier (Token-2022 program-ID pin)", () => {
     const r = argEqualsConstantIdentifier(c, T22);
     expect(r.result).toBe("fail");
     expect(r.detail).toContain("TOKEN_2022_PROGRAM_ID");
+  });
+});
+
+const SPL_AMOUNT = {
+  call: "createMintToInstruction",
+  argIndex: 3,
+  forbiddenIdentifiers: ["LAMPORTS_PER_SOL"],
+  expectedIdentifiers: ["decimals"],
+  failDetail: "lamports-per-sol-used: {got}",
+  passDetail: "decimals-scaled",
+  absentCallDetail: "no-createMintToInstruction",
+  cantTellDetail: "unrecognized-amount-expression",
+};
+
+describe("literalMultiplierWrongConstant (SPL amount scaling)", () => {
+  it("FAIL when the amount is scaled by LAMPORTS_PER_SOL", () => {
+    const c = candidate(
+      `import { createMintToInstruction } from "@solana/spl-token";
+       import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+       export function h(opts: any) {
+         return createMintToInstruction(opts.mint, opts.dest, opts.auth, opts.amount * LAMPORTS_PER_SOL, [], opts.programId);
+       }`,
+      "h",
+    );
+    const r = literalMultiplierWrongConstant(c, SPL_AMOUNT);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("LAMPORTS_PER_SOL");
+  });
+
+  it("PASS when the amount is scaled by the mint's decimals", () => {
+    const c = candidate(
+      `import { createMintToInstruction } from "@solana/spl-token";
+       export function h(opts: any) {
+         return createMintToInstruction(opts.mint, opts.dest, opts.auth, opts.amount * (10 ** opts.decimals), [], opts.programId);
+       }`,
+      "h",
+    );
+    const r = literalMultiplierWrongConstant(c, SPL_AMOUNT);
+    expect(r.result).toBe("pass");
+  });
+
+  it("CANT_TELL when the candidate doesn't call the target", () => {
+    const c = candidate(
+      `export function h(opts: any) { return opts.amount; }`,
+      "h",
+    );
+    expect(literalMultiplierWrongConstant(c, SPL_AMOUNT).result).toBe("cant_tell");
+  });
+
+  it("CANT_TELL when the amount expression matches neither pattern", () => {
+    const c = candidate(
+      `import { createMintToInstruction } from "@solana/spl-token";
+       export function h(opts: any) {
+         return createMintToInstruction(opts.mint, opts.dest, opts.auth, opts.rawAmount, [], opts.programId);
+       }`,
+      "h",
+    );
+    expect(literalMultiplierWrongConstant(c, SPL_AMOUNT).result).toBe("cant_tell");
   });
 });
 

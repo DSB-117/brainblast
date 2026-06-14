@@ -2,6 +2,17 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.5.1 — 2026-06-13
+
+- **New checker `literal-multiplier-wrong-constant`** (`src/checkers/literalMultiplierWrongConstant.ts`):
+  flags a call argument whose expression scales by the WRONG named constant —
+  e.g. `amount * LAMPORTS_PER_SOL` passed to an SPL-token instruction that
+  expects `amount * 10 ** decimals`. The two only coincide for 9-decimal
+  mints; for any other decimals count the minted amount is off by orders of
+  magnitude with no on-chain fix. Added to support third-party rule packs
+  (no bundled rule ships this checker yet — first consumer is the
+  `spl-amount-scaling` pack).
+
 ## 0.5.0 — 2026-06-13
 
 - **Rule packs**: `Rule.pack?: { id, version, author? }`, a `brainblast-pack.yaml` manifest
