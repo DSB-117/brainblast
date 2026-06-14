@@ -3,10 +3,12 @@ import { requiredCallWithOptions } from "./requiredCallWithOptions.ts";
 import { feeAllocationShape } from "./feeAllocationShape.ts";
 import { argEqualsConstantIdentifier } from "./argEqualsConstantIdentifier.ts";
 import { objectArgPropertyLiteralEquals } from "./objectArgPropertyLiteralEquals.ts";
+import { objectArgPropertyForbiddenLiteral } from "./objectArgPropertyForbiddenLiteral.ts";
 import { anchorInitIfNeededGuarded } from "./anchorInitIfNeededGuarded.ts";
 import { envSecretsCommitted } from "./envSecretsCommitted.ts";
 import { taintToSink } from "./taintToSink.ts";
 import { literalMultiplierWrongConstant } from "./literalMultiplierWrongConstant.ts";
+import { forbiddenCallReplacement } from "./forbiddenCallReplacement.ts";
 import type { Candidate, RustCandidate, ConfigCandidate, CheckOutcome, Checker, RustChecker, ConfigChecker } from "../types.ts";
 
 // Registry of human-vetted checker templates. Rules bind to these by `kind`.
@@ -18,10 +20,12 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker> = {
   "fee-allocation-shape": feeAllocationShape,
   "arg-equals-constant-identifier": argEqualsConstantIdentifier,
   "object-arg-property-literal-equals": objectArgPropertyLiteralEquals,
+  "object-arg-property-forbidden-literal": objectArgPropertyForbiddenLiteral,
   "anchor-init-if-needed-guarded": anchorInitIfNeededGuarded as RustChecker,
   "env-secrets-committed": envSecretsCommitted,
   "taint-to-sink": taintToSink,
   "literal-multiplier-wrong-constant": literalMultiplierWrongConstant,
+  "forbidden-call-replacement": forbiddenCallReplacement,
 };
 
 export function runChecker(kind: string, c: Candidate | RustCandidate | ConfigCandidate, params: any): CheckOutcome {

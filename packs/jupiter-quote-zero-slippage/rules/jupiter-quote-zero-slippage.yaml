@@ -1,0 +1,51 @@
+# Pure-data rule (facts). Binds to the vetted `object-arg-property-forbidden-literal`
+# checker template.
+#
+# Real-world instances of this exact pattern:
+#   - WSOL12/Solana-Arbitrage-Bot (510 stars, 208 forks), src/index.ts —
+#     `quoteUrl` fetch params include `slippageBps: 0`.
+#   - Forked verbatim into ChainBuff/sol-arb-bot, src/index.ts (same lines).
+#   - ARBProtocol/solana-jupiter-bot, src/bot/setup.js — same field on the
+#     Jupiter quote call.
+id: jupiter-quote-zero-slippage
+severity: high
+title: Jupiter quote/swap call hardcodes slippageBps to 0
+component:
+  name: Jupiter Aggregator API
+  type: Blockchain
+  version: unversioned
+  sourceUrl: https://station.jup.ag/docs/apis/swap-api
+detect:
+  modules: ["@jup-ag/api"]
+  # Keep broad enough to catch arb/swap bots that wrap the Jupiter quote
+  # call in their own helper (getQuote, fetchQuote, getArbQuote, swap, ...).
+  nameRegex: "quote|swap|arb"
+  triggerCalls: [quoteGet]
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: quoteGet
+    argIndex: 0
+    propName: slippageBps
+    forbiddenValue: 0
+    passDetail: >-
+      quoteGet's slippageBps is a nonzero literal — the swap has explicit
+      slippage protection.
+    failDetail: >-
+      quoteGet is called with slippageBps: 0, which disables slippage
+      protection entirely. Any price movement between the quote and the
+      on-chain swap (including a sandwich attack) executes the trade at
+      whatever price results, with no minimum-output guarantee. Set
+      slippageBps to a nonzero value (e.g. 50 = 0.5%) or use
+      `dynamicSlippage` so the swap reverts if the price moves too far.
+    absentCallDetail: >-
+      Handler is in the Jupiter-quote scope but does not call quoteGet; the
+      zero-slippage rule does not apply here.
+    absentArgDetail: >-
+      quoteGet's options object does not set slippageBps as an inline
+      literal — cannot determine statically whether slippage protection is
+      disabled. If slippageBps is omitted entirely, the Jupiter API defaults
+      to 50 bps (0.5%), which is safe; if it's a non-literal expression,
+      verify the resolved value is nonzero.
+test:
+  kind: none

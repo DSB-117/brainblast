@@ -1,0 +1,49 @@
+# Pure-data rule (facts). Binds to the vetted `forbidden-call-replacement`
+# checker template.
+#
+# Real-world instance of this exact pattern:
+#   - elizaOS/eliza, payout-processor.ts — executeSolanaPayout() builds the
+#     transfer instruction with `createTransferInstruction(sourceAta,
+#     destinationAta, payer, amount)`, the legacy SPL Token instruction that
+#     does NOT validate the mint or decimals of the accounts it's given.
+#     `createTransferCheckedInstruction` is the drop-in replacement that adds
+#     mint+decimals validation, closing a class of bugs where a malicious or
+#     mismatched token account causes funds to move on the wrong mint or with
+#     the wrong decimal scaling.
+id: spl-transfer-not-checked-in-payout
+severity: high
+title: Token payout uses createTransferInstruction instead of createTransferCheckedInstruction
+component:
+  name: SPL Token
+  type: Blockchain
+  version: unversioned
+  sourceUrl: https://spl.solana.com/token
+detect:
+  modules: ["@solana/spl-token"]
+  nameRegex: "payout|withdraw|disburse|transfer|distribute"
+  triggerCalls: [createTransferInstruction, createTransferCheckedInstruction]
+check:
+  kind: forbidden-call-replacement
+  params:
+    forbiddenCalls: [createTransferInstruction]
+    saferCalls: [createTransferCheckedInstruction]
+    passDetail: >-
+      Payout uses createTransferCheckedInstruction, which validates the mint
+      and decimals of the source/destination token accounts before building
+      the transfer.
+    failDetail: >-
+      Payout builds its transfer with createTransferInstruction, the legacy
+      SPL Token instruction. It performs no on-chain validation that the
+      source and destination accounts belong to the expected mint or that the
+      amount is scaled to the correct decimals. If a caller (or a chain of
+      account-derivation bugs) supplies a token account for the wrong mint,
+      the transfer can move the wrong asset or move the right asset at the
+      wrong decimal scale, with no protocol-level check to stop it. Replace
+      with createTransferCheckedInstruction(source, mint, destination, owner,
+      amount, decimals).
+    absentDetail: >-
+      Handler is in the payout/transfer scope but neither
+      createTransferInstruction nor createTransferCheckedInstruction was
+      found; this rule does not apply here.
+test:
+  kind: none
