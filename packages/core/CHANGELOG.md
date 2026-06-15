@@ -2,6 +2,12 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.5.3 — 2026-06-15
+
+- No `packages/core` source changes. Repo-level release adding the
+  `/brainblast-scout` agent skill and `scripts/agent-stake` (outside the
+  published package — see root `CHANGELOG.md`).
+
 ## 0.5.2 — 2026-06-13
 
 - **New fixer `literal-multiplier-wrong-constant`** (`src/fixers/literalMultiplierWrongConstant.ts`):
