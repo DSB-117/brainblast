@@ -1,0 +1,20 @@
+{
+  "name": "agent-stake",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pays a brainblast pack stake from a dedicated, capped ops wallet.",
+  "scripts": {
+    "stake": "tsx stake.ts"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.95.0",
+    "@solana/spl-token": "^0.4.14",
+    "bs58": "^6.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4",
+    "typescript": "^5",
+    "@types/node": "^22"
+  }
+}

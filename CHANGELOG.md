@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.5.3 — 2026-06-15
+
+- **`/brainblast-scout` skill**: end-to-end pipeline for an agent to scout real-world
+  footguns in external SDKs/protocols, synthesize + prove a rule pack (via the existing
+  `synth-prove` RED→GREEN gate), package it with `brainblast pack init`/`validate`, submit
+  it to the pack registry, and stake `$BRAIN` on it.
+- **`scripts/agent-stake`**: standalone script that pays a pack stake from a dedicated,
+  capped "ops wallet" — enforces a per-transaction cap (`AGENT_STAKE_MAX_USD`) and a
+  cumulative session cap (`AGENT_STAKE_SESSION_CAP_USD`), reads its key only from
+  `AGENT_OPS_WALLET_SECRET`, and never logs it.
+
 ## v0.5.0 — 2026-06-13
 
 - **Pluggable rule packs**: `--packs <dir1>,<dir2>,...` loads third-party rule packs
