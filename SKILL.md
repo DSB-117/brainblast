@@ -107,6 +107,22 @@ The internal output artifact is always saved as `$_RUN_DIR/requirements.md` rega
 
 ## Step 1 — Component inventory
 
+### Seed from lockfiles first
+
+Before reading the requirements, run:
+
+```bash
+sh "$_ROOT/scripts/seed-inventory.sh" "$_ROOT"
+```
+
+This scans `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `poetry.lock`, `requirements.txt`,
+`Cargo.lock`, `go.mod`, `Gemfile.lock`, and `composer.lock` for **exact, pinned versions** and
+prints `[{ "name", "version", "ecosystem", "source" }, ...]` (or `[]` if none found). Keep this
+list — when a component you identify below matches a seeded entry by name (allow for scoped/
+namespaced variants, e.g. `@stripe/stripe-js` vs `stripe`), **use the seeded version verbatim**
+instead of inferring it, set **Confidence: High**, and note the source lockfile. This is ground
+truth: a lockfile entry overrides anything prose or registry-latest would suggest.
+
 Read the requirements carefully. Identify every external system the implementation will touch. Think broadly:
 
 - REST APIs and GraphQL endpoints
@@ -131,19 +147,20 @@ For each component, record:
 - **Confidence** — High (explicitly named in requirements) / Medium (strongly implied) / Low (inferred)
 
 **Resolving the version** (this keys the cache in Step 3):
-1. If the repo pins it, use the **exact** pinned version — check `package.json`/`package-lock.json`/`yarn.lock`/`pnpm-lock.yaml`, `requirements.txt`/`poetry.lock`, `Cargo.toml`/`Cargo.lock`, `go.mod`, `Gemfile.lock`, `composer.lock`.
-2. Else, for an SDK/library on a public registry, use the **latest** version number shown there (record the actual number, e.g. `12.4.0` — not the word "latest").
-3. Else, for an API with a version concept (a dated REST version, a `v2` path, an API-version header), use that string.
-4. Else, record `unversioned` — there is no reliable change signal, so this component is **always re-researched** and never served from cache.
+1. If `seed-inventory.sh` found this component in a lockfile, use that **exact** pinned version — done, skip the rest.
+2. Else if the repo pins it some other way (e.g. `package.json` with no lockfile, `Cargo.toml` without `Cargo.lock`), use that exact version.
+3. Else, for an SDK/library on a public registry, use the **latest** version number shown there (record the actual number, e.g. `12.4.0` — not the word "latest").
+4. Else, for an API with a version concept (a dated REST version, a `v2` path, an API-version header), use that string.
+5. Else, record `unversioned` — there is no reliable change signal, so this component is **always re-researched** and never served from cache.
 
 Write this to `$_RUN_DIR/component-inventory.md` using this format:
 
 ```markdown
 # Component Inventory
 
-| Component | Type | Version | Role | Confidence |
-|---|---|---|---|---|
-| [name] | [type] | [version or `unversioned`] | [role] | [High/Medium/Low] |
+| Component | Type | Version | Source | Role | Confidence |
+|---|---|---|---|---|---|
+| [name] | [type] | [version or `unversioned`] | [lockfile path, registry, or "inferred"] | [role] | [High/Medium/Low] |
 ```
 
 Output the inventory to the user and ask if anything is missing or wrong. Use `AskUserQuestion` if available; otherwise print the table and ask as plain text. **In `--ci` mode (or any automated context where no response is possible), do not prompt** — proceed with the discovered inventory and note it as an assumption.
