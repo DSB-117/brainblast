@@ -58,7 +58,7 @@ Everything Brainblast does today, at a glance.
 - **Gates CI.** A `--ci` mode runs non-interactively (no prompts, documented defaults), and a dependency-free gate script turns `report.json` into an exit code — fail the build if any CRITICAL risk remains (`--fail-on=critical|high|…`) or the verdict is `blocked`.
 
 **Deterministic auditor — `npx brainblast`**
-- Published to npm as [`brainblast@0.5.0`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
+- Published to npm as [`brainblast@0.5.3`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
 - A Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code *offline* (no network, no LLM) for nine built-in integration traps: Stripe webhook raw-body signature verification, Privy/JWT signature + `aud` + `iss` verification, Bags/Solana fee-share creator-inclusion, Token-2022 program-ID pinning, Metaplex metadata immutability, Anchor `init_if_needed` guards, committed `.env*` secrets, and **graph-based, project-wide cross-file taint tracking** for secret leaks (`env-secret-leaked-to-sink`) and command injection (`request-input-command-injection`).
 - Emits CI-readable `checks[]` and `checkTotals` into `report.json`, and can generate behavioral contract tests that fail on the vulnerable fixtures and pass on the fixed ones — the durable guardrail that keeps a fixed trap fixed.
 - **`--since <ref>` diff-aware scanning** audits only what changed in `git diff <ref>` — fast enough for every commit or PR. **`brainblast watch`** re-scans on every save and streams NDJSON findings for an agent daemon to tail.
@@ -101,14 +101,14 @@ Install gstack: run git clone --single-branch --depth 1 https://github.com/garry
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.5.0/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.5.3/install.sh | sh
 ```
 
 The installer pins to a tagged release, verifies SHA-256 checksums before writing any file, and auto-detects Claude Code, OpenClaw, and Codex. If gstack is missing, it warns you with the exact command to fix it. (It installs the Brainblast skill, but it does **not** install gstack for you — that is a one-time prerequisite above.)
 
 **Or tell your agent:**
 
-> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.5.0/install.sh | sh`
+> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.5.3/install.sh | sh`
 
 For the bleeding edge instead of a pinned release, prefix with `BRAINBLAST_REF=main`.
 
@@ -248,7 +248,7 @@ A ready-to-adapt GitHub Actions workflow is in [`examples/ci/github-actions.yml`
       | sh -s -- --fail-on=critical
 ```
 
-In production, pin the URL to a release tag (e.g. `/v0.5.0/`) rather than `/main/`, or vendor [`scripts/brainblast-gate.sh`](scripts/brainblast-gate.sh) into your repo, so the gate can't change underneath you.
+In production, pin the URL to a release tag (e.g. `/v0.5.3/`) rather than `/main/`, or vendor [`scripts/brainblast-gate.sh`](scripts/brainblast-gate.sh) into your repo, so the gate can't change underneath you.
 
 ## Limitations
 
@@ -297,7 +297,7 @@ curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh 
 
 **Specific version:**
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.5.0 sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.5.3 sh
 ```
 
 The installer is idempotent: the Claude Code skill is overwritten in place, and the Codex adapter block is replaced (not duplicated) via its `<!-- BRAINBLAST:START/END -->` markers.
@@ -326,7 +326,7 @@ These are baked into every adapter:
 ## Roadmap
 
 See [ROADMAP.md](ROADMAP.md) for the full thesis — turning documentation into *enforcement* along a
-**Predict → Enforce → Watch → Compound** ladder. Shipped through **v0.5.0**: `report.json`, the
+**Predict → Enforce → Watch → Compound** ladder. Shipped through **v0.5.3**: `report.json`, the
 `--ci` exit-code gate, incremental cached runs, and the deterministic offline auditor — published to
 npm as [`brainblast`](https://www.npmjs.com/package/brainblast) (`npx brainblast .`, with provenance)
 — now covering nine bundled traps (Stripe webhook, Privy/JWT, Bags/Solana fee-share, Token-2022,
