@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v0.5.5 — 2026-06-15
+
+- **Auto-seed the component inventory from lockfiles**: the `/brainblast` research skill now
+  runs `scripts/seed-inventory.sh` at the start of Step 1, scanning `package-lock.json`,
+  `yarn.lock`, `pnpm-lock.yaml`, `poetry.lock`, `requirements.txt`, `Cargo.lock`, `go.mod`,
+  `Gemfile.lock`, and `composer.lock` for exact pinned versions. A component matching a
+  seeded entry uses that version verbatim (Confidence: High, source = lockfile) instead of
+  inferring it from prose — making every downstream step, especially the OSV cross-check
+  (v0.5.4), keyed on ground truth. The component inventory table gains a `Source` column.
+
 ## v0.5.4 — 2026-06-15
 
 - **Security-advisory cross-check (OSV)**: the `/brainblast` research skill now queries the
