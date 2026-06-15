@@ -56,7 +56,9 @@
               "properties": {
                 "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
                 "title": { "type": "string" },
-                "detail": { "type": "string" }
+                "detail": { "type": "string" },
+                "advisoryId": { "type": "string", "description": "OSV advisory ID (e.g. GHSA-xxxx-xxxx-xxxx or CVE-YYYY-NNNNN) for risks sourced from the OSV cross-check." },
+                "advisoryUrl": { "type": "string", "description": "Link to the advisory, e.g. https://osv.dev/vulnerability/<id>." }
               }
             }
           }

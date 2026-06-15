@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v0.5.4 — 2026-06-15
+
+- **Security-advisory cross-check (OSV)**: the `/brainblast` research skill now queries the
+  public [OSV.dev](https://osv.dev) API (no account, no key) for every component with a
+  resolved version, and folds known CVEs/advisories into `report.json` as `critical`/`high`/
+  `medium`/`low` risks with `advisoryId` and `advisoryUrl`. New `scripts/osv-check.sh
+  <ecosystem> <package> <version>` does the query; runs every time (even on a cache HIT)
+  since advisories are published on their own timeline. `schema/report.schema.json` gains
+  optional `advisoryId`/`advisoryUrl` fields on risk entries.
+
 ## v0.5.3 — 2026-06-15
 
 - **`/brainblast-scout` skill**: end-to-end pipeline for an agent to scout real-world
