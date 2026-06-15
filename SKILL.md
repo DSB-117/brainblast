@@ -305,6 +305,36 @@ fi
 
 The `BRAINBLAST:CACHE` header records when these facts were fetched, so a future run that reuses this file can report its age.
 
+### 3e — Security-advisory cross-check (OSV)
+
+*(Run for every component with a resolved (non-`unversioned`) version — both HIT and MISS. Advisories are published on their own timeline, independent of the docs cache, so even a cached component gets re-checked every run.)*
+
+If the component maps to a package in an [OSV ecosystem](https://ossf.github.io/osv-schema/#ecosystems) (`npm`, `PyPI`, `crates.io`, `Go`, `RubyGems`, `Packagist`, `Maven`, `NuGet`, `Pub`, …), run:
+
+```bash
+sh "$_ROOT/scripts/osv-check.sh" <ecosystem> <package-name> "$ver"
+```
+
+This calls the public OSV.dev API (no account, no key) and returns a JSON array of advisories — `[]` if none are known for this exact version.
+
+For each advisory returned, append a risk to the component's **Risks** section:
+
+```markdown
+**[severity from OSV, uppercased] — [advisoryId]: [summary]**
+Known advisory affecting [package-name]@[ver]. [summary]
+See [advisoryUrl] for details and the fixed version.
+```
+
+And carry it into `report.json` (Step 6b) as a risk entry with `advisoryId` and `advisoryUrl` set:
+
+```json
+{ "severity": "high", "title": "GHSA-xxxx-xxxx-xxxx: <summary>", "detail": "...", "advisoryId": "GHSA-xxxx-xxxx-xxxx", "advisoryUrl": "https://osv.dev/vulnerability/GHSA-xxxx-xxxx-xxxx" }
+```
+
+Components with `version: unversioned`, or with no OSV ecosystem mapping (e.g. a hosted API with no package manager artifact), skip this step — note in the component file: "OSV cross-check: skipped (unversioned)" or "OSV cross-check: skipped (no OSV ecosystem for this component)".
+
+**This is an authoritative source layered on top of docs research** — an OSV advisory is real and dated regardless of what the docs say, so don't downgrade or omit one because it wasn't mentioned in the official docs.
+
 Tell the user when each component is done. One-line update: "Done: [name] — [one key fact or risk worth flagging immediately]".
 
 ---
@@ -318,17 +348,18 @@ Re-read the component inventory. For each component, verify the research file co
 - [ ] Rate limits or quota constraints
 - [ ] At least one breaking change or gotcha in the last 12 months (or explicit confirmation there are none)
 - [ ] At least one CRITICAL or HIGH risk (or explicit confirmation that none were found)
+- [ ] OSV cross-check ran (Step 3e) — or explicitly skipped with a reason (`unversioned` / no OSV ecosystem)
 
-Flag any component that is missing a category. If something is missing, go back and browse for it before continuing. Components reused from cache (Step 3 HIT) already passed this review when they were first researched — accept their existing sections, but if a cached file is itself missing a category, treat it as a miss and re-research that component fresh.
+Flag any component that is missing a category. If something is missing, go back and browse for it before continuing. Components reused from cache (Step 3 HIT) already passed this review when they were first researched — accept their existing sections, but **OSV cross-check (3e) re-runs every time regardless of cache status**, so don't skip it for HITs.
 
 Write to `$_RUN_DIR/coverage-review.md`:
 
 ```markdown
 # Coverage Review
 
-| Component | Auth | Install/version | Rate limits | Breaking changes | Risks |
-|---|---|---|---|---|---|
-| [name] | [covered/missing] | ... | ... | ... | ... |
+| Component | Auth | Install/version | Rate limits | Breaking changes | Risks | OSV |
+|---|---|---|---|---|---|---|
+| [name] | [covered/missing] | ... | ... | ... | ... | [checked/skipped: reason] |
 
 ## Gaps addressed
 [list any gaps found and what was done about them]
