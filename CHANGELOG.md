@@ -2,6 +2,42 @@
 
 ## Unreleased
 
+## v0.6.1 — 2026-06-16
+
+- **Evidence layer** — every risk finding now requires a `evidence` block in `report.json` with a
+  verbatim `quote` from the source, the source `url`, and the access date (`browsedAt`). The
+  `/brainblast` research skill enforces this in the risk template and Step 6b rules, and the schema
+  validates it. Grounded evidence makes findings verifiable and shareable.
+
+- **Three new bundled rules** (12 total):
+  - `prisma-raw-injection` (CRITICAL) — detects `$queryRaw` / `$executeRaw` / `$queryRawUnsafe` /
+    `$executeRawUnsafe` calls that receive taint from `req.body`, `req.query`, or `req.params`
+    (cross-file taint tracking, up to 2 hops). Raw queries that interpolate user input are
+    vulnerable to SQL injection.
+  - `open-redirect` (HIGH) — detects `res.redirect()` or `res.setHeader()` calls that receive
+    taint from `req.query`, `req.params`, `req.body`, or `req.headers`. An attacker who controls
+    the redirect destination can phish users by bouncing them to a malicious site via a
+    trusted domain.
+  - `jsonwebtoken-algorithm-pinned` (CRITICAL) — detects `jwt.verify()` calls that omit the
+    `algorithms` option, and `jwt.decode()` calls used instead of `verify()`. Without a pinned
+    algorithm list an attacker can switch the header to `"alg": "none"` (no signature) or exploit
+    RS256/HS256 confusion to forge arbitrary tokens.
+
+- **Drift alerting** (`brainblast drift`) — weekly OSV.dev scan of every pinned dependency,
+  compared against a stored baseline at `.agent-research/drift-baseline.json`. Exits 0 when
+  nothing changed, exits 1 and opens a GitHub issue when new advisories appear. Bundled
+  `.github/workflows/drift-watch.yml` runs on a Monday cron and supports manual baseline resets
+  (`workflow_dispatch` with `update_baseline: true`).
+  ```sh
+  brainblast drift [dir]                # check for new advisories vs baseline
+  brainblast drift [dir] --update-baseline  # reset baseline to current state
+  brainblast drift [dir] --json         # machine-readable output
+  ```
+  New exports: `checkDrift`, `seedPackages`, `renderDriftText`, `DriftPackage`, `DriftAdvisory`,
+  `DriftBaseline`, `DriftResult` (from `brainblast` npm package).
+
+- **`packages/core` 0.6.1**: 9 new tests (checkers) + 8 drift tests (239 total, all green).
+
 ## v0.6.0 — 2026-06-16
 
 - **GitHub Action** (`action/`): drop `uses: DSB-117/brainblast/action@v0.6.0` into any

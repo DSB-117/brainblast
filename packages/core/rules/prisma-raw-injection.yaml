@@ -1,0 +1,35 @@
+# Pure-data rule (facts). Binds to vetted templates by `check.kind`/`test.kind`.
+id: prisma-raw-injection
+severity: critical
+title: Untrusted request input flows into a Prisma raw query
+component:
+  name: Prisma ORM
+  type: SDK
+  version: unversioned
+  sourceUrl: https://www.prisma.io/docs/orm/prisma-client/using-raw-sql/raw-queries#sql-injection-prevention
+detect:
+  lang: typescript
+  modules: ["@prisma/client", "prisma"]
+  # Never matches by name alone — only the sink triggerCalls below select candidates.
+  nameRegex: "(?!)"
+  triggerCalls:
+    - $queryRaw
+    - $executeRaw
+    - $queryRawUnsafe
+    - $executeRawUnsafe
+  requiresImport: false
+check:
+  kind: taint-to-sink
+  params:
+    sources:
+      - name: request-input
+        # req.body / req.query / req.params / req.headers — canonical untrusted HTTP input.
+        pattern: "\\b(req|request)\\.(body|query|params|headers)\\b"
+    sinkCalls:
+      - $queryRaw
+      - $executeRaw
+      - $queryRawUnsafe
+      - $executeRawUnsafe
+    maxHops: 2
+test:
+  kind: none

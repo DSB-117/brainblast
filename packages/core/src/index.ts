@@ -73,6 +73,17 @@ export { queryOsv, type OsvAdvisory } from "./osv.ts";
 // ── Upgrade risk diff (v0.6.0) ────────────────────────────────────────────────
 export { diffVersions, riskScore, renderDiffText, renderDiffMd, type DiffResult } from "./diff.ts";
 
+// ── Drift alerting (v0.6.1) ───────────────────────────────────────────────────
+export {
+  checkDrift,
+  seedPackages,
+  renderDriftText,
+  type DriftPackage,
+  type DriftAdvisory,
+  type DriftBaseline,
+  type DriftResult,
+} from "./drift.ts";
+
 // ── Core types ────────────────────────────────────────────────────────────────
 export type {
   Rule,

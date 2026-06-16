@@ -58,7 +58,18 @@
                 "title": { "type": "string" },
                 "detail": { "type": "string" },
                 "advisoryId": { "type": "string", "description": "OSV advisory ID (e.g. GHSA-xxxx-xxxx-xxxx or CVE-YYYY-NNNNN) for risks sourced from the OSV cross-check." },
-                "advisoryUrl": { "type": "string", "description": "Link to the advisory, e.g. https://osv.dev/vulnerability/<id>." }
+                "advisoryUrl": { "type": "string", "description": "Link to the advisory, e.g. https://osv.dev/vulnerability/<id>." },
+                "evidence": {
+                  "type": "object",
+                  "description": "Source-grounded proof for the risk finding. Captures the exact quote from official docs/changelogs that substantiates the risk, so the finding is verifiable rather than inferred.",
+                  "additionalProperties": false,
+                  "required": ["quote", "url"],
+                  "properties": {
+                    "quote": { "type": "string", "description": "Verbatim sentence or code snippet from the source that proves this risk exists." },
+                    "url": { "type": "string", "description": "URL of the page where the quote was found." },
+                    "browsedAt": { "type": "string", "format": "date", "description": "ISO date the source was accessed." }
+                  }
+                }
               }
             }
           }
