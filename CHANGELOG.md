@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+## v0.6.2 — 2026-06-16
+
+- **3 new Solana ecosystem packs** (from brainblast-scout), all PROVEN via `npm run synth` RED→GREEN:
+
+  - **`solana-sendtx-unconfirmed`** (HIGH) — detects `connection.sendTransaction()` used in value-bearing
+    paths without a confirmation step. `sendTransaction()` is fire-and-forget: it returns a signature
+    immediately regardless of whether the transaction lands on-chain. Transactions can silently drop
+    due to congestion, blockhash expiry, or a validator restart — code that credits a user right after
+    this call will think it succeeded when nothing moved. Fix: use `sendAndConfirmTransaction()`.
+    Checker: `forbidden-call-replacement`. SDK: `@solana/web3.js`.
+
+  - **`metaplex-nft-royalty-zero`** (HIGH) — detects `metaplex.nfts().create()` called with
+    `sellerFeeBasisPoints: 0`, which bakes zero royalties into the NFT's on-chain metadata at mint
+    time. Metaplex token-metadata is **immutable** after mint — creators can never recover royalties
+    without burning and reminting the collection. AI code generators emit `0` as a placeholder and
+    launch teams sometimes leave it in to appear creator-friendly. Either way, the economic harm is
+    permanent and silent. Fix: set `sellerFeeBasisPoints` to the intended basis points (e.g. `500` = 5%).
+    Checker: `object-arg-property-forbidden-literal`. SDK: `@metaplex-foundation/js`.
+
+  - **`raydium-compute-zero-slippage`** (HIGH) — detects `raydium.liquidity.computeAmountOut()` called
+    with `slippage: 0`, which sets `minAmountOut === amountOut` with zero tolerance. Any price
+    movement between compute and on-chain execution — including a sandwich attack — executes the swap
+    at a worse effective rate with no minimum-output floor. Fix: set `slippage` to a nonzero value
+    (e.g. `0.5` = 0.5%). Checker: `object-arg-property-forbidden-literal`. SDK: `@raydium-io/raydium-sdk-v2`.
+
+- Research Finding JSONs at `packages/core/findings/solana-sendtx-unconfirmed.json`,
+  `packages/core/findings/metaplex-nft-royalty-zero.json`,
+  `packages/core/findings/raydium-compute-zero-slippage.json`.
+
 ## v0.6.1 — 2026-06-16
 
 - **Evidence layer** — every risk finding now requires a `evidence` block in `report.json` with a
