@@ -1,0 +1,5 @@
+id: metaplex-nft-royalty-zero
+name: Metaplex NFT minted with zero royalties
+version: 0.1.0
+author: DSB-117
+description: "Detects metaplex.nfts().create() called with sellerFeeBasisPoints: 0 — royalties are immutably burned to zero at mint time"

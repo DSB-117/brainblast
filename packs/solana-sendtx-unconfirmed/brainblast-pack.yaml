@@ -1,0 +1,5 @@
+id: solana-sendtx-unconfirmed
+name: Solana sendTransaction without confirmation
+version: 0.1.0
+author: DSB-117
+description: Detects connection.sendTransaction() used in value-bearing paths without confirmation — transactions may silently drop on congestion or blockhash expiry
