@@ -1,0 +1,122 @@
+name: "Brainblast Security Audit"
+description: >
+  Run the brainblast static auditor on every PR and post a formatted risk
+  report as a review comment. Catches catastrophic AI-integration traps
+  (Stripe raw-body signing, JWT audience/issuer, SPL token-program identity,
+  command-injection sinks, committed secrets) and cross-checks every pinned
+  dependency against OSV.dev advisories.
+
+  Reference as: uses: DSB-117/brainblast/action@v0.6.0
+
+inputs:
+  github-token:
+    description: >
+      GitHub token used to post the PR comment.
+      Defaults to the built-in GITHUB_TOKEN — no extra setup needed for
+      public repos. Supply a PAT if you need write access on private repos.
+    required: false
+    default: ${{ github.token }}
+
+  target-dir:
+    description: "Directory to audit (relative to the repository root)."
+    required: false
+    default: "."
+
+  brainblast-version:
+    description: "brainblast npm package version to run (default: latest 0.6.x)."
+    required: false
+    default: "0.6"
+
+  fail-on:
+    description: >
+      Exit the job with a non-zero code when the audit finds at least one
+      risk at or above this severity. Options: critical | high | medium | low | never.
+    required: false
+    default: "critical"
+
+  node-version:
+    description: "Node.js version to use."
+    required: false
+    default: "22"
+
+  post-comment:
+    description: >
+      Set to 'false' to skip posting a PR comment (useful for non-PR runs or
+      when you only want the exit code).
+    required: false
+    default: "true"
+
+outputs:
+  verdict:
+    description: "ready | caution | blocked — from report.json summary.verdict"
+    value: ${{ steps.parse.outputs.verdict }}
+  risk-totals:
+    description: "JSON string of { critical, high, medium, low } risk counts"
+    value: ${{ steps.parse.outputs.risk_totals }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Run brainblast audit
+      id: audit
+      shell: bash
+      env:
+        TARGET_DIR: ${{ inputs.target-dir }}
+        BB_VERSION: ${{ inputs.brainblast-version }}
+      run: |
+        set +e
+        npx --yes "brainblast@${BB_VERSION}" "${TARGET_DIR}" --ci 2>&1
+        echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+    - name: Parse report.json
+      id: parse
+      shell: bash
+      env:
+        TARGET_DIR: ${{ inputs.target-dir }}
+        FAIL_ON: ${{ inputs.fail-on }}
+      run: |
+        REPORT="${TARGET_DIR}/.agent-research/report.json"
+        if [ ! -f "$REPORT" ]; then
+          echo "verdict=unknown" >> "$GITHUB_OUTPUT"
+          echo "risk_totals={}" >> "$GITHUB_OUTPUT"
+          echo "comment_body=brainblast: no report.json found — audit may have failed." >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        python3 "${{ github.action_path }}/parse-report.py" "$REPORT" "$FAIL_ON" >> "$GITHUB_OUTPUT"
+
+    - name: Post PR comment
+      if: >
+        inputs.post-comment == 'true' &&
+        github.event_name == 'pull_request' &&
+        steps.parse.outputs.comment_body != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+        COMMENT_BODY: ${{ steps.parse.outputs.comment_body }}
+      run: |
+        # Delete any existing brainblast comment on this PR first (idempotent).
+        EXISTING=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+          --jq '.[] | select(.body | startswith("<!-- brainblast-audit -->")) | .id' 2>/dev/null || true)
+        for ID in $EXISTING; do
+          gh api --method DELETE "repos/${REPO}/issues/comments/${ID}" >/dev/null 2>&1 || true
+        done
+        gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+          -f body="${COMMENT_BODY}" >/dev/null
+
+    - name: Enforce fail-on threshold
+      shell: bash
+      env:
+        FAIL_ON: ${{ inputs.fail-on }}
+        SHOULD_FAIL: ${{ steps.parse.outputs.should_fail }}
+      run: |
+        if [ "$SHOULD_FAIL" = "true" ]; then
+          echo "brainblast: audit failed — risk(s) at or above '${FAIL_ON}' severity found."
+          exit 1
+        fi

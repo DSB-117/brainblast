@@ -2,6 +2,25 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.6.0 — 2026-06-16
+
+- **`brainblast diff <pkg>@<from> <pkg>@<to>`**: new CLI subcommand that compares the OSV
+  advisory risk profile between two package versions. Shows introduced/resolved/unchanged
+  advisories, emits a signed risk score, and exits non-zero when the upgrade increases risk.
+  Supports `--ecosystem`, `--from`/`--to` long-form flags, `--json` for machine-readable output.
+
+- **`brainblast mcp`**: new CLI subcommand that starts a stdio MCP server. Exposes three
+  tools — `brainblast_audit`, `brainblast_diff`, `brainblast_osv_check` — so any
+  Claude-powered agent or IDE can call brainblast as a tool without shelling out.
+
+- **New public exports**: `queryOsv`, `diffVersions`, `riskScore`, `renderDiffText`,
+  `renderDiffMd` (functions) and `OsvAdvisory`, `DiffResult` (types) from the package root.
+
+- **New runtime dependency**: `@modelcontextprotocol/sdk@^1.29.0`.
+
+- **Build**: `@modelcontextprotocol/sdk` is marked external in `tsup.config.ts` so it is not
+  bundled — it is installed as a proper peer at runtime.
+
 ## 0.5.3 — 2026-06-15
 
 - No `packages/core` source changes. Repo-level release adding the
