@@ -1,0 +1,43 @@
+{
+  "id": "metaplex-nft-royalty-zero",
+  "severity": "high",
+  "title": "NFT minted with sellerFeeBasisPoints: 0 — creators receive zero royalties on secondary sales",
+  "component": {
+    "name": "@metaplex-foundation/js",
+    "type": "Blockchain",
+    "version": ">=0.18.0",
+    "sourceUrl": "https://developers.metaplex.com/token-metadata/mint"
+  },
+  "detect": {
+    "modules": ["@metaplex-foundation/js"],
+    "nameRegex": "mint|create|nft|deploy",
+    "triggerCalls": ["create"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "create",
+        "argIndex": 0,
+        "propName": "sellerFeeBasisPoints",
+        "forbiddenValue": 0,
+        "passDetail": "create() sets sellerFeeBasisPoints to a nonzero literal — creators will receive royalties on secondary sales.",
+        "failDetail": "create() is called with sellerFeeBasisPoints: 0, which bakes zero royalties into the NFT's on-chain metadata. Secondary marketplaces that honour on-chain royalties will pay creators nothing. Metaplex token-metadata is immutable after mint — this cannot be corrected without burning and reminting. Set sellerFeeBasisPoints to the intended basis points (e.g. 500 = 5%).",
+        "absentCallDetail": "Handler is in the NFT-mint scope but does not call create(); this rule does not apply here.",
+        "absentArgDetail": "create() does not include a sellerFeeBasisPoints literal in its options object; the royalty rate cannot be confirmed statically. Verify the resolved value is the intended nonzero royalty."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "mint.ts",
+    "vulnerable": "import { Metaplex } from \"@metaplex-foundation/js\";\n\nexport async function mintNft(metaplex: Metaplex, uri: string) {\n  // VULNERABLE: royalties are permanently set to zero — cannot be changed after mint\n  return metaplex.nfts().create({\n    uri,\n    name: \"My NFT\",\n    sellerFeeBasisPoints: 0,\n    symbol: \"MNFT\",\n  });\n}\n",
+    "fixed": "import { Metaplex } from \"@metaplex-foundation/js\";\n\nexport async function mintNft(metaplex: Metaplex, uri: string) {\n  // FIXED: 5% royalty on secondary sales\n  return metaplex.nfts().create({\n    uri,\n    name: \"My NFT\",\n    sellerFeeBasisPoints: 500,\n    symbol: \"MNFT\",\n  });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://developers.metaplex.com/token-metadata/mint",
+    "note": "sellerFeeBasisPoints is a required CreateNftInput field. AI code generators frequently emit 0 as a placeholder. Metaplex token-metadata is immutable after mint, so there is no recovery path short of a burn-and-remint."
+  }
+}

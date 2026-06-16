@@ -1,0 +1,5 @@
+id: raydium-compute-zero-slippage
+name: Raydium computeAmountOut with zero slippage
+version: 0.1.0
+author: DSB-117
+description: Detects computeAmountOut called with slippage 0 enabling sandwich attacks

@@ -1,0 +1,43 @@
+{
+  "id": "raydium-compute-zero-slippage",
+  "severity": "high",
+  "title": "Raydium computeAmountOut called with slippage: 0 — no minimum output protection against sandwich attacks",
+  "component": {
+    "name": "@raydium-io/raydium-sdk-v2",
+    "type": "Blockchain",
+    "version": ">=0.1.0",
+    "sourceUrl": "https://github.com/raydium-io/raydium-sdk-v2"
+  },
+  "detect": {
+    "modules": ["@raydium-io/raydium-sdk-v2"],
+    "nameRegex": "swap|arb|trade|exchange|buy|sell",
+    "triggerCalls": ["computeAmountOut", "computeAmountIn"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "computeAmountOut",
+        "argIndex": 0,
+        "propName": "slippage",
+        "forbiddenValue": 0,
+        "passDetail": "computeAmountOut is called with a nonzero slippage value — the swap has minimum output protection against sandwich attacks.",
+        "failDetail": "computeAmountOut is called with slippage: 0, which sets minAmountOut equal to amountOut with zero tolerance. Any price movement between compute and execution — including a sandwich attack — will cause the swap to execute at a worse price with no revert protection. Set slippage to a nonzero value (e.g. 0.5 = 0.5%) to enforce a minAmountOut floor.",
+        "absentCallDetail": "Handler is in the swap scope but does not call computeAmountOut(); this rule does not apply here.",
+        "absentArgDetail": "computeAmountOut does not include a slippage literal in its options object; the slippage tolerance cannot be confirmed statically. Verify the resolved value is nonzero."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "swap.ts",
+    "vulnerable": "import { Raydium } from \"@raydium-io/raydium-sdk-v2\";\n\nexport async function getSwapOutput(raydium: Raydium, poolId: string, amountIn: bigint) {\n  const pool = await raydium.liquidity.getPoolInfoFromRpc(poolId);\n  // VULNERABLE: slippage: 0 means minAmountOut === amountOut — no sandwich protection\n  return raydium.liquidity.computeAmountOut({\n    poolInfo: pool.poolInfo,\n    amountIn,\n    mintInfo: pool.mintInfos,\n    slippage: 0,\n  });\n}\n",
+    "fixed": "import { Raydium } from \"@raydium-io/raydium-sdk-v2\";\n\nexport async function getSwapOutput(raydium: Raydium, poolId: string, amountIn: bigint) {\n  const pool = await raydium.liquidity.getPoolInfoFromRpc(poolId);\n  // FIXED: 0.5% slippage tolerance enforces a minimum output floor\n  return raydium.liquidity.computeAmountOut({\n    poolInfo: pool.poolInfo,\n    amountIn,\n    mintInfo: pool.mintInfos,\n    slippage: 0.5,\n  });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/raydium-io/raydium-sdk-v2",
+    "note": "ComputeAmountOutParam.slippage: number in raydium-sdk-v2 type definitions. A value of 0 sets minAmountOut = amountOut exactly, enabling sandwich attacks. Confirmed in Raydium SDK v2 type.ts on GitHub."
+  }
+}
