@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.6.3 — 2026-06-16
+
+- **Patch:** fix stale `SHA256SUMS` checksum for `SKILL.md` — `v0.6.2` updated `SKILL.md`
+  but forgot to regenerate the hash, causing the installer to reject the file with a checksum
+  mismatch. No functional changes.
+
 ## v0.6.2 — 2026-06-16
 
 - **3 new Solana ecosystem packs** (from brainblast-scout), all PROVEN via `npm run synth` RED→GREEN:

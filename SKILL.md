@@ -18,11 +18,11 @@ triggers:
 
 Research every external component in a requirements file before an agent starts coding. Produces `.agent-research/runs/YYYYMMDD-HHMMSS/` with per-component notes and a final handoff report.
 
-> **v0.6.2 new tools available via `npx brainblast`:**
+> **v0.6.3 new tools available via `npx brainblast`:**
 > - `brainblast diff <pkg>@<v1> <pkg>@<v2>` — compare OSV risk profiles between two package versions.
 > - `brainblast mcp` — start a stdio MCP server (`brainblast_audit`, `brainblast_diff`, `brainblast_osv_check` tools).
 > - `brainblast drift [dir]` — detect new OSV advisories since baseline; exits 1 on new findings.
-> - GitHub Action: `uses: DSB-117/brainblast/action@v0.6.2` — PR comment with risk heatmap.
+> - GitHub Action: `uses: DSB-117/brainblast/action@v0.6.3` — PR comment with risk heatmap.
 > - 3 new Solana ecosystem packs: `solana-sendtx-unconfirmed`, `metaplex-nft-royalty-zero`, `raydium-compute-zero-slippage`.
 
 > **Incremental runs (caching).** Brainblast caches research per component, keyed by
