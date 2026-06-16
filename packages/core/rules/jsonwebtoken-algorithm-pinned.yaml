@@ -1,0 +1,36 @@
+# Pure-data rule (facts). Binds to vetted templates by `check.kind`/`test.kind`.
+id: jsonwebtoken-algorithm-pinned
+severity: critical
+title: jsonwebtoken verify() must pin the accepted algorithm(s)
+component:
+  name: jsonwebtoken
+  type: Auth
+  version: unversioned
+  sourceUrl: https://github.com/auth0/node-jsonwebtoken/blob/master/README.md#jwtverifytoken-secretorpublickey-options-callback
+detect:
+  lang: typescript
+  modules: [jsonwebtoken]
+  # Functions that import jsonwebtoken and contain verification logic.
+  nameRegex: "auth|jwt|token|verify|middleware"
+  triggerCalls: [verify]
+  requiresImport: true
+check:
+  kind: required-call-with-options
+  params:
+    verifyCalls: [verify]
+    decodeCalls: [decode]
+    requiredProps:
+      - [algorithms]
+    passDetail: >-
+      jwt.verify() pins the accepted algorithm(s) via the 'algorithms' option —
+      algorithm-confusion attacks are blocked.
+    missingPropsDetail: >-
+      jwt.verify() is called without an 'algorithms' option. An attacker who controls
+      the token header can switch to 'none' (no signature) or to an asymmetric algorithm
+      using the public key as the HMAC secret, bypassing signature verification entirely.
+      Always pass algorithms: ['HS256'] (or whichever algorithm you use).
+    decodeOnlyDetail: >-
+      Token is decoded with jwt.decode() (no signature verification). Any token —
+      forged or expired — is accepted. Use jwt.verify() with a pinned algorithms list.
+test:
+  kind: none

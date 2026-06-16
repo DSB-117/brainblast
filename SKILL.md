@@ -257,6 +257,8 @@ As you read each page, build up the following sections for the component:
 
 **Risks** — anything that could silently break the implementation or cause a revenue/data loss that would not be caught by tests. Rate these CRITICAL / HIGH / MEDIUM / LOW. A CRITICAL risk is one where the failure is invisible until it is too late (e.g. a fee recipient is silently set to zero, a config is immutable after deploy, a deprecated endpoint still accepts requests but returns stale data).
 
+**Every risk must be evidence-grounded.** When you find a risk, immediately record the proof: the verbatim sentence or code snippet from the official docs, changelog, or advisory that substantiates it, and the URL where you found it. This makes every finding independently verifiable — a reviewer can click the URL and confirm the quote. Do not write a risk without evidence; if you cannot find a primary source that proves it, log it as an assumption, not a risk.
+
 ### 3c — Questions loop
 
 As you research, you will encounter things you don't yet know. For each:
@@ -304,6 +306,8 @@ Write to `$_RUN_DIR/components/[slug].md`:
 
 **[CRITICAL/HIGH/MEDIUM/LOW] — [short title]**
 [one paragraph explaining the failure mode, why it is hard to detect, and what the correct behavior is]
+
+> **Evidence:** "[verbatim quote from the source that proves this risk]" — [source URL]
 
 ---
 
@@ -517,6 +521,7 @@ Rules — the gate and downstream consumers depend on these:
 - **All enums are lowercase.** `verdict` ∈ `ready | caution | blocked`; risk `severity` ∈ `critical | high | medium | low`; component `status` ∈ `fresh | cached | partial | not_found`; component `type` ∈ `API | SDK | Auth | Database | Infra | Blockchain | Other`.
 - **`riskTotals` MUST equal the sum of every component's risks by severity.** A consumer reads `riskTotals.critical` directly; if it disagrees with the listed risks, the report is wrong.
 - **No extra keys.** The schema is strict (`additionalProperties: false`). Map `cached` status to components reused from cache (Step 3 HIT), `fresh` to ones researched this run.
+- **Evidence is required on every risk.** Set `evidence.quote` to the verbatim sentence from the source, `evidence.url` to the page URL, and `evidence.browsedAt` to today's date. OSV-sourced risks use the advisory URL as `evidence.url` and the advisory summary as `evidence.quote`. A risk entry without evidence is a schema violation.
 - Emit `preCodingDecisions`, `requirementsCorrections`, and `openQuestions` from Steps 5 and 3; `openQuestions` lists only questions marked "Unresolvable from public sources" (usually empty).
 
 Shape:
@@ -535,7 +540,16 @@ Shape:
       "name": "Stripe API", "type": "API", "version": "2026-05-27.dahlia",
       "sourceUrl": "https://docs.stripe.com/", "status": "fresh",
       "risks": [
-        { "severity": "critical", "title": "Forged payments accepted", "detail": "…" }
+        {
+          "severity": "critical",
+          "title": "Forged payments accepted",
+          "detail": "…",
+          "evidence": {
+            "quote": "Verbatim sentence from official docs proving this risk",
+            "url": "https://docs.example.com/page-where-quote-was-found",
+            "browsedAt": "YYYY-MM-DD"
+          }
+        }
       ]
     }
   ],

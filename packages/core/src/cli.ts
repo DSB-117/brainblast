@@ -16,6 +16,7 @@ import { isTelemetryEnabled, recordGraduationEvents, telemetryFilePath, submitTe
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
 //   brainblast diff <pkg>@<from> <pkg>@<to> [--ecosystem <eco>] [--json]
+//   brainblast drift [targetDir] [--update-baseline] [--json]
 //   brainblast mcp
 //   brainblast watch [targetDir]
 //   brainblast trust-graph <programId> [<programId>...] [--rpc URL] [--no-probe] [--json]
@@ -82,6 +83,11 @@ function parsePackDirs(argv: string[]): string[] {
 
 if (args[0] === "diff") {
   await runDiff(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "drift") {
+  await runDrift(args.slice(1));
   process.exit(0);
 }
 
@@ -446,6 +452,33 @@ async function runFix(argv: string[]) {
       console.error(`\nWarning: could not create branch/commit: ${e.message ?? e}`);
     }
   }
+}
+
+// ── brainblast drift ─────────────────────────────────────────────────────────
+
+async function runDrift(argv: string[]) {
+  const updateBaseline = argv.includes("--update-baseline");
+  const jsonOut = argv.includes("--json");
+  const targetDir = argv.find((a) => !a.startsWith("--")) ?? process.cwd();
+
+  const { checkDrift, renderDriftText } = await import("./drift.ts");
+
+  let result;
+  try {
+    result = await checkDrift(targetDir, { updateBaseline });
+  } catch (e: any) {
+    console.error(`brainblast drift: ${e.message ?? String(e)}`);
+    process.exit(1);
+  }
+
+  if (jsonOut) {
+    console.log(JSON.stringify(result, null, 2));
+    if (result.newAdvisories.length > 0) process.exit(1);
+    return;
+  }
+
+  console.log(renderDriftText(result));
+  if (result.newAdvisories.length > 0) process.exit(1);
 }
 
 // ── brainblast diff ──────────────────────────────────────────────────────────

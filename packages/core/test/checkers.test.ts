@@ -755,3 +755,133 @@ describe("taintToSink", () => {
     });
   });
 });
+
+// ── prisma-raw-injection rule (taint-to-sink) ────────────────────────────────
+
+const PRISMA_PARAMS = {
+  sources: [{ name: "request-input", pattern: "\\b(req|request)\\.(body|query|params|headers)\\b" }],
+  sinkCalls: ["$queryRaw", "$executeRaw", "$queryRawUnsafe", "$executeRawUnsafe"],
+  maxHops: 2,
+};
+
+describe("prisma-raw-injection rule", () => {
+  it("FAIL when req.body flows into $queryRaw", () => {
+    const c = candidate(
+      `export function h(req: any, prisma: any) {
+        return prisma.$queryRaw(\`SELECT * FROM users WHERE id = \${req.body.id}\`);
+      }`,
+      "h",
+    );
+    expect(taintToSink(c, PRISMA_PARAMS).result).toBe("fail");
+  });
+
+  it("FAIL when req.query flows into $executeRawUnsafe", () => {
+    const c = candidate(
+      `export function h(req: any, prisma: any) {
+        const q = req.query.search;
+        return prisma.$executeRawUnsafe("SELECT * FROM posts WHERE title LIKE " + q);
+      }`,
+      "h",
+    );
+    expect(taintToSink(c, PRISMA_PARAMS).result).toBe("fail");
+  });
+
+  it("PASS when $queryRaw uses only a literal (safe tagged-template)", () => {
+    const c = candidate(
+      `export function h(id: number, prisma: any) {
+        return prisma.$queryRaw\`SELECT * FROM users WHERE id = \${id}\`;
+      }`,
+      "h",
+    );
+    expect(taintToSink(c, PRISMA_PARAMS).result).toBe("pass");
+  });
+});
+
+// ── open-redirect rule (taint-to-sink) ───────────────────────────────────────
+
+const REDIRECT_PARAMS = {
+  sources: [{ name: "request-input", pattern: "\\b(req|request)\\.(query|params|body|headers)\\b" }],
+  sinkCalls: ["redirect", "setHeader"],
+  maxHops: 2,
+};
+
+describe("open-redirect rule", () => {
+  it("FAIL when req.query flows into res.redirect", () => {
+    const c = candidate(
+      `export function h(req: any, res: any) {
+        res.redirect(req.query.returnUrl);
+      }`,
+      "h",
+    );
+    expect(taintToSink(c, REDIRECT_PARAMS).result).toBe("fail");
+  });
+
+  it("FAIL when req.params flows into redirect via variable", () => {
+    const c = candidate(
+      `export function h(req: any, res: any) {
+        const dest = req.params.next;
+        res.redirect(dest);
+      }`,
+      "h",
+    );
+    expect(taintToSink(c, REDIRECT_PARAMS).result).toBe("fail");
+  });
+
+  it("PASS when redirect destination is a literal", () => {
+    const c = candidate(
+      `export function h(req: any, res: any) {
+        res.redirect("/dashboard");
+      }`,
+      "h",
+    );
+    expect(taintToSink(c, REDIRECT_PARAMS).result).toBe("pass");
+  });
+});
+
+// ── jsonwebtoken-algorithm-pinned rule (required-call-with-options) ───────────
+
+const JWT_ALGO_PARAMS = {
+  verifyCalls: ["verify"],
+  decodeCalls: ["decode"],
+  requiredProps: [["algorithms"]],
+  passDetail: "algorithms pinned",
+  missingPropsDetail: "algorithms missing — algorithm confusion risk",
+  decodeOnlyDetail: "decode-only, no signature verification",
+};
+
+describe("jsonwebtoken-algorithm-pinned rule", () => {
+  it("PASS when jwt.verify includes algorithms option", () => {
+    const c = candidate(
+      `import jwt from "jsonwebtoken";
+       export function verifyJwt(token: string, secret: string) {
+         return jwt.verify(token, secret, { algorithms: ["HS256"] });
+       }`,
+      "verifyJwt",
+    );
+    expect(requiredCallWithOptions(c, JWT_ALGO_PARAMS).result).toBe("pass");
+  });
+
+  it("FAIL when jwt.verify has no algorithms option", () => {
+    const c = candidate(
+      `import jwt from "jsonwebtoken";
+       export function verifyJwt(token: string, secret: string) {
+         return jwt.verify(token, secret);
+       }`,
+      "verifyJwt",
+    );
+    const r = requiredCallWithOptions(c, JWT_ALGO_PARAMS);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("algorithms");
+  });
+
+  it("FAIL when only jwt.decode is used (no signature verification)", () => {
+    const c = candidate(
+      `import jwt from "jsonwebtoken";
+       export function verifyJwt(token: string) {
+         return jwt.decode(token);
+       }`,
+      "verifyJwt",
+    );
+    expect(requiredCallWithOptions(c, JWT_ALGO_PARAMS).result).toBe("fail");
+  });
+});
