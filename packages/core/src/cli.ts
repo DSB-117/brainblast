@@ -15,6 +15,8 @@ import { isTelemetryEnabled, recordGraduationEvents, telemetryFilePath, submitTe
 
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
+//   brainblast diff <pkg>@<from> <pkg>@<to> [--ecosystem <eco>] [--json]
+//   brainblast mcp
 //   brainblast watch [targetDir]
 //   brainblast trust-graph <programId> [<programId>...] [--rpc URL] [--no-probe] [--json]
 //
@@ -76,6 +78,17 @@ function parsePackDirs(argv: string[]): string[] {
   const value = argv[idx + 1];
   if (!value || value.startsWith("--")) return [];
   return value.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+if (args[0] === "diff") {
+  await runDiff(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "mcp") {
+  const { startMcpServer } = await import("./mcp.ts");
+  await startMcpServer();
+  process.exit(0);
 }
 
 if (args[0] === "trust-graph") {
@@ -432,5 +445,99 @@ async function runFix(argv: string[]) {
     } catch (e: any) {
       console.error(`\nWarning: could not create branch/commit: ${e.message ?? e}`);
     }
+  }
+}
+
+// ── brainblast diff ──────────────────────────────────────────────────────────
+
+function splitPkgVersion(arg: string): [string, string] {
+  if (arg.startsWith("@")) {
+    // scoped: @scope/name@version
+    const rest = arg.slice(1);
+    const at = rest.lastIndexOf("@");
+    if (at < 0) return [arg, ""];
+    return [`@${rest.slice(0, at)}`, rest.slice(at + 1)];
+  }
+  const at = arg.lastIndexOf("@");
+  if (at <= 0) return [arg, ""];
+  return [arg.slice(0, at), arg.slice(at + 1)];
+}
+
+function guessEcosystem(name: string): string {
+  if (name.includes("/") && !name.startsWith("@")) return "Go";
+  return "npm";
+}
+
+async function runDiff(argv: string[]) {
+  const flag = (n: string) => {
+    const i = argv.indexOf(`--${n}`);
+    return i >= 0 ? argv[i + 1] : undefined;
+  };
+  const ecoFlag = flag("ecosystem");
+  const fromFlag = flag("from");
+  const toFlag = flag("to");
+  const jsonOut = argv.includes("--json");
+  const skipValues = new Set([ecoFlag, fromFlag, toFlag].filter(Boolean));
+  const positional = argv.filter((a) => !a.startsWith("--") && !skipValues.has(a));
+
+  let pkgName: string;
+  let fromVersion: string;
+  let toVersion: string;
+  let ecosystem: string;
+
+  if (positional.length === 2 && positional[0].includes("@") && positional[1].includes("@")) {
+    const [n1, v1] = splitPkgVersion(positional[0]);
+    const [n2, v2] = splitPkgVersion(positional[1]);
+    if (n1 !== n2) {
+      console.error(`error: package names must match ('${n1}' vs '${n2}')`);
+      process.exit(2);
+    }
+    if (!v1 || !v2) {
+      console.error("error: could not parse versions from arguments");
+      process.exit(2);
+    }
+    pkgName = n1;
+    fromVersion = v1;
+    toVersion = v2;
+    ecosystem = ecoFlag ?? guessEcosystem(pkgName);
+  } else if (positional.length >= 1 && fromFlag && toFlag) {
+    pkgName = positional[0];
+    fromVersion = fromFlag;
+    toVersion = toFlag;
+    ecosystem = ecoFlag ?? guessEcosystem(pkgName);
+  } else {
+    console.error("usage: brainblast diff <pkg>@<from> <pkg>@<to> [--ecosystem <eco>]");
+    console.error("   or: brainblast diff <pkg> --from <v1> --to <v2> [--ecosystem <eco>]");
+    console.error("  e.g.: brainblast diff lodash@4.17.20 lodash@4.17.21");
+    process.exit(2);
+  }
+
+  const { diffVersions, renderDiffText, renderDiffMd, riskScore } = await import("./diff.ts");
+
+  let result;
+  try {
+    result = await diffVersions(ecosystem, pkgName, fromVersion, toVersion);
+  } catch (e: any) {
+    console.error(`brainblast diff: ${e.message ?? String(e)}`);
+    process.exit(1);
+  }
+
+  if (jsonOut) {
+    console.log(JSON.stringify(result, null, 2));
+    return;
+  }
+
+  console.log(renderDiffText(result));
+
+  const score = riskScore(result);
+  if (score > 0) {
+    console.error(`\nUpgrade INCREASES risk (score: +${score}). Review introduced advisories before bumping.`);
+    process.exit(1);
+  } else if (score < 0) {
+    console.log(`\nUpgrade DECREASES risk (score: ${score}). Upgrade recommended.`);
+  } else if (result.unchanged.length > 0) {
+    console.log(`\nRisk profile unchanged (${result.unchanged.length} advisory${result.unchanged.length !== 1 ? "ies" : ""} persist in both versions).`);
+  } else {
+    console.log("\nNo known advisories for either version.");
   }
 }

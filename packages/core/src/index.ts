@@ -67,6 +67,12 @@ export {
 } from "./trustGraph/programCache.ts";
 export type { ProgramCache, ProgramCacheEntry } from "./trustGraph/programCache.ts";
 
+// ── OSV advisory client (v0.6.0) ─────────────────────────────────────────────
+export { queryOsv, type OsvAdvisory } from "./osv.ts";
+
+// ── Upgrade risk diff (v0.6.0) ────────────────────────────────────────────────
+export { diffVersions, riskScore, renderDiffText, renderDiffMd, type DiffResult } from "./diff.ts";
+
 // ── Core types ────────────────────────────────────────────────────────────────
 export type {
   Rule,

@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+## v0.6.0 — 2026-06-16
+
+- **GitHub Action** (`action/`): drop `uses: DSB-117/brainblast/action@v0.6.0` into any
+  repository's workflow. Runs `npx brainblast --ci`, parses `report.json`, and posts a
+  formatted risk-report PR comment (risk heatmap, top risks, static-audit findings) using
+  the built-in `GITHUB_TOKEN`. Re-runs collapse the previous comment. Configurable `fail-on`
+  threshold (default: `critical`). No secrets required for public repos. Copy-paste example
+  at `examples/ci/brainblast-audit.yml`.
+
+- **MCP Server** (`brainblast mcp`): start a stdio Model Context Protocol server exposing
+  three tools any Claude-powered agent or IDE can call:
+  - `brainblast_audit(dir)` — run the full static auditor on a local directory.
+  - `brainblast_osv_check(ecosystem, package, version)` — query OSV.dev for known advisories.
+  - `brainblast_diff(ecosystem, package, from_version, to_version)` — compare risk profiles.
+  Add to `claude.json` MCP config with `"command": "npx", "args": ["brainblast@latest", "mcp"]`.
+
+- **Upgrade risk diff** (`brainblast diff`): compare the OSV advisory risk profile between
+  two package versions. Shows introduced advisories (new risk), resolved advisories (fixed),
+  and unchanged advisories, plus a signed risk score. Exits non-zero when the upgrade
+  increases risk so it can gate a lockfile bump in CI.
+  ```
+  brainblast diff lodash@4.17.20 lodash@4.17.21
+  brainblast diff stripe@12.0.0 stripe@13.0.0 --ecosystem npm
+  brainblast diff serde@1.0.0 serde@1.0.195 --ecosystem crates.io
+  ```
+
+- **`packages/core` 0.6.0**: new public exports `queryOsv`, `diffVersions`, `riskScore`,
+  `renderDiffText`, `renderDiffMd`, `OsvAdvisory`, `DiffResult` (from `brainblast` npm package).
+  New `@modelcontextprotocol/sdk` runtime dependency.
+
 ## v0.5.5 — 2026-06-15
 
 - **Auto-seed the component inventory from lockfiles**: the `/brainblast` research skill now
