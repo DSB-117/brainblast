@@ -84,7 +84,7 @@ export {
   type DriftResult,
 } from "./drift.ts";
 
-// ── Token identity + quality (v0.7.0) ────────────────────────────────────────
+// ── Token identity + quality (v0.6.4) ────────────────────────────────────────
 export { CANONICAL_MINTS, CANONICAL_BY_MINT, canonicalMintForSymbol, isCanonicalMint, type CanonicalMint } from "./solanaCanonicalMints.ts";
 export { verifyTokenIdentity, type TokenIdentity, type IdentityStatus, type VerifyOpts } from "./tokenRegistry.ts";
 export { analyzeToken, renderRicoText, deployerFlagsFrom, type RicoResult, type RicoOutcome, type RicoTokenSecurity } from "./ricomaps.ts";
