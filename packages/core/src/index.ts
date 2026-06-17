@@ -89,6 +89,24 @@ export { CANONICAL_MINTS, CANONICAL_BY_MINT, canonicalMintForSymbol, isCanonical
 export { verifyTokenIdentity, type TokenIdentity, type IdentityStatus, type VerifyOpts } from "./tokenRegistry.ts";
 export { analyzeToken, renderRicoText, deployerFlagsFrom, type RicoResult, type RicoOutcome, type RicoTokenSecurity } from "./ricomaps.ts";
 
+// ── AI-agent transaction firewall (v0.7.0) ────────────────────────────────────
+export {
+  inspectTransaction,
+  decodeTransaction,
+  analyzeInstructions,
+  parseCpiPrograms,
+  renderFirewallText,
+  KNOWN_PROGRAMS,
+  type FirewallReport,
+  type FirewallFinding,
+  type FirewallVerdict,
+  type FirewallSeverity,
+  type FirewallProgram,
+  type FirewallOpts,
+  type DecodedTx,
+  type DecodedInstruction,
+} from "./firewall.ts";
+
 // ── Core types ────────────────────────────────────────────────────────────────
 export type {
   Rule,

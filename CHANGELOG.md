@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### AI-agent transaction firewall (`brainblast firewall <base64-tx>`)
+
+- **`brainblast firewall`** — inspects a serialized Solana transaction *before* an autonomous agent signs it. Decodes the transaction locally (legacy + v0/versioned, including address lookup tables), flags dangerous instruction patterns, and (with an RPC endpoint) simulates it to surface the full CPI tree.
+- **Static heuristics:** delegate-approval drains (token `Approve`/`ApproveChecked`), authority changes (token `SetAuthority`), program upgrades and upgrade-authority changes (BPF Upgradeable Loader), and any call to an unrecognized program.
+- **Verdict model:** `allow` / `warn` / `block`. Exit 1 on `block` (or any `warn` with `--strict`) — a CI/agent gate, not just a report.
+- **Programmatic API:** `inspectTransaction(base64, opts)` exported from the package so AI-agent frameworks can call it inline before signing. Network calls go through an injectable `fetchImpl`; the whole pipeline is deterministic and offline-testable.
+- `--no-simulate` for fully-offline static analysis, `--message-only` for bare messages, `--json` for machine-readable output.
+
 ## v0.6.4 — 2026-06-16
 
 ### Rico Maps token identity + quality (`brainblast rico <CA>`)
