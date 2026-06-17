@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## v0.7.0 — 2026-06-16
+## v0.6.4 — 2026-06-16
 
 ### Rico Maps token identity + quality (`brainblast rico <CA>`)
 

@@ -58,7 +58,7 @@ Everything Brainblast does today, at a glance.
 - **Gates CI.** A `--ci` mode runs non-interactively (no prompts, documented defaults), and a dependency-free gate script turns `report.json` into an exit code — fail the build if any CRITICAL risk remains (`--fail-on=critical|high|…`) or the verdict is `blocked`.
 
 **Deterministic auditor — `npx brainblast`**
-- Published to npm as [`brainblast@0.7.0`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
+- Published to npm as [`brainblast@0.6.4`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
 - A Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code *offline* (no network, no LLM) for **thirteen built-in integration traps**: Stripe webhook raw-body signature verification, Privy/JWT signature + `aud` + `iss` verification, Bags/Solana fee-share creator-inclusion, Token-2022 program-ID pinning, Metaplex metadata immutability, Anchor `init_if_needed` guards, committed `.env*` secrets, **graph-based, project-wide cross-file taint tracking** for secret leaks (`env-secret-leaked-to-sink`), command injection (`request-input-command-injection`), SQL injection via Prisma raw queries (`prisma-raw-injection`), open-redirect via tainted `res.redirect()` calls (`open-redirect`), JWT algorithm confusion (`jsonwebtoken-algorithm-pinned`), and **Solana mint impersonation** (`solana-token-impersonation`).
 - **`brainblast rico <CA>`** — token identity + quality check: verifies a contract address against the canonical mint registry (offline) and Jupiter (live), detects impersonators, and runs a Rico Maps forensic scan (risk score, snipers, cabal, bundle clusters, deployer flags).
 - Emits CI-readable `checks[]` and `checkTotals` into `report.json`, and can generate behavioral contract tests that fail on the vulnerable fixtures and pass on the fixed ones — the durable guardrail that keeps a fixed trap fixed.
@@ -103,14 +103,14 @@ Install gstack: run git clone --single-branch --depth 1 https://github.com/garry
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.7.0/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.6.4/install.sh | sh
 ```
 
 The installer pins to a tagged release, verifies SHA-256 checksums before writing any file, and auto-detects Claude Code, OpenClaw, and Codex. If gstack is missing, it warns you with the exact command to fix it. (It installs the Brainblast skill, but it does **not** install gstack for you — that is a one-time prerequisite above.)
 
 **Or tell your agent:**
 
-> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.7.0/install.sh | sh`
+> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.6.4/install.sh | sh`
 
 For the bleeding edge instead of a pinned release, prefix with `BRAINBLAST_REF=main`.
 
