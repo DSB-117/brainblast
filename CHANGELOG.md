@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v0.7.0 — 2026-06-17
+
+The Solana power release: six features that extend brainblast from "audit before
+you ship" to a full-lifecycle safety layer for Solana developers and AI agents.
+
 ### Batch token risk scanner (`brainblast batch <file>`)
 
 - **`brainblast batch`** — pass a list of contract addresses (a portfolio, a launchpad's listings, a DEX routing whitelist) and get back a parallel-processed, risk-ranked matrix: identity status, impersonation flag, Rico risk score, snipers, bundle clusters, deployer flags. Built for builders curating which tokens their app should support.

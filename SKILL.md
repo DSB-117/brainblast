@@ -18,14 +18,15 @@ triggers:
 
 Research every external component in a requirements file before an agent starts coding. Produces `.agent-research/runs/YYYYMMDD-HHMMSS/` with per-component notes and a final handoff report.
 
-> **v0.6.4 new tools available via `npx brainblast`:**
-> - `brainblast rico <CA>` — token identity + quality check: canonical mint registry (offline), Jupiter live lookup, impersonation detection, and Rico Maps forensic scan (risk score, snipers, cabal, bundle clusters, deployer flags). Use `/brainblast-rico-maps <CA>` from Claude Code.
-> - 13th bundled rule: `solana-token-impersonation` — offline static check for hardcoded mint constants whose symbol name doesn't match the canonical address.
-> - `brainblast diff <pkg>@<v1> <pkg>@<v2>` — compare OSV risk profiles between two package versions.
-> - `brainblast mcp` — start a stdio MCP server (`brainblast_audit`, `brainblast_diff`, `brainblast_osv_check` tools).
-> - `brainblast drift [dir]` — detect new OSV advisories since baseline; exits 1 on new findings.
-> - GitHub Action: `uses: DSB-117/brainblast/action@v0.6.4` — PR comment with risk heatmap.
-> - 3 Solana ecosystem packs: `solana-sendtx-unconfirmed`, `metaplex-nft-royalty-zero`, `raydium-compute-zero-slippage`.
+> **v0.7.0 — the Solana power release. New tools via `npx brainblast`:**
+> - `brainblast firewall <base64-tx>` — AI-agent transaction firewall: decode a serialized tx (legacy + v0), flag drain/authority/upgrade patterns + unknown programs, optionally simulate for the CPI tree, return allow/warn/block. Use `/brainblast-firewall <tx>` from Claude Code.
+> - `brainblast idl-rules <idl.json>` — generate brainblast rules from an Anchor IDL that verify the Rust source declares every signer/mut constraint the IDL promises.
+> - `brainblast score <program-id>` — 0–100 trust score + A–F grade for a deployed program (upgrade authority, verified build, audits, curation, parity). `/brainblast-score`.
+> - `brainblast watch-chain <program-id>` — live NDJSON monitor: upgrade-authority changes + activity bursts.
+> - `brainblast pump-check <mint>` — launch pre-flight: mint/freeze authority revocation + identity + Rico forensics → GO/CAUTION/NO-GO. `/brainblast-pump-check`.
+> - `brainblast batch <file>` — risk-rank a list of contract addresses in parallel. `/brainblast-batch`.
+> - `brainblast rico <CA>` — token identity + quality check (canonical registry + Jupiter + Rico Maps). Use `/brainblast-rico-maps <CA>`.
+> - 13 bundled rules incl. `solana-token-impersonation`; `brainblast diff` / `mcp` / `drift`; GitHub Action `uses: DSB-117/brainblast/action@v0.7.0`; 3 Solana ecosystem packs.
 
 > **Incremental runs (caching).** Brainblast caches research per component, keyed by
 > `name@version`, in `.agent-research/cache/`. A re-run reuses cached components whose version is
