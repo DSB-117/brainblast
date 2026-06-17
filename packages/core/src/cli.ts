@@ -162,6 +162,11 @@ if (args[0] === "score") {
   process.exit(0);
 }
 
+if (args[0] === "pump-check") {
+  await runPumpCheck(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -830,4 +835,40 @@ async function runScore(argv: string[]): Promise<void> {
   if (min && !gradeAtLeast(result.grade, min)) {
     process.exit(1);
   }
+}
+
+async function runPumpCheck(argv: string[]): Promise<void> {
+  const { pumpPreflight, renderPreflightText } = await import("./pumpCheck.ts");
+
+  const mint = argv.find((a) => !a.startsWith("--"));
+  if (!mint) {
+    console.error("usage: brainblast pump-check <mint> [--rpc URL] [--api-key KEY] [--fail-on SCORE] [--offline] [--json]");
+    console.error("  Launch pre-flight: mint/freeze authority, identity, and Rico Maps forensics → GO/CAUTION/NO-GO.");
+    process.exit(2);
+  }
+
+  const rpcIdx = argv.indexOf("--rpc");
+  const rpcUrl = rpcIdx >= 0 ? argv[rpcIdx + 1] : undefined;
+  const keyIdx = argv.indexOf("--api-key");
+  const apiKey = keyIdx >= 0 ? argv[keyIdx + 1] : undefined;
+  const failIdx = argv.indexOf("--fail-on");
+  const failOnRisk = failIdx >= 0 ? parseInt(argv[failIdx + 1], 10) : undefined;
+  const offline = argv.includes("--offline");
+  const jsonOut = argv.includes("--json");
+
+  let report;
+  try {
+    report = await pumpPreflight(mint, { rpcUrl, apiKey, failOnRisk, offline });
+  } catch (e: any) {
+    console.error(`brainblast pump-check: ${e?.message ?? String(e)}`);
+    process.exit(2);
+  }
+
+  if (jsonOut) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    console.log(renderPreflightText(report));
+  }
+
+  if (report.verdict === "NO-GO") process.exit(1);
 }

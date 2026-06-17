@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Launch pre-flight for pump.fun / SPL builders (`brainblast pump-check <mint>`)
+
+- **`brainblast pump-check`** — run before you list or integrate a token. Reads the on-chain SPL mint account, verifies identity, and folds in a Rico Maps forensic scan into one **GO / CAUTION / NO-GO** checklist.
+- **The two silent footguns it catches up front:** a *live mint authority* (the deployer can print unlimited supply and dilute every holder → NO-GO) and a *live freeze authority* (they can freeze any user's token account → CAUTION) — both one `getAccountInfo` call away.
+- Checklist also covers identity/impersonation, Rico risk score (`--fail-on`, default 70), snipers, bundle clusters, holder distribution, and deployer flags. Exit 1 on NO-GO.
+- `--offline` does the on-chain + identity checks with no Rico call; graceful skip when no API key. Programmatic exports: `pumpPreflight`, `parseMintAccount`.
+
 ### Live on-chain monitoring (`brainblast watch-chain <program-id>`)
 
 - **`brainblast watch-chain`** — moves brainblast from "before you ship" to "while it's live." Polls a deployed program and emits an NDJSON anomaly stream: **upgrade-authority changes** (the single most dangerous on-chain event for a program's users), bursts of new activity, and poll errors.

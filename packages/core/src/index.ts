@@ -143,6 +143,19 @@ export {
   type ChainWatchOpts,
 } from "./watchChain.ts";
 
+// ── Launch pre-flight / pump-check (v0.7.0) ───────────────────────────────────
+export {
+  pumpPreflight,
+  parseMintAccount,
+  renderPreflightText,
+  type PreflightReport,
+  type PreflightCheck,
+  type PreflightVerdict,
+  type PreflightStatus,
+  type MintInfo,
+  type PreflightOpts,
+} from "./pumpCheck.ts";
+
 // ── Core types ────────────────────────────────────────────────────────────────
 export type {
   Rule,
