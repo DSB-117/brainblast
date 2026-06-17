@@ -121,6 +121,18 @@ export {
   type IdlConstraintParams,
 } from "./idlRules.ts";
 
+// ── Program trust score / oracle (v0.7.0) ─────────────────────────────────────
+export {
+  scoreProgram,
+  scoreFromProgram,
+  gradeForScore,
+  gradeAtLeast,
+  renderScoreText,
+  type TrustScore,
+  type ScoreFactor,
+  type Grade,
+} from "./score.ts";
+
 // ── Core types ────────────────────────────────────────────────────────────────
 export type {
   Rule,

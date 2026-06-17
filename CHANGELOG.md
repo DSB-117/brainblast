@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Program trust score / security oracle (`brainblast score <program-id>`)
+
+- **`brainblast score`** — a single 0–100 trust score and A–F grade for any deployed Solana program, composed from the trust graph: upgrade-authority kind (renounced > DAO > multisig > single-key), verified-build status, audit history, directory curation, and cross-cluster parity.
+- Returns a transparent weighted factor breakdown (each factor's points/max + a plain-English reason) so the score is auditable, not a black box. JSON output makes it a contract other tools, protocols, and frontends can consume.
+- `--min A|B|C|D|F` turns it into a CI gate (exit 1 below the bar); `--no-probe` runs offline against the curated directory + cache. Programmatic exports: `scoreProgram`, `scoreFromProgram`, `gradeForScore`.
+
 ### Anchor IDL → auto-generated rules (`brainblast idl-rules <idl.json>`)
 
 - **`brainblast idl-rules`** — turns any Anchor IDL into a brainblast rule that scans the program's Rust source and verifies every account constraint the IDL promises is actually present. Flips brainblast from a fixed set of curated rules to *unlimited rules derived from your own program's spec*.
