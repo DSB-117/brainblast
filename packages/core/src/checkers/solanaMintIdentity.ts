@@ -69,6 +69,6 @@ export const solanaMintIdentity: Checker = (c, _params) => {
   }
 
   if (foundWrong) return { result: "fail", detail: "Mint constant has wrong address for its symbol" };
-  if (foundRight) return { result: "pass" };
-  return { result: "cant_tell" };
+  if (foundRight) return { result: "pass", detail: "All symbol-named mint constants have canonical addresses" };
+  return { result: "cant_tell", detail: "No symbol-named mint constants found" };
 };
