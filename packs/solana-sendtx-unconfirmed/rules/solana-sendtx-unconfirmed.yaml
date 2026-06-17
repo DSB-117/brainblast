@@ -1,0 +1,40 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: solana-sendtx-unconfirmed
+severity: high
+title: sendTransaction used instead of sendAndConfirmTransaction — transaction
+  may silently drop
+component:
+  name: "@solana/web3.js"
+  type: Blockchain
+  version: ">=1.0.0"
+  sourceUrl: https://solana-labs.github.io/solana-web3.js/
+detect:
+  modules:
+    - "@solana/web3.js"
+  nameRegex: send|transfer|execute|submit|payout|swap
+  triggerCalls:
+    - sendTransaction
+    - sendAndConfirmTransaction
+check:
+  kind: forbidden-call-replacement
+  params:
+    forbiddenCalls:
+      - sendTransaction
+    saferCalls:
+      - sendAndConfirmTransaction
+    passDetail: Handler calls sendAndConfirmTransaction, which waits for the cluster
+      to confirm the transaction before returning and propagates any on-chain
+      error as a thrown exception.
+    failDetail: Handler calls connection.sendTransaction() but not
+      sendAndConfirmTransaction(). sendTransaction() submits the transaction and
+      returns a signature immediately, with no confirmation that it landed. If
+      the transaction is dropped (congestion, validator restart, blockhash
+      expiry) the code continues as if it succeeded — tokens are not moved but
+      the caller assumes they were. Use sendAndConfirmTransaction(connection,
+      tx, signers) to block until confirmation.
+    absentDetail: Handler is in the send/transfer scope but calls neither
+      sendTransaction nor sendAndConfirmTransaction; this rule does not apply
+      here.
+test:
+  kind: none

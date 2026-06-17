@@ -1,0 +1,46 @@
+{
+  "id": "metaplex-metadata-immutable-synth",
+  "severity": "critical",
+  "title": "Metaplex createV1 called with isMutable: false to seal token metadata at mint",
+  "component": {
+    "name": "Metaplex Token Metadata",
+    "type": "Blockchain",
+    "version": "unversioned",
+    "sourceUrl": "https://developers.metaplex.com/token-metadata"
+  },
+  "detect": {
+    "modules": ["@metaplex-foundation/mpl-token-metadata"],
+    "nameRegex": "metaplex|mpl|createNft",
+    "triggerCalls": ["createV1", "createNft", "createAndMint", "createMetadataAccountV3"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-literal-equals",
+      "params": {
+        "call": "createV1",
+        "argIndex": 1,
+        "propName": "isMutable",
+        "expectedValue": false,
+        "passDetail": "createV1 passes isMutable: false — token metadata is permanently sealed at mint time.",
+        "failAbsentDetail": "createV1 omits isMutable (defaults to true). The update authority retains the ability to change the token name, symbol, and URI after mint — permanently. Seal the metadata by passing isMutable: false.",
+        "failWrongDetail": "createV1 passes isMutable: true explicitly. Token metadata will remain mutable after mint — the update authority key becomes a permanent attack surface. Pass isMutable: false to seal it.",
+        "failArgDetail": "createV1's options argument is not an inline object literal; cannot statically verify isMutable. Inline the options object so static analysis can confirm isMutable: false.",
+        "failDynamicDetail": "isMutable is set via a variable or expression; cannot confirm it resolves to false statically. Use the literal false.",
+        "absentCallDetail": "Handler is in Metaplex scope but does not call createV1; the metadata-immutability rule does not apply here.",
+        "scopeNotMetDetail": "File does not import from @metaplex-foundation/mpl-token-metadata; rule does not apply."
+      }
+    },
+    "test": {
+      "kind": "metaplex-immutable-metadata"
+    }
+  },
+  "fixtures": {
+    "filename": "createNft.ts",
+    "vulnerable": "import { createV1, TokenStandard } from \"@metaplex-foundation/mpl-token-metadata\";\nexport async function mintToken(umi: any) {\n  await createV1(umi, {\n    mint: \"11111111111111111111111111111111\",\n    name: \"My Token\",\n    symbol: \"MTK\",\n    uri: \"https://arweave.net/metadata.json\",\n    sellerFeeBasisPoints: 0,\n    tokenStandard: TokenStandard.Fungible,\n  });\n}\n",
+    "fixed": "import { createV1, TokenStandard } from \"@metaplex-foundation/mpl-token-metadata\";\nexport async function mintToken(umi: any) {\n  await createV1(umi, {\n    mint: \"11111111111111111111111111111111\",\n    name: \"My Token\",\n    symbol: \"MTK\",\n    uri: \"https://arweave.net/metadata.json\",\n    sellerFeeBasisPoints: 0,\n    tokenStandard: TokenStandard.Fungible,\n    isMutable: false,\n  });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://developers.metaplex.com/token-metadata/token-standard",
+    "note": "isMutable defaults to true in the Metaplex Umi SDK. Setting it false is a one-shot, irrevocable decision — there is no on-chain migration path once metadata is minted as mutable."
+  }
+}

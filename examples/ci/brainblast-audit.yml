@@ -1,0 +1,42 @@
+# Example: run brainblast on every PR and post a risk-report comment.
+# Copy this to .github/workflows/brainblast-audit.yml in your repo.
+#
+# The action:
+#   1. Runs `npx brainblast --ci` on your repo.
+#   2. Parses report.json and posts a formatted PR comment.
+#   3. Fails the job if any CRITICAL risk is found (configurable via fail-on).
+#
+# No secrets required for public repos — uses the built-in GITHUB_TOKEN.
+
+name: brainblast audit
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write   # needed to post the PR comment
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run brainblast
+        uses: DSB-117/brainblast/action@v0.6.0
+        with:
+          # github-token defaults to ${{ github.token }} — no change needed
+          # for public repos. For private repos, supply a PAT with repo scope.
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # Directory to audit (default: repo root).
+          target-dir: "."
+
+          # Fail the job when a risk at or above this severity is found.
+          # Options: critical | high | medium | low | never
+          fail-on: "critical"
+
+          # brainblast npm package version to pin (default: 0.6).
+          brainblast-version: "0.6"

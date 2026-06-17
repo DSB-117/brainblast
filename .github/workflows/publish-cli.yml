@@ -1,0 +1,36 @@
+# Publishes the `brainblast` npm CLI (packages/core) on a package tag.
+# Inert until: (1) this lands on the default branch, (2) an NPM_TOKEN secret
+# exists, and (3) a `brainblast-v*` tag is pushed (kept distinct from the skill's
+# `v*` release tags so the two never collide).
+#
+# Note: actions are pinned to major tags (first-party actions/*). For maximum
+# supply-chain hardening, pin to a full commit SHA.
+name: publish-cli
+
+on:
+  push:
+    tags: ["brainblast-v*"]
+
+permissions:
+  contents: read
+  id-token: write # required for npm provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/core
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

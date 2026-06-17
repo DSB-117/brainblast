@@ -1,0 +1,32 @@
+# Pure-data rule (facts). Binds to vetted templates by `check.kind`/`test.kind`.
+id: open-redirect
+severity: high
+title: Untrusted request input used as a redirect destination
+component:
+  name: Node.js HTTP (Express / Next.js)
+  type: API
+  version: unversioned
+  sourceUrl: https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html
+detect:
+  lang: typescript
+  modules: []
+  # Trigger on any function that calls res.redirect / router.redirect / NextResponse.redirect.
+  nameRegex: "(?!)"
+  triggerCalls:
+    - redirect
+    - setHeader
+  requiresImport: false
+check:
+  kind: taint-to-sink
+  params:
+    sources:
+      - name: request-input
+        # req.query / req.params are the most common entry points for open-redirect attacks.
+        # req.body included for completeness (e.g. POST-based login redirects).
+        pattern: "\\b(req|request)\\.(query|params|body|headers)\\b"
+    sinkCalls:
+      - redirect
+      - setHeader
+    maxHops: 2
+test:
+  kind: none

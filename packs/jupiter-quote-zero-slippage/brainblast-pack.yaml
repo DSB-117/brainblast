@@ -1,0 +1,5 @@
+id: jupiter-quote-zero-slippage
+name: Jupiter zero-slippage quote
+version: 0.1.0
+author: DSB-117
+description: "Flags Jupiter aggregator quote/swap calls that hardcode slippageBps: 0, disabling sandwich/MEV protection."

@@ -1,0 +1,40 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: raydium-compute-zero-slippage
+severity: high
+title: "Raydium computeAmountOut called with slippage: 0 — no minimum output
+  protection against sandwich attacks"
+component:
+  name: "@raydium-io/raydium-sdk-v2"
+  type: Blockchain
+  version: ">=0.1.0"
+  sourceUrl: https://github.com/raydium-io/raydium-sdk-v2
+detect:
+  modules:
+    - "@raydium-io/raydium-sdk-v2"
+  nameRegex: swap|arb|trade|exchange|buy|sell
+  triggerCalls:
+    - computeAmountOut
+    - computeAmountIn
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: computeAmountOut
+    argIndex: 0
+    propName: slippage
+    forbiddenValue: 0
+    passDetail: computeAmountOut is called with a nonzero slippage value — the swap
+      has minimum output protection against sandwich attacks.
+    failDetail: "computeAmountOut is called with slippage: 0, which sets
+      minAmountOut equal to amountOut with zero tolerance. Any price movement
+      between compute and execution — including a sandwich attack — will cause
+      the swap to execute at a worse price with no revert protection. Set
+      slippage to a nonzero value (e.g. 0.5 = 0.5%) to enforce a minAmountOut
+      floor."
+    absentCallDetail: Handler is in the swap scope but does not call
+      computeAmountOut(); this rule does not apply here.
+    absentArgDetail: computeAmountOut does not include a slippage literal in its
+      options object; the slippage tolerance cannot be confirmed statically.
+      Verify the resolved value is nonzero.
+test:
+  kind: none

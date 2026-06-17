@@ -1,0 +1,36 @@
+{
+  "id": "anchor-missing-signer-on-authority-EXAMPLE-DRAFT",
+  "severity": "critical",
+  "title": "Anchor accounts struct missing Signer<'info> on the authority account",
+  "component": {
+    "name": "Anchor",
+    "type": "Framework",
+    "version": "0.30+",
+    "sourceUrl": "https://www.anchor-lang.com/"
+  },
+  "detect": {
+    "modules": ["anchor-lang"],
+    "nameRegex": "ctx|handler|authority|admin",
+    "triggerCalls": ["AccountsStruct"]
+  },
+  "binding": {
+    "check": {
+      "kind": "anchor-account-typed-as-signer",
+      "params": {
+        "authorityFieldRegex": "authority|admin|owner",
+        "requiredType": "Signer"
+      }
+    },
+    "test": {
+      "kind": "anchor-signer-required"
+    }
+  },
+  "fixtures": {
+    "filename": "handler.rs",
+    "vulnerable": "// VULNERABLE (illustrative): authority typed as AccountInfo, not Signer.\n// This file is not real Rust analysis surface yet — it exists to drive the\n// DRAFT path of the proof-as-classifier loop.\n#[derive(Accounts)]\npub struct SetAdmin<'info> {\n    pub authority: AccountInfo<'info>,\n}\n",
+    "fixed": "// FIXED: authority typed as Signer<'info>.\n#[derive(Accounts)]\npub struct SetAdmin<'info> {\n    pub authority: Signer<'info>,\n}\n"
+  },
+  "provenance": {
+    "note": "Negative-path example: this Finding intentionally binds to a checker kind that does NOT exist in the vetted registry, so synth-prove routes it to drafts/ instead of auto-committing. This exercises the 'loop fails closed' contract from Phase 0 of PLAN-solana-deep-dive.md. Once Phase 2.5 lands a real Rust/Anchor checker family, this Finding becomes a viable candidate for promotion."
+  }
+}

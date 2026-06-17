@@ -1,0 +1,84 @@
+{
+  "name": "brainblast",
+  "version": "0.6.3",
+  "type": "module",
+  "description": "Deterministic auditor for catastrophic AI-integration bugs: scan a repo, find the silent money/auth traps, and generate the behavioral test that proves they're fixed.",
+  "keywords": [
+    "security",
+    "static-analysis",
+    "audit",
+    "stripe",
+    "webhook",
+    "jwt",
+    "solana",
+    "anchor",
+    "metaplex",
+    "token-2022",
+    "trust-graph",
+    "bags",
+    "rent",
+    "ci",
+    "ai"
+  ],
+  "license": "MIT",
+  "author": "DSB-117",
+  "homepage": "https://github.com/DSB-117/brainblast/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/DSB-117/brainblast/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DSB-117/brainblast.git",
+    "directory": "packages/core"
+  },
+  "bin": {
+    "brainblast": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsup",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
+    "audit": "tsx src/cli.ts",
+    "prove": "tsx scripts/prove.ts",
+    "synth": "tsx scripts/synth-prove.ts",
+    "synth:bags": "tsx scripts/synth-prove.ts findings/bags-known-answer.json",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "tree-sitter": "^0.22.4",
+    "tree-sitter-rust": "^0.24.0",
+    "ts-morph": "^23",
+    "yaml": "^2"
+  },
+  "devDependencies": {
+    "@metaplex-foundation/mpl-token-metadata": "^3.4.0",
+    "@solana/spl-token": "^0.4.14",
+    "@types/node": "^22",
+    "@vitest/coverage-v8": "^2",
+    "jose": "^5",
+    "stripe": "^17",
+    "tsup": "^8",
+    "tsx": "^4",
+    "typescript": "^5",
+    "vitest": "^2"
+  }
+}

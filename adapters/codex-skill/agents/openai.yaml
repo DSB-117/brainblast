@@ -1,0 +1,6 @@
+interface:
+  display_name: "brainblast"
+  short_description: "Research external APIs and SDKs before coding. Identifies every external component in a requirements file, browses official sources, and produces a structured handoff report with facts, risks, and answered questions."
+  default_prompt: "Run the Brainblast research workflow. If a requirements file path was provided, use it. Otherwise auto-detect the spec file in this project."
+policy:
+  allow_implicit_invocation: true

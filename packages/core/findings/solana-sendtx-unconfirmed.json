@@ -1,0 +1,40 @@
+{
+  "id": "solana-sendtx-unconfirmed",
+  "severity": "high",
+  "title": "sendTransaction used instead of sendAndConfirmTransaction — transaction may silently drop",
+  "component": {
+    "name": "@solana/web3.js",
+    "type": "Blockchain",
+    "version": ">=1.0.0",
+    "sourceUrl": "https://solana-labs.github.io/solana-web3.js/"
+  },
+  "detect": {
+    "modules": ["@solana/web3.js"],
+    "nameRegex": "send|transfer|execute|submit|payout|swap",
+    "triggerCalls": ["sendTransaction", "sendAndConfirmTransaction"]
+  },
+  "binding": {
+    "check": {
+      "kind": "forbidden-call-replacement",
+      "params": {
+        "forbiddenCalls": ["sendTransaction"],
+        "saferCalls": ["sendAndConfirmTransaction"],
+        "passDetail": "Handler calls sendAndConfirmTransaction, which waits for the cluster to confirm the transaction before returning and propagates any on-chain error as a thrown exception.",
+        "failDetail": "Handler calls connection.sendTransaction() but not sendAndConfirmTransaction(). sendTransaction() submits the transaction and returns a signature immediately, with no confirmation that it landed. If the transaction is dropped (congestion, validator restart, blockhash expiry) the code continues as if it succeeded — tokens are not moved but the caller assumes they were. Use sendAndConfirmTransaction(connection, tx, signers) to block until confirmation.",
+        "absentDetail": "Handler is in the send/transfer scope but calls neither sendTransaction nor sendAndConfirmTransaction; this rule does not apply here."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "payment.ts",
+    "vulnerable": "import { Connection, Transaction, Keypair } from \"@solana/web3.js\";\n\nexport async function sendPayment(\n  connection: Connection,\n  tx: Transaction,\n  signer: Keypair,\n): Promise<string> {\n  // VULNERABLE: fire-and-forget — no confirmation that the transaction landed\n  return connection.sendTransaction(tx, [signer]);\n}\n",
+    "fixed": "import { Connection, Transaction, Keypair, sendAndConfirmTransaction } from \"@solana/web3.js\";\n\nexport async function sendPayment(\n  connection: Connection,\n  tx: Transaction,\n  signer: Keypair,\n): Promise<string> {\n  // FIXED: blocks until the transaction is confirmed by the cluster\n  return sendAndConfirmTransaction(connection, tx, [signer]);\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://solana-labs.github.io/solana-web3.js/",
+    "note": "connection.sendTransaction() is a legacy fire-and-forget call. Real-world instances: AI-generated payout scripts that call sendTransaction() and immediately credit the user without waiting for confirmation. The official Solana docs and numerous postmortems recommend sendAndConfirmTransaction() for any value-bearing path."
+  }
+}

@@ -1,0 +1,145 @@
+name: Dependency Drift Watch
+
+on:
+  schedule:
+    # Every Monday at 09:00 UTC
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      update_baseline:
+        description: "Reset the drift baseline to current advisory state"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  drift:
+    name: Check dependency drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # We need the baseline file if it's committed; depth=1 is fine.
+          fetch-depth: 1
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install brainblast
+        run: npm install -g brainblast@latest
+
+      - name: Run drift check
+        id: drift
+        working-directory: ${{ github.workspace }}
+        run: |
+          set +e
+          if [ "${{ github.event.inputs.update_baseline }}" = "true" ]; then
+            brainblast drift . --update-baseline --json > /tmp/drift-result.json 2>&1
+          else
+            brainblast drift . --json > /tmp/drift-result.json 2>&1
+          fi
+          EXIT_CODE=$?
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+          cat /tmp/drift-result.json
+
+      - name: Commit updated baseline
+        if: ${{ github.event.inputs.update_baseline == 'true' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .agent-research/drift-baseline.json || true
+          git diff --cached --quiet && echo "No baseline changes to commit" && exit 0
+          git commit -m "chore: update brainblast drift baseline [skip ci]"
+          git push
+
+      - name: Parse drift result
+        id: parse
+        if: steps.drift.outputs.exit_code != '0'
+        run: |
+          NEW_COUNT=$(jq '.newAdvisories | length' /tmp/drift-result.json 2>/dev/null || echo 0)
+          echo "new_count=$NEW_COUNT" >> "$GITHUB_OUTPUT"
+          # Build issue body
+          python3 - << 'EOF'
+          import json, os
+
+          with open("/tmp/drift-result.json") as f:
+            data = json.load(f)
+
+          lines = [
+            "## New security advisories detected",
+            "",
+            f"brainblast detected **{len(data['newAdvisories'])} new advisor{'y' if len(data['newAdvisories']) == 1 else 'ies'}** since the last baseline.",
+            "",
+            "| Severity | Package | Version | Advisory | Summary |",
+            "| --- | --- | --- | --- | --- |",
+          ]
+
+          sev_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+          advisories = sorted(data["newAdvisories"], key=lambda a: sev_order.get(a.get("severity", "low"), 4))
+
+          for a in advisories:
+            sev = a.get("severity", "?").upper()
+            pkg = a.get("package", "?")
+            ver = a.get("version", "?")
+            adv_id = a.get("id", "?")
+            url = a.get("url", "")
+            summary = (a.get("summary") or "").replace("|", "\\|")[:120]
+            link = f"[{adv_id}]({url})" if url else adv_id
+            lines.append(f"| {sev} | `{pkg}` | `{ver}` | {link} | {summary} |")
+
+          lines += [
+            "",
+            "### Next steps",
+            "1. Review each advisory and assess impact.",
+            "2. Bump affected packages: `brainblast diff <pkg>@<old> <pkg>@<new>` to check the upgrade risk.",
+            "3. After resolving, run: `brainblast drift . --update-baseline` (or trigger this workflow with `update_baseline: true`).",
+            "",
+            "_Opened automatically by the [brainblast drift-watch](.github/workflows/drift-watch.yml) workflow._",
+          ]
+
+          body = "\n".join(lines)
+          # Write to GITHUB_OUTPUT (must percent-encode newlines)
+          encoded = body.replace("%", "%25").replace("\n", "%0A").replace("\r", "%0D")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            f.write(f"issue_body={encoded}\n")
+          EOF
+
+      - name: Open or update GitHub issue
+        if: steps.drift.outputs.exit_code != '0' && steps.parse.outputs.new_count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_BODY: ${{ steps.parse.outputs.issue_body }}
+          REPO: ${{ github.repository }}
+        run: |
+          TITLE="[brainblast] New dependency advisories detected"
+
+          # Check if an open issue with this title already exists.
+          EXISTING_ISSUE=$(gh issue list --repo "$REPO" --state open --search "$TITLE" --json number --jq '.[0].number' 2>/dev/null || echo "")
+
+          if [ -n "$EXISTING_ISSUE" ]; then
+            echo "Updating existing issue #$EXISTING_ISSUE"
+            gh issue comment "$EXISTING_ISSUE" --repo "$REPO" --body "$ISSUE_BODY"
+          else
+            echo "Opening new issue"
+            gh issue create \
+              --repo "$REPO" \
+              --title "$TITLE" \
+              --body "$ISSUE_BODY" \
+              --label "security,dependencies" 2>/dev/null || \
+            gh issue create \
+              --repo "$REPO" \
+              --title "$TITLE" \
+              --body "$ISSUE_BODY"
+          fi
+
+      - name: Fail workflow if new advisories found
+        if: steps.drift.outputs.exit_code != '0'
+        run: |
+          echo "::error::New security advisories detected. See the GitHub issue opened by this workflow."
+          exit 1

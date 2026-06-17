@@ -1,0 +1,31 @@
+# Runs the auditor's typecheck/test/prove suite on every push and PR that
+# touches packages/core, so main always carries a green check independent of
+# a publish. Mirrors the steps publish-cli.yml runs before `npm publish`.
+name: ci
+
+on:
+  push:
+    branches: [main]
+    paths: ["packages/core/**"]
+  pull_request:
+    paths: ["packages/core/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/core
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run prove
+      - run: npm run build

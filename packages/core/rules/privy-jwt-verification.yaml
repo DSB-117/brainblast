@@ -1,0 +1,46 @@
+# Pure-data rule (facts). Binds to vetted templates by `check.kind`/`test.kind`.
+id: privy-jwt-verification
+severity: critical
+title: Privy access token verified (signature + aud + iss)
+component:
+  name: Privy auth
+  type: Auth
+  version: unversioned
+  sourceUrl: https://docs.privy.io/authentication/user-authentication/access-tokens
+detect:
+  modules: [jose, jsonwebtoken, "@privy-io/node", "@privy-io/server-auth"]
+  # Brand-specific terms only. Bare "token"/"auth" cross-match unrelated
+  # Solana handlers (launchToken, etc.) and produce spurious cant_tell noise.
+  # Privy handlers are still picked up by the @privy-io/* / jose / jsonwebtoken
+  # imports, and by triggerCalls like decodeJwt / jwtVerify.
+  nameRegex: "privy|jwt"
+  # Only decodeJwt triggers detection; it's specific to jose and unambiguously
+  # indicates a decode-only pattern.  jwtVerify/verify/decode were removed because:
+  #   - "verify" matches Node.js crypto.verify(), jsonwebtoken jwt.verify(), etc.
+  #   - "decode" matches bs58.decode() (Solana), Buffer.from(), etc.
+  #   - "jwtVerify" matches Fastify's request.jwtVerify() plugin method, which is
+  #     not a jose-based call and requires no audience/issuer options.
+  # Functions that import jose/@privy-io/* and are named with "privy|jwt" are still
+  # detected via requiresImport + (importsModule && hasName), the primary detection path.
+  triggerCalls: [decodeJwt]
+  # A module import is REQUIRED to be a candidate.  Without this guard, a Fastify
+  # middleware named "verifyJwt" (which calls request.jwtVerify(), a completely
+  # different library) would match the nameRegex and be flagged as missing aud/iss.
+  requiresImport: true
+check:
+  kind: required-call-with-options
+  params:
+    verifyCalls: [jwtVerify, verify]
+    decodeCalls: [decodeJwt, decode]
+    requiredProps:
+      - [audience, aud]
+      - [issuer, iss]
+    passDetail: Token signature is verified and both aud and iss are asserted.
+    missingPropsDetail: >-
+      Token signature is verified but aud/iss are not asserted. A valid token
+      from another Privy app is accepted.
+    decodeOnlyDetail: >-
+      Token is decoded without verifying its signature. Any forged token is
+      accepted — auth bypass.
+test:
+  kind: privy-jwt-claims

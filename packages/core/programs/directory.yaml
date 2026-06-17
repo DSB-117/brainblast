@@ -1,0 +1,179 @@
+# Curated Solana program directory. Human-authored facts; never LLM-edited in
+# place. Every entry is a program brainblast considers "known enough to
+# describe without an RPC call." For anything not in this file, the
+# trust-graph builder falls back to live RPC probing for upgrade authority and
+# reports verifiedBuild=unknown / audits=[] unless the research skill
+# enriches it.
+#
+# Add an entry only when you can cite a primary source for every field.
+# Comments above each entry name those sources.
+
+programs:
+  # System Program — owns wallets, transfers SOL, allocates accounts. Core
+  # runtime; not an upgradeable program. https://docs.solana.com/runtime/programs
+  - programId: "11111111111111111111111111111111"
+    name: System Program
+    kind: runtime
+    upgradeAuthority:
+      kind: renounced
+      address: null
+      source: directory
+    verifiedBuild:
+      state: verified
+      registryUrl: https://github.com/anza-xyz/agave
+    audits: []
+    parity:
+      mainnet: present
+      devnet: present
+      testnet: present
+      notes: Identical on every cluster; part of the validator binary.
+
+  # SPL Token — the legacy SPL token program. Native, non-upgradeable.
+  # https://spl.solana.com/token
+  - programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+    name: SPL Token
+    kind: token
+    upgradeAuthority:
+      kind: renounced
+      address: null
+      source: directory
+    verifiedBuild:
+      state: verified
+      registryUrl: https://github.com/solana-program/token
+    audits:
+      - firm: Kudelski Security
+        date: "2020-08-01"
+        reportUrl: https://github.com/solana-program/token/tree/main/audits
+    parity:
+      mainnet: present
+      devnet: present
+      testnet: present
+      notes: Same address everywhere. Distinct from Token-2022; consumers must pick one and never mix.
+
+  # SPL Token-2022 — the new token program with transfer hooks, fees, and
+  # confidential transfers. DIFFERENT program id from legacy Token; mixing the
+  # two is the #1 trap in the deep-dive research.
+  # https://spl.solana.com/token-2022
+  - programId: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+    name: SPL Token-2022
+    kind: token
+    upgradeAuthority:
+      kind: multisig
+      address: "9YBjtad6ZxR7hxNXyTjRRPnPipFbuAU6c2EVHTSVTQAW"
+      source: directory
+      checkedAt: "2025-04-15"
+    verifiedBuild:
+      state: verified
+      registryUrl: https://github.com/solana-program/token-2022
+    audits:
+      - firm: OtterSec
+        date: "2024-02-01"
+        reportUrl: https://github.com/solana-program/token-2022/tree/main/audits
+    parity:
+      mainnet: present
+      devnet: present
+      testnet: present
+      notes: >-
+        Same address on every cluster. Behavior identical, but extensions like transfer-fee
+        and transfer-hook can encode mainnet-only economics that don't show up in devnet
+        testing of a fresh mint.
+
+  # Metaplex Token Metadata. The metadata account for every NFT and most
+  # SPL-token branding goes through this program. isMutable / collection
+  # verification are immutable-after-mint decisions worth flagging.
+  # https://developers.metaplex.com/token-metadata
+  - programId: "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+    name: Metaplex Token Metadata
+    kind: metadata
+    upgradeAuthority:
+      kind: multisig
+      address: "BFV9MAfDjT8azkAArh9k4iAjwboTBA9z3PNK7BFNKaiK"
+      source: directory
+      checkedAt: "2025-04-15"
+    verifiedBuild:
+      state: verified
+      registryUrl: https://github.com/metaplex-foundation/mpl-token-metadata
+    audits:
+      - firm: OtterSec
+        date: "2023-09-01"
+        reportUrl: https://github.com/metaplex-foundation/mpl-token-metadata/tree/main/programs/token-metadata/audits
+    parity:
+      mainnet: present
+      devnet: present
+      testnet: present
+      notes: Same address everywhere; metadata is the standard NFT/token-info layer.
+
+  # Memo Program. Lets transactions include UTF-8 notes; no state. Useful in
+  # CPI but trivially safe.
+  - programId: "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
+    name: SPL Memo
+    kind: utility
+    upgradeAuthority:
+      kind: renounced
+      address: null
+      source: directory
+    verifiedBuild:
+      state: verified
+      registryUrl: https://github.com/solana-program/memo
+    audits: []
+    parity:
+      mainnet: present
+      devnet: present
+      testnet: present
+
+  # Compute Budget Program. Lets a tx set its compute unit price/limit. Pure
+  # runtime; not upgradeable. Worth knowing for fee posture in the cost report.
+  - programId: "ComputeBudget111111111111111111111111111111"
+    name: Compute Budget Program
+    kind: runtime
+    upgradeAuthority:
+      kind: renounced
+      address: null
+      source: directory
+    verifiedBuild:
+      state: verified
+      registryUrl: https://github.com/anza-xyz/agave
+    audits: []
+    parity:
+      mainnet: present
+      devnet: present
+      testnet: present
+
+  # Address Lookup Table Program. Lets transactions reference more accounts
+  # than the legacy 32-account limit allows.
+  - programId: "AddressLookupTab1e1111111111111111111111111"
+    name: Address Lookup Table Program
+    kind: runtime
+    upgradeAuthority:
+      kind: renounced
+      address: null
+      source: directory
+    verifiedBuild:
+      state: verified
+      registryUrl: https://github.com/anza-xyz/agave
+    audits: []
+    parity:
+      mainnet: present
+      devnet: present
+      testnet: present
+
+  # BPF Upgradeable Loader. The program that owns every upgradeable program;
+  # `setAuthority` and `upgrade` instructions go through here. The trust
+  # graph routinely reads ProgramData accounts owned by this address to
+  # resolve the upgrade authority of any other upgradeable program.
+  - programId: "BPFLoaderUpgradeab1e11111111111111111111111"
+    name: BPF Upgradeable Loader
+    kind: loader
+    upgradeAuthority:
+      kind: renounced
+      address: null
+      source: directory
+    verifiedBuild:
+      state: verified
+      registryUrl: https://github.com/anza-xyz/agave
+    audits: []
+    parity:
+      mainnet: present
+      devnet: present
+      testnet: present
+      notes: The loader itself is part of the validator and not upgradeable in the BPF sense.

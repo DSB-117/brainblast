@@ -1,0 +1,5 @@
+id: spl-transfer-not-checked-in-payout
+name: SPL transfer not checked in payout
+version: 0.1.0
+author: DSB-117
+description: Flags SPL token payouts that use createTransferInstruction instead of createTransferCheckedInstruction
