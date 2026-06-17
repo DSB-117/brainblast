@@ -131,6 +131,11 @@ if (args[0] === "firewall") {
   process.exit(0);
 }
 
+if (args[0] === "idl-rules") {
+  await runIdlRules(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -710,5 +715,52 @@ async function runFirewall(argv: string[]): Promise<void> {
 
   if (report.verdict === "block" || (strict && report.verdict === "warn")) {
     process.exit(1);
+  }
+}
+
+async function runIdlRules(argv: string[]): Promise<void> {
+  const { readFileSync, writeFileSync, mkdirSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const { parseIdl, generateRulesFromIdl, renderRulesYaml } = await import("./idlRules.ts");
+
+  const idlPath = argv.find((a) => !a.startsWith("--"));
+  if (!idlPath) {
+    console.error("usage: brainblast idl-rules <idl.json> [--out <dir>] [--json]");
+    console.error("  Generate brainblast rules from an Anchor IDL's account constraints.");
+    process.exit(2);
+  }
+
+  const outIdx = argv.indexOf("--out");
+  const outDir = outIdx >= 0 ? argv[outIdx + 1] : undefined;
+  const jsonOut = argv.includes("--json");
+
+  let idl;
+  try {
+    idl = parseIdl(JSON.parse(readFileSync(idlPath, "utf8")));
+  } catch (e: any) {
+    console.error(`brainblast idl-rules: ${e?.message ?? String(e)}`);
+    process.exit(2);
+  }
+
+  const rules = generateRulesFromIdl(idl);
+  if (rules.length === 0) {
+    console.error("brainblast idl-rules: IDL produced no rules (no instructions?)");
+    process.exit(1);
+  }
+
+  if (jsonOut) {
+    console.log(JSON.stringify(rules, null, 2));
+    return;
+  }
+
+  const yaml = renderRulesYaml(rules);
+  if (outDir) {
+    mkdirSync(outDir, { recursive: true });
+    const file = join(outDir, `${rules[0].id}.yaml`);
+    writeFileSync(file, yaml);
+    console.log(`Generated ${rules.length} rule(s) → ${file}`);
+    console.log(`  Run against your program:  npx brainblast <program-dir> --packs <pack-with-this-rule>`);
+  } else {
+    console.log(yaml);
   }
 }
