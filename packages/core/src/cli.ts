@@ -121,6 +121,11 @@ if (args[0] === "watch") {
   await new Promise(() => {});
 }
 
+if (args[0] === "rico") {
+  await runRico(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -545,7 +550,7 @@ async function runDiff(argv: string[]) {
     process.exit(2);
   }
 
-  const { diffVersions, renderDiffText, renderDiffMd, riskScore } = await import("./diff.ts");
+  const { diffVersions, renderDiffText, renderDiffMd: _renderDiffMd, riskScore } = await import("./diff.ts");
 
   let result;
   try {
@@ -572,5 +577,96 @@ async function runDiff(argv: string[]) {
     console.log(`\nRisk profile unchanged (${result.unchanged.length} advisory${result.unchanged.length !== 1 ? "ies" : ""} persist in both versions).`);
   } else {
     console.log("\nNo known advisories for either version.");
+  }
+}
+
+async function runRico(argv: string[]): Promise<void> {
+  const { analyzeToken, renderRicoText } = await import("./ricomaps.ts");
+  const { verifyTokenIdentity } = await import("./tokenRegistry.ts");
+
+  const mint = argv.find((a) => !a.startsWith("--"));
+  if (!mint) {
+    console.error("usage: brainblast rico <mint> [--expect SYMBOL] [--api-key KEY] [--fail-on SCORE] [--offline] [--json]");
+    process.exit(2);
+  }
+
+  const expectIdx = argv.indexOf("--expect");
+  const expectSymbol = expectIdx >= 0 ? argv[expectIdx + 1] : undefined;
+  const apiKeyIdx = argv.indexOf("--api-key");
+  let apiKey = apiKeyIdx >= 0 ? argv[apiKeyIdx + 1] : undefined;
+  const failOnIdx = argv.indexOf("--fail-on");
+  const failOn = failOnIdx >= 0 ? parseInt(argv[failOnIdx + 1], 10) : 70;
+  const offline = argv.includes("--offline");
+  const jsonOut = argv.includes("--json");
+
+  // ── Quality scan (Rico Maps) ─────────────────────────────────────────────
+  let ricoResult: Awaited<ReturnType<typeof analyzeToken>> | null = null;
+
+  if (!offline) {
+    ricoResult = await analyzeToken(mint, { apiKey });
+
+    if (!ricoResult.ok && ricoResult.kind === "auth") {
+      // Graceful-skip: prompt for key or skip
+      const readline = await import("node:readline");
+      const rl = readline.createInterface({ input: process.stdin, output: process.stderr });
+      const answer = await new Promise<string>((resolve) => {
+        rl.question(
+          "\nRico Maps API key missing or invalid.\n  [s] Skip quality scan\n  [k] Enter API key\nChoice: ",
+          resolve
+        );
+      });
+      rl.close();
+
+      if (answer.trim().toLowerCase().startsWith("k")) {
+        const rl2 = readline.createInterface({ input: process.stdin, output: process.stderr });
+        apiKey = await new Promise<string>((resolve) => {
+          rl2.question("API key: ", resolve);
+        });
+        rl2.close();
+        ricoResult = await analyzeToken(mint, { apiKey });
+      } else {
+        ricoResult = null; // skip
+      }
+    }
+  }
+
+  // ── Identity check ───────────────────────────────────────────────────────
+  const claimedSymbol = ricoResult?.ok ? ricoResult.result.symbol : undefined;
+  const identity = await verifyTokenIdentity(mint, { expectSymbol, claimedSymbol, offline });
+
+  if (jsonOut) {
+    console.log(JSON.stringify({ identity, quality: ricoResult?.ok ? ricoResult.result : null }, null, 2));
+  } else {
+    // Identity block
+    const impTag = identity.impersonation ? " ⚠ IMPERSONATION" : "";
+    const expectTag = identity.expectMismatch ? " ⚠ EXPECT MISMATCH" : "";
+    console.log(`\nIdentity  [${identity.status}]${impTag}${expectTag}`);
+    if (identity.symbol) console.log(`  Symbol:  ${identity.symbol}`);
+    if (identity.name) console.log(`  Name:    ${identity.name}`);
+    console.log(`  Source:  ${identity.source}`);
+    if (identity.impersonation && identity.canonicalMint) {
+      console.log(`  Canonical ${identity.symbol} mint: ${identity.canonicalMint}`);
+      console.log(`  This token: ${mint}`);
+    }
+    if (identity.detail) console.log(`  Note:    ${identity.detail}`);
+
+    // Quality block
+    if (ricoResult === null) {
+      console.log("\nQuality   [skipped]");
+    } else if (!ricoResult.ok) {
+      console.log(`\nQuality   [error: ${ricoResult.kind}] ${ricoResult.error}`);
+      if (ricoResult.kind === "rate-limit" && ricoResult.retryAfterMs) {
+        console.log(`  Retry after: ${Math.ceil(ricoResult.retryAfterMs / 1000)}s`);
+      }
+    } else {
+      console.log(`\n${renderRicoText(ricoResult.result)}`);
+    }
+    console.log("");
+  }
+
+  // ── Exit code ────────────────────────────────────────────────────────────
+  const highRisk = ricoResult?.ok && ricoResult.result.riskScore >= failOn;
+  if (identity.impersonation || identity.expectMismatch || highRisk) {
+    process.exit(1);
   }
 }

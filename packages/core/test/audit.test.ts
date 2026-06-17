@@ -26,6 +26,8 @@ const cases: [string, string, CheckResultKind][] = [
   ["cmdinject/fixed", "request-input-command-injection", "pass"],
   ["taint-crossfile/vulnerable", "env-secret-leaked-to-sink", "fail"],
   ["taint-crossfile/fixed", "env-secret-leaked-to-sink", "pass"],
+  ["mintidentity/vulnerable", "solana-token-impersonation", "fail"],
+  ["mintidentity/fixed", "solana-token-impersonation", "pass"],
 ];
 
 describe("audit (unified, all rules)", () => {
