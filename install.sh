@@ -94,9 +94,12 @@ if [ -d "$HOME/.claude/skills" ]; then
   # Register /brainblast as a first-class slash command in the command palette
   fetch_verified "commands/brainblast.md" "$HOME/.claude/commands/brainblast.md"
   fetch_verified "commands/brainblast-update.md" "$HOME/.claude/commands/brainblast-update.md"
+  fetch_verified "commands/brainblast-rico-maps.md" "$HOME/.claude/commands/brainblast-rico-maps.md"
   echo "  Registered → ~/.claude/commands/brainblast.md"
   echo "  Registered → ~/.claude/commands/brainblast-update.md"
+  echo "  Registered → ~/.claude/commands/brainblast-rico-maps.md"
   echo "  Invoke:     /brainblast [requirements-file]"
+  echo "  Token check: /brainblast-rico-maps <contract-address>"
   echo "  Update:     /brainblast-update"
   echo ""
   INSTALLED="yes"

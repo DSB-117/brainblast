@@ -58,8 +58,9 @@ Everything Brainblast does today, at a glance.
 - **Gates CI.** A `--ci` mode runs non-interactively (no prompts, documented defaults), and a dependency-free gate script turns `report.json` into an exit code — fail the build if any CRITICAL risk remains (`--fail-on=critical|high|…`) or the verdict is `blocked`.
 
 **Deterministic auditor — `npx brainblast`**
-- Published to npm as [`brainblast@0.6.3`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
-- A Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code *offline* (no network, no LLM) for **twelve built-in integration traps**: Stripe webhook raw-body signature verification, Privy/JWT signature + `aud` + `iss` verification, Bags/Solana fee-share creator-inclusion, Token-2022 program-ID pinning, Metaplex metadata immutability, Anchor `init_if_needed` guards, committed `.env*` secrets, **graph-based, project-wide cross-file taint tracking** for secret leaks (`env-secret-leaked-to-sink`), command injection (`request-input-command-injection`), SQL injection via Prisma raw queries (`prisma-raw-injection`), open-redirect via tainted `res.redirect()` calls (`open-redirect`), and JWT algorithm confusion (`jsonwebtoken-algorithm-pinned`).
+- Published to npm as [`brainblast@0.7.0`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
+- A Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code *offline* (no network, no LLM) for **thirteen built-in integration traps**: Stripe webhook raw-body signature verification, Privy/JWT signature + `aud` + `iss` verification, Bags/Solana fee-share creator-inclusion, Token-2022 program-ID pinning, Metaplex metadata immutability, Anchor `init_if_needed` guards, committed `.env*` secrets, **graph-based, project-wide cross-file taint tracking** for secret leaks (`env-secret-leaked-to-sink`), command injection (`request-input-command-injection`), SQL injection via Prisma raw queries (`prisma-raw-injection`), open-redirect via tainted `res.redirect()` calls (`open-redirect`), JWT algorithm confusion (`jsonwebtoken-algorithm-pinned`), and **Solana mint impersonation** (`solana-token-impersonation`).
+- **`brainblast rico <CA>`** — token identity + quality check: verifies a contract address against the canonical mint registry (offline) and Jupiter (live), detects impersonators, and runs a Rico Maps forensic scan (risk score, snipers, cabal, bundle clusters, deployer flags).
 - Emits CI-readable `checks[]` and `checkTotals` into `report.json`, and can generate behavioral contract tests that fail on the vulnerable fixtures and pass on the fixed ones — the durable guardrail that keeps a fixed trap fixed.
 - **`--since <ref>` diff-aware scanning** audits only what changed in `git diff <ref>` — fast enough for every commit or PR. **`brainblast watch`** re-scans on every save and streams NDJSON findings for an agent daemon to tail.
 - **`brainblast fix [--apply] [--branch]`** lists (and, with `--apply`, applies) mechanical fixes for confirmed FAILs, re-audits to confirm RED → GREEN, and can commit the result to a new branch.
@@ -102,14 +103,14 @@ Install gstack: run git clone --single-branch --depth 1 https://github.com/garry
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.6.3/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.7.0/install.sh | sh
 ```
 
 The installer pins to a tagged release, verifies SHA-256 checksums before writing any file, and auto-detects Claude Code, OpenClaw, and Codex. If gstack is missing, it warns you with the exact command to fix it. (It installs the Brainblast skill, but it does **not** install gstack for you — that is a one-time prerequisite above.)
 
 **Or tell your agent:**
 
-> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.6.3/install.sh | sh`
+> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.7.0/install.sh | sh`
 
 For the bleeding edge instead of a pinned release, prefix with `BRAINBLAST_REF=main`.
 
@@ -309,7 +310,7 @@ Be clear-eyed about what this is and is not:
 - **The research workflow writes research artifacts, not production implementation code.** The deterministic auditor in `packages/core` can generate behavioral test files for supported traps, but Brainblast does not implement the feature for you.
 - **Its output is only as good as the docs.** Undocumented behavior, wrong official docs, or missing changelogs limit what it can catch.
 - **It cannot reach private or authenticated docs** out of the box. For gated docs, use gstack's cookie import (`/setup-browser-cookies`) before running.
-- **The deterministic auditor's bundled rule set is still growing.** It covers twelve traps today (Stripe, Privy/JWT, Bags/Solana fee-share, Token-2022, Metaplex, Anchor `init_if_needed`, committed `.env*` secrets, cross-file taint tracking for secret leaks, command injection, SQL injection via Prisma, open-redirect, and JWT algorithm confusion); broader generated guardrails are the next direction.
+- **The deterministic auditor's bundled rule set is still growing.** It covers thirteen traps today (Stripe, Privy/JWT, Bags/Solana fee-share, Token-2022, Metaplex, Anchor `init_if_needed`, committed `.env*` secrets, cross-file taint tracking for secret leaks, command injection, SQL injection via Prisma, open-redirect, JWT algorithm confusion, and Solana mint impersonation); broader generated guardrails are the next direction.
 - **It costs tokens and time.** A typical 3–5 component run is a few minutes and a meaningful chunk of tokens because it browses many pages. Budget accordingly for large specs.
 
 ## Security
@@ -380,11 +381,11 @@ See [ROADMAP.md](ROADMAP.md) for the full thesis — turning documentation into 
 **Predict → Enforce → Watch → Compound** ladder. Shipped through **v0.6.0**: `report.json`, the
 `--ci` exit-code gate, incremental cached runs, and the deterministic offline auditor — published to
 npm as [`brainblast`](https://www.npmjs.com/package/brainblast) (`npx brainblast .`, with provenance)
-— now covering twelve bundled traps (Stripe webhook, Privy/JWT, Bags/Solana fee-share, Token-2022,
+— now covering thirteen bundled traps (Stripe webhook, Privy/JWT, Bags/Solana fee-share, Token-2022,
 Metaplex, Anchor `init_if_needed`, committed `.env*` secrets, graph-based cross-file taint
-tracking for secret leaks, command injection, SQL injection, open-redirect, and JWT algorithm
-confusion), plus 3 community packs (Solana sendtx-unconfirmed, Metaplex royalty-zero,
-Raydium zero-slippage), plus diff-aware scanning (`--since`), watch mode,
+tracking for secret leaks, command injection, SQL injection, open-redirect, JWT algorithm
+confusion, and Solana mint impersonation), plus 3 community packs (Solana sendtx-unconfirmed,
+Metaplex royalty-zero, Raydium zero-slippage), plus diff-aware scanning (`--since`), watch mode,
 auto-fix (`fix [--apply] [--branch]`), living memory, cost & rent analysis, Solana trust-graph
 resolution, pluggable rule packs (`--packs`, `pack init`/`validate`), opt-in graduation telemetry,
 OSV security-advisory cross-check, lockfile inventory auto-seeding, **upgrade risk diff**

@@ -1,0 +1,17 @@
+id: solana-token-impersonation
+severity: critical
+title: Hardcoded Solana mint address doesn't match the named token's canonical address
+component:
+  name: "@solana/web3.js / @solana/spl-token"
+  type: SDK
+  version: any
+  sourceUrl: https://github.com/solana-labs/solana-web3.js
+detect:
+  modules: ["@solana/web3.js", "@solana/spl-token"]
+  nameRegex: "mint|payment|usdc|usdt|swap|pay|deposit|withdraw|treasury|stablecoin"
+  triggerCalls: []
+  requiresImport: true
+check:
+  kind: solana-mint-identity-mismatch
+test:
+  kind: none

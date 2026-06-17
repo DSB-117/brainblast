@@ -18,12 +18,14 @@ triggers:
 
 Research every external component in a requirements file before an agent starts coding. Produces `.agent-research/runs/YYYYMMDD-HHMMSS/` with per-component notes and a final handoff report.
 
-> **v0.6.3 new tools available via `npx brainblast`:**
+> **v0.7.0 new tools available via `npx brainblast`:**
+> - `brainblast rico <CA>` — token identity + quality check: canonical mint registry (offline), Jupiter live lookup, impersonation detection, and Rico Maps forensic scan (risk score, snipers, cabal, bundle clusters, deployer flags). Use `/brainblast-rico-maps <CA>` from Claude Code.
+> - 13th bundled rule: `solana-token-impersonation` — offline static check for hardcoded mint constants whose symbol name doesn't match the canonical address.
 > - `brainblast diff <pkg>@<v1> <pkg>@<v2>` — compare OSV risk profiles between two package versions.
 > - `brainblast mcp` — start a stdio MCP server (`brainblast_audit`, `brainblast_diff`, `brainblast_osv_check` tools).
 > - `brainblast drift [dir]` — detect new OSV advisories since baseline; exits 1 on new findings.
-> - GitHub Action: `uses: DSB-117/brainblast/action@v0.6.3` — PR comment with risk heatmap.
-> - 3 new Solana ecosystem packs: `solana-sendtx-unconfirmed`, `metaplex-nft-royalty-zero`, `raydium-compute-zero-slippage`.
+> - GitHub Action: `uses: DSB-117/brainblast/action@v0.7.0` — PR comment with risk heatmap.
+> - 3 Solana ecosystem packs: `solana-sendtx-unconfirmed`, `metaplex-nft-royalty-zero`, `raydium-compute-zero-slippage`.
 
 > **Incremental runs (caching).** Brainblast caches research per component, keyed by
 > `name@version`, in `.agent-research/cache/`. A re-run reuses cached components whose version is
@@ -364,6 +366,44 @@ Components with `version: unversioned`, or with no OSV ecosystem mapping (e.g. a
 **This is an authoritative source layered on top of docs research** — an OSV advisory is real and dated regardless of what the docs say, so don't downgrade or omit one because it wasn't mentioned in the official docs.
 
 Tell the user when each component is done. One-line update: "Done: [name] — [one key fact or risk worth flagging immediately]".
+
+---
+
+### 3f — Solana token identity + quality (run when component involves a Solana deployed token / CA)
+
+If the requirements mention a specific contract address (CA), mint address, or deployed token, run a two-part check before researching the component:
+
+**Part 1 — Identity (offline, always):**
+
+```bash
+npx brainblast rico <CA> --offline
+```
+
+- **verified-canonical**: address is in the bundled blue-chip snapshot (USDC, USDT, SOL, JUP, etc.) — report this and proceed.
+- **unverified + impersonation=true**: a token at this address claims a canonical symbol but lives at the wrong mint — **STOP and flag as CRITICAL risk before researching further**. Do not proceed as if the component is the real token.
+- **unverified / unknown**: not in snapshot, run Part 2.
+
+**Part 2 — Quality (network, optional key):**
+
+```bash
+npx brainblast rico <CA> [--api-key KEY]
+```
+
+Record in the component research file under a `## Token Identity` section:
+
+```
+Status: <verified-canonical | verified | unverified | unknown>
+Symbol: <symbol if found>
+Source: <bundled | jupiter | none>
+Impersonation: <true | false>
+Rico risk score: <0–100 or "skipped">
+Snipers: <yes/no>
+Cabal count: <N or "skipped">
+Bundle clusters: <yes/no or "skipped">
+Deployer flags: <list or "none">
+```
+
+Skip Part 2 if Rico Maps returns an auth error and the user opts to skip — record "quality: skipped (no API key)".
 
 ---
 

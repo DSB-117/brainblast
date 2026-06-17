@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## v0.7.0 — 2026-06-16
+
+### Rico Maps token identity + quality (`brainblast rico <CA>`)
+
+- **`brainblast rico <CA>`** — new CLI subcommand combining identity pre-check and forensic quality scan in one command
+- **Token identity (Layer 1 — offline):** bundled canonical mint snapshot covering 12 blue-chip Solana tokens (USDC, USDT, SOL, WSOL, JUP, BONK, WIF, PYTH, RAY, ORCA, MNGO, mSOL). No network required.
+- **Token identity (Layer 2 — live):** falls back to Jupiter token registry (`tokens.jup.ag`) for tokens not in the bundled snapshot
+- **Impersonation detection:** flags tokens claiming a canonical symbol (USDC, JUP, etc.) at a wrong mint address
+- **Token quality:** calls Rico Maps `/api/v1/analyze` — risk score (0–100), holder concentration, cabal count, snipers, bundle clusters, deployer flags (mint-authority-live, freeze-authority-live, metadata-mutable)
+- **Graceful API key handling:** anonymous free tier (10 req/min, 1k/month) attempted first; on auth failure, prompts to enter key or skip quality scan
+- **Exit 1** on: impersonation detected, `--expect` symbol mismatch, or risk score ≥ `--fail-on` threshold (default 70)
+- **`/brainblast-rico-maps`** slash command registered by installer
+
+### Static checker: `solana-token-impersonation`
+
+- **13th bundled rule:** offline scan of TypeScript source for mint constants whose symbol name doesn't match the canonical address (e.g. `const USDC_MINT = new PublicKey("<USDT address>")`)
+- Scopes to files importing `@solana/web3.js` or `@solana/spl-token` (`requiresImport: true`) to prevent cross-contamination
+- Detects bare string literals, `new PublicKey("...")`, and object-literal properties (`{ USDC: "..." }`)
+- Fixtures: `mintidentity/vulnerable` (FAIL) and `mintidentity/fixed` (PASS)
+
+### SKILL.md enrichment
+
+- Step 3f: Solana token identity and quality research guidance
+
 ## v0.6.3 — 2026-06-16
 
 - **Patch:** fix stale `SHA256SUMS` checksum for `SKILL.md` — `v0.6.2` updated `SKILL.md`

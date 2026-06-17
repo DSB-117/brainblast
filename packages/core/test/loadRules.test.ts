@@ -23,6 +23,7 @@ describe("loadRules", () => {
       "prisma-raw-injection",
       "privy-jwt-verification",
       "request-input-command-injection",
+      "solana-token-impersonation",
       "stripe-webhook-raw-body-verification",
       "token-2022-program-id-pinned",
     ]);
