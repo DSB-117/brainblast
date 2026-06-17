@@ -121,6 +121,27 @@ if (args[0] === "watch") {
   await new Promise(() => {});
 }
 
+if (args[0] === "watch-chain") {
+  const rest = args.slice(1);
+  const programId = rest.find((a) => !a.startsWith("--"));
+  if (!programId) {
+    console.error("usage: brainblast watch-chain <program-id> [--rpc URL] [--interval <seconds>] [--limit N]");
+    console.error("  Poll a deployed program for new activity and upgrade-authority changes. Emits NDJSON.");
+    process.exit(2);
+  }
+  const { startChainWatch } = await import("./watchChain.ts");
+  const rpcIdx = rest.indexOf("--rpc");
+  const rpcUrl = rpcIdx >= 0 ? rest[rpcIdx + 1] : undefined;
+  const intIdx = rest.indexOf("--interval");
+  const intervalMs = intIdx >= 0 ? parseInt(rest[intIdx + 1], 10) * 1000 : undefined;
+  const limIdx = rest.indexOf("--limit");
+  const limit = limIdx >= 0 ? parseInt(rest[limIdx + 1], 10) : undefined;
+  const handle = startChainWatch(programId, { rpcUrl, intervalMs, limit });
+  process.on("SIGINT", () => { handle.stop(); process.exit(0); });
+  process.on("SIGTERM", () => { handle.stop(); process.exit(0); });
+  await new Promise(() => {});
+}
+
 if (args[0] === "rico") {
   await runRico(args.slice(1));
   process.exit(0);
@@ -128,6 +149,26 @@ if (args[0] === "rico") {
 
 if (args[0] === "firewall") {
   await runFirewall(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "idl-rules") {
+  await runIdlRules(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "score") {
+  await runScore(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "pump-check") {
+  await runPumpCheck(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "batch") {
+  await runBatch(args.slice(1));
   process.exit(0);
 }
 
@@ -709,6 +750,175 @@ async function runFirewall(argv: string[]): Promise<void> {
   }
 
   if (report.verdict === "block" || (strict && report.verdict === "warn")) {
+    process.exit(1);
+  }
+}
+
+async function runIdlRules(argv: string[]): Promise<void> {
+  const { readFileSync, writeFileSync, mkdirSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const { parseIdl, generateRulesFromIdl, renderRulesYaml } = await import("./idlRules.ts");
+
+  const idlPath = argv.find((a) => !a.startsWith("--"));
+  if (!idlPath) {
+    console.error("usage: brainblast idl-rules <idl.json> [--out <dir>] [--json]");
+    console.error("  Generate brainblast rules from an Anchor IDL's account constraints.");
+    process.exit(2);
+  }
+
+  const outIdx = argv.indexOf("--out");
+  const outDir = outIdx >= 0 ? argv[outIdx + 1] : undefined;
+  const jsonOut = argv.includes("--json");
+
+  let idl;
+  try {
+    idl = parseIdl(JSON.parse(readFileSync(idlPath, "utf8")));
+  } catch (e: any) {
+    console.error(`brainblast idl-rules: ${e?.message ?? String(e)}`);
+    process.exit(2);
+  }
+
+  const rules = generateRulesFromIdl(idl);
+  if (rules.length === 0) {
+    console.error("brainblast idl-rules: IDL produced no rules (no instructions?)");
+    process.exit(1);
+  }
+
+  if (jsonOut) {
+    console.log(JSON.stringify(rules, null, 2));
+    return;
+  }
+
+  const yaml = renderRulesYaml(rules);
+  if (outDir) {
+    mkdirSync(outDir, { recursive: true });
+    const file = join(outDir, `${rules[0].id}.yaml`);
+    writeFileSync(file, yaml);
+    console.log(`Generated ${rules.length} rule(s) → ${file}`);
+    console.log(`  Run against your program:  npx brainblast <program-dir> --packs <pack-with-this-rule>`);
+  } else {
+    console.log(yaml);
+  }
+}
+
+async function runScore(argv: string[]): Promise<void> {
+  const { scoreProgram, renderScoreText, gradeAtLeast } = await import("./score.ts");
+  const { isValidSolanaAddress } = await import("./trustGraph/index.ts");
+
+  const programId = argv.find((a) => !a.startsWith("--"));
+  if (!programId) {
+    console.error("usage: brainblast score <program-id> [--rpc URL] [--no-probe] [--min A|B|C|D|F] [--json]");
+    console.error("  Compute a 0-100 trust score + A-F grade for a deployed Solana program.");
+    process.exit(2);
+  }
+  if (!isValidSolanaAddress(programId)) {
+    console.error(`brainblast score: not a valid Solana address: ${programId}`);
+    process.exit(2);
+  }
+
+  const rpcIdx = argv.indexOf("--rpc");
+  const rpcUrl = rpcIdx >= 0 ? argv[rpcIdx + 1] : undefined;
+  const noProbe = argv.includes("--no-probe");
+  const minIdx = argv.indexOf("--min");
+  const min = minIdx >= 0 ? (argv[minIdx + 1] as "A" | "B" | "C" | "D" | "F") : undefined;
+  const jsonOut = argv.includes("--json");
+
+  let result;
+  try {
+    result = await scoreProgram(programId, { rpcUrl, probeRpc: !noProbe });
+  } catch (e: any) {
+    console.error(`brainblast score: ${e?.message ?? String(e)}`);
+    process.exit(1);
+  }
+
+  if (jsonOut) {
+    console.log(JSON.stringify(result, null, 2));
+  } else {
+    console.log(renderScoreText(result));
+  }
+
+  if (min && !gradeAtLeast(result.grade, min)) {
+    process.exit(1);
+  }
+}
+
+async function runPumpCheck(argv: string[]): Promise<void> {
+  const { pumpPreflight, renderPreflightText } = await import("./pumpCheck.ts");
+
+  const mint = argv.find((a) => !a.startsWith("--"));
+  if (!mint) {
+    console.error("usage: brainblast pump-check <mint> [--rpc URL] [--api-key KEY] [--fail-on SCORE] [--offline] [--json]");
+    console.error("  Launch pre-flight: mint/freeze authority, identity, and Rico Maps forensics → GO/CAUTION/NO-GO.");
+    process.exit(2);
+  }
+
+  const rpcIdx = argv.indexOf("--rpc");
+  const rpcUrl = rpcIdx >= 0 ? argv[rpcIdx + 1] : undefined;
+  const keyIdx = argv.indexOf("--api-key");
+  const apiKey = keyIdx >= 0 ? argv[keyIdx + 1] : undefined;
+  const failIdx = argv.indexOf("--fail-on");
+  const failOnRisk = failIdx >= 0 ? parseInt(argv[failIdx + 1], 10) : undefined;
+  const offline = argv.includes("--offline");
+  const jsonOut = argv.includes("--json");
+
+  let report;
+  try {
+    report = await pumpPreflight(mint, { rpcUrl, apiKey, failOnRisk, offline });
+  } catch (e: any) {
+    console.error(`brainblast pump-check: ${e?.message ?? String(e)}`);
+    process.exit(2);
+  }
+
+  if (jsonOut) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    console.log(renderPreflightText(report));
+  }
+
+  if (report.verdict === "NO-GO") process.exit(1);
+}
+
+async function runBatch(argv: string[]): Promise<void> {
+  const { readFileSync } = await import("node:fs");
+  const { batchScan, parseMintList, renderBatchText } = await import("./batchScan.ts");
+
+  const file = argv.find((a) => !a.startsWith("--"));
+  if (!file) {
+    console.error("usage: brainblast batch <file> [--concurrency N] [--api-key KEY] [--fail-on SCORE] [--offline] [--json]");
+    console.error("  Risk-rank a list of contract addresses (newline-separated or JSON array).");
+    process.exit(2);
+  }
+
+  let mints: string[];
+  try {
+    mints = parseMintList(readFileSync(file, "utf8"));
+  } catch (e: any) {
+    console.error(`brainblast batch: ${e?.message ?? String(e)}`);
+    process.exit(2);
+  }
+  if (mints.length === 0) {
+    console.error("brainblast batch: no addresses found in file");
+    process.exit(2);
+  }
+
+  const concIdx = argv.indexOf("--concurrency");
+  const concurrency = concIdx >= 0 ? parseInt(argv[concIdx + 1], 10) : undefined;
+  const keyIdx = argv.indexOf("--api-key");
+  const apiKey = keyIdx >= 0 ? argv[keyIdx + 1] : undefined;
+  const failIdx = argv.indexOf("--fail-on");
+  const failOnRisk = failIdx >= 0 ? parseInt(argv[failIdx + 1], 10) : undefined;
+  const offline = argv.includes("--offline");
+  const jsonOut = argv.includes("--json");
+
+  const result = await batchScan(mints, { concurrency, apiKey, failOnRisk, offline });
+
+  if (jsonOut) {
+    console.log(JSON.stringify(result, null, 2));
+  } else {
+    console.log(renderBatchText(result));
+  }
+
+  if (result.summary.impersonators > 0 || result.summary.highRisk > 0) {
     process.exit(1);
   }
 }

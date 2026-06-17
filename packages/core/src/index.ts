@@ -107,6 +107,65 @@ export {
   type DecodedInstruction,
 } from "./firewall.ts";
 
+// ── Anchor IDL → rules (v0.7.0) ───────────────────────────────────────────────
+export {
+  parseIdl,
+  generateRulesFromIdl,
+  buildConstraintParams,
+  renderRulesYaml,
+  idlProgramName,
+  toSnakeCase,
+  type AnchorIdl,
+  type IdlInstruction,
+  type IdlAccount,
+  type IdlConstraintParams,
+} from "./idlRules.ts";
+
+// ── Program trust score / oracle (v0.7.0) ─────────────────────────────────────
+export {
+  scoreProgram,
+  scoreFromProgram,
+  gradeForScore,
+  gradeAtLeast,
+  renderScoreText,
+  type TrustScore,
+  type ScoreFactor,
+  type Grade,
+} from "./score.ts";
+
+// ── Live on-chain monitoring (v0.7.0) ─────────────────────────────────────────
+export {
+  pollChainOnce,
+  startChainWatch,
+  initialChainWatchState,
+  type ChainEvent,
+  type ChainWatchState,
+  type ChainWatchOpts,
+} from "./watchChain.ts";
+
+// ── Launch pre-flight / pump-check (v0.7.0) ───────────────────────────────────
+export {
+  pumpPreflight,
+  parseMintAccount,
+  renderPreflightText,
+  type PreflightReport,
+  type PreflightCheck,
+  type PreflightVerdict,
+  type PreflightStatus,
+  type MintInfo,
+  type PreflightOpts,
+} from "./pumpCheck.ts";
+
+// ── Batch token risk scanner (v0.7.0) ─────────────────────────────────────────
+export {
+  batchScan,
+  parseMintList,
+  renderBatchText,
+  type BatchResult,
+  type BatchRow,
+  type BatchScanOpts,
+} from "./batchScan.ts";
+
 // ── Core types ────────────────────────────────────────────────────────────────
 export type {
   Rule,
