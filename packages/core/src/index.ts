@@ -107,6 +107,20 @@ export {
   type DecodedInstruction,
 } from "./firewall.ts";
 
+// ── Anchor IDL → rules (v0.7.0) ───────────────────────────────────────────────
+export {
+  parseIdl,
+  generateRulesFromIdl,
+  buildConstraintParams,
+  renderRulesYaml,
+  idlProgramName,
+  toSnakeCase,
+  type AnchorIdl,
+  type IdlInstruction,
+  type IdlAccount,
+  type IdlConstraintParams,
+} from "./idlRules.ts";
+
 // ── Core types ────────────────────────────────────────────────────────────────
 export type {
   Rule,
