@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Batch token risk scanner (`brainblast batch <file>`)
+
+- **`brainblast batch`** — pass a list of contract addresses (a portfolio, a launchpad's listings, a DEX routing whitelist) and get back a parallel-processed, risk-ranked matrix: identity status, impersonation flag, Rico risk score, snipers, bundle clusters, deployer flags. Built for builders curating which tokens their app should support.
+- Bounded-concurrency scan (`--concurrency`, default 5), input dedupe, results ranked with impersonators floated to the top, then by risk score. Accepts newline-separated or JSON-array files.
+- `--fail-on SCORE` and the impersonator count drive exit code (1 if any impersonator or high-risk token), so it gates a curation pipeline. `--offline` for identity-only, `--json` for the full matrix. Programmatic exports: `batchScan`, `parseMintList`.
+
 ### Launch pre-flight for pump.fun / SPL builders (`brainblast pump-check <mint>`)
 
 - **`brainblast pump-check`** — run before you list or integrate a token. Reads the on-chain SPL mint account, verifies identity, and folds in a Rico Maps forensic scan into one **GO / CAUTION / NO-GO** checklist.

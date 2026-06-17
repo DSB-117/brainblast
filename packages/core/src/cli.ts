@@ -167,6 +167,11 @@ if (args[0] === "pump-check") {
   process.exit(0);
 }
 
+if (args[0] === "batch") {
+  await runBatch(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -871,4 +876,49 @@ async function runPumpCheck(argv: string[]): Promise<void> {
   }
 
   if (report.verdict === "NO-GO") process.exit(1);
+}
+
+async function runBatch(argv: string[]): Promise<void> {
+  const { readFileSync } = await import("node:fs");
+  const { batchScan, parseMintList, renderBatchText } = await import("./batchScan.ts");
+
+  const file = argv.find((a) => !a.startsWith("--"));
+  if (!file) {
+    console.error("usage: brainblast batch <file> [--concurrency N] [--api-key KEY] [--fail-on SCORE] [--offline] [--json]");
+    console.error("  Risk-rank a list of contract addresses (newline-separated or JSON array).");
+    process.exit(2);
+  }
+
+  let mints: string[];
+  try {
+    mints = parseMintList(readFileSync(file, "utf8"));
+  } catch (e: any) {
+    console.error(`brainblast batch: ${e?.message ?? String(e)}`);
+    process.exit(2);
+  }
+  if (mints.length === 0) {
+    console.error("brainblast batch: no addresses found in file");
+    process.exit(2);
+  }
+
+  const concIdx = argv.indexOf("--concurrency");
+  const concurrency = concIdx >= 0 ? parseInt(argv[concIdx + 1], 10) : undefined;
+  const keyIdx = argv.indexOf("--api-key");
+  const apiKey = keyIdx >= 0 ? argv[keyIdx + 1] : undefined;
+  const failIdx = argv.indexOf("--fail-on");
+  const failOnRisk = failIdx >= 0 ? parseInt(argv[failIdx + 1], 10) : undefined;
+  const offline = argv.includes("--offline");
+  const jsonOut = argv.includes("--json");
+
+  const result = await batchScan(mints, { concurrency, apiKey, failOnRisk, offline });
+
+  if (jsonOut) {
+    console.log(JSON.stringify(result, null, 2));
+  } else {
+    console.log(renderBatchText(result));
+  }
+
+  if (result.summary.impersonators > 0 || result.summary.highRisk > 0) {
+    process.exit(1);
+  }
 }
