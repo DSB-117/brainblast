@@ -136,6 +136,11 @@ if (args[0] === "idl-rules") {
   process.exit(0);
 }
 
+if (args[0] === "score") {
+  await runScore(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -762,5 +767,46 @@ async function runIdlRules(argv: string[]): Promise<void> {
     console.log(`  Run against your program:  npx brainblast <program-dir> --packs <pack-with-this-rule>`);
   } else {
     console.log(yaml);
+  }
+}
+
+async function runScore(argv: string[]): Promise<void> {
+  const { scoreProgram, renderScoreText, gradeAtLeast } = await import("./score.ts");
+  const { isValidSolanaAddress } = await import("./trustGraph/index.ts");
+
+  const programId = argv.find((a) => !a.startsWith("--"));
+  if (!programId) {
+    console.error("usage: brainblast score <program-id> [--rpc URL] [--no-probe] [--min A|B|C|D|F] [--json]");
+    console.error("  Compute a 0-100 trust score + A-F grade for a deployed Solana program.");
+    process.exit(2);
+  }
+  if (!isValidSolanaAddress(programId)) {
+    console.error(`brainblast score: not a valid Solana address: ${programId}`);
+    process.exit(2);
+  }
+
+  const rpcIdx = argv.indexOf("--rpc");
+  const rpcUrl = rpcIdx >= 0 ? argv[rpcIdx + 1] : undefined;
+  const noProbe = argv.includes("--no-probe");
+  const minIdx = argv.indexOf("--min");
+  const min = minIdx >= 0 ? (argv[minIdx + 1] as "A" | "B" | "C" | "D" | "F") : undefined;
+  const jsonOut = argv.includes("--json");
+
+  let result;
+  try {
+    result = await scoreProgram(programId, { rpcUrl, probeRpc: !noProbe });
+  } catch (e: any) {
+    console.error(`brainblast score: ${e?.message ?? String(e)}`);
+    process.exit(1);
+  }
+
+  if (jsonOut) {
+    console.log(JSON.stringify(result, null, 2));
+  } else {
+    console.log(renderScoreText(result));
+  }
+
+  if (min && !gradeAtLeast(result.grade, min)) {
+    process.exit(1);
   }
 }
