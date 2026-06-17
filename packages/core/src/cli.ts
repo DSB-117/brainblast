@@ -126,6 +126,11 @@ if (args[0] === "rico") {
   process.exit(0);
 }
 
+if (args[0] === "firewall") {
+  await runFirewall(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -667,6 +672,43 @@ async function runRico(argv: string[]): Promise<void> {
   // ── Exit code ────────────────────────────────────────────────────────────
   const highRisk = ricoResult?.ok && ricoResult.result.riskScore >= failOn;
   if (identity.impersonation || identity.expectMismatch || highRisk) {
+    process.exit(1);
+  }
+}
+
+async function runFirewall(argv: string[]): Promise<void> {
+  const { inspectTransaction, renderFirewallText } = await import("./firewall.ts");
+
+  const tx = argv.find((a) => !a.startsWith("--"));
+  if (!tx) {
+    console.error("usage: brainblast firewall <base64-tx> [--rpc URL] [--no-simulate] [--message-only] [--strict] [--json]");
+    console.error("  Inspect a serialized Solana transaction before an agent signs it.");
+    console.error("  Exit 1 on BLOCK verdict (or any WARN with --strict).");
+    process.exit(2);
+  }
+
+  const rpcIdx = argv.indexOf("--rpc");
+  const rpcUrl = rpcIdx >= 0 ? argv[rpcIdx + 1] : undefined;
+  const noSimulate = argv.includes("--no-simulate");
+  const messageOnly = argv.includes("--message-only");
+  const strict = argv.includes("--strict");
+  const jsonOut = argv.includes("--json");
+
+  let report;
+  try {
+    report = await inspectTransaction(tx, { rpcUrl, simulate: !noSimulate, messageOnly });
+  } catch (e: any) {
+    console.error(`brainblast firewall: ${e?.message ?? String(e)}`);
+    process.exit(2);
+  }
+
+  if (jsonOut) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    console.log(renderFirewallText(report));
+  }
+
+  if (report.verdict === "block" || (strict && report.verdict === "warn")) {
     process.exit(1);
   }
 }
