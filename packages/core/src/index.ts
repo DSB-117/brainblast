@@ -156,6 +156,16 @@ export {
   type PreflightOpts,
 } from "./pumpCheck.ts";
 
+// ── Batch token risk scanner (v0.7.0) ─────────────────────────────────────────
+export {
+  batchScan,
+  parseMintList,
+  renderBatchText,
+  type BatchResult,
+  type BatchRow,
+  type BatchScanOpts,
+} from "./batchScan.ts";
+
 // ── Core types ────────────────────────────────────────────────────────────────
 export type {
   Rule,
