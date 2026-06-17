@@ -121,6 +121,27 @@ if (args[0] === "watch") {
   await new Promise(() => {});
 }
 
+if (args[0] === "watch-chain") {
+  const rest = args.slice(1);
+  const programId = rest.find((a) => !a.startsWith("--"));
+  if (!programId) {
+    console.error("usage: brainblast watch-chain <program-id> [--rpc URL] [--interval <seconds>] [--limit N]");
+    console.error("  Poll a deployed program for new activity and upgrade-authority changes. Emits NDJSON.");
+    process.exit(2);
+  }
+  const { startChainWatch } = await import("./watchChain.ts");
+  const rpcIdx = rest.indexOf("--rpc");
+  const rpcUrl = rpcIdx >= 0 ? rest[rpcIdx + 1] : undefined;
+  const intIdx = rest.indexOf("--interval");
+  const intervalMs = intIdx >= 0 ? parseInt(rest[intIdx + 1], 10) * 1000 : undefined;
+  const limIdx = rest.indexOf("--limit");
+  const limit = limIdx >= 0 ? parseInt(rest[limIdx + 1], 10) : undefined;
+  const handle = startChainWatch(programId, { rpcUrl, intervalMs, limit });
+  process.on("SIGINT", () => { handle.stop(); process.exit(0); });
+  process.on("SIGTERM", () => { handle.stop(); process.exit(0); });
+  await new Promise(() => {});
+}
+
 if (args[0] === "rico") {
   await runRico(args.slice(1));
   process.exit(0);

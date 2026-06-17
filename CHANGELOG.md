@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Live on-chain monitoring (`brainblast watch-chain <program-id>`)
+
+- **`brainblast watch-chain`** — moves brainblast from "before you ship" to "while it's live." Polls a deployed program and emits an NDJSON anomaly stream: **upgrade-authority changes** (the single most dangerous on-chain event for a program's users), bursts of new activity, and poll errors.
+- Poll-based — no websocket dependency. `--interval <seconds>`, `--limit N`, `--rpc URL`. Pairs naturally with the bundled drift-watch GitHub Action.
+- `pollChainOnce(programId, state, opts)` is a pure, single-cycle primitive (injectable fetch + authority probe) so the monitor is fully deterministic and testable; the daemon loop is a thin NDJSON wrapper mirroring `brainblast watch`.
+
 ### Program trust score / security oracle (`brainblast score <program-id>`)
 
 - **`brainblast score`** — a single 0–100 trust score and A–F grade for any deployed Solana program, composed from the trust graph: upgrade-authority kind (renounced > DAO > multisig > single-key), verified-build status, audit history, directory curation, and cross-cluster parity.

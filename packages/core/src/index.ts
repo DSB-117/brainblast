@@ -133,6 +133,16 @@ export {
   type Grade,
 } from "./score.ts";
 
+// ── Live on-chain monitoring (v0.7.0) ─────────────────────────────────────────
+export {
+  pollChainOnce,
+  startChainWatch,
+  initialChainWatchState,
+  type ChainEvent,
+  type ChainWatchState,
+  type ChainWatchOpts,
+} from "./watchChain.ts";
+
 // ── Core types ────────────────────────────────────────────────────────────────
 export type {
   Rule,
