@@ -58,10 +58,18 @@ Everything Brainblast does today, at a glance.
 - **Gates CI.** A `--ci` mode runs non-interactively (no prompts, documented defaults), and a dependency-free gate script turns `report.json` into an exit code — fail the build if any CRITICAL risk remains (`--fail-on=critical|high|…`) or the verdict is `blocked`.
 
 **Deterministic auditor — `npx brainblast`**
-- Published to npm as [`brainblast@0.6.4`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
+- Published to npm as [`brainblast@0.7.0`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
 - A Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code *offline* (no network, no LLM) for **thirteen built-in integration traps**: Stripe webhook raw-body signature verification, Privy/JWT signature + `aud` + `iss` verification, Bags/Solana fee-share creator-inclusion, Token-2022 program-ID pinning, Metaplex metadata immutability, Anchor `init_if_needed` guards, committed `.env*` secrets, **graph-based, project-wide cross-file taint tracking** for secret leaks (`env-secret-leaked-to-sink`), command injection (`request-input-command-injection`), SQL injection via Prisma raw queries (`prisma-raw-injection`), open-redirect via tainted `res.redirect()` calls (`open-redirect`), JWT algorithm confusion (`jsonwebtoken-algorithm-pinned`), and **Solana mint impersonation** (`solana-token-impersonation`).
 - **`brainblast rico <CA>`** — token identity + quality check: verifies a contract address against the canonical mint registry (offline) and Jupiter (live), detects impersonators, and runs a Rico Maps forensic scan (risk score, snipers, cabal, bundle clusters, deployer flags).
 - Emits CI-readable `checks[]` and `checkTotals` into `report.json`, and can generate behavioral contract tests that fail on the vulnerable fixtures and pass on the fixed ones — the durable guardrail that keeps a fixed trap fixed.
+
+**Solana power tools (v0.7.0)** — a full-lifecycle safety layer, each with a CLI command and a programmatic export for AI-agent frameworks:
+- **`brainblast firewall <base64-tx>`** — an AI-agent transaction firewall. Decodes a serialized Solana transaction (legacy + v0, address lookup tables), flags drain patterns (delegate `Approve`, `SetAuthority`, program upgrades, unknown programs), optionally simulates it for the full CPI tree, and returns an `allow` / `warn` / `block` verdict. Exit 1 on block. Call `inspectTransaction()` inline before an agent signs.
+- **`brainblast idl-rules <idl.json>`** — turns any Anchor IDL into a brainblast rule that verifies the program's Rust source actually declares every signer/mut account constraint the IDL promises. Unlimited rules derived from your own program's spec.
+- **`brainblast score <program-id>`** — a 0–100 trust score + A–F grade for any deployed program (upgrade authority, verified build, audits, curation, cluster parity), with a transparent factor breakdown. `--min` gates CI; `--json` makes it an oracle other tools can consume.
+- **`brainblast watch-chain <program-id>`** — live on-chain monitoring. Polls a program and streams NDJSON anomalies: upgrade-authority changes, activity bursts.
+- **`brainblast pump-check <mint>`** — launch pre-flight for pump.fun/SPL builders: mint/freeze authority revocation, identity, and Rico forensics → GO / CAUTION / NO-GO.
+- **`brainblast batch <file>`** — risk-rank a list of contract addresses in parallel (identity + Rico), impersonators floated to the top. For curating which tokens an app should support.
 - **`--since <ref>` diff-aware scanning** audits only what changed in `git diff <ref>` — fast enough for every commit or PR. **`brainblast watch`** re-scans on every save and streams NDJSON findings for an agent daemon to tail.
 - **`brainblast fix [--apply] [--branch]`** lists (and, with `--apply`, applies) mechanical fixes for confirmed FAILs, re-audits to confirm RED → GREEN, and can commit the result to a new branch.
 - **`brainblast trust-graph`** resolves on-chain upgrade-authority and verified-build status for Solana programs, with a local TTL cache. Every run also emits a cost & rent analysis (`.agent-research/cost-analysis.md`).
@@ -103,14 +111,14 @@ Install gstack: run git clone --single-branch --depth 1 https://github.com/garry
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.6.4/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.7.0/install.sh | sh
 ```
 
 The installer pins to a tagged release, verifies SHA-256 checksums before writing any file, and auto-detects Claude Code, OpenClaw, and Codex. If gstack is missing, it warns you with the exact command to fix it. (It installs the Brainblast skill, but it does **not** install gstack for you — that is a one-time prerequisite above.)
 
 **Or tell your agent:**
 
-> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.6.4/install.sh | sh`
+> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.7.0/install.sh | sh`
 
 For the bleeding edge instead of a pinned release, prefix with `BRAINBLAST_REF=main`.
 

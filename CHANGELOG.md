@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+## v0.7.0 — 2026-06-17
+
+The Solana power release: six features that extend brainblast from "audit before
+you ship" to a full-lifecycle safety layer for Solana developers and AI agents.
+
+### Batch token risk scanner (`brainblast batch <file>`)
+
+- **`brainblast batch`** — pass a list of contract addresses (a portfolio, a launchpad's listings, a DEX routing whitelist) and get back a parallel-processed, risk-ranked matrix: identity status, impersonation flag, Rico risk score, snipers, bundle clusters, deployer flags. Built for builders curating which tokens their app should support.
+- Bounded-concurrency scan (`--concurrency`, default 5), input dedupe, results ranked with impersonators floated to the top, then by risk score. Accepts newline-separated or JSON-array files.
+- `--fail-on SCORE` and the impersonator count drive exit code (1 if any impersonator or high-risk token), so it gates a curation pipeline. `--offline` for identity-only, `--json` for the full matrix. Programmatic exports: `batchScan`, `parseMintList`.
+
+### Launch pre-flight for pump.fun / SPL builders (`brainblast pump-check <mint>`)
+
+- **`brainblast pump-check`** — run before you list or integrate a token. Reads the on-chain SPL mint account, verifies identity, and folds in a Rico Maps forensic scan into one **GO / CAUTION / NO-GO** checklist.
+- **The two silent footguns it catches up front:** a *live mint authority* (the deployer can print unlimited supply and dilute every holder → NO-GO) and a *live freeze authority* (they can freeze any user's token account → CAUTION) — both one `getAccountInfo` call away.
+- Checklist also covers identity/impersonation, Rico risk score (`--fail-on`, default 70), snipers, bundle clusters, holder distribution, and deployer flags. Exit 1 on NO-GO.
+- `--offline` does the on-chain + identity checks with no Rico call; graceful skip when no API key. Programmatic exports: `pumpPreflight`, `parseMintAccount`.
+
+### Live on-chain monitoring (`brainblast watch-chain <program-id>`)
+
+- **`brainblast watch-chain`** — moves brainblast from "before you ship" to "while it's live." Polls a deployed program and emits an NDJSON anomaly stream: **upgrade-authority changes** (the single most dangerous on-chain event for a program's users), bursts of new activity, and poll errors.
+- Poll-based — no websocket dependency. `--interval <seconds>`, `--limit N`, `--rpc URL`. Pairs naturally with the bundled drift-watch GitHub Action.
+- `pollChainOnce(programId, state, opts)` is a pure, single-cycle primitive (injectable fetch + authority probe) so the monitor is fully deterministic and testable; the daemon loop is a thin NDJSON wrapper mirroring `brainblast watch`.
+
+### Program trust score / security oracle (`brainblast score <program-id>`)
+
+- **`brainblast score`** — a single 0–100 trust score and A–F grade for any deployed Solana program, composed from the trust graph: upgrade-authority kind (renounced > DAO > multisig > single-key), verified-build status, audit history, directory curation, and cross-cluster parity.
+- Returns a transparent weighted factor breakdown (each factor's points/max + a plain-English reason) so the score is auditable, not a black box. JSON output makes it a contract other tools, protocols, and frontends can consume.
+- `--min A|B|C|D|F` turns it into a CI gate (exit 1 below the bar); `--no-probe` runs offline against the curated directory + cache. Programmatic exports: `scoreProgram`, `scoreFromProgram`, `gradeForScore`.
+
+### Anchor IDL → auto-generated rules (`brainblast idl-rules <idl.json>`)
+
+- **`brainblast idl-rules`** — turns any Anchor IDL into a brainblast rule that scans the program's Rust source and verifies every account constraint the IDL promises is actually present. Flips brainblast from a fixed set of curated rules to *unlimited rules derived from your own program's spec*.
+- New checker kind **`anchor-account-matches-idl`**: for each instruction handler, every account the IDL marks `isSigner` must be a `Signer<'info>` (or carry a `signer` constraint), and every `isMut` account must carry `mut`/`init`. A missing constraint is a silent authorization hole → FAIL.
+- Handles Anchor ≥0.30 (`metadata.name`) and older IDLs, nested composite accounts, and camelCase↔snake_case account/handler naming.
+- `--out <dir>` writes the generated rule YAML into a pack directory; `--json` prints the rule objects. Programmatic exports: `parseIdl`, `generateRulesFromIdl`, `buildConstraintParams`.
+
 ### AI-agent transaction firewall (`brainblast firewall <base64-tx>`)
 
 - **`brainblast firewall`** — inspects a serialized Solana transaction *before* an autonomous agent signs it. Decodes the transaction locally (legacy + v0/versioned, including address lookup tables), flags dangerous instruction patterns, and (with an RPC endpoint) simulates it to surface the full CPI tree.
