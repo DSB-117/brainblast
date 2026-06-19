@@ -207,7 +207,7 @@ See `packages/core/CHANGELOG.md` for details.
 - **Fix-it mode**: FAIL results now include an additive `fix` field — a unified-diff patch for
   mechanical fixes (Stripe raw-body, Privy `audience`/`issuer`) or guidance text where an automatic
   patch isn't safe to synthesize. New `packages/core/src/fixers/` registry.
-- **Living memory**: brainblast persists `.agent-research/memory.json` per repo, recording fix
+- **Living memory**: Brainblast persists `.agent-research/memory.json` per repo, recording fix
   history across runs and annotating new FAILs with a `precedent` when the same rule was already
   fixed elsewhere in the repo.
 

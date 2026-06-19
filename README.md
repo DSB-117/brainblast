@@ -1,4 +1,4 @@
-# brainblast
+# Brainblast
 
 [![npm version](https://img.shields.io/npm/v/brainblast.svg)](https://www.npmjs.com/package/brainblast)
 [![provenance](https://img.shields.io/badge/provenance-SLSA%20v1-blue)](https://www.npmjs.com/package/brainblast?activeTab=code)
