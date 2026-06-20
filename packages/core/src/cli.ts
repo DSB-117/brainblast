@@ -17,6 +17,7 @@ import { isTelemetryEnabled, recordGraduationEvents, telemetryFilePath, submitTe
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
 //   brainblast diff <pkg>@<from> <pkg>@<to> [--ecosystem <eco>] [--json]
 //   brainblast drift [targetDir] [--update-baseline] [--json]
+//   brainblast rico <mint> [--expect SYM] [--api-key KEY] [--fail-on N] [--offline] [--json]
 //   brainblast mcp
 //   brainblast watch [targetDir]
 //   brainblast trust-graph <programId> [<programId>...] [--rpc URL] [--no-probe] [--json]
@@ -88,6 +89,11 @@ if (args[0] === "diff") {
 
 if (args[0] === "drift") {
   await runDrift(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "rico") {
+  await runRico(args.slice(1));
   process.exit(0);
 }
 
@@ -452,6 +458,99 @@ async function runFix(argv: string[]) {
       console.error(`\nWarning: could not create branch/commit: ${e.message ?? e}`);
     }
   }
+}
+
+// ── brainblast rico ──────────────────────────────────────────────────────────
+//
+// brainblast rico <mint> [--expect SYM] [--api-key KEY] [--fail-on N]
+//                        [--base-url URL] [--offline] [--json]
+//
+// Combined token check: (1) identity pre-check against the canonical registry
+// (offline-capable, no key) — confirms the mint is the token you think it is and
+// flags impersonators; (2) quality scan via Rico Maps (/api/v1/analyze) — risk
+// score, sniper %, cabal, bundle clusters, deployer flags. The key is optional:
+// missing/invalid keys graceful-skip the quality scan and still return identity.
+// Exits non-zero on impersonation, an expected-symbol mismatch, or a risk score
+// at/above --fail-on (default 70) — so it can gate CI.
+
+async function runRico(argv: string[]) {
+  const flag = (n: string) => {
+    const i = argv.indexOf(`--${n}`);
+    return i >= 0 ? argv[i + 1] : undefined;
+  };
+  const expectSymbol = flag("expect");
+  const apiKeyFlag = flag("api-key");
+  const apiKey = apiKeyFlag ?? process.env.RICO_API_KEY;
+  const baseUrl = flag("base-url");
+  const failOnRaw = flag("fail-on");
+  const failOn = failOnRaw ? parseInt(failOnRaw, 10) : 70;
+  const jsonOut = argv.includes("--json");
+  const offline = argv.includes("--offline");
+
+  const skipValues = new Set([expectSymbol, apiKeyFlag, baseUrl, failOnRaw].filter(Boolean) as string[]);
+  const mint = argv.find((a) => !a.startsWith("--") && !skipValues.has(a));
+
+  if (!mint) {
+    console.error("usage: brainblast rico <mint> [--expect SYM] [--api-key KEY] [--fail-on N] [--base-url URL] [--offline] [--json]");
+    process.exit(2);
+  }
+  if (!isValidSolanaAddress(mint)) {
+    console.error(`error: '${mint}' is not a valid Solana mint address`);
+    process.exit(2);
+  }
+
+  const { verifyTokenIdentity } = await import("./tokenRegistry.ts");
+  const { analyzeToken, renderRicoText } = await import("./ricomaps.ts");
+
+  // Quality first (when allowed) so its on-chain symbol can feed collision
+  // detection in the identity step.
+  const quality = offline ? null : await analyzeToken(mint, { apiKey, baseUrl });
+  const claimedSymbol = quality?.ok ? quality.result.symbol : undefined;
+
+  const identity = await verifyTokenIdentity(mint, { expectSymbol, claimedSymbol, offline });
+
+  if (jsonOut) {
+    console.log(JSON.stringify({ identity, quality }, null, 2));
+  } else {
+    console.log(`\nbrainblast rico — ${mint}\n`);
+    console.log("── Identity ─────────────────────────────────────────────────");
+    const idTag = identity.impersonation
+      ? "IMPERSONATION"
+      : identity.status === "verified-canonical" || identity.status === "verified"
+        ? "VERIFIED"
+        : identity.status.toUpperCase();
+    console.log(`  [${idTag}] ${identity.detail}`);
+    if (identity.expectMismatch && !identity.impersonation) {
+      console.log(`  [MISMATCH] resolved symbol does not match --expect ${expectSymbol}.`);
+    }
+
+    console.log("\n── Quality (Rico Maps) ──────────────────────────────────────");
+    if (offline) {
+      console.log("  (skipped — --offline)");
+    } else if (quality?.ok) {
+      console.log(renderRicoText(quality.result));
+    } else if (quality && quality.kind === "auth") {
+      console.log("  (skipped — no valid Rico Maps API key. Set RICO_API_KEY or pass --api-key to enable the quality scan.)");
+    } else if (quality) {
+      console.log(`  (unavailable — ${quality.error})`);
+    }
+  }
+
+  // Gate: impersonation / expect-mismatch / high risk.
+  const highRisk = quality?.ok ? quality.result.riskScore >= failOn : false;
+  const gateFail = identity.impersonation || !!identity.expectMismatch || highRisk;
+  if (gateFail) {
+    if (!jsonOut) {
+      const reasons = [
+        identity.impersonation ? "impersonation" : null,
+        identity.expectMismatch ? `expected ${expectSymbol}` : null,
+        highRisk ? `risk ${quality && quality.ok ? quality.result.riskScore : "?"} ≥ ${failOn}` : null,
+      ].filter(Boolean).join(", ");
+      console.log(`\n  verdict: FAIL (${reasons})`);
+    }
+    process.exit(1);
+  }
+  if (!jsonOut) console.log(`\n  verdict: OK`);
 }
 
 // ── brainblast drift ─────────────────────────────────────────────────────────

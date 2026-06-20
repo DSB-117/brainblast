@@ -1,0 +1,46 @@
+# Pure-data rule (facts). Binds to the vetted `solana-mint-identity-mismatch`
+# checker, which verifies hardcoded mint constants against the bundled
+# canonical-mint snapshot (src/solanaCanonicalMints.ts) — fully offline.
+#
+# Catches the impersonation footgun where a constant is LABELLED as a blue-chip
+# token (USDC, USDT, JUP, …) but points at a different / attacker-controlled
+# address. AI code generators and copy-paste both produce this: the variable
+# name says USDC, the address is something else, and value silently routes to
+# the wrong token.
+id: solana-token-impersonation
+severity: critical
+title: Hardcoded Solana mint constant does not match the canonical mint for its labelled symbol
+component:
+  name: Solana SPL Token
+  type: Blockchain
+  version: unversioned
+  sourceUrl: https://station.jup.ag/docs/token-list/token-list-api
+detect:
+  modules: ["@solana/web3.js", "@solana/spl-token"]
+  # requiresImport: only files that import a Solana lib are candidates, so this
+  # never fires on JWT ("token"), Metaplex, or other non-Solana code. "token" is
+  # deliberately excluded from nameRegex to avoid matching unrelated *Token()
+  # handlers in Solana files; the checker scans the whole source file once any
+  # handler matches, so a mint constant anywhere in the file is still caught.
+  nameRegex: "mint|payment|usdc|usdt|swap|pay|deposit|withdraw|treasury|stablecoin"
+  triggerCalls: []
+  requiresImport: true
+check:
+  kind: solana-mint-identity-mismatch
+  params:
+    passDetail: >-
+      Every hardcoded mint constant labelled with a canonical symbol resolves
+      to that symbol's real mint address.
+    failDetail: >-
+      A hardcoded mint constant is labelled as a canonical token (e.g. USDC)
+      but its address is not that token's canonical mint. The on-chain symbol
+      and a developer-chosen variable name are both attacker-controllable, so a
+      mismatch here means value can silently route to the wrong — possibly
+      attacker-owned — token. Replace the address with the canonical mint for
+      the labelled symbol, or rename the constant if it genuinely refers to a
+      different token.
+    absentDetail: >-
+      No hardcoded mint constant named after a known canonical symbol was found;
+      the impersonation rule does not apply here.
+test:
+  kind: none

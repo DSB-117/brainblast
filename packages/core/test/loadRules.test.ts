@@ -14,6 +14,9 @@ describe("loadRules", () => {
     const ids = rules.map((r) => r.id).sort();
     expect(ids).toEqual([
       "anchor-init-if-needed-guarded",
+      "anchor-pda-find-program-address",
+      "anchor-signer-constraint-missing",
+      "anchor-unchecked-account-type",
       "bags-fee-share-creator-included",
       "env-secret-leaked-to-sink",
       "env-secrets-committed",
@@ -23,6 +26,7 @@ describe("loadRules", () => {
       "prisma-raw-injection",
       "privy-jwt-verification",
       "request-input-command-injection",
+      "solana-token-impersonation",
       "stripe-webhook-raw-body-verification",
       "token-2022-program-id-pinned",
     ]);

@@ -2,6 +2,44 @@
 
 ## Unreleased
 
+## v0.7.1 — 2026-06-20
+
+**Pillar 2: Anchor/Rust Security Checkers** — three new static checker kinds for
+Solana programs written with the Anchor framework, plus 6 fixtures and full test coverage.
+
+### New checker kinds
+
+- **`anchor-account-missing-constraint`** — detects Anchor instruction handlers where
+  an authority-named account field (`authority`, `admin`, `owner`, `payer`, `signer`, etc.)
+  is typed as `AccountInfo<'info>` without a `signer` constraint or `Signer<'info>` type.
+  Missing signer validation lets an attacker pass any key as the authority and execute
+  privileged operations without actually owning the authority key. Severity: **critical**.
+  Rule: `anchor-signer-constraint-missing`.
+
+- **`anchor-forbidden-account-type`** — detects Anchor instruction handlers where any
+  account field uses a forbidden account type (default: `UncheckedAccount<'info>`).
+  Anchor requires a `/// CHECK:` safety comment on `UncheckedAccount` fields but performs
+  zero runtime validation — ownership, signer status, and data layout are entirely unchecked.
+  AI coding agents routinely reach for `UncheckedAccount` as a lazy placeholder, add a
+  boilerplate comment, and ship without ever adding actual validation. Fix: replace with
+  `Account<'info, T>`, `Signer<'info>`, or `SystemAccount<'info>`. Severity: **high**.
+  Rule: `anchor-unchecked-account-type`.
+
+- **`anchor-body-call-pattern`** — detects dangerous patterns in an Anchor instruction
+  handler body via regex text matching. Primary use case: `Pubkey::find_program_address`
+  called inside a handler body. This is a footgun for two reasons: (1) it iterates bump
+  seeds 255→0, up to 255 SHA256 hashes, consuming excessive compute units; (2) if the
+  canonical bump was stored at init time, re-deriving it may silently use a different nonce.
+  The correct Anchor pattern is `#[account(seeds=[...], bump=state.bump)]` on the Accounts
+  struct — Anchor re-derives and verifies at zero extra cost. Parameterized: one checker
+  kind, many rules. Severity: **high**. Rule: `anchor-pda-find-program-address`.
+
+### New rules (3)
+
+`anchor-signer-constraint-missing`, `anchor-unchecked-account-type`,
+`anchor-pda-find-program-address` — all with vulnerable/fixed fixtures and
+audit-level integration tests.
+
 ## v0.6.3 — 2026-06-16
 
 - **Patch:** fix stale `SHA256SUMS` checksum for `SKILL.md` — `v0.6.2` updated `SKILL.md`
@@ -207,7 +245,7 @@ See `packages/core/CHANGELOG.md` for details.
 - **Fix-it mode**: FAIL results now include an additive `fix` field — a unified-diff patch for
   mechanical fixes (Stripe raw-body, Privy `audience`/`issuer`) or guidance text where an automatic
   patch isn't safe to synthesize. New `packages/core/src/fixers/` registry.
-- **Living memory**: brainblast persists `.agent-research/memory.json` per repo, recording fix
+- **Living memory**: Brainblast persists `.agent-research/memory.json` per repo, recording fix
   history across runs and annotating new FAILs with a `precedent` when the same rule was already
   fixed elsewhere in the repo.
 

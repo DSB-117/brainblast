@@ -1,0 +1,42 @@
+id: anchor-unchecked-account-type
+severity: high
+title: Anchor UncheckedAccount used without typed validation
+component:
+  name: Anchor Framework
+  type: Blockchain
+  version: ">=0.26.0"
+  sourceUrl: https://docs.rs/anchor-lang/latest/anchor_lang/accounts/unchecked_account/struct.UncheckedAccount.html
+detect:
+  lang: rust
+  modules:
+    - "@coral-xyz/anchor"
+    - "@project-serum/anchor"
+  nameRegex: ".*"
+  triggerCalls: []
+check:
+  kind: anchor-forbidden-account-type
+  params:
+    forbiddenType: "UncheckedAccount"
+    passDetail: >-
+      No UncheckedAccount fields found; all accounts use typed validation.
+    failDetail: >-
+      UncheckedAccount<'info> performs zero runtime validation — Anchor does not
+      check ownership, signer status, or data layout. A '/// CHECK:' comment is
+      required by the compiler but does not add any on-chain enforcement.
+      AI coding agents routinely use UncheckedAccount as a lazy placeholder and
+      ship without adding the actual validation.
+      Fix: replace with a typed account —
+        Account<'info, T>         for program-owned data accounts,
+        Signer<'info>             for accounts that must sign,
+        SystemAccount<'info>      for system-program-owned accounts,
+        InterfaceAccount<'info, T> for Token-2022 compatible token accounts.
+    absentDetail: >-
+      Handler has no UncheckedAccount fields; this rule does not apply.
+test:
+  kind: anchor-program-test
+  params:
+    scenario: unchecked-account-substitution
+    description: >-
+      Passes an attacker-controlled account in place of the UncheckedAccount
+      field. Without typed validation the instruction accepts it; with a typed
+      account Anchor rejects it at deserialization time.

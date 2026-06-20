@@ -8,5 +8,8 @@
 # Research run outputs (large, project-specific)
 .agent-research/
 
+# Dependencies
+node_modules/
+
 # macOS
 .DS_Store

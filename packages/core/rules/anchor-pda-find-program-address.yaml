@@ -1,0 +1,48 @@
+id: anchor-pda-find-program-address
+severity: high
+title: Anchor instruction derives PDA at runtime instead of using stored canonical bump
+component:
+  name: Anchor Framework
+  type: Blockchain
+  version: ">=0.26.0"
+  sourceUrl: https://www.anchor-lang.com/docs/pdas
+detect:
+  lang: rust
+  modules:
+    - "@coral-xyz/anchor"
+    - "@project-serum/anchor"
+  nameRegex: ".*"
+  triggerCalls: []
+check:
+  kind: anchor-body-call-pattern
+  params:
+    forbiddenPattern: "Pubkey::find_program_address|find_program_address\\s*\\("
+    passDetail: >-
+      Handler does not call find_program_address at runtime; PDA derivation
+      is handled via Anchor seeds + bump constraints.
+    failDetail: >-
+      Handler calls Pubkey::find_program_address inside the instruction body.
+      This is a footgun for two reasons:
+      (1) Security: find_program_address iterates bump seeds 255→0 and returns
+      the first valid PDA. If a canonical bump was stored at account creation,
+      re-deriving without that stored bump may silently accept a different nonce
+      or collide with an unintended address.
+      (2) Compute: worst-case 255 SHA256 iterations (~1,500 CU each) consume
+      significant compute budget unnecessarily.
+      Fix: declare seeds and bump constraints on the Accounts struct —
+        #[account(seeds = [b"vault", user.key().as_ref()], bump)]
+      Store ctx.bumps.<account> at init time, then use
+        #[account(seeds = [...], bump = state.bump)]
+      in subsequent handlers. Anchor re-derives and verifies the PDA at zero
+      extra compute cost.
+    absentDetail: >-
+      Handler does not call find_program_address; this rule does not apply.
+test:
+  kind: anchor-program-test
+  params:
+    scenario: pda-bump-mismatch
+    description: >-
+      Verifies that the PDA derived at runtime matches the canonical PDA stored
+      at init. A bump mismatch causes the instruction to operate on a different
+      account than intended. The fixed version uses the Anchor seeds+bump
+      constraint so Anchor enforces correctness automatically.

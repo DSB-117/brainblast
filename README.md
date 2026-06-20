@@ -1,11 +1,11 @@
-# brainblast
+# Brainblast
 
 [![npm version](https://img.shields.io/npm/v/brainblast.svg)](https://www.npmjs.com/package/brainblast)
 [![provenance](https://img.shields.io/badge/provenance-SLSA%20v1-blue)](https://www.npmjs.com/package/brainblast?activeTab=code)
 [![ci](https://github.com/DSB-117/brainblast/actions/workflows/ci.yml/badge.svg)](https://github.com/DSB-117/brainblast/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-![Brainblast](assets/brainblast.jpg)
+![Brainblast](assets/brainblast.png)
 
 Research external APIs and SDKs before your AI agent starts coding — then enforce, in CI, that
 what got written matches.

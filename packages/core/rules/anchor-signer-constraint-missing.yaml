@@ -1,0 +1,42 @@
+id: anchor-signer-constraint-missing
+severity: critical
+title: Anchor authority account missing signer constraint
+component:
+  name: Anchor Framework
+  type: Blockchain
+  version: ">=0.26.0"
+  sourceUrl: https://www.anchor-lang.com/docs/the-accounts-struct#signer
+detect:
+  lang: rust
+  modules:
+    - "@coral-xyz/anchor"
+    - "@project-serum/anchor"
+  # Match all instruction handlers — the checker itself filters by field name.
+  nameRegex: ".*"
+  triggerCalls: []
+check:
+  kind: anchor-account-missing-constraint
+  params:
+    namePattern: "^(authority|admin|owner|payer|caller|signer|user|operator|manager|creator|deployer)$"
+    passDetail: >-
+      All authority-named account fields are properly validated as signers
+      (Signer<'info> type or explicit #[account(signer)] constraint).
+    failDetail: >-
+      An authority-named account field is declared as AccountInfo<'info> without
+      a signer constraint. Any account can be passed here — the instruction does
+      not verify the caller signed the transaction. This is the root cause of
+      unauthorized-instruction exploits.
+      Fix: use 'pub <field>: Signer<'info>' (preferred) or add
+      #[account(signer)] to the field's attribute list.
+    absentDetail: >-
+      Handler has no authority-named account fields; signer-constraint rule
+      does not apply.
+test:
+  kind: anchor-program-test
+  params:
+    scenario: unauthorized-signer
+    description: >-
+      Calls the instruction with a non-signing account passed as the authority
+      field. Without the signer constraint, the call succeeds when it must fail.
+      With the constraint (Signer<'info> or #[account(signer)]), Anchor rejects
+      the transaction at account validation time.
