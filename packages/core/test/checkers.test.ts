@@ -14,7 +14,7 @@ import { anchorAccountMissingConstraint } from "../src/checkers/anchorAccountMis
 import { anchorForbiddenAccountType } from "../src/checkers/anchorForbiddenAccountType.ts";
 import { anchorBodyCallPattern } from "../src/checkers/anchorBodyCallPattern.ts";
 import { anchorCpiUnverifiedProgram } from "../src/checkers/anchorCpiUnverifiedProgram.ts";
-import { economicValueZeroOrMissing } from "../src/checkers/economicValueZeroOrMissing.ts";
+import { feeConfigsZeroOrMissing } from "../src/checkers/feeConfigsZeroOrMissing.ts";
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -1082,7 +1082,7 @@ describe("anchorCpiUnverifiedProgram (Wormhole pattern)", () => {
   });
 });
 
-describe("economicValueZeroOrMissing (Token Economics Validator)", () => {
+describe("feeConfigsZeroOrMissing (Fee Config Validator)", () => {
   const P = { calls: ["createV1", "create"], field: "sellerFeeBasisPoints" };
 
   it("FAIL when the revenue field is omitted (defaults to zero)", () => {
@@ -1090,7 +1090,7 @@ describe("economicValueZeroOrMissing (Token Economics Validator)", () => {
       `export function h(umi: any) { return createV1(umi, { name: "x", uri: "u" }); }`,
       "h",
     );
-    const r = economicValueZeroOrMissing(c, P);
+    const r = feeConfigsZeroOrMissing(c, P);
     expect(r.result).toBe("fail");
     expect(r.detail).toContain("omitted");
   });
@@ -1100,7 +1100,7 @@ describe("economicValueZeroOrMissing (Token Economics Validator)", () => {
       `export function h(umi: any) { return createV1(umi, { name: "x", sellerFeeBasisPoints: 0 }); }`,
       "h",
     );
-    const r = economicValueZeroOrMissing(c, P);
+    const r = feeConfigsZeroOrMissing(c, P);
     expect(r.result).toBe("fail");
     expect(r.detail).toContain("literal 0");
   });
@@ -1110,7 +1110,7 @@ describe("economicValueZeroOrMissing (Token Economics Validator)", () => {
       `export function h(umi: any) { return createV1(umi, { sellerFeeBasisPoints: 0 as any } as any); }`,
       "h",
     );
-    expect(economicValueZeroOrMissing(c, P).result).toBe("fail");
+    expect(feeConfigsZeroOrMissing(c, P).result).toBe("fail");
   });
 
   it("PASS when set to a non-zero numeric literal", () => {
@@ -1118,7 +1118,7 @@ describe("economicValueZeroOrMissing (Token Economics Validator)", () => {
       `export function h(umi: any) { return createV1(umi, { sellerFeeBasisPoints: 500 }); }`,
       "h",
     );
-    expect(economicValueZeroOrMissing(c, P).result).toBe("pass");
+    expect(feeConfigsZeroOrMissing(c, P).result).toBe("pass");
   });
 
   it("PASS when set via a non-literal expression (intentional)", () => {
@@ -1126,7 +1126,7 @@ describe("economicValueZeroOrMissing (Token Economics Validator)", () => {
       `export function h(umi: any) { return createV1(umi, { sellerFeeBasisPoints: percentAmount(5) }); }`,
       "h",
     );
-    expect(economicValueZeroOrMissing(c, P).result).toBe("pass");
+    expect(feeConfigsZeroOrMissing(c, P).result).toBe("pass");
   });
 
   it("FAIL when the field is omitted even with the object cast `as any`", () => {
@@ -1134,12 +1134,12 @@ describe("economicValueZeroOrMissing (Token Economics Validator)", () => {
       `export function h(umi: any) { return createV1(umi, { name: "x" } as any); }`,
       "h",
     );
-    expect(economicValueZeroOrMissing(c, P).result).toBe("fail");
+    expect(feeConfigsZeroOrMissing(c, P).result).toBe("fail");
   });
 
   it("CANT_TELL when no matching config call exists", () => {
     const c = candidate(`export function h() { return doSomethingElse({ sellerFeeBasisPoints: 0 }); }`, "h");
-    expect(economicValueZeroOrMissing(c, P).result).toBe("cant_tell");
+    expect(feeConfigsZeroOrMissing(c, P).result).toBe("cant_tell");
   });
 });
 

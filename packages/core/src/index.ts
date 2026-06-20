@@ -191,19 +191,19 @@ export {
   type BundledPack,
 } from "./bundledPacks.ts";
 
-// ── Token Economics Validator (v0.7.5) ────────────────────────────────────────
+// ── Fee Config Validator (v0.7.5) ────────────────────────────────────────
 export {
-  ECONOMIC_PATTERNS,
-  getEconomicPattern,
-  economicPatternsByCategory,
+  FEE_CONFIGS,
+  getFeeConfig,
+  feeConfigsByCategory,
   enforcedCount,
-  renderEconomicsMd,
-  renderEconomicsText,
-  renderEconomicDetailText,
-  type EconomicPattern,
-  type EconomicCategory,
-  type EconomicStatus,
-} from "./tokenEconomics.ts";
+  renderFeeConfigsMd,
+  renderFeeConfigsText,
+  renderFeeConfigDetailText,
+  type FeeConfig,
+  type FeeConfigCategory,
+  type FeeConfigStatus,
+} from "./feeConfigs.ts";
 
 // ── Exploit Pattern Database (v0.7.3) ─────────────────────────────────────────
 export {

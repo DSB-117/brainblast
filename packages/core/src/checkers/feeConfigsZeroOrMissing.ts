@@ -2,9 +2,9 @@ import { SyntaxKind } from "ts-morph";
 import type { CallExpression, Expression } from "ts-morph";
 import type { Candidate, Checker } from "../types.ts";
 
-// Checker: economic-value-zero-or-missing
+// Checker: fee-configs-zero-or-missing
 //
-// Token Economics Validator (v0.7.5) — the generalized Bags exploit.
+// Fee Config Validator (v0.7.5) — the generalized Bags exploit.
 //
 // The Bags trap was one instance of a whole class: a *revenue-bearing* field in
 // a config object that, if omitted, silently defaults to zero. The protocol
@@ -68,7 +68,7 @@ function isLiteralZero(expr: Expression | undefined): boolean {
   return false;
 }
 
-export const economicValueZeroOrMissing: Checker = (c, p) => {
+export const feeConfigsZeroOrMissing: Checker = (c, p) => {
   const names: string[] = Array.isArray(p.calls) ? p.calls : [p.calls];
   const field: string = p.field;
 
@@ -79,7 +79,7 @@ export const economicValueZeroOrMissing: Checker = (c, p) => {
   if (calls.length === 0) {
     return {
       result: "cant_tell",
-      detail: p.absentDetail ?? `No call to ${names.join("/")} in '${c.fnName}'; economic-value check does not apply.`,
+      detail: p.absentDetail ?? `No call to ${names.join("/")} in '${c.fnName}'; fee-configs check does not apply.`,
     };
   }
 

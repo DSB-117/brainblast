@@ -1,4 +1,4 @@
-// ── Token Economics Validator (v0.7.5) ────────────────────────────────────────
+// ── Fee Config Validator (v0.7.5) ────────────────────────────────────────
 //
 // The Bags exploit — a creator wallet silently omitted from a fee split, so the
 // creator earned $0 forever — was one instance of a whole class:
@@ -10,21 +10,21 @@
 // This catalog enumerates that class across the three places money is split:
 // **fees**, **royalties**, and **reward distribution**. Each entry names the
 // SDK, the exact field, what zero/omitted costs you, and — when one exists —
-// the bundled brainblast rule that statically detects it (`economic-value-zero
-// -or-missing` / `fee-allocation-shape`). Entries with no rule yet are marked
+// the bundled brainblast rule that statically detects it
+// (`fee-configs-zero-or-missing` / `fee-allocation-shape`). Entries with no rule yet are marked
 // `advisory`: a known footgun you should grep for, and a candidate for a
 // project-local rule.
 //
 // Invariant (enforced by test): every non-null `ruleId` resolves to a real
 // bundled rule. No false "we catch this".
 
-export type EconomicCategory = "royalty" | "fee" | "reward";
-export type EconomicStatus = "enforced" | "advisory";
+export type FeeConfigCategory = "royalty" | "fee" | "reward";
+export type FeeConfigStatus = "enforced" | "advisory";
 
-export interface EconomicPattern {
+export interface FeeConfig {
   /** Stable slug. */
   id: string;
-  category: EconomicCategory;
+  category: FeeConfigCategory;
   /** SDK / protocol the field belongs to. */
   sdk: string;
   /** The setup/config call that takes the field. */
@@ -37,12 +37,12 @@ export interface EconomicPattern {
   fix: string;
   /** Bundled rule that detects this, or null for an advisory entry. */
   ruleId: string | null;
-  status: EconomicStatus;
+  status: FeeConfigStatus;
   /** Optional reference / docs URL. */
   docsUrl?: string;
 }
 
-export const ECONOMIC_PATTERNS: EconomicPattern[] = [
+export const FEE_CONFIGS: FeeConfig[] = [
   {
     id: "metaplex-seller-fee",
     category: "royalty",
@@ -93,34 +93,34 @@ export const ECONOMIC_PATTERNS: EconomicPattern[] = [
     field: "rewardRate / emissionsPerSecond",
     whatZeroMeans:
       "A reward-rate or emissions field omitted/zeroed → stakers and LPs accrue nothing while the pool looks live. A silent, ongoing zero-yield misconfiguration.",
-    fix: "Set the reward-rate field explicitly and assert it is non-zero in your deploy script; add a project-local economic-value-zero-or-missing rule for your SDK's call shape.",
+    fix: "Set the reward-rate field explicitly and assert it is non-zero in your deploy script; add a project-local fee-configs-zero-or-missing rule for your SDK's call shape.",
     ruleId: null,
     status: "advisory",
   },
 ];
 
-export function getEconomicPattern(id: string): EconomicPattern | undefined {
-  return ECONOMIC_PATTERNS.find((e) => e.id === id || e.ruleId === id);
+export function getFeeConfig(id: string): FeeConfig | undefined {
+  return FEE_CONFIGS.find((e) => e.id === id || e.ruleId === id);
 }
 
-export function economicPatternsByCategory(cat: EconomicCategory): EconomicPattern[] {
-  return ECONOMIC_PATTERNS.filter((e) => e.category === cat);
+export function feeConfigsByCategory(cat: FeeConfigCategory): FeeConfig[] {
+  return FEE_CONFIGS.filter((e) => e.category === cat);
 }
 
-export function enforcedCount(patterns: EconomicPattern[] = ECONOMIC_PATTERNS): number {
+export function enforcedCount(patterns: FeeConfig[] = FEE_CONFIGS): number {
   return patterns.filter((e) => e.status === "enforced").length;
 }
 
 // ── Renderers ─────────────────────────────────────────────────────────────────
 
-const CATEGORY_LABEL: Record<EconomicCategory, string> = {
+const CATEGORY_LABEL: Record<FeeConfigCategory, string> = {
   royalty: "Royalties",
   fee: "Fees",
   reward: "Reward distribution",
 };
 
-export function renderEconomicsMd(patterns: EconomicPattern[] = ECONOMIC_PATTERNS): string {
-  const L: string[] = ["## Token Economics — silent zero-revenue class\n"];
+export function renderFeeConfigsMd(patterns: FeeConfig[] = FEE_CONFIGS): string {
+  const L: string[] = ["## Fee Configs — silent zero-revenue class\n"];
   L.push(
     "The Bags exploit generalized: a revenue-bearing field that, if omitted or zeroed, silently collects nothing — forever. Watch these across every protocol that touches fees, royalties, or rewards.\n",
   );
@@ -145,9 +145,9 @@ export function renderEconomicsMd(patterns: EconomicPattern[] = ECONOMIC_PATTERN
   return L.join("\n");
 }
 
-export function renderEconomicsText(patterns: EconomicPattern[] = ECONOMIC_PATTERNS): string {
+export function renderFeeConfigsText(patterns: FeeConfig[] = FEE_CONFIGS): string {
   const L: string[] = [];
-  L.push("── Token Economics — silent zero-revenue class ───────────────");
+  L.push("── Fee Configs — silent zero-revenue class ───────────────");
   L.push("  fields that default to zero and silently collect nothing");
   L.push("");
   for (const e of patterns) {
@@ -161,7 +161,7 @@ export function renderEconomicsText(patterns: EconomicPattern[] = ECONOMIC_PATTE
   return L.join("\n");
 }
 
-export function renderEconomicDetailText(e: EconomicPattern): string {
+export function renderFeeConfigDetailText(e: FeeConfig): string {
   const L: string[] = [];
   L.push(`── ${e.sdk} — ${e.field} ──`);
   L.push(`  category:    ${CATEGORY_LABEL[e.category]}`);

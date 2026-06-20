@@ -1,4 +1,4 @@
-# Token Economics Validator (v0.7.5) — the generalized Bags exploit.
+# Fee Config Validator (v0.7.5) — the generalized Bags exploit.
 # A revenue-bearing field omitted from a config object silently defaults to
 # zero: the call succeeds, nothing is collected, forever. Here: Metaplex
 # `sellerFeeBasisPoints` — the on-chain royalty creators earn on secondary
@@ -18,7 +18,7 @@ detect:
   nameRegex: "metaplex|mpl|createNft|mint"
   triggerCalls: [create, createV1, createNft, createFungible, createAndMint]
 check:
-  kind: economic-value-zero-or-missing
+  kind: fee-configs-zero-or-missing
   params:
     calls: [create, createV1, createNft, createFungible, createAndMint]
     field: sellerFeeBasisPoints

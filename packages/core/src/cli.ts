@@ -214,8 +214,8 @@ if (args[0] === "oracle") {
   process.exit(0);
 }
 
-if (args[0] === "economics") {
-  await runEconomics(args.slice(1));
+if (args[0] === "fee-configs") {
+  await runFeeConfigs(args.slice(1));
   process.exit(0);
 }
 
@@ -384,47 +384,47 @@ function runDeployPlan(argv: string[]) {
   console.log(`  deploy plan: ${mdPath}`);
 }
 
-async function runEconomics(argv: string[]) {
+async function runFeeConfigs(argv: string[]) {
   const {
-    ECONOMIC_PATTERNS,
-    getEconomicPattern,
-    renderEconomicsText,
-    renderEconomicsMd,
-    renderEconomicDetailText,
-  } = await import("./tokenEconomics.ts");
+    FEE_CONFIGS,
+    getFeeConfig,
+    renderFeeConfigsText,
+    renderFeeConfigsMd,
+    renderFeeConfigDetailText,
+  } = await import("./feeConfigs.ts");
 
   if (argv.includes("--help") || argv.includes("-h")) {
-    console.log("usage: brainblast economics [id] [--json]");
-    console.log("  Token Economics Validator: the silent zero-revenue class (fees, royalties,");
+    console.log("usage: brainblast fee-configs [id] [--json]");
+    console.log("  Fee Config Validator: the silent zero-revenue class (fees, royalties,");
     console.log("  rewards) — fields that default to zero and quietly collect nothing. Pass an");
     console.log("  id to see one in detail. Known ids:");
-    console.log(`    ${ECONOMIC_PATTERNS.map((e: any) => e.id).join(", ")}`);
+    console.log(`    ${FEE_CONFIGS.map((e: any) => e.id).join(", ")}`);
     process.exit(0);
   }
   const json = argv.includes("--json");
   const id = argv.find((a) => !a.startsWith("--"));
 
   if (id) {
-    const e = getEconomicPattern(id);
+    const e = getFeeConfig(id);
     if (!e) {
-      console.error(`error: no economic pattern '${id}'. Known: ${ECONOMIC_PATTERNS.map((x: any) => x.id).join(", ")}`);
+      console.error(`error: no fee-config '${id}'. Known: ${FEE_CONFIGS.map((x: any) => x.id).join(", ")}`);
       process.exit(2);
     }
     if (json) console.log(JSON.stringify(e, null, 2));
-    else console.log(renderEconomicDetailText(e));
+    else console.log(renderFeeConfigDetailText(e));
     return;
   }
 
   if (json) {
-    console.log(JSON.stringify(ECONOMIC_PATTERNS, null, 2));
+    console.log(JSON.stringify(FEE_CONFIGS, null, 2));
     return;
   }
-  console.log(renderEconomicsText());
+  console.log(renderFeeConfigsText());
 
   const outDir = join(process.cwd(), ".agent-research");
   mkdirSync(outDir, { recursive: true });
-  writeFileSync(join(outDir, "token-economics.md"), renderEconomicsMd());
-  console.log(`\n  catalog: ${join(outDir, "token-economics.md")}`);
+  writeFileSync(join(outDir, "fee-configs.md"), renderFeeConfigsMd());
+  console.log(`\n  catalog: ${join(outDir, "fee-configs.md")}`);
 }
 
 async function runOracle(argv: string[]) {

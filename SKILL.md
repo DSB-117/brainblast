@@ -39,9 +39,9 @@ Research every external component in a requirements file before an agent starts 
 > - `brainblast trust-graph <programId…>` now **classifies upgrade authority live** — single-key (System Program owner) vs **multisig** (Squads) vs **dao** (SPL Governance), by reading the authority account's owner — and shows an at-a-glance trust line (authority · verified build · audited).
 > - `brainblast oracle <account>` — *is the oracle fresh?* Provider-agnostic last-write recency (most recent signature slot vs current slot) → `FRESH`/`STALE`/`NO_HISTORY`, exit 1 on stale. `--max-staleness-slots|seconds`, `--json`. `/brainblast-oracle`.
 
-> **v0.7.5 — Token Economics Validator (the generalized Bags exploit):**
-> - New bundled rule `metaplex-seller-fee-zero` + general checker `economic-value-zero-or-missing`: a revenue field (fee/royalty/reward) omitted or set to literal `0` in a config call defaults to zero and silently collects nothing forever. Flagship: Metaplex `sellerFeeBasisPoints` omitted → creators earn no secondary-sale royalties.
-> - `brainblast economics [id]` — curated catalog of the silent zero-revenue class across fees, royalties, and rewards, each mapped to its detecting bundled rule (or marked advisory). `/brainblast-economics`.
+> **v0.7.5 — Fee Config Validator (the generalized Bags exploit):**
+> - New bundled rule `metaplex-seller-fee-zero` + general checker `fee-configs-zero-or-missing`: a revenue field (fee/royalty/reward) omitted or set to literal `0` in a config call defaults to zero and silently collects nothing forever. Flagship: Metaplex `sellerFeeBasisPoints` omitted → creators earn no secondary-sale royalties.
+> - `brainblast fee-configs [id]` — curated catalog of the silent zero-revenue class across fees, royalties, and rewards, each mapped to its detecting bundled rule (or marked advisory). `/brainblast-fee-configs`.
 
 > **v0.7.6 — Protocol Pack Library:**
 > - Opt into research + enforcement for the exact Solana stack you build on: `brainblast --packs jupiter,pyth .` (names resolve to bundled packs). `brainblast packs` lists the 8 bundled protocol packs. `/brainblast-packs`.
