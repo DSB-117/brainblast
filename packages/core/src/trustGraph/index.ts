@@ -2,6 +2,13 @@ export { buildTrustGraph, type BuildOpts } from "./build.ts";
 export { renderTrustGraphMd, renderProgram } from "./render.ts";
 export { loadDirectory } from "./directory.ts";
 export { probeUpgradeAuthority, getAccountInfo, DEFAULT_RPC } from "./rpc.ts";
+export {
+  classifyUpgradeAuthority,
+  enrichAuthorityClassification,
+  KNOWN_AUTHORITY_OWNERS,
+  SYSTEM_PROGRAM,
+  type AuthorityClassification,
+} from "./classifyAuthority.ts";
 export { base58Encode, base58Decode, isValidSolanaAddress } from "./base58.ts";
 export {
   loadProgramCache,

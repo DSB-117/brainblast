@@ -1,5 +1,6 @@
 import { loadDirectory } from "./directory.ts";
 import { probeUpgradeAuthority, type RpcOpts } from "./rpc.ts";
+import { enrichAuthorityClassification } from "./classifyAuthority.ts";
 import {
   loadProgramCache,
   saveProgramCache,
@@ -14,6 +15,11 @@ export interface BuildOpts extends RpcOpts {
   // tests; programs not in the directory AND not in the cache will be
   // marked unresolved with reason="not_in_directory_or_cache_and_rpc_disabled".
   probeRpc?: boolean;
+  // When true (default), a freshly RPC-probed authority that resolved to an
+  // address but couldn't be classified is enriched with one more getAccountInfo
+  // on the authority account — turning "unknown" into single-key / multisig /
+  // dao by reading its owner program (v0.7.4). Set false to skip the extra call.
+  classifyAuthority?: boolean;
   // Override the directory file (tests).
   directoryPath?: string;
   // Path to the program-keyed disk cache.
@@ -99,6 +105,16 @@ export async function buildTrustGraph(programIds: string[], opts: BuildOpts = {}
     let authority: UpgradeAuthority;
     try {
       authority = await probeUpgradeAuthority(id, opts);
+      // Live classification: read the authority account's owner to resolve
+      // single-key vs multisig vs DAO. Best-effort — a failure here must not
+      // sink the whole program, so we keep the (unclassified) authority.
+      if (opts.classifyAuthority !== false) {
+        try {
+          authority = await enrichAuthorityClassification(authority, opts);
+        } catch {
+          /* keep the unclassified authority */
+        }
+      }
     } catch (e: any) {
       unresolved.push({ programId: id, reason: `rpc_error: ${e?.message ?? String(e)}` });
       continue;

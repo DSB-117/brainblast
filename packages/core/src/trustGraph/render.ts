@@ -7,20 +7,48 @@ import type { OnChainProgram, TrustGraph } from "./types.ts";
 
 function renderAuthority(p: OnChainProgram): string {
   const a = p.upgradeAuthority;
+  const owner = a.ownerProgram ? ` _(owner: \`${a.ownerProgram}\`)_` : "";
   switch (a.kind) {
     case "renounced":
       return "🔒 **Renounced** — program is frozen; no key can upgrade it.";
     case "single-key":
-      return `⚠️ **Single key** \`${a.address}\` — one private key can replace this program at any time.`;
+      return `⚠️ **Single key** \`${a.address}\` — one private key can replace this program at any time.${owner}`;
     case "multisig":
-      return `🔐 **Multisig** \`${a.address}\` — a threshold of signers can upgrade.`;
+      return `🔐 **Multisig** \`${a.address}\` — a threshold of signers can upgrade.${owner}`;
     case "dao":
-      return `🏛 **DAO** \`${a.address}\` — governance program controls upgrades.`;
+      return `🏛 **DAO** \`${a.address}\` — governance program controls upgrades.${owner}`;
     case "unknown":
       return a.address
-        ? `❓ **Unclassified authority** \`${a.address}\` — needs research to confirm single-key vs multisig/DAO.`
+        ? `❓ **Unclassified authority** \`${a.address}\`${owner} — needs research to confirm single-key vs multisig/DAO.`
         : "❓ **Unknown** — could not determine upgrade authority.";
   }
+}
+
+// One-line, at-a-glance trust verdict combining the three questions a Solana
+// dev answers by hand on Solscan: who can upgrade it, is the build verified,
+// is it audited.
+function renderTrustSummary(p: OnChainProgram): string {
+  const a = p.upgradeAuthority;
+  const authBit =
+    a.kind === "renounced"
+      ? "🔒 immutable"
+      : a.kind === "multisig"
+        ? "🔐 multisig"
+        : a.kind === "dao"
+          ? "🏛 DAO-governed"
+          : a.kind === "single-key"
+            ? "⚠️ single-key upgradeable"
+            : "❓ authority unclassified";
+  const verifiedBit =
+    p.verifiedBuild.state === "verified"
+      ? "✅ verified build"
+      : p.verifiedBuild.state === "unverified"
+        ? "❌ unverified"
+        : "❓ build unchecked";
+  const auditBit = p.audits.length
+    ? `✅ audited (${p.audits.map((x) => x.firm).join(", ")})`
+    : "❌ no audits on file";
+  return `${authBit} · ${verifiedBit} · ${auditBit}`;
 }
 
 function renderVerified(p: OnChainProgram): string {
@@ -54,6 +82,8 @@ export function renderProgram(p: OnChainProgram): string {
     `### ${p.name}`,
     "",
     `\`${p.programId}\`${p.kind ? ` · kind: \`${p.kind}\`` : ""}`,
+    "",
+    `**Trust:** ${renderTrustSummary(p)}`,
     "",
     `- **Upgrade authority:** ${renderAuthority(p)}`,
     `- **Verified build:** ${renderVerified(p)}`,
