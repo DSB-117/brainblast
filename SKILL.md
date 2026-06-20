@@ -26,7 +26,7 @@ Research every external component in a requirements file before an agent starts 
 > - `brainblast pump-check <mint>` — launch pre-flight: mint/freeze authority revocation + identity + Rico forensics → GO/CAUTION/NO-GO. `/brainblast-pump-check`.
 > - `brainblast batch <file>` — risk-rank a list of contract addresses in parallel. `/brainblast-batch`.
 > - `brainblast rico <CA>` — token identity + quality check (canonical registry + Jupiter + Rico Maps). Use `/brainblast-rico-maps <CA>`.
-> - 13 bundled rules incl. `solana-token-impersonation`; `brainblast diff` / `mcp` / `drift`; GitHub Action `uses: DSB-117/brainblast/action@v0.7.0`; 3 Solana ecosystem packs.
+> - 16 bundled rules incl. `solana-token-impersonation` + 3 Anchor program-security checks; `brainblast diff` / `mcp` / `drift`; GitHub Action `uses: DSB-117/brainblast/action@v0.7.2`; 3 Solana ecosystem packs.
 
 > **v0.7.2 — Deployment Intelligence:**
 > - `brainblast deploy-plan [dir]` — answers "how much SOL do I need to deploy this?" and "what's the exact ordered transaction sequence?" for an Anchor program. Reads the compiled `.so` + `#[derive(Accounts)]` structs and computes BPF upgradeable-loader economics (program + programdata at 2× upgrade headroom + transient buffer), per-PDA `init` rent (treasury, config, …) with seeds/payer, tx fees, and the create-buffer → write → deploy → initialize sequence. `/brainblast-deploy-plan`.
