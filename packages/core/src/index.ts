@@ -166,6 +166,24 @@ export {
   type BatchScanOpts,
 } from "./batchScan.ts";
 
+// ── Live On-Chain Intelligence (v0.7.4) ───────────────────────────────────────
+export {
+  classifyUpgradeAuthority,
+  enrichAuthorityClassification,
+  KNOWN_AUTHORITY_OWNERS,
+  SYSTEM_PROGRAM,
+  type AuthorityClassification,
+} from "./trustGraph/classifyAuthority.ts";
+export {
+  checkOracleFreshness,
+  renderOracleText,
+  renderOracleMd,
+  DEFAULT_STALENESS_SLOTS,
+  type OracleFreshness,
+  type OracleOpts,
+  type OracleVerdict,
+} from "./oracle.ts";
+
 // ── Exploit Pattern Database (v0.7.3) ─────────────────────────────────────────
 export {
   EXPLOIT_PATTERNS,

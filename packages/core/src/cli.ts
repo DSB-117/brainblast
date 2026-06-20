@@ -190,6 +190,11 @@ if (args[0] === "exploits") {
   process.exit(0);
 }
 
+if (args[0] === "oracle") {
+  await runOracle(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -353,6 +358,53 @@ function runDeployPlan(argv: string[]) {
   const mdPath = join(outDir, "deploy-plan.md");
   writeFileSync(mdPath, renderDeployPlanMd(plan));
   console.log(`  deploy plan: ${mdPath}`);
+}
+
+async function runOracle(argv: string[]) {
+  if (argv.includes("--help") || argv.includes("-h") || argv.filter((a) => !a.startsWith("--")).length === 0) {
+    console.log("usage: brainblast oracle <account> [--rpc URL] [--max-staleness-slots N | --max-staleness-seconds N] [--json]");
+    console.log("  Is the oracle fresh? Reports how many slots/seconds ago the price account was");
+    console.log("  last written (provider-agnostic) and gates FRESH/STALE. Exit 1 on STALE or");
+    console.log("  NO_HISTORY. Pass your own --rpc for reliable results (public RPC is rate-limited).");
+    process.exit(argv.length === 0 ? 2 : 0);
+  }
+  const { checkOracleFreshness, renderOracleText, renderOracleMd } = await import("./oracle.ts");
+  const num = (name: string): number | undefined => {
+    const i = argv.indexOf(`--${name}`);
+    if (i < 0) return undefined;
+    const v = parseInt(argv[i + 1], 10);
+    return Number.isFinite(v) ? v : undefined;
+  };
+  const rpcIdx = argv.indexOf("--rpc");
+  const rpcUrl = rpcIdx >= 0 ? argv[rpcIdx + 1] : undefined;
+  const account = argv.find(
+    (a, i) => !a.startsWith("--") && argv[i - 1] !== "--rpc" && argv[i - 1] !== "--max-staleness-slots" && argv[i - 1] !== "--max-staleness-seconds",
+  );
+  if (!account) {
+    console.error("error: missing <account>. usage: brainblast oracle <account> [--rpc URL] [--json]");
+    process.exit(2);
+  }
+
+  let f;
+  try {
+    f = await checkOracleFreshness(account, {
+      rpcUrl,
+      maxStalenessSlots: num("max-staleness-slots"),
+      maxStalenessSeconds: num("max-staleness-seconds"),
+    });
+  } catch (e: any) {
+    console.error(`error: ${e?.message ?? String(e)}`);
+    process.exit(2);
+  }
+
+  if (argv.includes("--json")) console.log(JSON.stringify(f, null, 2));
+  else console.log(renderOracleText(f));
+
+  const outDir = join(process.cwd(), ".agent-research");
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(join(outDir, "oracle-freshness.md"), renderOracleMd(f));
+
+  process.exit(f.fresh ? 0 : 1);
 }
 
 function runExploits(argv: string[]) {

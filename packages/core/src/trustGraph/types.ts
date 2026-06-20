@@ -27,6 +27,12 @@ export interface UpgradeAuthority {
   // can change after we read it. The renderer should warn on entries older
   // than some threshold (e.g. 24h for RPC, never for renounced/directory).
   checkedAt?: string;
+  // The program that OWNS the authority account — what lets us classify
+  // single-key vs multisig vs DAO live (v0.7.4). System Program → single-key;
+  // a known multisig program (Squads) → multisig; a governance program (SPL
+  // Governance / Realms) → dao. Present only when the authority was classified
+  // by reading its owner account; absent for directory/research entries.
+  ownerProgram?: string;
 }
 
 export type VerifiedBuildState =

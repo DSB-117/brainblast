@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+## v0.7.4 — 2026-06-20
+
+**Live On-Chain Intelligence** — answers, from live RPC, the questions Solana devs
+otherwise work out by hand on Solscan: *is the upgrade authority a multisig?* and
+*is the oracle fresh?*
+
+- **Live upgrade-authority classification** (extends `brainblast trust-graph`). The
+  RPC probe already resolved the authority *address* but could only mark it
+  `unknown`. It now reads the authority account's **owner program** to classify it:
+  - System Program owner → **single-key** (a plain wallet — one key can replace the program)
+  - Squads program owner → **multisig**
+  - SPL Governance (Realms) owner → **dao**
+  - anything else → `unknown`, with the owner program recorded (never a false single-key)
+  The trust-graph renderer now shows the classifying owner and an at-a-glance
+  **Trust** line per program: `authority · verified build · audited`. Known owners
+  live in an extensible registry (`KNOWN_AUTHORITY_OWNERS`); set
+  `classifyAuthority: false` to skip the extra lookup.
+- **`brainblast oracle <account>`** — *is the oracle fresh?* A provider-agnostic
+  freshness gate: rather than parse each oracle's (version-specific) binary layout,
+  it measures the universal signal — the slot of the most recent transaction
+  touching the account vs. the current slot. Reports `FRESH` / `STALE` /
+  `NO_HISTORY` with slots/seconds behind; `--max-staleness-slots` /
+  `--max-staleness-seconds` set the threshold (default 150 slots ≈ 60s).
+  **Exit 1 on STALE or NO_HISTORY** for a pre-trade CI gate. `--json` for agents;
+  markdown report at `.agent-research/oracle-freshness.md`.
+- New `/brainblast-oracle` slash command; programmatic exports
+  (`classifyUpgradeAuthority`, `checkOracleFreshness`, …) for AI-agent frameworks.
+  20 new tests (407 total green).
+
 ## v0.7.3 — 2026-06-20
 
 **Exploit Pattern Database** — research-to-enforcement on real on-chain incidents. A curated
