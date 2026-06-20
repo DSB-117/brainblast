@@ -2,15 +2,54 @@
 
 ## Unreleased
 
+## v0.7.6 — 2026-06-20
+
+**Protocol Pack Library** — the distribution play. Every Solana app is built on
+some combination of Jupiter, Raydium, Pyth, Meteora, Jito, … — each with its own
+silent footguns. A pack per protocol means you opt into research-and-enforcement
+for the exact stack you build on, before a line is written:
+
+```
+brainblast --packs jupiter,pyth .
+```
+
+- **Three new protocol packs** (each opt-in, pure-data, with `vulnerable/`+`fixed/`
+  fixtures proven RED → GREEN):
+  - **`pyth-price-unchecked-staleness`** — `getPriceUnchecked()` (ignores
+    staleness) instead of `getPriceNoOlderThan(maxAge)`; can return an arbitrarily
+    old price. Pairs with the live `brainblast oracle` check.
+  - **`meteora-dlmm-zero-min-out`** — Meteora DLMM `swap({ minOutAmount: new BN(0) })`
+    removes the minimum-output floor (sandwich exposure).
+  - **`jito-bundle-zero-tip`** — a Jito bundle sent with a `0` tip is deprioritized
+    and never lands, while the send call still returns a bundle id.
+  Joins the existing Jupiter, Raydium, Metaplex, Solana-sendtx, and SPL packs —
+  **8 bundled protocol packs**.
+- **`brainblast --packs <name>`** now resolves a **protocol name** ("jupiter",
+  "pyth") to its bundled pack, not just a filesystem path. **`brainblast packs`**
+  lists the library. Packs ship inside the npm package (`dist/packs`), so
+  `npx brainblast --packs jupiter,pyth` works with no checkout.
+- **`object-arg-property-forbidden-literal` is now `BN(0)`-aware** — it flags the
+  idiomatic Solana `new BN(0)` / `BN("0")` / `anchor.BN(0)`, not just bare `0`, so
+  amount/slippage/tip rules catch real code.
+- A CI guard test validates **every** bundled pack RED → GREEN. New
+  `/brainblast-packs` slash command; `listBundledPacks` / `resolveBundledPackToken`
+  exports. 12 new tests (439 total green).
+- **Rename (corrects v0.7.5 naming):** the `brainblast economics` command is now
+  **`brainblast fee-configs`**, the checker kind `economic-value-zero-or-missing` is
+  now **`fee-configs-zero-or-missing`**, and the feature is the **Fee Config
+  Validator**. Programmatic exports renamed accordingly (`FEE_CONFIGS`,
+  `getFeeConfig`, `renderFeeConfigs*`); the `metaplex-seller-fee-zero` rule id is
+  unchanged.
+
 ## v0.7.5 — 2026-06-20
 
-**Token Economics Validator** — the Bags exploit, generalized. The Bags trap (a
+**Fee Config Validator** — the Bags exploit, generalized. The Bags trap (a
 creator wallet silently omitted from a fee split, earning $0 forever) was one
 instance of a whole class: **a revenue-bearing field that, if omitted or zeroed,
 silently defaults to no value** — the call succeeds, nothing reverts, and a fee /
 royalty / reward is never collected, permanently.
 
-- **New checker `economic-value-zero-or-missing`** — validates a revenue field on
+- **New checker `fee-configs-zero-or-missing`** — validates a revenue field on
   a config/setup call: FAIL when the field is omitted (defaults to zero) or a
   literal `0`; PASS when present as a non-zero literal or a non-literal expression
   (intentionally set); CANT_TELL when no matching call. Robust to `as any` casts
@@ -19,13 +58,13 @@ royalty / reward is never collected, permanently.
   with `sellerFeeBasisPoints` omitted or zero earns creators **no royalties on
   secondary sales**, permanently, with no migration path once minted. Vulnerable/
   fixed fixtures (RED→GREEN). Brings the bundled rule set to **18**.
-- **`brainblast economics [id]`** — a curated catalog of the silent zero-revenue
+- **`brainblast fee-configs [id]`** — a curated catalog of the silent zero-revenue
   class across **fees, royalties, and rewards** (Metaplex `sellerFeeBasisPoints`,
   Bags `userBps`, Token-2022 `transferFeeBasisPoints`, generic reward rates). Each
   entry maps to its detecting bundled rule or is marked `advisory`; an integrity
   test guarantees every referenced rule exists. `--json` for agents.
-- New `/brainblast-economics` slash command; programmatic exports
-  (`ECONOMIC_PATTERNS`, `getEconomicPattern`, …). 20 new tests (427 total green).
+- New `/brainblast-fee-configs` slash command; programmatic exports
+  (`FEE_CONFIGS`, `getFeeConfig`, …). 20 new tests (427 total green).
 
 ## v0.7.4 — 2026-06-20
 

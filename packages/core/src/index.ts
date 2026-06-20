@@ -184,19 +184,26 @@ export {
   type OracleVerdict,
 } from "./oracle.ts";
 
-// ── Token Economics Validator (v0.7.5) ────────────────────────────────────────
+// ── Protocol Pack Library (v0.7.6) ────────────────────────────────────────────
 export {
-  ECONOMIC_PATTERNS,
-  getEconomicPattern,
-  economicPatternsByCategory,
+  listBundledPacks,
+  resolveBundledPackToken,
+  type BundledPack,
+} from "./bundledPacks.ts";
+
+// ── Fee Config Validator (v0.7.5) ────────────────────────────────────────
+export {
+  FEE_CONFIGS,
+  getFeeConfig,
+  feeConfigsByCategory,
   enforcedCount,
-  renderEconomicsMd,
-  renderEconomicsText,
-  renderEconomicDetailText,
-  type EconomicPattern,
-  type EconomicCategory,
-  type EconomicStatus,
-} from "./tokenEconomics.ts";
+  renderFeeConfigsMd,
+  renderFeeConfigsText,
+  renderFeeConfigDetailText,
+  type FeeConfig,
+  type FeeConfigCategory,
+  type FeeConfigStatus,
+} from "./feeConfigs.ts";
 
 // ── Exploit Pattern Database (v0.7.3) ─────────────────────────────────────────
 export {

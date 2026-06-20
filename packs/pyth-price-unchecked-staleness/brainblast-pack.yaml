@@ -1,0 +1,5 @@
+id: pyth-price-unchecked-staleness
+name: Pyth unchecked price staleness
+version: 0.1.0
+author: DSB-117
+description: "Flags Pyth price reads via getPriceUnchecked() (ignores staleness) instead of getPriceNoOlderThan(maxAge), which can return an arbitrarily old price."

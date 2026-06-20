@@ -1,0 +1,47 @@
+# Pure-data rule. Binds to the vetted `forbidden-call-replacement` checker.
+#
+# Pyth's own docs are explicit: NEVER use getPriceUnchecked() in production —
+# it returns the last price regardless of how old it is. A feed can stop
+# updating (publisher outage, network congestion) and getPriceUnchecked() will
+# happily hand you a stale price, which a protocol then prices liquidations /
+# swaps against. Use getPriceNoOlderThan(maxAge), which returns undefined when
+# the price is older than maxAge so the caller can refuse to trade.
+id: pyth-price-unchecked-staleness
+severity: high
+title: Pyth price read with getPriceUnchecked() instead of getPriceNoOlderThan()
+component:
+  name: Pyth Network price feeds
+  type: Blockchain
+  version: unversioned
+  sourceUrl: https://docs.pyth.network/price-feeds/best-practices#price-availability
+detect:
+  modules:
+    - "@pythnetwork/price-service-client"
+    - "@pythnetwork/pyth-solana-receiver"
+    - "@pythnetwork/hermes-client"
+  nameRegex: price|oracle|quote|value|fetch|get
+  triggerCalls:
+    - getPriceUnchecked
+    - getPriceNoOlderThan
+check:
+  kind: forbidden-call-replacement
+  params:
+    forbiddenCalls:
+      - getPriceUnchecked
+    saferCalls:
+      - getPriceNoOlderThan
+    passDetail: >-
+      Handler reads the Pyth price via getPriceNoOlderThan(maxAge), which
+      returns no price when the feed is older than maxAge — the caller can
+      refuse to trade on a stale oracle.
+    failDetail: >-
+      Handler calls getPriceUnchecked(), which returns the most recent Pyth
+      price REGARDLESS of how old it is. If the feed stops updating (publisher
+      outage, congestion), the protocol prices swaps/liquidations against a
+      stale value with no guard. Use getPriceNoOlderThan(maxAge) (e.g. 60s) and
+      handle the undefined/stale case explicitly.
+    absentDetail: >-
+      Handler is in Pyth scope but calls neither getPriceUnchecked nor
+      getPriceNoOlderThan; the staleness rule does not apply here.
+test:
+  kind: none

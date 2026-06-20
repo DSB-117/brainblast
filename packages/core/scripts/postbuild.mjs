@@ -6,7 +6,7 @@
 // at import.meta.url. In dist/ that's dist/../../programs/, so we mirror the
 // repo layout one level up; instead we keep it simple and copy alongside the
 // dist bundle, then the bundled loader looks at dist/../programs first.
-import { mkdirSync, readdirSync, copyFileSync } from "node:fs";
+import { mkdirSync, readdirSync, copyFileSync, cpSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 mkdirSync("dist/rules", { recursive: true });
@@ -28,3 +28,14 @@ for (const f of readdirSync("programs")) {
   }
 }
 console.log(`postbuild: copied ${p} program directory file(s) -> dist/programs`);
+
+// Protocol Pack Library (v0.7.6): ship the bundled packs so `npx brainblast
+// --packs jupiter,pyth` resolves them from the installed package. The packs live
+// at the repo root (../../packs relative to packages/core); copy the tree into
+// dist/packs, which bundledPacks.ts resolves at import.meta.url.
+const packsSrc = join("..", "..", "packs");
+if (existsSync(packsSrc)) {
+  cpSync(packsSrc, "dist/packs", { recursive: true });
+  const packCount = readdirSync("dist/packs").length;
+  console.log(`postbuild: copied ${packCount} bundled pack(s) -> dist/packs`);
+}

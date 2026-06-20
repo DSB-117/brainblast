@@ -1,0 +1,5 @@
+id: meteora-dlmm-zero-min-out
+name: Meteora DLMM zero minimum-out
+version: 0.1.0
+author: DSB-117
+description: "Flags Meteora DLMM swap() calls with minOutAmount of 0 (including new BN(0)) — no minimum-output floor, so a sandwich attack executes the swap at any price."

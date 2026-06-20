@@ -1,5 +1,25 @@
 import { SyntaxKind } from "ts-morph";
+import type { Expression } from "ts-morph";
 import type { Checker } from "../types.ts";
+
+// Solana amounts are almost always BN-wrapped: `minOutAmount: new BN(0)`,
+// `tipLamports: new anchor.BN(0)`, `slippage: BN("0")`. Treat such a zero-wrapped
+// literal as the underlying zero so amount/slippage rules catch idiomatic code,
+// not just bare `0`. Only meaningful when the forbidden value is 0.
+function isBnWrappedZero(init: Expression): boolean {
+  const isNewOrCall = init.getKind() === SyntaxKind.NewExpression || init.getKind() === SyntaxKind.CallExpression;
+  if (!isNewOrCall) return false;
+  const calleeText = (init as any).getExpression?.()?.getText?.() ?? "";
+  // `BN`, `bn`, `anchor.BN`, `web3.BN`, `new BN`, etc.
+  if (!/(^|\.)bn$/i.test(calleeText)) return false;
+  const args = (init as any).getArguments?.() ?? [];
+  if (args.length !== 1) return false;
+  const a = args[0];
+  const k = a.getKind();
+  if (k === SyntaxKind.NumericLiteral) return Number(a.getLiteralValue()) === 0;
+  if (k === SyntaxKind.StringLiteral) return a.getLiteralValue() === "0";
+  return false;
+}
 
 // Checker: object-arg-property-forbidden-literal
 //
@@ -71,9 +91,12 @@ export const objectArgPropertyForbiddenLiteral: Checker = (c, p) => {
   const text = init.getText();
   const forbidden = JSON.stringify(p.forbiddenValue);
 
-  const isForbidden =
+  const isLiteralForbidden =
     (kind === SyntaxKind.NumericLiteral || kind === SyntaxKind.StringLiteral) &&
     (text === forbidden || text === String(p.forbiddenValue));
+
+  // `new BN(0)` / `BN("0")` count as the forbidden zero (idiomatic Solana amounts).
+  const isForbidden = isLiteralForbidden || (p.forbiddenValue === 0 && isBnWrappedZero(init));
 
   if (isForbidden) {
     return {
