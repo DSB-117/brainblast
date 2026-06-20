@@ -166,6 +166,18 @@ export {
   type BatchScanOpts,
 } from "./batchScan.ts";
 
+// ── Exploit Pattern Database (v0.7.3) ─────────────────────────────────────────
+export {
+  EXPLOIT_PATTERNS,
+  getExploitPattern,
+  totalLossUsd,
+  formatUsd,
+  renderExploitsMd,
+  renderExploitsText,
+  renderExploitDetailText,
+  type ExploitPattern,
+} from "./exploitPatterns.ts";
+
 // ── Core types ────────────────────────────────────────────────────────────────
 export type {
   Rule,

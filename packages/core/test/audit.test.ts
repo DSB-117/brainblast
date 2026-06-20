@@ -34,6 +34,8 @@ const cases: [string, string, CheckResultKind][] = [
   ["anchor-unchecked-account-type/fixed", "anchor-unchecked-account-type", "pass"],
   ["anchor-pda-find-program-address/vulnerable", "anchor-pda-find-program-address", "fail"],
   ["anchor-pda-find-program-address/fixed", "anchor-pda-find-program-address", "pass"],
+  ["cpi-target-program-unverified/vulnerable", "cpi-target-program-unverified", "fail"],
+  ["cpi-target-program-unverified/fixed", "cpi-target-program-unverified", "pass"],
 ];
 
 describe("audit (unified, all rules)", () => {

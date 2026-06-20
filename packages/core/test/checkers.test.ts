@@ -12,6 +12,7 @@ import { literalMultiplierWrongConstant } from "../src/checkers/literalMultiplie
 import { anchorAccountMissingConstraint } from "../src/checkers/anchorAccountMissingConstraint.ts";
 import { anchorForbiddenAccountType } from "../src/checkers/anchorForbiddenAccountType.ts";
 import { anchorBodyCallPattern } from "../src/checkers/anchorBodyCallPattern.ts";
+import { anchorCpiUnverifiedProgram } from "../src/checkers/anchorCpiUnverifiedProgram.ts";
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -1016,5 +1017,65 @@ describe("anchorBodyCallPattern (find_program_address in handler body)", () => {
   it("CANT_TELL when forbiddenPattern param is missing", () => {
     const c = rustCandidate("x", [], "{ Ok(()) }");
     expect(anchorBodyCallPattern(c, {}).result).toBe("cant_tell");
+  });
+});
+
+describe("anchorCpiUnverifiedProgram (Wormhole pattern)", () => {
+  const CPI_BODY = "{ let ix = build(); invoke(&ix, &[ctx.accounts.token_program.clone()])?; Ok(()) }";
+
+  it("FAIL: CPI with a raw AccountInfo program account and no verification", () => {
+    const c = rustCandidate(
+      "forward",
+      [{ name: "token_program", typeName: "AccountInfo<'info>", attrText: "/// CHECK: x", hasInitIfNeeded: false }],
+      CPI_BODY,
+    );
+    const r = anchorCpiUnverifiedProgram(c, {});
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("Wormhole");
+  });
+
+  it("PASS: program account typed Program<'info, T> (Anchor verifies the id)", () => {
+    const c = rustCandidate(
+      "forward",
+      [{ name: "token_program", typeName: "Program<'info, Token>", attrText: "", hasInitIfNeeded: false }],
+      CPI_BODY,
+    );
+    expect(anchorCpiUnverifiedProgram(c, {}).result).toBe("pass");
+  });
+
+  it("PASS: raw AccountInfo but address= constraint present", () => {
+    const c = rustCandidate(
+      "forward",
+      [{ name: "token_program", typeName: "AccountInfo<'info>", attrText: "#[account(address = spl_token::ID)]", hasInitIfNeeded: false }],
+      CPI_BODY,
+    );
+    expect(anchorCpiUnverifiedProgram(c, {}).result).toBe("pass");
+  });
+
+  it("PASS: raw AccountInfo but in-body key() check present", () => {
+    const c = rustCandidate(
+      "forward",
+      [{ name: "token_program", typeName: "AccountInfo<'info>", attrText: "", hasInitIfNeeded: false }],
+      "{ require_keys_eq!(ctx.accounts.token_program.key(), spl_token::ID); invoke(&ix, &acc)?; Ok(()) }",
+    );
+    expect(anchorCpiUnverifiedProgram(c, {}).result).toBe("pass");
+  });
+
+  it("CANT_TELL: handler performs no CPI", () => {
+    const c = rustCandidate(
+      "set",
+      [{ name: "token_program", typeName: "AccountInfo<'info>", attrText: "", hasInitIfNeeded: false }],
+      "{ ctx.accounts.state.x = 1; Ok(()) }",
+    );
+    expect(anchorCpiUnverifiedProgram(c, {}).result).toBe("cant_tell");
+  });
+
+  it("CANT_TELL: CPI present but no program-named account to verify", () => {
+    const c = rustCandidate(
+      "forward",
+      [{ name: "vault", typeName: "Account<'info, Vault>", attrText: "#[account(mut)]", hasInitIfNeeded: false }],
+      CPI_BODY,
+    );
+    expect(anchorCpiUnverifiedProgram(c, {}).result).toBe("cant_tell");
   });
 });

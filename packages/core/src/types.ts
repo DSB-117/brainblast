@@ -142,6 +142,21 @@ export interface Rule {
   check: { kind: string; params: Record<string, any> };
   test: { kind: string; params?: Record<string, any> };
   /**
+   * Exploit Pattern Database provenance (v0.7.3): links this rule to the real
+   * on-chain incident whose root cause it detects. Optional; present on rules
+   * derived from a public post-mortem. The authoritative, user-facing catalog
+   * lives in src/exploitPatterns.ts — this inline block is rule-local
+   * provenance and is cross-checked against the catalog in tests.
+   */
+  exploit?: {
+    incident: string;
+    date: string;
+    lossUsd?: number;
+    chain?: string;
+    postmortemUrl: string;
+    pattern?: string;
+  };
+  /**
    * Provenance for rules loaded from a third-party rule pack (see
    * src/packs.ts). Absent for bundled rules. Stamped by the pack loader from
    * the pack's brainblast-pack.yaml manifest, not set by the rule author.

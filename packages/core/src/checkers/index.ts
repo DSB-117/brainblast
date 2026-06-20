@@ -14,6 +14,7 @@ import { anchorIdlAccount } from "./anchorIdlAccount.ts";
 import { anchorAccountMissingConstraint } from "./anchorAccountMissingConstraint.ts";
 import { anchorForbiddenAccountType } from "./anchorForbiddenAccountType.ts";
 import { anchorBodyCallPattern } from "./anchorBodyCallPattern.ts";
+import { anchorCpiUnverifiedProgram } from "./anchorCpiUnverifiedProgram.ts";
 import type { Candidate, RustCandidate, ConfigCandidate, CheckOutcome, Checker, RustChecker, ConfigChecker } from "../types.ts";
 
 // Registry of human-vetted checker templates. Rules bind to these by `kind`.
@@ -36,6 +37,7 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker> = {
   "anchor-account-missing-constraint": anchorAccountMissingConstraint as RustChecker,
   "anchor-forbidden-account-type": anchorForbiddenAccountType as RustChecker,
   "anchor-body-call-pattern": anchorBodyCallPattern as RustChecker,
+  "anchor-cpi-unverified-program": anchorCpiUnverifiedProgram as RustChecker,
 };
 
 export function runChecker(kind: string, c: Candidate | RustCandidate | ConfigCandidate, params: any): CheckOutcome {
