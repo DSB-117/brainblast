@@ -184,6 +184,20 @@ export {
   type OracleVerdict,
 } from "./oracle.ts";
 
+// ── Token Economics Validator (v0.7.5) ────────────────────────────────────────
+export {
+  ECONOMIC_PATTERNS,
+  getEconomicPattern,
+  economicPatternsByCategory,
+  enforcedCount,
+  renderEconomicsMd,
+  renderEconomicsText,
+  renderEconomicDetailText,
+  type EconomicPattern,
+  type EconomicCategory,
+  type EconomicStatus,
+} from "./tokenEconomics.ts";
+
 // ── Exploit Pattern Database (v0.7.3) ─────────────────────────────────────────
 export {
   EXPLOIT_PATTERNS,

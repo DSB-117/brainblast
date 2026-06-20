@@ -195,6 +195,11 @@ if (args[0] === "oracle") {
   process.exit(0);
 }
 
+if (args[0] === "economics") {
+  await runEconomics(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -358,6 +363,49 @@ function runDeployPlan(argv: string[]) {
   const mdPath = join(outDir, "deploy-plan.md");
   writeFileSync(mdPath, renderDeployPlanMd(plan));
   console.log(`  deploy plan: ${mdPath}`);
+}
+
+async function runEconomics(argv: string[]) {
+  const {
+    ECONOMIC_PATTERNS,
+    getEconomicPattern,
+    renderEconomicsText,
+    renderEconomicsMd,
+    renderEconomicDetailText,
+  } = await import("./tokenEconomics.ts");
+
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.log("usage: brainblast economics [id] [--json]");
+    console.log("  Token Economics Validator: the silent zero-revenue class (fees, royalties,");
+    console.log("  rewards) — fields that default to zero and quietly collect nothing. Pass an");
+    console.log("  id to see one in detail. Known ids:");
+    console.log(`    ${ECONOMIC_PATTERNS.map((e: any) => e.id).join(", ")}`);
+    process.exit(0);
+  }
+  const json = argv.includes("--json");
+  const id = argv.find((a) => !a.startsWith("--"));
+
+  if (id) {
+    const e = getEconomicPattern(id);
+    if (!e) {
+      console.error(`error: no economic pattern '${id}'. Known: ${ECONOMIC_PATTERNS.map((x: any) => x.id).join(", ")}`);
+      process.exit(2);
+    }
+    if (json) console.log(JSON.stringify(e, null, 2));
+    else console.log(renderEconomicDetailText(e));
+    return;
+  }
+
+  if (json) {
+    console.log(JSON.stringify(ECONOMIC_PATTERNS, null, 2));
+    return;
+  }
+  console.log(renderEconomicsText());
+
+  const outDir = join(process.cwd(), ".agent-research");
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(join(outDir, "token-economics.md"), renderEconomicsMd());
+  console.log(`\n  catalog: ${join(outDir, "token-economics.md")}`);
 }
 
 async function runOracle(argv: string[]) {
