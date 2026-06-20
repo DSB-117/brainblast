@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+## v0.7.1 — 2026-06-20
+
+**Pillar 2: Anchor/Rust Security Checkers** — three new static checker kinds for
+Solana programs written with the Anchor framework, plus 6 fixtures and full test coverage.
+
+- **`anchor-signer-constraint-missing`** (CRITICAL) — detects authority-named account fields
+  (`authority`, `admin`, `owner`, `payer`, etc.) typed as `AccountInfo<'info>` without a
+  `signer` constraint or `Signer<'info>` type. Anchor performs no signing check on
+  `AccountInfo` — any key can be passed as the authority and privileged instructions will
+  execute without signature validation. Fix: use `Signer<'info>` or add `#[account(signer)]`.
+  Checker: `anchor-account-missing-constraint`.
+
+- **`anchor-unchecked-account-type`** (HIGH) — detects `UncheckedAccount<'info>` fields in
+  Anchor instruction handlers. Anchor requires a `/// CHECK:` safety comment on these fields
+  but performs zero runtime validation — ownership, signer status, and data layout are
+  entirely unchecked. AI coding agents routinely use `UncheckedAccount` as a placeholder,
+  add a boilerplate CHECK comment, and ship without actual validation logic.
+  Fix: replace with `Account<'info, T>`, `Signer<'info>`, or `SystemAccount<'info>`.
+  Checker: `anchor-forbidden-account-type`.
+
+- **`anchor-pda-find-program-address`** (HIGH) — detects `Pubkey::find_program_address`
+  calls inside instruction handler bodies. (1) Expensive: iterates bump seeds 255→0, up to
+  255 SHA256 hashes per call. (2) Unsafe: if the canonical bump was stored at init time,
+  re-deriving it may silently use a different nonce. Fix: use `#[account(seeds=[...],
+  bump=state.bump)]` on the Accounts struct — Anchor re-derives and verifies at zero cost.
+  Checker: `anchor-body-call-pattern`.
+
+- Updated logo: `assets/brainblast.png` replaces `assets/brainblast.jpg`.
+- 348/348 tests green.
+
 ## v0.7.0 — 2026-06-17
 
 The Solana power release: six features that extend brainblast from "audit before

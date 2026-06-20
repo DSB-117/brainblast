@@ -1,0 +1,28 @@
+id: anchor-pda-find-program-address
+severity: high
+title: Anchor handler calls find_program_address at runtime instead of using seeds+bump constraint
+component:
+  name: Anchor Framework
+  type: Blockchain
+  version: ">=0.26.0"
+  sourceUrl: https://www.anchor-lang.com/docs/the-accounts-struct#seeds-and-bump
+detect:
+  lang: rust
+  modules:
+    - "@coral-xyz/anchor"
+    - "@project-serum/anchor"
+  nameRegex: ".*"
+  triggerCalls: []
+check:
+  kind: anchor-body-call-pattern
+  params:
+    forbiddenPattern: "Pubkey::find_program_address|find_program_address\\s*\\("
+test:
+  kind: anchor-program-test
+  params:
+    scenario: pda-canonical-bump-mismatch
+    description: >-
+      Initializes the PDA storing the canonical bump, then calls the handler with
+      a non-canonical bump seed. With find_program_address the handler may accept
+      this (re-deriving a different nonce), whereas the seeds+bump constraint
+      enforces the stored canonical bump and will reject it.

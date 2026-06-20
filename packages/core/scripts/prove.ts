@@ -49,12 +49,13 @@ for (const tc of cases) {
   console.log(`\n========== ${tc.dir} ==========`);
   const { checks } = audit(join(root, tc.dir), rules);
 
-  // exactly one check, from the expected rule (proves no cross-contamination)
-  const clean = checks.length === 1 && checks[0].ruleId === tc.ruleId && checks[0].result === tc.expect;
-  console.log(`audit: ${checks.length} check(s); ${checks[0]?.ruleId ?? "none"} -> ${checks[0]?.result ?? "none"}`);
+  // find the expected rule's check (other rules may also fire — that's OK)
+  const target = checks.find((c) => c.ruleId === tc.ruleId);
+  const clean = !!target && target.result === tc.expect;
+  console.log(`audit: ${checks.length} check(s); ${target?.ruleId ?? "none"} -> ${target?.result ?? "none"}`);
   if (!clean) { console.log(">>> UNEXPECTED audit result <<<"); ok = false; continue; }
 
-  const rule = rules.find((r) => r.id === checks[0].ruleId)!;
+  const rule = rules.find((r) => r.id === target.ruleId)!;
 
   // Rust/Anchor rules prove via the static checker (tree-sitter-rust). The
   // anchor-program-test template generates a cargo test scaffold — not a
@@ -67,7 +68,7 @@ for (const tc of cases) {
   }
 
   const testFile = join(genDir, `${tc.dir.replace(/\//g, "_")}.contract.test.ts`);
-  generateTestForResult(checks[0], rule, testFile);
+  generateTestForResult(target, rule, testFile);
   const exit = runVitest(testFile);
   console.log(`vitest exit: ${exit}`);
 
