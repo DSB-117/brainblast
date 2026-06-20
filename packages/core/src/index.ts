@@ -184,6 +184,13 @@ export {
   type OracleVerdict,
 } from "./oracle.ts";
 
+// ── Protocol Pack Library (v0.7.6) ────────────────────────────────────────────
+export {
+  listBundledPacks,
+  resolveBundledPackToken,
+  type BundledPack,
+} from "./bundledPacks.ts";
+
 // ── Token Economics Validator (v0.7.5) ────────────────────────────────────────
 export {
   ECONOMIC_PATTERNS,

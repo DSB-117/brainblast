@@ -58,7 +58,7 @@ Everything Brainblast does today, at a glance.
 - **Gates CI.** A `--ci` mode runs non-interactively (no prompts, documented defaults), and a dependency-free gate script turns `report.json` into an exit code — fail the build if any CRITICAL risk remains (`--fail-on=critical|high|…`) or the verdict is `blocked`.
 
 **Deterministic auditor — `npx brainblast`**
-- Published to npm as [`brainblast@0.7.5`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
+- Published to npm as [`brainblast@0.7.6`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
 - A Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code *offline* (no network, no LLM) for **eighteen built-in integration traps**: Stripe webhook raw-body signature verification, Privy/JWT signature + `aud` + `iss` verification, Bags/Solana fee-share creator-inclusion, Token-2022 program-ID pinning, Metaplex metadata immutability, Anchor `init_if_needed` guards, committed `.env*` secrets, **graph-based, project-wide cross-file taint tracking** for secret leaks (`env-secret-leaked-to-sink`), command injection (`request-input-command-injection`), SQL injection via Prisma raw queries (`prisma-raw-injection`), open-redirect via tainted `res.redirect()` calls (`open-redirect`), JWT algorithm confusion (`jsonwebtoken-algorithm-pinned`), **Solana mint impersonation** (`solana-token-impersonation`), four **Anchor program-security checks** — missing `Signer` constraint on authority accounts (`anchor-signer-constraint-missing`), `UncheckedAccount` usage (`anchor-unchecked-account-type`), `find_program_address` in handler bodies (`anchor-pda-find-program-address`), and **unverified CPI target program** (`cpi-target-program-unverified`, the Wormhole pattern), and **silent zero-revenue token economics** (`metaplex-seller-fee-zero` — royalties omitted/zeroed).
 - **`brainblast rico <CA>`** — token identity + quality check: verifies a contract address against the canonical mint registry (offline) and Jupiter (live), detects impersonators, and runs a Rico Maps forensic scan (risk score, snipers, cabal, bundle clusters, deployer flags).
 - Emits CI-readable `checks[]` and `checkTotals` into `report.json`, and can generate behavioral contract tests that fail on the vulnerable fixtures and pass on the fixed ones — the durable guardrail that keeps a fixed trap fixed.
@@ -77,6 +77,7 @@ Everything Brainblast does today, at a glance.
 - **`--since <ref>` diff-aware scanning** audits only what changed in `git diff <ref>` — fast enough for every commit or PR. **`brainblast watch`** re-scans on every save and streams NDJSON findings for an agent daemon to tail.
 - **`brainblast fix [--apply] [--branch]`** lists (and, with `--apply`, applies) mechanical fixes for confirmed FAILs, re-audits to confirm RED → GREEN, and can commit the result to a new branch.
 - **`brainblast trust-graph`** resolves on-chain upgrade-authority and verified-build status for Solana programs, with a local TTL cache. _(v0.7.4)_ It now **classifies the upgrade authority live** — single-key vs **multisig** (Squads) vs **DAO** (SPL Governance), by reading the authority account's owner program — and prints an at-a-glance trust line per program (authority · verified build · audited). Every run also emits a cost & rent analysis (`.agent-research/cost-analysis.md`).
+- **Protocol Pack Library** _(v0.7.6)_ — `brainblast --packs jupiter,pyth .` opts into research + enforcement for the exact Solana stack you build on. **8 bundled, opt-in protocol packs** (Jupiter, Raydium, Pyth, Meteora, Jito, Metaplex, Solana-sendtx, SPL), each pure-data and proven RED → GREEN; `--packs <name>` resolves a protocol name to its pack, and `brainblast packs` lists the library. Packs ship inside the npm package, so `npx brainblast --packs jupiter,pyth` works with no checkout. Each pack someone contributes compounds the value for the next dev on that protocol.
 - Loads project-local `.agent-research/rules/*.yaml` rules as data, without executing scanned code or allowing project rules to shadow bundled rules.
 - **`brainblast drift [dir] [--update-baseline] [--json]`** checks every pinned dependency against OSV.dev and diffs against a baseline at `.agent-research/drift-baseline.json`. Exits non-zero when new advisories appear since the last baseline. Bundled `.github/workflows/drift-watch.yml` runs weekly and opens a GitHub issue when new advisories are found. First run creates the baseline; subsequent runs alert on any change.
 
@@ -115,14 +116,14 @@ Install gstack: run git clone --single-branch --depth 1 https://github.com/garry
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.7.5/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.7.6/install.sh | sh
 ```
 
 The installer pins to a tagged release, verifies SHA-256 checksums before writing any file, and auto-detects Claude Code, OpenClaw, and Codex. If gstack is missing, it warns you with the exact command to fix it. (It installs the Brainblast skill, but it does **not** install gstack for you — that is a one-time prerequisite above.)
 
 **Or tell your agent:**
 
-> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.7.5/install.sh | sh`
+> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.7.6/install.sh | sh`
 
 For the bleeding edge instead of a pinned release, prefix with `BRAINBLAST_REF=main`.
 
@@ -396,8 +397,8 @@ npm as [`brainblast`](https://www.npmjs.com/package/brainblast) (`npx brainblast
 — now covering eighteen bundled traps (Stripe webhook, Privy/JWT, Bags/Solana fee-share, Token-2022,
 Metaplex, Anchor `init_if_needed`, committed `.env*` secrets, graph-based cross-file taint
 tracking for secret leaks, command injection, SQL injection, open-redirect, JWT algorithm
-confusion, Solana mint impersonation, and four Anchor program-security checks), plus 3 community packs (Solana sendtx-unconfirmed,
-Metaplex royalty-zero, Raydium zero-slippage), plus diff-aware scanning (`--since`), watch mode,
+confusion, Solana mint impersonation, and four Anchor program-security checks), plus 8 opt-in protocol packs
+(Jupiter, Raydium, Pyth, Meteora, Jito, Metaplex, Solana-sendtx, SPL — `--packs jupiter,pyth`), plus diff-aware scanning (`--since`), watch mode,
 auto-fix (`fix [--apply] [--branch]`), living memory, cost & rent analysis, Solana trust-graph
 resolution, pluggable rule packs (`--packs`, `pack init`/`validate`), opt-in graduation telemetry,
 OSV security-advisory cross-check, lockfile inventory auto-seeding, **upgrade risk diff**

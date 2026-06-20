@@ -109,10 +109,12 @@ if [ -d "$HOME/.claude/skills" ]; then
   fetch_verified "commands/brainblast-oracle.md" "$HOME/.claude/commands/brainblast-oracle.md"
   # Token Economics Validator (v0.7.5)
   fetch_verified "commands/brainblast-economics.md" "$HOME/.claude/commands/brainblast-economics.md"
+  # Protocol Pack Library (v0.7.6)
+  fetch_verified "commands/brainblast-packs.md" "$HOME/.claude/commands/brainblast-packs.md"
   echo "  Registered → ~/.claude/commands/brainblast.md"
   echo "  Registered → ~/.claude/commands/brainblast-update.md"
   echo "  Registered → ~/.claude/commands/brainblast-rico-maps.md"
-  echo "  Registered → ~/.claude/commands/brainblast-{firewall,score,pump-check,batch,idl-rules,deploy-plan,exploits,oracle,economics}.md"
+  echo "  Registered → ~/.claude/commands/brainblast-{firewall,score,pump-check,batch,idl-rules,deploy-plan,exploits,oracle,economics,packs}.md"
   echo "  Invoke:     /brainblast [requirements-file]"
   echo "  Token check: /brainblast-rico-maps <contract-address>"
   echo "  TX firewall: /brainblast-firewall <base64-tx>"

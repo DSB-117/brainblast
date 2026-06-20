@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+## v0.7.6 — 2026-06-20
+
+**Protocol Pack Library** — the distribution play. Every Solana app is built on
+some combination of Jupiter, Raydium, Pyth, Meteora, Jito, … — each with its own
+silent footguns. A pack per protocol means you opt into research-and-enforcement
+for the exact stack you build on, before a line is written:
+
+```
+brainblast --packs jupiter,pyth .
+```
+
+- **Three new protocol packs** (each opt-in, pure-data, with `vulnerable/`+`fixed/`
+  fixtures proven RED → GREEN):
+  - **`pyth-price-unchecked-staleness`** — `getPriceUnchecked()` (ignores
+    staleness) instead of `getPriceNoOlderThan(maxAge)`; can return an arbitrarily
+    old price. Pairs with the live `brainblast oracle` check.
+  - **`meteora-dlmm-zero-min-out`** — Meteora DLMM `swap({ minOutAmount: new BN(0) })`
+    removes the minimum-output floor (sandwich exposure).
+  - **`jito-bundle-zero-tip`** — a Jito bundle sent with a `0` tip is deprioritized
+    and never lands, while the send call still returns a bundle id.
+  Joins the existing Jupiter, Raydium, Metaplex, Solana-sendtx, and SPL packs —
+  **8 bundled protocol packs**.
+- **`brainblast --packs <name>`** now resolves a **protocol name** ("jupiter",
+  "pyth") to its bundled pack, not just a filesystem path. **`brainblast packs`**
+  lists the library. Packs ship inside the npm package (`dist/packs`), so
+  `npx brainblast --packs jupiter,pyth` works with no checkout.
+- **`object-arg-property-forbidden-literal` is now `BN(0)`-aware** — it flags the
+  idiomatic Solana `new BN(0)` / `BN("0")` / `anchor.BN(0)`, not just bare `0`, so
+  amount/slippage/tip rules catch real code.
+- A CI guard test validates **every** bundled pack RED → GREEN. New
+  `/brainblast-packs` slash command; `listBundledPacks` / `resolveBundledPackToken`
+  exports. 12 new tests (439 total green).
+
 ## v0.7.5 — 2026-06-20
 
 **Token Economics Validator** — the Bags exploit, generalized. The Bags trap (a

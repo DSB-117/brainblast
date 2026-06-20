@@ -1,0 +1,54 @@
+# Pure-data rule. Binds to the vetted `object-arg-property-forbidden-literal`
+# checker (BN(0)-aware as of brainblast v0.7.6).
+#
+# Jito bundles are ordered by their tip. A bundle that tips 0 is deprioritized
+# by the block engine and, under any competition, simply never lands — yet the
+# send call returns a bundle id and the code proceeds as if it submitted.
+# This rule targets the common wrapper signature `sendBundle({ ..., tipLamports })`
+# (and `new BN(0)`). The positional `Bundle.addTipTx(payer, lamports, ...)` form
+# is a complementary manual check — see the pack README.
+#
+# Scope note: this fires only in files that import a Jito SDK (detect.modules),
+# so a zero-amount transfer elsewhere won't trip it.
+id: jito-bundle-zero-tip
+severity: high
+title: Jito bundle sent with a tip of 0 — bundle is deprioritized and will not land
+component:
+  name: Jito (block engine / bundles)
+  type: Blockchain
+  version: unversioned
+  sourceUrl: https://docs.jito.wtf/lowlatencytxnsend/
+detect:
+  modules:
+    - "jito-ts"
+    - "jito-js-rpc"
+    - "@jito-foundation/sdk"
+  nameRegex: bundle|jito|send|submit|tip|mev
+  triggerCalls:
+    - sendBundle
+    - sendJitoBundle
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: sendBundle
+    argIndex: 0
+    propName: tipLamports
+    forbiddenValue: 0
+    passDetail: >-
+      sendBundle is called with a nonzero tipLamports — the bundle has a tip the
+      block engine can prioritize.
+    failDetail: >-
+      sendBundle is called with tipLamports of 0 (or new BN(0)). A Jito bundle
+      with no tip is deprioritized by the block engine and, under any
+      competition, never lands — but the call still returns a bundle id, so the
+      code proceeds as if the transactions submitted. Set a nonzero tip (and
+      ideally scale it with priority/competition).
+    absentCallDetail: >-
+      Handler is in Jito scope but does not call sendBundle; the zero-tip rule
+      does not apply here.
+    absentArgDetail: >-
+      sendBundle's options object does not set tipLamports as an inline literal;
+      the tip cannot be confirmed statically. Verify it resolves to a nonzero
+      value.
+test:
+  kind: none

@@ -1,0 +1,5 @@
+id: jito-bundle-zero-tip
+name: Jito bundle zero tip
+version: 0.1.0
+author: DSB-117
+description: "Flags Jito bundle sends with a tip of 0 (including new BN(0)) — a bundle with no tip is deprioritized by the block engine and typically never lands."

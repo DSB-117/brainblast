@@ -5,6 +5,7 @@ import { requiredCallWithOptions } from "../src/checkers/requiredCallWithOptions
 import { feeAllocationShape } from "../src/checkers/feeAllocationShape.ts";
 import { argEqualsConstantIdentifier } from "../src/checkers/argEqualsConstantIdentifier.ts";
 import { objectArgPropertyLiteralEquals } from "../src/checkers/objectArgPropertyLiteralEquals.ts";
+import { objectArgPropertyForbiddenLiteral } from "../src/checkers/objectArgPropertyForbiddenLiteral.ts";
 import { anchorInitIfNeededGuarded } from "../src/checkers/anchorInitIfNeededGuarded.ts";
 import { envSecretsCommitted } from "../src/checkers/envSecretsCommitted.ts";
 import { taintToSink } from "../src/checkers/taintToSink.ts";
@@ -1139,5 +1140,43 @@ describe("economicValueZeroOrMissing (Token Economics Validator)", () => {
   it("CANT_TELL when no matching config call exists", () => {
     const c = candidate(`export function h() { return doSomethingElse({ sellerFeeBasisPoints: 0 }); }`, "h");
     expect(economicValueZeroOrMissing(c, P).result).toBe("cant_tell");
+  });
+});
+
+describe("objectArgPropertyForbiddenLiteral (BN(0)-aware, v0.7.6)", () => {
+  const P = { call: "swap", argIndex: 0, propName: "minOutAmount", forbiddenValue: 0 };
+
+  it("FAIL on a bare literal 0", () => {
+    const c = candidate(`export function h() { return pool.swap({ minOutAmount: 0 }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(c, P).result).toBe("fail");
+  });
+
+  it("FAIL on new BN(0) (idiomatic Solana zero)", () => {
+    const c = candidate(`export function h() { return pool.swap({ minOutAmount: new BN(0) }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(c, P).result).toBe("fail");
+  });
+
+  it("FAIL on BN(\"0\") and anchor.BN(0)", () => {
+    const c1 = candidate(`export function h() { return pool.swap({ minOutAmount: BN("0") }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(c1, P).result).toBe("fail");
+    const c2 = candidate(`export function h() { return pool.swap({ minOutAmount: new anchor.BN(0) }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(c2, P).result).toBe("fail");
+  });
+
+  it("PASS on a nonzero literal", () => {
+    const c = candidate(`export function h() { return pool.swap({ minOutAmount: 500 }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(c, P).result).toBe("pass");
+  });
+
+  it("does NOT flag a nonzero BN or computed value (cant_tell, not fail)", () => {
+    const c = candidate(`export function h(q: any) { return pool.swap({ minOutAmount: new BN(100) }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(c, P).result).toBe("cant_tell");
+    const c2 = candidate(`export function h(q: any) { return pool.swap({ minOutAmount: q.minOutAmount }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(c2, P).result).toBe("cant_tell");
+  });
+
+  it("CANT_TELL when the call is absent", () => {
+    const c = candidate(`export function h() { return other({ minOutAmount: new BN(0) }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(c, P).result).toBe("cant_tell");
   });
 });

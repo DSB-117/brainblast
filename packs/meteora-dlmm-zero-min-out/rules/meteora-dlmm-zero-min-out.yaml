@@ -1,0 +1,47 @@
+# Pure-data rule. Binds to the vetted `object-arg-property-forbidden-literal`
+# checker (BN(0)-aware as of brainblast v0.7.6).
+#
+# Meteora DLMM's swap() takes `minOutAmount` — the floor the swap must return or
+# it reverts. Passing `new BN(0)` (or 0) removes that floor entirely: any price
+# movement between quote and execution, including a sandwich, fills the swap at
+# whatever price results. AI-written swap bots reach for minOutAmount: new BN(0)
+# to "just make the swap go through," silently disabling slippage protection.
+id: meteora-dlmm-zero-min-out
+severity: high
+title: Meteora DLMM swap called with minOutAmount of 0 — no slippage floor
+component:
+  name: "@meteora-ag/dlmm"
+  type: Blockchain
+  version: unversioned
+  sourceUrl: https://docs.meteora.ag/product-overview/meteora-liquidity-pools/dlmm-overview
+detect:
+  modules:
+    - "@meteora-ag/dlmm"
+  nameRegex: swap|trade|exchange|buy|sell|arb
+  triggerCalls:
+    - swap
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: swap
+    argIndex: 0
+    propName: minOutAmount
+    forbiddenValue: 0
+    passDetail: >-
+      swap() is called with a nonzero minOutAmount — the swap reverts if it
+      would return less, enforcing a minimum-output floor.
+    failDetail: >-
+      swap() is called with minOutAmount of 0 (or new BN(0)), which removes the
+      minimum-output floor. Any price movement between quote and on-chain
+      execution — including a sandwich attack — fills the swap at whatever price
+      results, with no revert protection. Compute minOutAmount from the quote
+      and a slippage tolerance (e.g. quote.minOutAmount or quote * (1 - 0.005)).
+    absentCallDetail: >-
+      Handler is in the Meteora DLMM swap scope but does not call swap(); this
+      rule does not apply here.
+    absentArgDetail: >-
+      swap()'s options object does not set minOutAmount as an inline literal;
+      the minimum-output floor cannot be confirmed statically. Verify it is
+      derived from the quote and a nonzero slippage tolerance.
+test:
+  kind: none

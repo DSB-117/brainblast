@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { audit } from "./audit.ts";
 import { getChangedRanges } from "./gitDiff.ts";
@@ -19,6 +19,7 @@ import { startWatch } from "./watch.ts";
 import { execFileSync } from "node:child_process";
 import { applyDiffToFile, parseDiff } from "./fixers/applyDiff.ts";
 import { initPack, validatePack } from "./pack.ts";
+import { listBundledPacks, resolveBundledPackToken } from "./bundledPacks.ts";
 import { isTelemetryEnabled, recordGraduationEvents, telemetryFilePath, submitTelemetry } from "./telemetry.ts";
 
 // Usage:
@@ -86,7 +87,20 @@ function parsePackDirs(argv: string[]): string[] {
   if (idx < 0) return [];
   const value = argv[idx + 1];
   if (!value || value.startsWith("--")) return [];
-  return value.split(",").map((s) => s.trim()).filter(Boolean);
+  const tokens = value.split(",").map((s) => s.trim()).filter(Boolean);
+  // Each token is either an explicit pack directory or a bundled protocol name
+  // ("jupiter", "pyth"). Resolve names to bundled pack dirs so users name the
+  // protocols in their stack, not filesystem paths.
+  return tokens.map((t) => {
+    if (existsSync(join(t, "brainblast-pack.yaml"))) return t; // explicit path
+    const resolved = resolveBundledPackToken(t);
+    if (resolved) return resolved;
+    console.error(
+      `brainblast: --packs '${t}' is not a known bundled pack or a pack directory. ` +
+        `Run 'brainblast packs' to list bundled packs.`,
+    );
+    process.exit(2);
+  });
 }
 
 if (args[0] === "diff") {
@@ -112,6 +126,11 @@ if (args[0] === "trust-graph") {
 
 if (args[0] === "pack") {
   runPack(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "packs") {
+  runPacks(args.slice(1));
   process.exit(0);
 }
 
@@ -489,6 +508,29 @@ function runExploits(argv: string[]) {
   const mdPath = join(outDir, "exploit-patterns.md");
   writeFileSync(mdPath, renderExploitsMd());
   console.log(`\n  database: ${mdPath}`);
+}
+
+function runPacks(argv: string[]) {
+  const packs = listBundledPacks();
+  if (argv.includes("--json")) {
+    console.log(JSON.stringify(packs.map((p) => ({ ...p.manifest, dir: p.dir })), null, 2));
+    return;
+  }
+  if (packs.length === 0) {
+    console.log("No bundled protocol packs found.");
+    return;
+  }
+  console.log("Protocol Pack Library — opt into the exact stack you build on:\n");
+  console.log("  brainblast --packs <name>[,<name>...] .\n");
+  for (const p of packs) {
+    // shortest unique name: the leading segment (protocol) when it resolves.
+    const lead = p.id.split("-")[0];
+    const shortName = resolveBundledPackToken(lead) === p.dir ? lead : p.id;
+    console.log(`  ${shortName.padEnd(12)} ${p.manifest.name}`);
+    if (p.manifest.description) console.log(`  ${" ".repeat(12)} ${p.manifest.description}`);
+    console.log("");
+  }
+  console.log(`${packs.length} pack(s). Each ships RED→GREEN fixtures; run 'brainblast pack validate <dir>' to verify.`);
 }
 
 function runPack(argv: string[]) {
