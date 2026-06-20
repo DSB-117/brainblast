@@ -5,7 +5,7 @@
 [![ci](https://github.com/DSB-117/brainblast/actions/workflows/ci.yml/badge.svg)](https://github.com/DSB-117/brainblast/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-![Brainblast](assets/brainblast.jpg)
+![Brainblast](assets/brainblast.png)
 
 Research external APIs and SDKs before your AI agent starts coding — then enforce, in CI, that
 what got written matches.
