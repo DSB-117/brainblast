@@ -1,0 +1,41 @@
+# Token Economics Validator (v0.7.5) — the generalized Bags exploit.
+# A revenue-bearing field omitted from a config object silently defaults to
+# zero: the call succeeds, nothing is collected, forever. Here: Metaplex
+# `sellerFeeBasisPoints` — the on-chain royalty creators earn on secondary
+# sales. Omit it (or set 0) and the creators earn nothing, permanently.
+id: metaplex-seller-fee-zero
+severity: high
+title: Metaplex token created with sellerFeeBasisPoints omitted or zero — creators earn no royalties
+component:
+  name: Metaplex Token Metadata
+  type: Blockchain
+  version: unversioned
+  sourceUrl: https://developers.metaplex.com/token-metadata/mint
+detect:
+  modules:
+    - "@metaplex-foundation/mpl-token-metadata"
+    - "@metaplex-foundation/js"
+  nameRegex: "metaplex|mpl|createNft|mint"
+  triggerCalls: [create, createV1, createNft, createFungible, createAndMint]
+check:
+  kind: economic-value-zero-or-missing
+  params:
+    calls: [create, createV1, createNft, createFungible, createAndMint]
+    field: sellerFeeBasisPoints
+    omittedDetail: >-
+      The Metaplex create call omits sellerFeeBasisPoints, which defaults to 0.
+      The token mints fine, but creators earn ZERO royalties on every secondary
+      sale — permanently and silently. There is no after-the-fact fix once
+      minted. Set sellerFeeBasisPoints explicitly (e.g. 500 = 5%).
+    zeroDetail: >-
+      sellerFeeBasisPoints is set to a literal 0 — creators will earn no royalty
+      on secondary sales. If this token is meant to be royalty-free that's fine;
+      otherwise set a non-zero basis-points value.
+    passDetail: >-
+      sellerFeeBasisPoints is set to a non-zero value — secondary-sale royalties
+      are configured.
+    absentDetail: >-
+      Handler is in Metaplex scope but does not call a token-create function;
+      the royalty-allocation rule does not apply here.
+test:
+  kind: none

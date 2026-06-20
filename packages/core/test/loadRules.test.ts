@@ -23,6 +23,7 @@ describe("loadRules", () => {
       "env-secrets-committed",
       "jsonwebtoken-algorithm-pinned",
       "metaplex-metadata-immutable",
+      "metaplex-seller-fee-zero",
       "open-redirect",
       "prisma-raw-injection",
       "privy-jwt-verification",
