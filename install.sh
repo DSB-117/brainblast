@@ -101,10 +101,12 @@ if [ -d "$HOME/.claude/skills" ]; then
   fetch_verified "commands/brainblast-pump-check.md" "$HOME/.claude/commands/brainblast-pump-check.md"
   fetch_verified "commands/brainblast-batch.md" "$HOME/.claude/commands/brainblast-batch.md"
   fetch_verified "commands/brainblast-idl-rules.md" "$HOME/.claude/commands/brainblast-idl-rules.md"
+  # Deployment Intelligence (v0.7.2)
+  fetch_verified "commands/brainblast-deploy-plan.md" "$HOME/.claude/commands/brainblast-deploy-plan.md"
   echo "  Registered → ~/.claude/commands/brainblast.md"
   echo "  Registered → ~/.claude/commands/brainblast-update.md"
   echo "  Registered → ~/.claude/commands/brainblast-rico-maps.md"
-  echo "  Registered → ~/.claude/commands/brainblast-{firewall,score,pump-check,batch,idl-rules}.md"
+  echo "  Registered → ~/.claude/commands/brainblast-{firewall,score,pump-check,batch,idl-rules,deploy-plan}.md"
   echo "  Invoke:     /brainblast [requirements-file]"
   echo "  Token check: /brainblast-rico-maps <contract-address>"
   echo "  TX firewall: /brainblast-firewall <base64-tx>"
