@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## v0.7.2 — 2026-06-20
+
+**Deployment Intelligence** — a new `brainblast deploy-plan [dir]` command that answers the
+two questions every Anchor builder works out by hand before `anchor deploy`: *how much SOL do
+I need?* and *what's the exact ordered transaction sequence?*
+
+- **Program-deploy economics** from the compiled `.so` under `target/deploy/`, modeled on the
+  on-chain BPF **upgradeable** loader:
+  - Program account rent (`rent(36)`).
+  - Program data rent at the default **2× upgrade headroom** (`rent(45 + 2·len)`) — the large,
+    non-recoverable lockup. Override with `--max-len-mult N`.
+  - Transient **buffer** rent (`rent(37 + len)`) — refunded when the buffer drains at deploy.
+  - Write-transaction count (binary chunked at ~1012 bytes) and base transaction fees.
+- **Anchor `init` PDA accounting** — parses every `#[derive(Accounts)]` struct (tree-sitter-rust)
+  for `init` / `init_if_needed` accounts and reports each one's `space`, rent, PDA `seeds`, and
+  `payer` (treasury, config, …). Non-literal `space` expressions (e.g. `8 + State::INIT_SPACE`)
+  are flagged and excluded from totals rather than guessed.
+- **Ordered transaction sequence** — create buffer → write chunks → deploy → one `initialize`
+  step per Accounts struct, each annotated with the rent it locks / refunds and its fee.
+- Outputs a **wallet funding figure** (safe upper bound) and the **steady-state lockup**, both as
+  a terminal summary and a markdown report at `.agent-research/deploy-plan.md`. `--program-len`
+  models an uncompiled build; `--json` emits the full plan for an agent to act on.
+- New `/brainblast-deploy-plan` slash command. 20 new tests (368 total green).
+
 ## v0.7.1 — 2026-06-20
 
 **Pillar 2: Anchor/Rust Security Checkers** — three new static checker kinds for

@@ -7,6 +7,7 @@ import { loadMemory, saveMemory, updateMemory, precedentKey } from "./memory.ts"
 import { resolveRules } from "./resolveRules.ts";
 import { buildTrustGraph, renderTrustGraphMd, isValidSolanaAddress, cacheSize, loadProgramCache, defaultCachePath } from "./trustGraph/index.ts";
 import { analyzeCosts, renderCostReportMd } from "./costAnalysis.ts";
+import { buildDeployPlan, renderDeployPlanMd, renderDeployPlanText } from "./deployPlan.ts";
 import { startWatch } from "./watch.ts";
 import { execFileSync } from "node:child_process";
 import { applyDiffToFile, parseDiff } from "./fixers/applyDiff.ts";
@@ -172,6 +173,11 @@ if (args[0] === "batch") {
   process.exit(0);
 }
 
+if (args[0] === "deploy-plan") {
+  runDeployPlan(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -296,6 +302,45 @@ console.log(`  report:      ${reportPath}`);
 if (ci) {
   const gateFail = fails > 0 || (strict && cantTell > 0);
   process.exit(gateFail ? 1 : 0);
+}
+
+function runDeployPlan(argv: string[]) {
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.log("usage: brainblast deploy-plan [targetDir] [--json] [--max-len-mult N] [--program-len BYTES] [--priority-fee MICROLAMPORTS]");
+    console.log("  Estimate SOL needed to deploy an Anchor program and print the exact ordered");
+    console.log("  transaction sequence (create buffer → write → deploy → initialize PDAs).");
+    console.log("  Reads the compiled .so under target/deploy/; pass --program-len to model a");
+    console.log("  build you haven't compiled yet.");
+    process.exit(0);
+  }
+  const num = (name: string): number | undefined => {
+    const idx = argv.indexOf(`--${name}`);
+    if (idx < 0) return undefined;
+    const v = parseInt(argv[idx + 1], 10);
+    return Number.isFinite(v) ? v : undefined;
+  };
+  const targetDir =
+    argv.find((a, i) => !a.startsWith("--") && !/^\d+$/.test(a) && argv[i - 1] !== "--max-len-mult" && argv[i - 1] !== "--program-len" && argv[i - 1] !== "--priority-fee") ??
+    process.cwd();
+
+  const plan = buildDeployPlan(targetDir, {
+    maxLenMultiplier: num("max-len-mult"),
+    programLen: num("program-len"),
+    priorityMicroLamports: num("priority-fee"),
+  });
+
+  if (argv.includes("--json")) {
+    console.log(JSON.stringify(plan, null, 2));
+    return;
+  }
+
+  console.log(renderDeployPlanText(plan));
+
+  const outDir = join(targetDir, ".agent-research");
+  mkdirSync(outDir, { recursive: true });
+  const mdPath = join(outDir, "deploy-plan.md");
+  writeFileSync(mdPath, renderDeployPlanMd(plan));
+  console.log(`  deploy plan: ${mdPath}`);
 }
 
 function runPack(argv: string[]) {
