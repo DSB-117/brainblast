@@ -8,6 +8,13 @@ import { resolveRules } from "./resolveRules.ts";
 import { buildTrustGraph, renderTrustGraphMd, isValidSolanaAddress, cacheSize, loadProgramCache, defaultCachePath } from "./trustGraph/index.ts";
 import { analyzeCosts, renderCostReportMd } from "./costAnalysis.ts";
 import { buildDeployPlan, renderDeployPlanMd, renderDeployPlanText } from "./deployPlan.ts";
+import {
+  EXPLOIT_PATTERNS,
+  getExploitPattern,
+  renderExploitsText,
+  renderExploitsMd,
+  renderExploitDetailText,
+} from "./exploitPatterns.ts";
 import { startWatch } from "./watch.ts";
 import { execFileSync } from "node:child_process";
 import { applyDiffToFile, parseDiff } from "./fixers/applyDiff.ts";
@@ -178,6 +185,11 @@ if (args[0] === "deploy-plan") {
   process.exit(0);
 }
 
+if (args[0] === "exploits") {
+  runExploits(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -341,6 +353,42 @@ function runDeployPlan(argv: string[]) {
   const mdPath = join(outDir, "deploy-plan.md");
   writeFileSync(mdPath, renderDeployPlanMd(plan));
   console.log(`  deploy plan: ${mdPath}`);
+}
+
+function runExploits(argv: string[]) {
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.log("usage: brainblast exploits [id] [--json]");
+    console.log("  The Exploit Pattern Database: real on-chain incidents mapped to the bundled");
+    console.log("  rule that statically detects each root-cause pattern. Pass an incident id or");
+    console.log("  rule id to see one in detail. Known ids:");
+    console.log(`    ${EXPLOIT_PATTERNS.map((e) => e.id).join(", ")}`);
+    process.exit(0);
+  }
+  const json = argv.includes("--json");
+  const id = argv.find((a) => !a.startsWith("--"));
+
+  if (id) {
+    const e = getExploitPattern(id);
+    if (!e) {
+      console.error(`error: no exploit pattern '${id}'. Known: ${EXPLOIT_PATTERNS.map((x) => x.id).join(", ")}`);
+      process.exit(2);
+    }
+    if (json) console.log(JSON.stringify(e, null, 2));
+    else console.log(renderExploitDetailText(e));
+    return;
+  }
+
+  if (json) {
+    console.log(JSON.stringify(EXPLOIT_PATTERNS, null, 2));
+    return;
+  }
+  console.log(renderExploitsText());
+
+  const outDir = join(process.cwd(), ".agent-research");
+  mkdirSync(outDir, { recursive: true });
+  const mdPath = join(outDir, "exploit-patterns.md");
+  writeFileSync(mdPath, renderExploitsMd());
+  console.log(`\n  database: ${mdPath}`);
 }
 
 function runPack(argv: string[]) {

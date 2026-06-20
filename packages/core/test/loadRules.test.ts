@@ -18,6 +18,7 @@ describe("loadRules", () => {
       "anchor-signer-constraint-missing",
       "anchor-unchecked-account-type",
       "bags-fee-share-creator-included",
+      "cpi-target-program-unverified",
       "env-secret-leaked-to-sink",
       "env-secrets-committed",
       "jsonwebtoken-algorithm-pinned",

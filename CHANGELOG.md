@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+## v0.7.3 — 2026-06-20
+
+**Exploit Pattern Database** — research-to-enforcement on real on-chain incidents. A curated
+catalog (`brainblast exploits`) maps public post-mortems to the bundled rule that statically
+detects each one's root-cause pattern, so the code that lost the funds is the exact code the
+rule fails on. Seeded with **$381.8M** of catalogued Solana losses across 4 patterns.
+
+- **New rule `cpi-target-program-unverified`** (CRITICAL) — the **Wormhole** ($325M, Feb 2022)
+  pattern: *"does this CPI verify its target program ID?"* Detects an Anchor handler that
+  performs a cross-program invocation (`invoke` / `invoke_signed` / `CpiContext`) against a
+  program-named account typed as raw `AccountInfo` / `UncheckedAccount` with no `address=`
+  constraint and no in-body key check — letting an attacker substitute a malicious program.
+  Fix: type the account `Program<'info, T>` or add `#[account(address = <expected>)]`. New
+  `anchor-cpi-unverified-program` checker, with vulnerable/fixed fixtures (RED→GREEN).
+- **`brainblast exploits [id] [--json]`** — lists the database (incident, loss, detecting rule)
+  or explains one incident (match by incident id or rule id). Catalog seeded with Wormhole →
+  `cpi-target-program-unverified`, Cashio ($48M) and Crema ($8.8M) → `anchor-unchecked-account-type`,
+  and SPL mint impersonation → `solana-token-impersonation`. Writes
+  `.agent-research/exploit-patterns.md`.
+- **Rule-local provenance** — rules derived from a post-mortem carry an inline `exploit:` block
+  (incident, date, loss, post-mortem URL). An integrity test guarantees every catalog entry's
+  `ruleId` resolves to a real bundled rule (no false "we catch this" claims) and cross-checks
+  rule-local provenance against the catalog to prevent drift.
+- Programmatic exports (`EXPLOIT_PATTERNS`, `getExploitPattern`, renderers) for AI-agent
+  frameworks. New `/brainblast-exploits` slash command. 16 → **17 bundled rules**; 387 tests green.
+
 ## v0.7.2 — 2026-06-20
 
 **Deployment Intelligence** — a new `brainblast deploy-plan [dir]` command that answers the

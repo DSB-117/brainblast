@@ -1,0 +1,41 @@
+id: cpi-target-program-unverified
+severity: critical
+title: Anchor CPI invokes a target program account whose identity is never verified (Wormhole pattern)
+component:
+  name: Anchor Framework
+  type: Blockchain
+  version: ">=0.26.0"
+  sourceUrl: https://www.anchor-lang.com/docs/the-program-module
+exploit:
+  incident: Wormhole bridge exploit
+  date: "2022-02-02"
+  lossUsd: 325000000
+  chain: Solana
+  postmortemUrl: https://rekt.news/wormhole-rekt/
+  pattern: >-
+    A cross-program invocation (or signature-verification load) was performed
+    against an account trusted by position rather than by identity. A deprecated
+    load did not verify the supplied account's address, letting an attacker
+    substitute a malicious account and forge verification. Generalized: a CPI
+    target program was used without verifying its program ID.
+detect:
+  lang: rust
+  modules:
+    - "@coral-xyz/anchor"
+    - "@project-serum/anchor"
+  nameRegex: ".*"
+  triggerCalls: []
+check:
+  kind: anchor-cpi-unverified-program
+  params:
+    programNameRegex: "(^|_)program$|^program(_id)?$"
+    cpiRegex: "invoke_signed\\s*\\(|invoke\\s*\\(|CpiContext::|\\.cpi\\(\\)"
+test:
+  kind: anchor-program-test
+  params:
+    scenario: cpi-substituted-program
+    description: >-
+      Invokes the handler with a malicious program substituted for the expected
+      target. With a raw AccountInfo program account the CPI dispatches to the
+      attacker's program; typing it Program<'info, T> (or adding address=)
+      makes Anchor reject the substitution before the handler runs.
