@@ -14,6 +14,9 @@ describe("loadRules", () => {
     const ids = rules.map((r) => r.id).sort();
     expect(ids).toEqual([
       "anchor-init-if-needed-guarded",
+      "anchor-pda-find-program-address",
+      "anchor-signer-constraint-missing",
+      "anchor-unchecked-account-type",
       "bags-fee-share-creator-included",
       "env-secret-leaked-to-sink",
       "env-secrets-committed",
