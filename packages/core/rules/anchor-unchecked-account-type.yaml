@@ -1,0 +1,27 @@
+id: anchor-unchecked-account-type
+severity: high
+title: Anchor instruction uses UncheckedAccount — no runtime validation
+component:
+  name: Anchor Framework
+  type: Blockchain
+  version: ">=0.26.0"
+  sourceUrl: https://www.anchor-lang.com/docs/the-accounts-struct#uncheckedaccount
+detect:
+  lang: rust
+  modules:
+    - "@coral-xyz/anchor"
+    - "@project-serum/anchor"
+  nameRegex: ".*"
+  triggerCalls: []
+check:
+  kind: anchor-forbidden-account-type
+  params:
+    forbiddenType: "UncheckedAccount"
+test:
+  kind: anchor-program-test
+  params:
+    scenario: arbitrary-account-substitution
+    description: >-
+      Passes an account owned by an arbitrary program (not the expected program ID)
+      as the UncheckedAccount field. Must be rejected. If it succeeds, an attacker
+      can substitute any account and the instruction will operate on attacker-controlled data.

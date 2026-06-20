@@ -11,6 +11,9 @@ import { literalMultiplierWrongConstant } from "./literalMultiplierWrongConstant
 import { forbiddenCallReplacement } from "./forbiddenCallReplacement.ts";
 import { solanaMintIdentity } from "./solanaMintIdentity.ts";
 import { anchorIdlAccount } from "./anchorIdlAccount.ts";
+import { anchorAccountMissingConstraint } from "./anchorAccountMissingConstraint.ts";
+import { anchorForbiddenAccountType } from "./anchorForbiddenAccountType.ts";
+import { anchorBodyCallPattern } from "./anchorBodyCallPattern.ts";
 import type { Candidate, RustCandidate, ConfigCandidate, CheckOutcome, Checker, RustChecker, ConfigChecker } from "../types.ts";
 
 // Registry of human-vetted checker templates. Rules bind to these by `kind`.
@@ -30,6 +33,9 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker> = {
   "forbidden-call-replacement": forbiddenCallReplacement,
   "solana-mint-identity-mismatch": solanaMintIdentity,
   "anchor-account-matches-idl": anchorIdlAccount as RustChecker,
+  "anchor-account-missing-constraint": anchorAccountMissingConstraint as RustChecker,
+  "anchor-forbidden-account-type": anchorForbiddenAccountType as RustChecker,
+  "anchor-body-call-pattern": anchorBodyCallPattern as RustChecker,
 };
 
 export function runChecker(kind: string, c: Candidate | RustCandidate | ConfigCandidate, params: any): CheckOutcome {

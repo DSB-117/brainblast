@@ -1,0 +1,27 @@
+id: anchor-signer-constraint-missing
+severity: critical
+title: Anchor authority account missing signer constraint
+component:
+  name: Anchor Framework
+  type: Blockchain
+  version: ">=0.26.0"
+  sourceUrl: https://www.anchor-lang.com/docs/the-accounts-struct#signer
+detect:
+  lang: rust
+  modules:
+    - "@coral-xyz/anchor"
+    - "@project-serum/anchor"
+  nameRegex: ".*"
+  triggerCalls: []
+check:
+  kind: anchor-account-missing-constraint
+  params:
+    nameRegex: "^(authority|admin|owner|payer|caller|signer|user|operator|manager|creator|deployer)$"
+test:
+  kind: anchor-program-test
+  params:
+    scenario: unauthorized-caller
+    description: >-
+      Calls the instruction with a key that does not match the expected authority
+      and has not signed the transaction. Must be rejected with a signing error.
+      If it succeeds, the authority check is absent and privilege escalation is possible.

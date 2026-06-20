@@ -9,6 +9,9 @@ import { anchorInitIfNeededGuarded } from "../src/checkers/anchorInitIfNeededGua
 import { envSecretsCommitted } from "../src/checkers/envSecretsCommitted.ts";
 import { taintToSink } from "../src/checkers/taintToSink.ts";
 import { literalMultiplierWrongConstant } from "../src/checkers/literalMultiplierWrongConstant.ts";
+import { anchorAccountMissingConstraint } from "../src/checkers/anchorAccountMissingConstraint.ts";
+import { anchorForbiddenAccountType } from "../src/checkers/anchorForbiddenAccountType.ts";
+import { anchorBodyCallPattern } from "../src/checkers/anchorBodyCallPattern.ts";
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -883,5 +886,135 @@ describe("jsonwebtoken-algorithm-pinned rule", () => {
       "verifyJwt",
     );
     expect(requiredCallWithOptions(c, JWT_ALGO_PARAMS).result).toBe("fail");
+  });
+});
+
+// ── anchorAccountMissingConstraint ────────────────────────────────────────────
+
+describe("anchorAccountMissingConstraint (signer check on authority fields)", () => {
+  it("FAIL when authority field is AccountInfo without signer constraint", () => {
+    const c = rustCandidate(
+      "set_admin",
+      [{ name: "authority", typeName: "AccountInfo<'info>", attrText: "#[account(mut)]", hasInitIfNeeded: false }],
+      "{ ctx.accounts.config.admin = new_admin; Ok(()) }",
+    );
+    const r = anchorAccountMissingConstraint(c, {});
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("authority");
+  });
+
+  it("PASS when authority field is Signer<'info>", () => {
+    const c = rustCandidate(
+      "set_admin",
+      [{ name: "authority", typeName: "Signer<'info>", attrText: "", hasInitIfNeeded: false }],
+      "{ ctx.accounts.config.admin = new_admin; Ok(()) }",
+    );
+    expect(anchorAccountMissingConstraint(c, {}).result).toBe("pass");
+  });
+
+  it("PASS when AccountInfo field has signer in attrText", () => {
+    const c = rustCandidate(
+      "set_admin",
+      [{ name: "authority", typeName: "AccountInfo<'info>", attrText: "#[account(signer)]", hasInitIfNeeded: false }],
+      "{ Ok(()) }",
+    );
+    expect(anchorAccountMissingConstraint(c, {}).result).toBe("pass");
+  });
+
+  it("CANT_TELL when no authority-named fields exist", () => {
+    const c = rustCandidate(
+      "process",
+      [{ name: "vault", typeName: "Account<'info, Vault>", attrText: "#[account(mut)]", hasInitIfNeeded: false }],
+      "{ Ok(()) }",
+    );
+    expect(anchorAccountMissingConstraint(c, {}).result).toBe("cant_tell");
+  });
+});
+
+// ── anchorForbiddenAccountType ────────────────────────────────────────────────
+
+describe("anchorForbiddenAccountType (UncheckedAccount detection)", () => {
+  it("FAIL when any field uses UncheckedAccount", () => {
+    const c = rustCandidate(
+      "process",
+      [
+        { name: "signer", typeName: "Signer<'info>", attrText: "", hasInitIfNeeded: false },
+        { name: "data_account", typeName: "UncheckedAccount<'info>", attrText: "", hasInitIfNeeded: false },
+      ],
+      "{ Ok(()) }",
+    );
+    const r = anchorForbiddenAccountType(c, {});
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("data_account");
+    expect(r.detail).toContain("UncheckedAccount");
+  });
+
+  it("PASS when account fields exist but none are UncheckedAccount", () => {
+    const c = rustCandidate(
+      "process",
+      [{ name: "data", typeName: "Account<'info, MyData>", attrText: "#[account(mut)]", hasInitIfNeeded: false }],
+      "{ Ok(()) }",
+    );
+    expect(anchorForbiddenAccountType(c, {}).result).toBe("pass");
+  });
+
+  it("CANT_TELL when handler has no account fields at all", () => {
+    const c = rustCandidate("process", [], "{ Ok(()) }");
+    expect(anchorForbiddenAccountType(c, {}).result).toBe("cant_tell");
+  });
+
+  it("FAIL respects custom forbiddenType param", () => {
+    const c = rustCandidate(
+      "process",
+      [{ name: "target", typeName: "AccountInfo<'info>", attrText: "", hasInitIfNeeded: false }],
+      "{ Ok(()) }",
+    );
+    const r = anchorForbiddenAccountType(c, { forbiddenType: "AccountInfo" });
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("target");
+  });
+});
+
+// ── anchorBodyCallPattern ─────────────────────────────────────────────────────
+
+describe("anchorBodyCallPattern (find_program_address in handler body)", () => {
+  const PDA_PARAMS = {
+    forbiddenPattern: "Pubkey::find_program_address|find_program_address\\s*\\(",
+    failDetail: "Handler calls find_program_address at runtime — use seeds+bump constraint instead.",
+  };
+
+  it("FAIL when handler body calls find_program_address", () => {
+    const c = rustCandidate(
+      "deposit",
+      [{ name: "vault", typeName: "Account<'info, Vault>", attrText: "#[account(mut)]", hasInitIfNeeded: false }],
+      "{ let (pda, _bump) = Pubkey::find_program_address(&[b\"vault\"], ctx.program_id); Ok(()) }",
+    );
+    const r = anchorBodyCallPattern(c, PDA_PARAMS);
+    expect(r.result).toBe("fail");
+    expect(r.detail).toContain("find_program_address");
+  });
+
+  it("PASS when handler body does not call find_program_address", () => {
+    const c = rustCandidate(
+      "deposit",
+      [{ name: "vault", typeName: "Account<'info, Vault>", attrText: "#[account(mut, seeds=[b\"vault\"], bump=vault.bump)]", hasInitIfNeeded: false }],
+      "{ ctx.accounts.vault.balance += amount; Ok(()) }",
+    );
+    expect(anchorBodyCallPattern(c, PDA_PARAMS).result).toBe("pass");
+  });
+
+  it("PASS when exemptPattern matches alongside forbidden pattern", () => {
+    const c = rustCandidate(
+      "migrate",
+      [],
+      "{ let (pda, _) = Pubkey::find_program_address(&[b\"v\"], id); require!(pda == expected_pda, E::Bad); Ok(()) }",
+    );
+    const r = anchorBodyCallPattern(c, { ...PDA_PARAMS, exemptPattern: "expected_pda" });
+    expect(r.result).toBe("pass");
+  });
+
+  it("CANT_TELL when forbiddenPattern param is missing", () => {
+    const c = rustCandidate("x", [], "{ Ok(()) }");
+    expect(anchorBodyCallPattern(c, {}).result).toBe("cant_tell");
   });
 });
