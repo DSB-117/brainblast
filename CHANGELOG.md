@@ -2,6 +2,54 @@
 
 ## Unreleased
 
+## v0.8.0 — 2026-06-22
+
+**Keyguard** — the safety net for irreplaceable Solana secrets in the age of
+autonomous coding agents. An AI agent that helpfully runs `git clean -fdx` or
+`rm -rf target/` can silently destroy a program's upgrade-authority keypair —
+and the program is then immutable **forever**, with no recovery. The files that
+matter most (keypairs, `.env`, seed phrases) are *correctly gitignored*, so git
+can never restore them. Keyguard finds them, ranks blast radius, guards against
+their deletion, and recovers them when prevention fails.
+
+Five capabilities — **Identify → Guard → Vault → Audit → Rescue**:
+
+- **`brainblast keys [dir]`** — a content-based classifier (the `solana-keygen`
+  64-int signature with offline pubkey derivation, base58 secret keys, BIP39
+  seed phrases, `.env` private keys / keypair path refs — never echoing a secret
+  value) that ranks each secret by **blast radius**, resolved **on-chain**:
+  ☠ TERMINAL (the sole upgrade authority of a live program), 🔴 FUNDS (holds
+  SOL), 🟡 REBUILDABLE (a deployed program keypair — post-deploy it only set the
+  address), ⚪ TRIVIAL. It reports the recovery truth for each: is this gitignored,
+  so **git CANNOT restore it**? `--offline` skips the chain; exit 1 when a
+  high-tier secret is committed (leak) or unbacked.
+
+- **`brainblast guard`** — a **`PreToolUse` hook** that intercepts a destructive
+  command *before it runs* and blocks it if its blast set hits an irreplaceable
+  secret. Precision over string-matching: it runs `git clean -n` to get the exact
+  file list, walks `rm -rf` directories, and catches redirects, `shred`/`truncate`/
+  `dd`, `mv`/`cp` overwrites, and compound commands with `cd` tracking. Block
+  messages name what dies, why git can't restore it, and the safe alternative
+  (`vault backup` / `vault trash` / `git clean --exclude`). `guard install` prints
+  the settings block; `guard <command>` is a direct/Codex mode.
+
+- **`brainblast vault`** — encrypted (AES-256-GCM, scrypt KDF), content-addressed,
+  versioned snapshots at `~/.brainblast/vault`, stored **outside any repo** so
+  `rm`/`git clean` can't reach them. `backup` (dedup), `restore` (by path or
+  pubkey, won't clobber without `--force`), `trash` (safe soft-delete), `status`,
+  `list`, `verify`. Scans show a backed-up secret as "✓ safe in the Vault."
+
+- **`brainblast keys --audit`** — a CI-gateable hardening posture check: every
+  high-tier secret backed up, nothing committed to git, in-repo secrets gitignored,
+  and single-key upgrade authorities flagged to migrate to a Squads multisig. Exit
+  1 on any fail.
+
+- **`brainblast rescue`** — honest, Solana-aware incident response after a possible
+  deletion: what the Vault can bring back (♻), what's still at risk, what's safe,
+  plus best-effort shell-history forensics for the command that likely did it.
+
+83 new tests across the five capabilities; full package suite at 483.
+
 ## v0.7.6 — 2026-06-20
 
 **Protocol Pack Library** — the distribution play. Every Solana app is built on

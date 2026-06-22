@@ -97,6 +97,28 @@ Everything Brainblast does today, at a glance.
 - **Secure installer**: pins to a tagged release and verifies the SHA-256 of *every* file before writing it, checks the gstack dependency, and re-installs idempotently (`BRAINBLAST_REF=latest` or a specific version).
 - Ships **two complete committed example runs** and a release self-check (`scripts/validate.sh`).
 
+## Keyguard — protect irreplaceable Solana secrets (v0.8.0)
+
+An AI agent that helpfully runs `git clean -fdx` or `rm -rf target/` can silently destroy your program's **upgrade-authority keypair** — and the deployed program is then immutable **forever**, with no recovery. On Solana, keys *are* the funds and the authority: there is no password reset. And the files that matter most — keypairs, `.env`, seed phrases — are *correctly gitignored*, so **git can never restore them.** The one tool you'd trust to save you is structurally blind here.
+
+Keyguard is the safety net. **Identify → Guard → Vault → Audit → Rescue:**
+
+- **`brainblast keys [dir]`** — finds every irreplaceable secret by **content** (the `solana-keygen` 64-int signature, base58 secret keys, BIP39 seed phrases, `.env` keys — never echoing a value) and ranks each by **blast radius, resolved on-chain**: ☠ **TERMINAL** (the sole upgrade authority of a live program), 🔴 **FUNDS** (holds SOL), 🟡 **REBUILDABLE** (a deployed program keypair — post-deploy it only set the address), ⚪ **TRIVIAL**. For each, it tells you the recovery truth: gitignored → *git CANNOT restore this if deleted.* `--offline` skips the chain; `--audit` is a CI gate.
+
+- **`brainblast guard`** — a Claude Code **`PreToolUse` hook** that intercepts a destructive command *before it runs* and blocks it if its blast set hits an irreplaceable secret. It doesn't string-match — it runs `git clean -n` to get the exact file list, walks `rm -rf` directories, and catches redirects, `shred`/`truncate`/`dd`, `mv`/`cp` overwrites, and compound `cd && …` commands. The block names what would die and hands back the safe alternative. Arm it with `brainblast guard install`.
+
+  ```
+  ⛔ BLOCKED — git clean -fdx would permanently destroy 2 irreplaceable secret(s):
+    ☠ target/deploy/authority.json — sole UPGRADE AUTHORITY of program Bpf…9xQ (live)
+    🔴 .env — SOLANA_PRIVATE_KEY for a wallet holding 41.2 SOL
+    Neither is in git — version control cannot restore them.
+    Safe alternative:  brainblast vault backup target/deploy/authority.json .env
+  ```
+
+- **`brainblast vault`** — encrypted (AES-256-GCM), content-addressed, versioned snapshots at `~/.brainblast/vault`, stored **outside any repo** so `rm`/`git clean` can't reach them. `backup`, `restore` (by path or pubkey), `trash` (safe soft-delete), `status`, `list`, `verify`.
+
+- **`brainblast rescue`** — after a possible deletion: what the Vault can bring back, what's still at risk, what's safe — plus shell-history forensics for the command that likely did it.
+
 ## Prerequisites
 
 Brainblast is a workflow that runs *inside* a host agent. It needs a browser engine to fetch live docs.
