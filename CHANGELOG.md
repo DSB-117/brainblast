@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+## v0.8.1 — 2026-06-22
+
+**Signguard** — Keyguard protects the keypair from *deletion*; Signguard protects
+it from being *used against you*. The most common way SOL actually leaves a wallet
+is signing one transaction you didn't understand — a drainer, a `SetAuthority`, a
+delegate `Approve`, a runaway transfer — and agents now sign autonomously.
+Signguard is the transaction-signing sibling of the file Guard: it decodes a
+transaction *before it's signed* and enforces a standing local **signing policy**,
+returning `allow / warn / block`.
+
+Built on the existing `firewall` (decode + pattern findings + simulation), adding
+the thing it lacks — a policy you set once and enforce everywhere:
+
+- **Spend quantification + caps** — decodes the SOL leaving the fee payer
+  (SystemProgram `Transfer`/`CreateAccount`) and enforces a **per-transaction**
+  and a **cumulative per-session** cap. *"Moves 5.0000 SOL — over the 1 SOL limit. BLOCK."*
+- **Program allowlist** — unknown programs become a hard block (vs the firewall's
+  soft warn), scoped to `KNOWN_PROGRAMS` ∪ your `allowedPrograms`.
+- **Action policy** — `setAuthority` / `delegateApproval` / `programUpgrade` /
+  `closeAccount` each map to `allow|warn|block` (secure defaults: first three block).
+- **Recipient allowlist** — transfers must go to addresses you've approved.
+- **Session ledger** — cumulative spend at `~/.brainblast/signguard`, `signguard reset`.
+
+Surfaces:
+- **`brainblast signguard <base64-tx>`** — decode + simulate + apply policy; exit 1
+  on block. `--policy`, `--max-sol`, `--record`, `--no-sim`, `--rpc`, `--json`.
+- **`brainblast signguard init`** — scaffold a secure-default `.brainblast/signguard.json`.
+- **`brainblast signguard hook`** — `PreToolUse` entrypoint that parses recognized
+  Solana CLI commands (`solana transfer`, `solana program set-upgrade-authority`,
+  `spl-token transfer`) and applies the policy with no serialized tx in hand.
+- **`inspectSigning(base64, { policy })`** — inline export agents call before signing.
+- **`signguard session` / `reset`** — view / clear the cumulative ledger.
+
+20 new tests; full package suite at 503.
+
 ## v0.8.0 — 2026-06-22
 
 **Keyguard** — the safety net for irreplaceable Solana secrets in the age of

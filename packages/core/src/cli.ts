@@ -239,6 +239,11 @@ if (args[0] === "rescue") {
   process.exit(0);
 }
 
+if (args[0] === "signguard") {
+  await runSignguard(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -1334,6 +1339,98 @@ async function runVault(argv: string[]): Promise<void> {
 
   console.error(`brainblast vault: unknown command '${sub}'`);
   process.exit(2);
+}
+
+async function runSignguard(argv: string[]): Promise<void> {
+  const sg = await import("./signguard/index.ts");
+  const { evaluateSolanaCommand } = await import("./signguard/commands.ts");
+  const mode = argv[0];
+
+  if (mode === "init") {
+    const dir = argv.find((a, i) => i > 0 && !a.startsWith("--")) ?? ".";
+    try {
+      const path = sg.scaffoldPolicy(dir);
+      console.log(`✓ wrote secure-default signing policy to ${path}`);
+      console.log("  Edit it to set maxSolPerTx, allowedPrograms, allowedRecipients, and per-action rules.");
+    } catch (e: any) {
+      console.error(`signguard init: ${e?.message ?? String(e)}`);
+      process.exit(2);
+    }
+    process.exit(0);
+  }
+
+  if (mode === "session") {
+    const s = sg.loadSession();
+    console.log(`Signguard session — ${s.solOut.toFixed(4)} SOL across ${s.txCount} tx (since ${s.startedAt})`);
+    process.exit(0);
+  }
+  if (mode === "reset") {
+    sg.resetSession();
+    console.log("✓ Signguard session ledger reset to 0.");
+    process.exit(0);
+  }
+
+  if (mode === "hook") {
+    const chunks: Buffer[] = [];
+    for await (const c of process.stdin) chunks.push(c as Buffer);
+    let payload: any = {};
+    try {
+      payload = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+    } catch {
+      process.exit(0);
+    }
+    if (payload.tool_name !== "Bash" || typeof payload.tool_input?.command !== "string") process.exit(0);
+    const { policy } = sg.loadPolicy({ cwd: payload.cwd });
+    const v = evaluateSolanaCommand(payload.tool_input.command, policy, { sessionSolOut: sg.loadSession().solOut });
+    if (!v.recognized || v.decision === "allow") process.exit(0);
+    const out = {
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: v.decision === "block" ? "deny" : "ask",
+        permissionDecisionReason: `[Brainblast Signguard] ${v.message}`,
+      },
+    };
+    console.log(JSON.stringify(out));
+    process.exit(0);
+  }
+
+  // Default: evaluate a base64-serialized transaction against the policy.
+  const tx = argv.find((a) => !a.startsWith("--"));
+  if (!tx) {
+    console.error("usage: brainblast signguard <base64-tx> [--policy FILE] [--max-sol N] [--record] [--no-sim] [--rpc URL] [--json]");
+    console.error("       brainblast signguard init | session | reset | hook");
+    console.error("  Decode a transaction and check it against your standing signing policy (spend caps, program");
+    console.error("  allowlist, authority/upgrade/delegate rules, recipient allowlist). Exit 1 on block.");
+    process.exit(2);
+  }
+  const polIdx = argv.indexOf("--policy");
+  const policyPath = polIdx >= 0 ? argv[polIdx + 1] : undefined;
+  const { policy, source } = sg.loadPolicy({ policyPath });
+  const maxIdx = argv.indexOf("--max-sol");
+  if (maxIdx >= 0) policy.maxSolPerTx = parseFloat(argv[maxIdx + 1]);
+  const rpcIdx = argv.indexOf("--rpc");
+  const rpcUrl = rpcIdx >= 0 ? argv[rpcIdx + 1] : undefined;
+  const jsonOut = argv.includes("--json");
+
+  let result;
+  try {
+    result = await sg.inspectSigning(tx, {
+      policy,
+      rpcUrl,
+      simulate: !argv.includes("--no-sim"),
+      sessionSolOut: sg.loadSession().solOut,
+    });
+  } catch (e: any) {
+    console.error(`signguard: ${e?.message ?? String(e)}`);
+    process.exit(2);
+  }
+
+  if (argv.includes("--record") && result.decision !== "block") sg.recordSpend(result.solOut);
+
+  if (jsonOut) console.log(JSON.stringify({ ...result, policySource: source }, null, 2));
+  else console.log(sg.renderSignguardText(result, source));
+
+  process.exit(result.decision === "block" ? 1 : 0);
 }
 
 async function runGuard(argv: string[]): Promise<void> {
