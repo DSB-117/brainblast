@@ -229,6 +229,11 @@ if (args[0] === "vault") {
   process.exit(0);
 }
 
+if (args[0] === "guard") {
+  await runGuard(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -1300,6 +1305,89 @@ async function runVault(argv: string[]): Promise<void> {
 
   console.error(`brainblast vault: unknown command '${sub}'`);
   process.exit(2);
+}
+
+async function runGuard(argv: string[]): Promise<void> {
+  const { evaluateCommand, evaluateOverwrite } = await import("./keys/guard.ts");
+  const vault = await import("./keys/vault.ts");
+  const vaultLookup = (abs: string) => vault.isBackedUp(abs);
+  const mode = argv[0];
+
+  if (mode === "install") {
+    const snippet = {
+      hooks: {
+        PreToolUse: [
+          {
+            matcher: "Bash|Write|Edit|MultiEdit|NotebookEdit",
+            hooks: [{ type: "command", command: "npx brainblast guard hook" }],
+          },
+        ],
+      },
+    };
+    console.log("Add this to your Claude Code settings.json (~/.claude/settings.json) to arm the Guard:");
+    console.log("");
+    console.log(JSON.stringify(snippet, null, 2));
+    console.log("");
+    console.log("Then any rm -rf / git clean / overwrite that would destroy an irreplaceable Solana secret is");
+    console.log("blocked before it runs. Codex: wrap destructive commands with `brainblast guard <command>`.");
+    process.exit(0);
+  }
+
+  if (mode === "hook") {
+    // Read a Claude Code PreToolUse payload from stdin and emit a decision.
+    const chunks: Buffer[] = [];
+    for await (const c of process.stdin) chunks.push(c as Buffer);
+    let payload: any = {};
+    try {
+      payload = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+    } catch {
+      process.exit(0); // not our payload — don't interfere
+    }
+    const tool = payload.tool_name;
+    const cwd = payload.cwd || process.cwd();
+    const input = payload.tool_input || {};
+
+    let verdict;
+    if (tool === "Bash" && typeof input.command === "string") {
+      verdict = evaluateCommand(input.command, { cwd, vaultLookup });
+    } else if (
+      (tool === "Write" || tool === "Edit" || tool === "MultiEdit" || tool === "NotebookEdit") &&
+      typeof input.file_path === "string"
+    ) {
+      verdict = evaluateOverwrite(input.file_path, { cwd, vaultLookup });
+    } else {
+      process.exit(0); // nothing we guard — allow
+    }
+
+    if (verdict.decision === "allow") process.exit(0);
+
+    const reason = verdict.safeAlternative
+      ? `${verdict.message}\n\nSafe alternative:\n${verdict.safeAlternative}`
+      : verdict.message;
+    const out = {
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: verdict.decision === "block" ? "deny" : "ask",
+        permissionDecisionReason: `[Brainblast Keyguard] ${reason}`,
+      },
+    };
+    console.log(JSON.stringify(out));
+    process.exit(0);
+  }
+
+  // Direct mode: evaluate a command string (for testing / Codex wrapping).
+  const command = argv.join(" ").trim();
+  if (!command) {
+    console.error("usage: brainblast guard <command>   |   guard hook   |   guard install");
+    console.error("  Evaluate a destructive command against your irreplaceable secrets. Exit 1 if it would");
+    console.error("  destroy one. `guard hook` is the Claude Code PreToolUse entrypoint; `guard install` prints setup.");
+    process.exit(2);
+  }
+  const verdict = evaluateCommand(command, { vaultLookup });
+  const icon = verdict.decision === "block" ? "⛔" : verdict.decision === "warn" ? "⚠️" : "✅";
+  console.log(`${icon} ${verdict.message}`);
+  if (verdict.safeAlternative) console.log(`\nSafe alternative:\n${verdict.safeAlternative}`);
+  process.exit(verdict.decision === "block" ? 1 : 0);
 }
 
 async function runPumpCheck(argv: string[]): Promise<void> {

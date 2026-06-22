@@ -69,7 +69,7 @@ function isProbablyText(buf: Buffer): boolean {
   return true;
 }
 
-function deriveTier(d: RawDetection, rel: string): { tier: BlastTier; needsOnchainCheck: boolean } {
+export function deriveTier(d: RawDetection, rel: string): { tier: BlastTier; needsOnchainCheck: boolean } {
   const isKeyMaterial =
     d.kind === "solana-keypair-64" ||
     d.kind === "solana-secret-32" ||
