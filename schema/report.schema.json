@@ -146,6 +146,14 @@
         "fail": { "type": "integer", "minimum": 0 },
         "cant_tell": { "type": "integer", "minimum": 0 }
       }
+    },
+    "costAnalysis": {
+      "type": ["object", "null"],
+      "description": "Additive cost & rent analysis (npx brainblast). Does not affect the security verdict."
+    },
+    "walletConfig": {
+      "type": ["object", "null"],
+      "description": "Additive Wallet Guard analysis (v0.8.3): declared network vs wallet-adapter wiring. Surfaced in the default run but does NOT affect checks[]/checkTotals or the security verdict; gate explicitly with --fail-on-wallet."
     }
   }
 }

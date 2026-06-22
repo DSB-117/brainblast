@@ -120,6 +120,28 @@ const BANNER: Record<WalletVerdict, string> = {
   block: "BLOCK — wallet network/config mismatch",
 };
 
+// Compact section for embedding in the default `npx brainblast .` output —
+// additive and advisory (mirrors the Cost & Rent section; never gates by default).
+export function renderWalletSection(r: WalletReport): string {
+  const lines: string[] = [];
+  lines.push("── Wallet config ────────────────────────────────────────────");
+  if (!r.walletAdapterDetected && r.findings.length === 0) {
+    lines.push("  (no @solana/wallet-adapter-react setup detected)");
+    return lines.join("\n");
+  }
+  if (r.findings.length === 0) {
+    lines.push("  ✓ declared network is wired through; adapter looks correct");
+    return lines.join("\n");
+  }
+  const TAG: Record<WalletSeverity, string> = { critical: "CRIT", high: "HIGH", medium: "MED " };
+  for (const f of r.findings) {
+    lines.push(`  [${TAG[f.severity]}] ${f.id}  ${f.file ?? ""}${f.line ? `:${f.line}` : ""}`);
+    lines.push(`         ${f.detail}`);
+  }
+  lines.push("  (advisory — does not gate the verdict; pass --fail-on-wallet to fail on critical/high)");
+  return lines.join("\n");
+}
+
 export function renderWalletText(r: WalletReport): string {
   const lines: string[] = [];
   lines.push(`Wallet Guard  [${BANNER[r.verdict]}]  ${r.dir}`);
