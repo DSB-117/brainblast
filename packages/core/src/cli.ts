@@ -234,6 +234,11 @@ if (args[0] === "guard") {
   process.exit(0);
 }
 
+if (args[0] === "rescue") {
+  await runRescue(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -1117,7 +1122,7 @@ async function parseAnchorProgramIds(dir: string): Promise<string[]> {
 }
 
 async function runKeys(argv: string[]): Promise<void> {
-  const { scanSecrets, renderKeysText } = await import("./keys/scan.ts");
+  const { scanSecrets, renderKeysText, renderAuditText, auditReport } = await import("./keys/scan.ts");
   const { enrichSecretsOnchain } = await import("./keys/onchain.ts");
   const vault = await import("./keys/vault.ts");
   const os = await import("node:os");
@@ -1134,6 +1139,7 @@ async function runKeys(argv: string[]): Promise<void> {
 
   const dir = argv.find((a) => !a.startsWith("--")) ?? ".";
   const jsonOut = argv.includes("--json");
+  const auditMode = argv.includes("--audit");
   const offline = argv.includes("--offline");
   const noVault = argv.includes("--no-vault");
   const projectOnly = argv.includes("--project-only");
@@ -1164,6 +1170,13 @@ async function runKeys(argv: string[]): Promise<void> {
     process.exit(2);
   }
 
+  if (auditMode) {
+    const audit = auditReport(report);
+    if (jsonOut) console.log(JSON.stringify({ ...report, audit }, null, 2));
+    else console.log(renderAuditText(report));
+    process.exit(audit.pass ? 0 : 1);
+  }
+
   if (jsonOut) {
     console.log(JSON.stringify(report, null, 2));
   } else {
@@ -1174,6 +1187,22 @@ async function runKeys(argv: string[]): Promise<void> {
   // --fail-on funds: also exit 1 if any unbacked high-tier secret exists at all.
   if (report.verdict === "exposed") process.exit(1);
   if (failOn === "funds" && report.summary.unrecoverable > 0) process.exit(1);
+}
+
+async function runRescue(argv: string[]): Promise<void> {
+  const { rescue, renderRescueText } = await import("./keys/rescue.ts");
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.error("usage: brainblast rescue [dir] [--json] [--no-history]");
+    console.error("  After something may have been deleted: what the Vault can bring back, what's still at");
+    console.error("  risk, and (from shell history) the command that likely did it. Exit 1 if anything is");
+    console.error("  recoverable-but-not-yet-restored or unbacked.");
+    process.exit(2);
+  }
+  const dir = argv.find((a) => !a.startsWith("--")) ?? ".";
+  const report = rescue(dir, { includeHistory: !argv.includes("--no-history") });
+  if (argv.includes("--json")) console.log(JSON.stringify(report, null, 2));
+  else console.log(renderRescueText(report));
+  process.exit(report.recoverableMissing > 0 || report.unbackedAtRisk > 0 ? 1 : 0);
 }
 
 async function runVault(argv: string[]): Promise<void> {

@@ -273,6 +273,79 @@ const TIER_LABEL: Record<BlastTier, string> = {
   trivial: "TRIVIAL",
 };
 
+// ── Capability 4: the hardening audit (CI-gateable posture check) ────────────
+export interface AuditCheck {
+  id: string;
+  label: string;
+  status: "pass" | "fail" | "warn";
+  detail: string;
+}
+export interface AuditResult {
+  checks: AuditCheck[];
+  pass: boolean;
+}
+
+export function auditReport(report: KeysReport): AuditResult {
+  const checks: AuditCheck[] = [];
+  const high = report.secrets.filter((s) => s.tier === "terminal" || s.tier === "funds");
+
+  const unbacked = high.filter((s) => !(s.vaulted || s.gitTracked));
+  checks.push({
+    id: "backed-up",
+    label: "Irreplaceable secrets are recoverable (Vault)",
+    status: unbacked.length ? "fail" : "pass",
+    detail: unbacked.length
+      ? `${unbacked.length} high-tier secret(s) NOT backed up — one rm from gone forever: ${unbacked.map((s) => s.rel).join(", ")}. Run: brainblast vault backup`
+      : "Every high-tier secret is backed up in the Vault.",
+  });
+
+  const tracked = report.secrets.filter((s) => s.gitTracked);
+  checks.push({
+    id: "not-committed",
+    label: "No secrets committed to git",
+    status: tracked.length ? "fail" : "pass",
+    detail: tracked.length
+      ? `${tracked.length} secret(s) committed to git (leak): ${tracked.map((s) => s.rel).join(", ")}`
+      : "No detected secret is committed to git.",
+  });
+
+  const exposedToCommit = report.secrets.filter(
+    (s) => s.inGitRepo && !s.external && s.gitTracked === false && s.gitIgnored === false && s.tier !== "trivial",
+  );
+  checks.push({
+    id: "gitignored",
+    label: "In-repo secrets are gitignored",
+    status: exposedToCommit.length ? "warn" : "pass",
+    detail: exposedToCommit.length
+      ? `${exposedToCommit.length} secret(s) are neither ignored nor committed — one \`git add\` from a leak: ${exposedToCommit.map((s) => s.rel).join(", ")}`
+      : "All in-repo secrets are gitignored.",
+  });
+
+  const terminal = report.secrets.filter((s) => s.tier === "terminal");
+  if (terminal.length) {
+    const progs = terminal.flatMap((s) => s.onchain?.upgradeAuthorityOf ?? []).join(", ");
+    checks.push({
+      id: "authority-multisig",
+      label: "Upgrade authority is not a single deletable key",
+      status: "warn",
+      detail: `A program upgrade authority is a single keypair on disk (${progs}). Migrate to a Squads multisig so no single deletable file can brick the program.`,
+    });
+  }
+
+  return { checks, pass: !checks.some((c) => c.status === "fail") };
+}
+
+const AUDIT_ICON = { pass: "✓", warn: "⚠", fail: "✗" } as const;
+
+export function renderAuditText(report: KeysReport): string {
+  const audit = auditReport(report);
+  const lines: string[] = [];
+  lines.push(`Keyguard audit  [${audit.pass ? "PASS" : "FAIL"}]  ${report.root}`);
+  lines.push("");
+  for (const c of audit.checks) lines.push(`  ${AUDIT_ICON[c.status]} ${c.label} — ${c.detail}`);
+  return lines.join("\n");
+}
+
 export function renderKeysText(r: KeysReport): string {
   const lines: string[] = [];
   const verdictTag = r.verdict === "exposed" ? "EXPOSED" : r.verdict === "warn" ? "AT RISK" : "OK";
