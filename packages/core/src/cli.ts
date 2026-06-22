@@ -244,6 +244,11 @@ if (args[0] === "signguard") {
   process.exit(0);
 }
 
+if (args[0] === "wallet-check") {
+  await runWalletCheck(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -1339,6 +1344,28 @@ async function runVault(argv: string[]): Promise<void> {
 
   console.error(`brainblast vault: unknown command '${sub}'`);
   process.exit(2);
+}
+
+async function runWalletCheck(argv: string[]): Promise<void> {
+  const { analyzeWallet, renderWalletText } = await import("./wallet/analyze.ts");
+
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.error("usage: brainblast wallet-check [dir] [--strict] [--json]");
+    console.error("  Reconcile a Solana frontend's declared network (.env) against its actual wallet-adapter");
+    console.error("  wiring. Flags network mismatch, dead/unwired network env vars, the rate-limited public");
+    console.error("  mainnet RPC, RPC keys exposed in NEXT_PUBLIC_*, and a wallet UI missing its stylesheet.");
+    console.error("  Exit 1 on a critical mismatch (or any finding with --strict).");
+    process.exit(2);
+  }
+
+  const dir = argv.find((a) => !a.startsWith("--")) ?? ".";
+  const report = analyzeWallet(dir);
+
+  if (argv.includes("--json")) console.log(JSON.stringify(report, null, 2));
+  else console.log(renderWalletText(report));
+
+  if (report.verdict === "block") process.exit(1);
+  if (argv.includes("--strict") && report.findings.length > 0) process.exit(1);
 }
 
 async function runSignguard(argv: string[]): Promise<void> {
