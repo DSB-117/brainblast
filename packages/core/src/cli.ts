@@ -7,6 +7,7 @@ import { loadMemory, saveMemory, updateMemory, precedentKey } from "./memory.ts"
 import { resolveRules } from "./resolveRules.ts";
 import { buildTrustGraph, renderTrustGraphMd, isValidSolanaAddress, cacheSize, loadProgramCache, defaultCachePath } from "./trustGraph/index.ts";
 import { analyzeCosts, renderCostReportMd } from "./costAnalysis.ts";
+import { analyzeWallet, renderWalletSection } from "./wallet/analyze.ts";
 import { buildDeployPlan, renderDeployPlanMd, renderDeployPlanText } from "./deployPlan.ts";
 import {
   EXPLOIT_PATTERNS,
@@ -256,6 +257,7 @@ if (args[0] === "fix") {
 
 const ci = args.includes("--ci");
 const strict = args.includes("--strict");
+const failOnWallet = args.includes("--fail-on-wallet");
 const sinceIdx = args.indexOf("--since");
 const since = sinceIdx >= 0 ? args[sinceIdx + 1] : undefined;
 const targetDir =
@@ -312,6 +314,17 @@ if (!changedRanges) {
 const costReport = analyzeCosts(targetDir);
 // Attach cost analysis as a named section — additive, never mutates security results.
 (report as any).costAnalysis = costReport;
+
+// Wallet Guard (v0.8.3): reconcile declared network (.env) vs wallet-adapter
+// wiring. Attached as an additive section like costAnalysis — surfaced on every
+// full run, but kept OUT of checks[]/checkTotals so it never changes the security
+// verdict or an existing CI gate. Skipped in --since mode (it's whole-repo /
+// cross-file, like the memory write). Gate it explicitly with --fail-on-wallet.
+let walletReport: ReturnType<typeof analyzeWallet> | undefined;
+if (!changedRanges) {
+  walletReport = analyzeWallet(targetDir);
+  (report as any).walletConfig = walletReport;
+}
 
 const outDir = join(targetDir, ".agent-research");
 mkdirSync(outDir, { recursive: true });
@@ -370,10 +383,21 @@ if (costReport.accountFlows.length === 0) {
 console.log(`  cost report: ${costMdPath}`);
 console.log(`  report:      ${reportPath}`);
 
+// Wallet config section — additive/advisory; only shown when relevant.
+if (walletReport && (walletReport.walletAdapterDetected || walletReport.findings.length > 0)) {
+  console.log("\n" + renderWalletSection(walletReport));
+}
+
+// Opt-in wallet gating: fails only when --fail-on-wallet is passed AND a
+// critical/high wallet finding exists. The default verdict/exit is unchanged.
+const walletGate =
+  failOnWallet && !!walletReport && walletReport.findings.some((f) => f.severity === "critical" || f.severity === "high");
+
 if (ci) {
-  const gateFail = fails > 0 || (strict && cantTell > 0);
+  const gateFail = fails > 0 || (strict && cantTell > 0) || walletGate;
   process.exit(gateFail ? 1 : 0);
 }
+if (walletGate) process.exit(1);
 
 function runDeployPlan(argv: string[]) {
   if (argv.includes("--help") || argv.includes("-h")) {

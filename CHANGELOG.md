@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## v0.8.3 — 2026-06-22
+
+**Wallet Guard now runs in the default `npx brainblast .`** — so the
+devnet-config-shipping-mainnet class is caught on a normal run, without having to
+know to invoke a separate command. Follows the `costAnalysis` precedent: **purely
+additive, never mutates security results.**
+
+- The default audit prints a **"Wallet config"** section and attaches the findings
+  as `report.walletConfig`, but keeps them **out of `checks[]` / `checkTotals`** — so
+  the security verdict, exit code, `brainblast-gate.sh`, `--ci`, and the living-memory
+  path are all **unchanged**. No previously-green build can fail by surprise.
+- Only shown when a wallet-adapter setup or a finding is present (no noise on
+  non-frontend repos); skipped in `--since` diff-scoped runs.
+- **Opt-in gating:** `brainblast . --fail-on-wallet` exits 1 on a critical/high
+  wallet finding. The default exit behavior is untouched.
+- `report.schema.json`: `costAnalysis` and `walletConfig` added as optional
+  nullable-object sections so a fresh `report.json` validates.
+
+The standalone `brainblast wallet-check [dir]` from v0.8.2 is unchanged.
+
 ## v0.8.2 — 2026-06-22
 
 **Wallet Guard** — catch the silent wallet-adapter footguns that ship the wrong
