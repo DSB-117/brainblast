@@ -219,6 +219,11 @@ if (args[0] === "fee-configs") {
   process.exit(0);
 }
 
+if (args[0] === "keys") {
+  await runKeys(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -1075,6 +1080,54 @@ async function runScore(argv: string[]): Promise<void> {
   if (min && !gradeAtLeast(result.grade, min)) {
     process.exit(1);
   }
+}
+
+async function runKeys(argv: string[]): Promise<void> {
+  const { scanSecrets, renderKeysText } = await import("./keys/scan.ts");
+  const os = await import("node:os");
+  const { join } = await import("node:path");
+
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.error("usage: brainblast keys [dir] [--json] [--project-only] [--include PATH] [--fail-on funds|exposed]");
+    console.error("  Find every irreplaceable Solana secret (keypairs, seed phrases, .env keys) and rank it by");
+    console.error("  blast radius — what you permanently lose if an agent deletes it. Exit 1 when a high-tier");
+    console.error("  secret is git-committed (leak) or gitignored-and-unbacked (one rm from gone forever).");
+    process.exit(2);
+  }
+
+  const dir = argv.find((a) => !a.startsWith("--")) ?? ".";
+  const jsonOut = argv.includes("--json");
+  const projectOnly = argv.includes("--project-only");
+  const failIdx = argv.indexOf("--fail-on");
+  const failOn = failIdx >= 0 ? argv[failIdx + 1] : "exposed";
+
+  const extraPaths: string[] = [];
+  if (!projectOnly) {
+    // The single most-deleted irreplaceable file: the default CLI wallet.
+    extraPaths.push(join(os.homedir(), ".config", "solana", "id.json"));
+  }
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === "--include" && argv[i + 1]) extraPaths.push(argv[i + 1]);
+  }
+
+  let report;
+  try {
+    report = scanSecrets(dir, { extraPaths });
+  } catch (e: any) {
+    console.error(`brainblast keys: ${e?.message ?? String(e)}`);
+    process.exit(2);
+  }
+
+  if (jsonOut) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    console.log(renderKeysText(report));
+  }
+
+  // --fail-on exposed (default): exit 1 only on the headline failure.
+  // --fail-on funds: also exit 1 if any unbacked high-tier secret exists at all.
+  if (report.verdict === "exposed") process.exit(1);
+  if (failOn === "funds" && report.summary.unrecoverable > 0) process.exit(1);
 }
 
 async function runPumpCheck(argv: string[]): Promise<void> {
