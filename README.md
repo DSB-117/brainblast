@@ -58,7 +58,7 @@ Everything Brainblast does today, at a glance.
 - **Gates CI.** A `--ci` mode runs non-interactively (no prompts, documented defaults), and a dependency-free gate script turns `report.json` into an exit code — fail the build if any CRITICAL risk remains (`--fail-on=critical|high|…`) or the verdict is `blocked`.
 
 **Deterministic auditor — `npx brainblast`**
-- Published to npm as [`brainblast@0.8.0`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
+- Published to npm as [`brainblast@0.8.1`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
 - A Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code *offline* (no network, no LLM) for **eighteen built-in integration traps**: Stripe webhook raw-body signature verification, Privy/JWT signature + `aud` + `iss` verification, Bags/Solana fee-share creator-inclusion, Token-2022 program-ID pinning, Metaplex metadata immutability, Anchor `init_if_needed` guards, committed `.env*` secrets, **graph-based, project-wide cross-file taint tracking** for secret leaks (`env-secret-leaked-to-sink`), command injection (`request-input-command-injection`), SQL injection via Prisma raw queries (`prisma-raw-injection`), open-redirect via tainted `res.redirect()` calls (`open-redirect`), JWT algorithm confusion (`jsonwebtoken-algorithm-pinned`), **Solana mint impersonation** (`solana-token-impersonation`), four **Anchor program-security checks** — missing `Signer` constraint on authority accounts (`anchor-signer-constraint-missing`), `UncheckedAccount` usage (`anchor-unchecked-account-type`), `find_program_address` in handler bodies (`anchor-pda-find-program-address`), and **unverified CPI target program** (`cpi-target-program-unverified`, the Wormhole pattern), and **silent zero-revenue fee configs** (`metaplex-seller-fee-zero` — royalties omitted/zeroed).
 - **`brainblast rico <CA>`** — token identity + quality check: verifies a contract address against the canonical mint registry (offline) and Jupiter (live), detects impersonators, and runs a Rico Maps forensic scan (risk score, snipers, cabal, bundle clusters, deployer flags).
 - Emits CI-readable `checks[]` and `checkTotals` into `report.json`, and can generate behavioral contract tests that fail on the vulnerable fixtures and pass on the fixed ones — the durable guardrail that keeps a fixed trap fixed.
@@ -119,6 +119,27 @@ Keyguard is the safety net. **Identify → Guard → Vault → Audit → Rescue:
 
 - **`brainblast rescue`** — after a possible deletion: what the Vault can bring back, what's still at risk, what's safe — plus shell-history forensics for the command that likely did it.
 
+## Signguard — a standing signing policy for transactions (v0.8.1)
+
+Keyguard protects the keypair from *deletion*. **Signguard protects it from being *used against you*.** The most common way SOL actually leaves a wallet is signing one transaction you didn't understand — a drainer, a `SetAuthority`, a delegate `Approve`, a runaway transfer — and agents now sign transactions autonomously. Signguard is the transaction-signing sibling of the file Guard: it decodes a transaction *before it's signed* and enforces a standing local **signing policy**.
+
+Built on the `firewall`, it adds what the firewall lacks — *how much leaves, and the rules you set once and enforce everywhere*:
+
+- **Spend caps** — decodes the SOL leaving the fee payer and enforces a **per-transaction** and a **cumulative per-session** limit.
+- **Program allowlist** — unknown programs become a hard block (not a soft warn).
+- **Action policy** — `setAuthority` / `programUpgrade` / `delegateApproval` / `closeAccount` each `allow|warn|block` (secure defaults block the first three).
+- **Recipient allowlist** — transfers must go where you approved.
+
+```
+$ brainblast signguard <base64-tx>
+Signguard  [BLOCK — violates your signing policy]
+  SOL out:     5.0000 SOL
+  Recipients:  8qbHbw2Bbb…CVfeR
+  ⛔ [spend-cap-tx] Moves 5.0000 SOL out of the fee payer — over the 1 SOL per-transaction limit.
+```
+
+- **`brainblast signguard init`** scaffolds a secure-default policy; **`signguard hook`** is the Claude Code `PreToolUse` entrypoint (it even catches `solana transfer … 9` straight from Bash); **`inspectSigning(tx, { policy })`** is the inline export an agent calls before signing.
+
 ## Prerequisites
 
 Brainblast is a workflow that runs *inside* a host agent. It needs a browser engine to fetch live docs.
@@ -138,14 +159,14 @@ Install gstack: run git clone --single-branch --depth 1 https://github.com/garry
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.8.0/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.8.1/install.sh | sh
 ```
 
 The installer pins to a tagged release, verifies SHA-256 checksums before writing any file, and auto-detects Claude Code, OpenClaw, and Codex. If gstack is missing, it warns you with the exact command to fix it. (It installs the Brainblast skill, but it does **not** install gstack for you — that is a one-time prerequisite above.)
 
 **Or tell your agent:**
 
-> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.8.0/install.sh | sh`
+> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.8.1/install.sh | sh`
 
 For the bleeding edge instead of a pinned release, prefix with `BRAINBLAST_REF=main`.
 

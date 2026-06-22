@@ -26,7 +26,7 @@ Research every external component in a requirements file before an agent starts 
 > - `brainblast pump-check <mint>` — launch pre-flight: mint/freeze authority revocation + identity + Rico forensics → GO/CAUTION/NO-GO. `/brainblast-pump-check`.
 > - `brainblast batch <file>` — risk-rank a list of contract addresses in parallel. `/brainblast-batch`.
 > - `brainblast rico <CA>` — token identity + quality check (canonical registry + Jupiter + Rico Maps). Use `/brainblast-rico-maps <CA>`.
-> - 18 bundled rules incl. `solana-token-impersonation` + 4 Anchor program-security checks + `metaplex-seller-fee-zero`; `brainblast diff` / `mcp` / `drift`; GitHub Action `uses: DSB-117/brainblast/action@v0.8.0`; 8 opt-in protocol packs (`--packs jupiter,pyth`).
+> - 18 bundled rules incl. `solana-token-impersonation` + 4 Anchor program-security checks + `metaplex-seller-fee-zero`; `brainblast diff` / `mcp` / `drift`; GitHub Action `uses: DSB-117/brainblast/action@v0.8.1`; 8 opt-in protocol packs (`--packs jupiter,pyth`).
 
 > **v0.7.2 — Deployment Intelligence:**
 > - `brainblast deploy-plan [dir]` — answers "how much SOL do I need to deploy this?" and "what's the exact ordered transaction sequence?" for an Anchor program. Reads the compiled `.so` + `#[derive(Accounts)]` structs and computes BPF upgradeable-loader economics (program + programdata at 2× upgrade headroom + transient buffer), per-PDA `init` rent (treasury, config, …) with seeds/payer, tx fees, and the create-buffer → write → deploy → initialize sequence. `/brainblast-deploy-plan`.
@@ -52,6 +52,10 @@ Research every external component in a requirements file before an agent starts 
 > - `brainblast guard` — a Claude Code `PreToolUse` hook that blocks a destructive command *before it runs* if its blast set hits an irreplaceable secret. Measured, not string-matched: `git clean -n` dry-run for the exact list, `rm -rf` dir-walk, redirects/`shred`/`dd`/`mv`-`cp`/compound `cd &&`. `guard install` arms it; `guard <cmd>` is direct/Codex mode.
 > - `brainblast vault` — encrypted (AES-256-GCM), content-addressed, versioned snapshots at `~/.brainblast/vault`, *outside any repo* so `rm`/`git clean` can't reach them. `backup` / `restore` / `trash` / `status` / `list` / `verify`.
 > - `brainblast rescue` — honest incident response after a deletion: what the Vault can bring back, what's at risk, what's safe, + shell-history forensics for the likely culprit.
+
+> **v0.8.1 — Signguard (a standing signing policy for transactions):**
+> - Keyguard protects the keypair from deletion; Signguard protects it from being *used against you*. `brainblast signguard <base64-tx>` decodes a transaction before it's signed and enforces a standing policy: per-tx + cumulative-session **SOL spend caps** (it quantifies the SOL leaving the fee payer), a **program allowlist** (unknown → hard block), per-action rules (`setAuthority`/`programUpgrade`/`delegateApproval`/`closeAccount`), and a recipient allowlist. Exit 1 on block.
+> - `signguard init` scaffolds a secure-default `.brainblast/signguard.json`; `signguard hook` is the Claude Code `PreToolUse` entrypoint (catches `solana transfer … N` / `set-upgrade-authority` straight from Bash); `inspectSigning(tx, { policy })` is the inline export an agent calls before signing. `signguard session` / `reset` manage the cumulative ledger.
 
 > **Incremental runs (caching).** Brainblast caches research per component, keyed by
 > `name@version`, in `.agent-research/cache/`. A re-run reuses cached components whose version is
