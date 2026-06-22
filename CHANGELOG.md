@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+## v0.8.2 — 2026-06-22
+
+**Wallet Guard** — catch the silent wallet-adapter footguns that ship the wrong
+cluster, break the connect modal, and leak paid RPC keys. The trigger: a devnet
+demo whose `.env` said `NEXT_PUBLIC_SOLANA_NETWORK=devnet`, but neither coding
+agent wired it into the wallet adapter — so the `ConnectionProvider` ran mainnet
+and the wallet referenced real SOL. Classic silent config mismatch.
+
+**`brainblast wallet-check [dir]`** — one analysis pass that reconciles the
+project's *declared* network (`.env*`) against its *actual* wallet-adapter wiring
+(`@solana/wallet-adapter-react`), emitting:
+
+- **`solana-wallet-network-mismatch`** (critical) — `.env` declares one network but
+  the `ConnectionProvider` endpoint is hardcoded to a *different* one and isn't wired
+  to the env var → the app runs on the wrong cluster, referencing real funds.
+- **`solana-network-env-unwired`** (high) — a network env var is declared but **no
+  source file reads it** (the exact reported bug); the value is dead.
+- **`solana-public-rpc-endpoint`** (high) — the rate-limited public mainnet RPC
+  (`api.mainnet-beta.solana.com`), which 429s under real load. Only fires for
+  mainnet-bound endpoints (devnet public RPC is fine for a demo).
+- **`solana-rpc-key-exposed`** (high) — a keyed provider RPC URL (Helius/QuickNode/
+  Alchemy/…) under a client-exposed prefix (`NEXT_PUBLIC_`/`VITE_`/`REACT_APP_`),
+  shipped to every browser → anyone drains your paid quota.
+- **`solana-wallet-ui-styles-missing`** (medium) — `WalletModalProvider`/
+  `WalletMultiButton` used without importing `@solana/wallet-adapter-react-ui/styles.css`
+  → the connect modal renders unstyled / looks broken.
+
+Verdict `allow / warn / block`; exit 1 on a critical mismatch (or any finding with
+`--strict`). `--json` and an `inspectWalletConfig(dir)` inline export. Conservative,
+content-based, fully offline. 10 new tests; full package suite at 513.
+
 ## v0.8.1 — 2026-06-22
 
 **Signguard** — Keyguard protects the keypair from *deletion*; Signguard protects
