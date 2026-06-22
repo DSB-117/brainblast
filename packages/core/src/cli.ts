@@ -224,6 +224,11 @@ if (args[0] === "keys") {
   process.exit(0);
 }
 
+if (args[0] === "vault") {
+  await runVault(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -1082,22 +1087,53 @@ async function runScore(argv: string[]): Promise<void> {
   }
 }
 
+// Parse program IDs declared in an Anchor.toml ([programs.*] sections), so the
+// on-chain step can ask "is one of my keys the upgrade authority of these?".
+async function parseAnchorProgramIds(dir: string): Promise<string[]> {
+  try {
+    const { readFileSync, existsSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const p = join(dir, "Anchor.toml");
+    if (!existsSync(p)) return [];
+    const ids = new Set<string>();
+    let inPrograms = false;
+    for (const line of readFileSync(p, "utf8").split(/\r?\n/)) {
+      const t = line.trim();
+      if (t.startsWith("[")) inPrograms = /^\[programs\./.test(t);
+      else if (inPrograms) {
+        const m = t.match(/=\s*"([1-9A-HJ-NP-Za-km-z]{32,44})"/);
+        if (m) ids.add(m[1]);
+      }
+    }
+    return [...ids];
+  } catch {
+    return [];
+  }
+}
+
 async function runKeys(argv: string[]): Promise<void> {
   const { scanSecrets, renderKeysText } = await import("./keys/scan.ts");
+  const { enrichSecretsOnchain } = await import("./keys/onchain.ts");
+  const vault = await import("./keys/vault.ts");
   const os = await import("node:os");
   const { join } = await import("node:path");
 
   if (argv.includes("--help") || argv.includes("-h")) {
-    console.error("usage: brainblast keys [dir] [--json] [--project-only] [--include PATH] [--fail-on funds|exposed]");
+    console.error("usage: brainblast keys [dir] [--json] [--offline] [--no-vault] [--project-only] [--include PATH] [--rpc URL] [--fail-on funds|exposed]");
     console.error("  Find every irreplaceable Solana secret (keypairs, seed phrases, .env keys) and rank it by");
-    console.error("  blast radius — what you permanently lose if an agent deletes it. Exit 1 when a high-tier");
-    console.error("  secret is git-committed (leak) or gitignored-and-unbacked (one rm from gone forever).");
+    console.error("  blast radius — what you permanently lose if an agent deletes it. Resolves on-chain whether a");
+    console.error("  key is a live program's SOLE UPGRADE AUTHORITY (☠ terminal) or holds SOL (funds), and whether");
+    console.error("  the Vault can recover it. Exit 1 when a high-tier secret is committed (leak) or unbacked.");
     process.exit(2);
   }
 
   const dir = argv.find((a) => !a.startsWith("--")) ?? ".";
   const jsonOut = argv.includes("--json");
+  const offline = argv.includes("--offline");
+  const noVault = argv.includes("--no-vault");
   const projectOnly = argv.includes("--project-only");
+  const rpcIdx = argv.indexOf("--rpc");
+  const rpcUrl = rpcIdx >= 0 ? argv[rpcIdx + 1] : undefined;
   const failIdx = argv.indexOf("--fail-on");
   const failOn = failIdx >= 0 ? argv[failIdx + 1] : "exposed";
 
@@ -1110,9 +1146,14 @@ async function runKeys(argv: string[]): Promise<void> {
     if (argv[i] === "--include" && argv[i + 1]) extraPaths.push(argv[i + 1]);
   }
 
+  const vaultLookup = noVault ? undefined : (abs: string) => vault.isBackedUp(abs);
+
   let report;
   try {
-    report = scanSecrets(dir, { extraPaths });
+    report = scanSecrets(dir, { extraPaths, vaultLookup });
+    if (!offline) {
+      report = await enrichSecretsOnchain(report, { rpcUrl, programIds: await parseAnchorProgramIds(dir) });
+    }
   } catch (e: any) {
     console.error(`brainblast keys: ${e?.message ?? String(e)}`);
     process.exit(2);
@@ -1128,6 +1169,137 @@ async function runKeys(argv: string[]): Promise<void> {
   // --fail-on funds: also exit 1 if any unbacked high-tier secret exists at all.
   if (report.verdict === "exposed") process.exit(1);
   if (failOn === "funds" && report.summary.unrecoverable > 0) process.exit(1);
+}
+
+async function runVault(argv: string[]): Promise<void> {
+  const vault = await import("./keys/vault.ts");
+  const { scanSecrets } = await import("./keys/scan.ts");
+  const { statSync } = await import("node:fs");
+  const isDir = (p: string): boolean => {
+    try {
+      return statSync(p).isDirectory();
+    } catch {
+      return false;
+    }
+  };
+  const sub = argv[0];
+  const rest = argv.slice(1);
+
+  if (!sub || sub === "--help" || sub === "-h") {
+    console.error("usage: brainblast vault <command>");
+    console.error("  backup [dir|file...]   back up high-tier secrets (or specific files) into the encrypted Vault");
+    console.error("  status [dir]           show which detected secrets are backed up");
+    console.error("  list                   list the latest snapshot per path");
+    console.error("  restore <path|pubkey>  restore a secret from the Vault [--to DEST] [--force] [--by-pubkey]");
+    console.error("  trash <file>           back up a file, then delete it (safe soft-delete)");
+    console.error("  verify                 check every indexed snapshot's object is present");
+    console.error("");
+    console.error("  The Vault lives at ~/.brainblast/vault (override BRAINBLAST_VAULT_DIR), encrypted with a");
+    console.error("  local key or BRAINBLAST_VAULT_PASSPHRASE. It is OUTSIDE your repo, so rm/git-clean can't reach it.");
+    process.exit(2);
+  }
+
+  if (sub === "backup") {
+    const targets = rest.filter((a) => !a.startsWith("--"));
+    let files: { path: string; pubkey?: string; kind?: string; tier?: string }[] = [];
+    if (targets.length === 0 || targets.every((t) => isDir(t))) {
+      // Back up the high-tier secrets found by scanning the dir (default: cwd).
+      const dir = targets[0] ?? ".";
+      const report = scanSecrets(dir, {});
+      files = report.secrets
+        .filter((s) => s.tier === "terminal" || s.tier === "funds" || s.tier === "unknown")
+        .map((s) => ({ path: s.path, pubkey: s.pubkey, kind: s.kind, tier: s.tier }));
+    } else {
+      files = targets.map((t) => ({ path: t }));
+    }
+    if (files.length === 0) {
+      console.log("vault: nothing to back up (no high-tier secrets found).");
+      process.exit(0);
+    }
+    for (const f of files) {
+      try {
+        const { deduped } = vault.backupFile(f.path, { pubkey: f.pubkey, kind: f.kind, tier: f.tier });
+        console.log(`  ${deduped ? "·" : "✓"} ${f.path}${deduped ? " (already stored)" : " backed up"}`);
+      } catch (e: any) {
+        console.error(`  ✗ ${f.path}: ${e?.message ?? String(e)}`);
+      }
+    }
+    process.exit(0);
+  }
+
+  if (sub === "status") {
+    const dir = rest.find((a) => !a.startsWith("--")) ?? ".";
+    const report = scanSecrets(dir, { vaultLookup: (abs) => vault.isBackedUp(abs) });
+    const interesting = report.secrets.filter((s) => s.tier !== "trivial");
+    if (interesting.length === 0) {
+      console.log("No high-tier secrets detected.");
+      process.exit(0);
+    }
+    for (const s of interesting) {
+      console.log(`  ${s.vaulted ? "✓ backed up" : "✗ NOT backed up"}  ${s.rel}`);
+    }
+    const unbacked = interesting.filter((s) => !s.vaulted).length;
+    process.exit(unbacked > 0 ? 1 : 0);
+  }
+
+  if (sub === "list") {
+    const entries = vault.listLatestByPath();
+    if (entries.length === 0) {
+      console.log("Vault is empty.");
+      process.exit(0);
+    }
+    for (const e of entries) {
+      console.log(`  ${e.ts}  ${e.path}${e.pubkey ? `  (${e.pubkey})` : ""}`);
+    }
+    process.exit(0);
+  }
+
+  if (sub === "restore") {
+    const query = rest.find((a) => !a.startsWith("--"));
+    if (!query) {
+      console.error("usage: brainblast vault restore <path|pubkey> [--to DEST] [--force] [--by-pubkey]");
+      process.exit(2);
+    }
+    const toIdx = rest.indexOf("--to");
+    const to = toIdx >= 0 ? rest[toIdx + 1] : undefined;
+    try {
+      const r = vault.restore(query, { to, force: rest.includes("--force"), byPubkey: rest.includes("--by-pubkey") });
+      console.log(`✓ restored ${r.restoredTo}  (snapshot ${r.ts})`);
+    } catch (e: any) {
+      console.error(`vault restore: ${e?.message ?? String(e)}`);
+      process.exit(2);
+    }
+    process.exit(0);
+  }
+
+  if (sub === "trash") {
+    const target = rest.find((a) => !a.startsWith("--"));
+    if (!target) {
+      console.error("usage: brainblast vault trash <file>");
+      process.exit(2);
+    }
+    try {
+      vault.trash(target);
+      console.log(`✓ ${target} backed up and removed (restore with: brainblast vault restore ${target})`);
+    } catch (e: any) {
+      console.error(`vault trash: ${e?.message ?? String(e)}`);
+      process.exit(2);
+    }
+    process.exit(0);
+  }
+
+  if (sub === "verify") {
+    const v = vault.verifyVault();
+    if (v.ok) {
+      console.log("✓ Vault integrity OK — every snapshot's object is present.");
+      process.exit(0);
+    }
+    console.error(`✗ Vault missing ${v.missing.length} object(s): ${v.missing.join(", ")}`);
+    process.exit(1);
+  }
+
+  console.error(`brainblast vault: unknown command '${sub}'`);
+  process.exit(2);
 }
 
 async function runPumpCheck(argv: string[]): Promise<void> {

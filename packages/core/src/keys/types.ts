@@ -45,6 +45,17 @@ export interface DetectedSecret extends RawDetection {
   vaulted?: boolean; // backed up by the Vault (filled in once the Vault ships)
   external?: boolean; // lives outside the scanned project tree (e.g. ~/.config/solana)
   inGitRepo?: boolean; // the scan root is a git work tree (so git context is meaningful)
+  onchain?: OnchainFacts; // resolved blast radius, once the chain is consulted
+}
+
+// What the chain says this keypair actually controls. This is what turns a
+// generic "private key" into "☠ the sole upgrade authority of a live program."
+export interface OnchainFacts {
+  lamports?: number; // balance of the key's own account
+  sol?: number; // lamports / 1e9, for display
+  isDeployedProgram?: boolean; // the key's pubkey is itself a deployed program
+  upgradeAuthorityOf?: string[]; // program IDs this key is the sole upgrade authority of
+  checkedProgramIds?: string[]; // which programs we were able to check against
 }
 
 export interface KeysSummary {

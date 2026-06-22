@@ -128,6 +128,9 @@ export interface ScanOpts {
   // Extra absolute paths to inspect beyond the project tree — e.g. the default
   // wallet at ~/.config/solana/id.json. These get no git context.
   extraPaths?: string[];
+  // Returns true if the file at this absolute path is backed up in the Vault.
+  // Injected so scan.ts stays decoupled from the Vault module (and testable).
+  vaultLookup?: (absPath: string) => boolean;
 }
 
 export function scanSecrets(root: string, opts: ScanOpts = {}): KeysReport {
@@ -187,15 +190,20 @@ export function scanSecrets(root: string, opts: ScanOpts = {}): KeysReport {
       needsOnchainCheck,
       gitTracked,
       gitIgnored,
-      vaulted: false,
+      vaulted: opts.vaultLookup ? opts.vaultLookup(path) : false,
       external,
       inGitRepo: git.isRepo,
     });
   }
 
-  secrets.sort((a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier] || a.rel.localeCompare(b.rel));
+  return finalizeReport(absRoot, secrets);
+}
 
-  return { root: absRoot, secrets, summary: summarize(secrets), verdict: verdictOf(secrets) };
+// Sort, summarize, and assign a verdict. Shared by the offline scan and the
+// on-chain enrichment so both produce an identically-shaped report.
+export function finalizeReport(root: string, secrets: DetectedSecret[]): KeysReport {
+  secrets.sort((a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier] || a.rel.localeCompare(b.rel));
+  return { root, secrets, summary: summarize(secrets), verdict: verdictOf(secrets) };
 }
 
 const TIER_ORDER: Record<BlastTier, number> = {
@@ -293,8 +301,9 @@ export function renderKeysText(r: KeysReport): string {
             : s.external
               ? "outside the project — no git protection"
               : "no git repo here — git cannot restore this if deleted";
+    const vault = s.vaulted ? "  ·  ✓ safe in the Vault" : "";
     const onchain = s.needsOnchainCheck ? "  ·  on-chain blast radius not yet resolved" : "";
-    lines.push(`      ${recovery}${onchain}`);
+    lines.push(`      ${recovery}${vault}${onchain}`);
   }
   return lines.join("\n");
 }

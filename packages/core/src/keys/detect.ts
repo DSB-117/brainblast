@@ -94,10 +94,17 @@ export function classifySecretValue(rawValue: string): RawDetection | null {
   if (bytes) return detectionFromBytes(bytes);
 
   if (isBase58SecretKey(value)) {
+    let pubkey: string | undefined;
+    try {
+      pubkey = base58Encode(base58Decode(value).slice(32)); // last 32 bytes = pubkey
+    } catch {
+      pubkey = undefined;
+    }
     return {
       kind: "base58-secret-key",
       confidence: "high",
       reason: "Base58 string that decodes to a 64-byte ed25519 secret key.",
+      pubkey,
     };
   }
 
