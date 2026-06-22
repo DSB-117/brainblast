@@ -58,7 +58,7 @@ Everything Brainblast does today, at a glance.
 - **Gates CI.** A `--ci` mode runs non-interactively (no prompts, documented defaults), and a dependency-free gate script turns `report.json` into an exit code — fail the build if any CRITICAL risk remains (`--fail-on=critical|high|…`) or the verdict is `blocked`.
 
 **Deterministic auditor — `npx brainblast`**
-- Published to npm as [`brainblast@0.8.1`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
+- Published to npm as [`brainblast@0.8.2`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
 - A Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code *offline* (no network, no LLM) for **eighteen built-in integration traps**: Stripe webhook raw-body signature verification, Privy/JWT signature + `aud` + `iss` verification, Bags/Solana fee-share creator-inclusion, Token-2022 program-ID pinning, Metaplex metadata immutability, Anchor `init_if_needed` guards, committed `.env*` secrets, **graph-based, project-wide cross-file taint tracking** for secret leaks (`env-secret-leaked-to-sink`), command injection (`request-input-command-injection`), SQL injection via Prisma raw queries (`prisma-raw-injection`), open-redirect via tainted `res.redirect()` calls (`open-redirect`), JWT algorithm confusion (`jsonwebtoken-algorithm-pinned`), **Solana mint impersonation** (`solana-token-impersonation`), four **Anchor program-security checks** — missing `Signer` constraint on authority accounts (`anchor-signer-constraint-missing`), `UncheckedAccount` usage (`anchor-unchecked-account-type`), `find_program_address` in handler bodies (`anchor-pda-find-program-address`), and **unverified CPI target program** (`cpi-target-program-unverified`, the Wormhole pattern), and **silent zero-revenue fee configs** (`metaplex-seller-fee-zero` — royalties omitted/zeroed).
 - **`brainblast rico <CA>`** — token identity + quality check: verifies a contract address against the canonical mint registry (offline) and Jupiter (live), detects impersonators, and runs a Rico Maps forensic scan (risk score, snipers, cabal, bundle clusters, deployer flags).
 - Emits CI-readable `checks[]` and `checkTotals` into `report.json`, and can generate behavioral contract tests that fail on the vulnerable fixtures and pass on the fixed ones — the durable guardrail that keeps a fixed trap fixed.
@@ -140,6 +140,26 @@ Signguard  [BLOCK — violates your signing policy]
 
 - **`brainblast signguard init`** scaffolds a secure-default policy; **`signguard hook`** is the Claude Code `PreToolUse` entrypoint (it even catches `solana transfer … 9` straight from Bash); **`inspectSigning(tx, { policy })`** is the inline export an agent calls before signing.
 
+## Wallet Guard — declared network vs actual wiring (v0.8.2)
+
+A devnet demo whose `.env` says `NEXT_PUBLIC_SOLANA_NETWORK=devnet` but never wires it into the wallet adapter silently runs **mainnet** — the wallet references real SOL instead of your devnet test funds. Demo-killing, and exactly the silent config mismatch Brainblast surfaces.
+
+**`brainblast wallet-check [dir]`** reconciles the project's declared network (`.env*`) against its actual `@solana/wallet-adapter-react` wiring and flags:
+
+- **network mismatch** (critical) — `.env` says one cluster, the `ConnectionProvider` endpoint is hardcoded to another;
+- **unwired network env var** (high) — declared but no source reads it (the value is dead);
+- **public mainnet RPC** (high) — `api.mainnet-beta.solana.com` is rate-limited and 429s in production;
+- **exposed RPC key** (high) — a keyed provider URL under `NEXT_PUBLIC_`/`VITE_`/`REACT_APP_` ships to every browser;
+- **missing wallet-adapter styles** (medium) — `WalletMultiButton` without `@solana/wallet-adapter-react-ui/styles.css` (unstyled modal).
+
+```
+$ brainblast wallet-check .
+Wallet Guard  [BLOCK — wallet network/config mismatch]
+  ⛔ [solana-wallet-network-mismatch] .env declares 'devnet' but the endpoint is hardcoded to 'mainnet' — real funds where you intended devnet.  (WalletContext.tsx:5)
+```
+
+Verdict `allow / warn / block`, exit 1 on a critical mismatch (`--strict`, `--json`); `inspectWalletConfig(dir)` is the inline export.
+
 ## Prerequisites
 
 Brainblast is a workflow that runs *inside* a host agent. It needs a browser engine to fetch live docs.
@@ -159,14 +179,14 @@ Install gstack: run git clone --single-branch --depth 1 https://github.com/garry
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.8.1/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.8.2/install.sh | sh
 ```
 
 The installer pins to a tagged release, verifies SHA-256 checksums before writing any file, and auto-detects Claude Code, OpenClaw, and Codex. If gstack is missing, it warns you with the exact command to fix it. (It installs the Brainblast skill, but it does **not** install gstack for you — that is a one-time prerequisite above.)
 
 **Or tell your agent:**
 
-> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.8.1/install.sh | sh`
+> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.8.2/install.sh | sh`
 
 For the bleeding edge instead of a pinned release, prefix with `BRAINBLAST_REF=main`.
 
