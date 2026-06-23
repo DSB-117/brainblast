@@ -77,8 +77,8 @@ the bond on quality, and the dividend on supply.** Buyers are *nudged* into
 
 | Stage | Theme | Exit milestone | Indicative window |
 |---|---|---|---|
-| **0** | Define & capture the VTI | VTI schema v1 committed; seed records generate from existing packs | Q3 2026 |
-| **1** | Owned synthetic seed corpus + buyer validation | License-clean seed dataset + ≥1 paid pilot / signed LOI | Q3–Q4 2026 |
+| **0 ✅** | Define & capture the VTI | VTI schema v1 committed; seed records generate from existing packs | _shipped (`training-data`)_ |
+| **1 ◐** | Owned synthetic seed corpus + buyer validation | License-clean seed dataset + ≥1 paid pilot / signed LOI | Q3–Q4 2026 |
 | **2** | Consent & contribution pipeline | First consented user VTIs flowing; first `$BRAIN` data dividend paid | Q4 2026 – Q1 2027 |
 | **3** | The data factory at scale | Continuous VTI production across N≥50 SDKs at a quality SLA | Q1–Q2 2027 |
 | **4** | Real-time feed + marketplace | Live subscription feed with paying customers settling in `$BRAIN`/USDC | Q2–Q3 2027 |
@@ -156,6 +156,25 @@ the flywheel is real from dollar one.
 **Exit milestone:** ✅ A **license-clean, schema-valid seed dataset + companion
 benchmark**, plus **≥1 paid pilot or signed LOI** — demand validated, buyer
 requirements documented, `$BRAIN` payment path exercised once end-to-end.
+
+**Progress (`training-data` branch):**
+- ◐ **Step 2 — packaging shipped.** `npm run pack:dataset`
+  (`packages/core/scripts/pack-dataset.ts`) emits a versioned product under
+  `datasets/v0.1.0/`: an open **sample** lot, a `$BRAIN`-gated **full** lot, a
+  Datasheets-for-Datasets `datasheet.md`, an `index.json` carrying the access +
+  pricing model (USD price, 10% `$BRAIN` discount, USDC→buyback settlement), and
+  `SHA256SUMS` for tamper-evidence.
+- ✅ **Step 3 — benchmark shipped.** `npm run bench` (`bench/`) grades candidate
+  code with Brainblast's own checker as the oracle (RED = trap shipped, GREEN =
+  avoided). The `--self-test` baseline proves the oracle end-to-end (vulnerable
+  fixtures → 0% avoided, fixed → 100%); `--emit-tasks` publishes leak-free task
+  starters; `--submissions` scores model outputs and gates CI at 100%.
+- ☐ **Step 1 — supply** is the `brainblast-scout` lever (spends `$BRAIN`; run
+  deliberately). Every pack it lands flows automatically into both the dataset
+  (`gen:vti` → `pack:dataset`) and the benchmark.
+- ☐ **Steps 4–5 — buyer discovery + paid pilot** are go-to-market actions;
+  `datasets/v0.1.0/sample/` + the benchmark scorecard are the artifacts to take
+  to buyers.
 
 ---
 
