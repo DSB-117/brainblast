@@ -229,8 +229,15 @@ dividend paid** to a contributor.
   `^[a-z0-9][a-z0-9-]*$` in `validatePackManifest`, closing the path-traversal
   vector before untrusted contributed packs are accepted.
 - ✅ Tested: accept / secret-reject / repro-reject + id-traversal, 518/518 green.
-- ☐ **Step 1 (telemetry capture path)** — the consent-gated content capture from
-  live `brainblast fix --apply` telemetry; the ingest gate is the receiving end.
+- ✅ **Step 1 — telemetry capture path shipped.** A *separate, explicit* opt-in
+  (`BRAINBLAST_CONTRIBUTE=1` or `.agent-research/config.json {"contribute":…}`,
+  **off by default**) makes `brainblast fix --apply` capture the before/after
+  *content* of each confirmed RED→GREEN fix to `.agent-research/contrib-staging/`
+  — hash-only telemetry is unchanged for everyone else
+  (`packages/core/src/contrib/capture.ts`). A secret pre-scan refuses to even
+  stage a pair holding a key. `npm run ingest:vti -- --from-staging <dir>` then
+  drains staged candidates through the same three gates into the contrib lot.
+  Producer → gate → separate lot is now closed end to end.
 - ☐ **Steps 4–5 (`$BRAIN` stake-slash + dividend payout)** settle on-chain via
   the `scripts/agent-stake` ops-wallet flow + registry; deferred (spends funds).
   The reproduction gate above is already the slashing trigger.

@@ -16,8 +16,9 @@
 // Pure and fs-reading only — no network, no execution of contributed code (the
 // audit pipeline parses with ts-morph; it never runs the candidate).
 
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, join } from "node:path";
 import { auditWithRule } from "../audit.ts";
 import { detectFileSecrets } from "../keys/detect.ts";
 import { isSafeId } from "../packs.ts";
@@ -169,4 +170,37 @@ export function ingestContribution(input: IngestInput): IngestResult {
   };
 
   return { accepted: true, trapId, reasons: [], secretsFound: [], proof, vti };
+}
+
+// Ingest a captured before/after pair (snippets, not a directory). Materializes
+// the pair into a temp vulnerable/ + fixed/ layout, runs the same three gates,
+// and cleans up. Used to drain telemetry-captured contributions (capture.ts).
+export function ingestCandidate(
+  input: {
+    rule: Rule;
+    file?: string;
+    vulnerableSource: string;
+    fixedSource: string;
+    consentScope: ConsentScope;
+    corroborationCount?: number;
+    now?: string;
+  },
+): IngestResult {
+  const base = mkdtempSync(join(tmpdir(), "bb-ingest-"));
+  try {
+    const fname = input.file ? basename(input.file) || "candidate.ts" : "candidate.ts";
+    mkdirSync(join(base, "vulnerable"), { recursive: true });
+    mkdirSync(join(base, "fixed"), { recursive: true });
+    writeFileSync(join(base, "vulnerable", fname), input.vulnerableSource);
+    writeFileSync(join(base, "fixed", fname), input.fixedSource);
+    return ingestContribution({
+      submissionDir: base,
+      rule: input.rule,
+      consentScope: input.consentScope,
+      corroborationCount: input.corroborationCount,
+      now: input.now,
+    });
+  } finally {
+    rmSync(base, { recursive: true, force: true });
+  }
 }

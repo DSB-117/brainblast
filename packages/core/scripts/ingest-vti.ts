@@ -1,18 +1,24 @@
 // ingest-vti — CLI for the Stage 2 contributor ingest gate (src/contrib/ingest.ts).
 //
-//   npm run ingest:vti -- --submission <dir> --trap <ruleId> \
-//        [--consent opt-in:train+eval] [--corroboration 1]
+// Two modes:
+//   Single submission (a vulnerable/ + fixed/ directory pair):
+//     npm run ingest:vti -- --submission <dir> --trap <ruleId> \
+//          [--consent opt-in:train+eval] [--corroboration 1]
 //
-// <dir> contains vulnerable/ and fixed/. The trap must map to a bundled rule
-// (the grading oracle). Accepted records are APPENDED to a physically separate,
-// git-ignored lot — datasets/contrib/contrib-vti.jsonl — never the owned corpus.
+//   Drain captured candidates staged by `brainblast fix --apply` (opt-in):
+//     npm run ingest:vti -- --from-staging <projectDir>
+//
+// Accepted records are APPENDED to a physically separate, git-ignored lot —
+// datasets/contrib/contrib-vti.jsonl — never the owned corpus.
 
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { listBundledPacks } from "../src/bundledPacks.ts";
 import { loadPack } from "../src/packs.ts";
-import { ingestContribution, type ConsentScope } from "../src/contrib/ingest.ts";
+import { resolveRules } from "../src/resolveRules.ts";
+import { ingestCandidate, ingestContribution, type ConsentScope, type IngestResult } from "../src/contrib/ingest.ts";
+import { listStagedContributions } from "../src/contrib/capture.ts";
 import type { Rule } from "../src/types.ts";
 
 const repoRoot = join(fileURLToPath(new URL(".", import.meta.url)), "..", "..", "..");
@@ -20,13 +26,67 @@ const argv = process.argv.slice(2);
 const flag = (n: string) => { const i = argv.indexOf(n); return i >= 0 ? argv[i + 1] : undefined; };
 const resolve = (p: string) => (isAbsolute(p) ? p : join(repoRoot, p));
 
+const lotDir = join(repoRoot, "datasets", "contrib");
+const lotPath = join(lotDir, "contrib-vti.jsonl");
+function appendToLot(vti: unknown): number {
+  mkdirSync(lotDir, { recursive: true });
+  appendFileSync(lotPath, JSON.stringify(vti) + "\n");
+  return existsSync(lotPath) ? readFileSync(lotPath, "utf8").split("\n").filter(Boolean).length : 1;
+}
+
+// ── Drain mode ────────────────────────────────────────────────────────────────
+const fromStaging = flag("--from-staging");
+if (fromStaging !== undefined) {
+  const projectDir = resolve(fromStaging || ".");
+  // Resolve traps from the project's active rules AND every bundled pack — a
+  // captured trap may come from an opt-in protocol pack the project didn't
+  // explicitly enable, but the rule (the oracle) still ships with brainblast.
+  const ruleById = new Map<string, Rule>();
+  for (const r of resolveRules(projectDir, [])) ruleById.set(r.id, r);
+  for (const b of listBundledPacks()) for (const r of loadPack(b.dir).rules) if (!ruleById.has(r.id)) ruleById.set(r.id, r);
+  const staged = listStagedContributions(projectDir);
+  if (staged.length === 0) {
+    console.log(`No staged contributions in ${projectDir}/.agent-research/contrib-staging/`);
+    process.exit(0);
+  }
+  let accepted = 0;
+  let rejected = 0;
+  for (const { path, rec } of staged) {
+    const rule = ruleById.get(rec.ruleId);
+    if (!rule) {
+      console.error(`  ⏭️  ${rec.ruleId}: no matching rule resolvable in ${projectDir} — left staged`);
+      rejected++;
+      continue;
+    }
+    const res: IngestResult = ingestCandidate({
+      rule,
+      file: rec.file,
+      vulnerableSource: rec.vulnerable,
+      fixedSource: rec.fixed,
+      consentScope: rec.consentScope as ConsentScope,
+    });
+    if (res.accepted) {
+      const n = appendToLot(res.vti);
+      rmSync(path, { force: true }); // consumed
+      accepted++;
+      console.log(`  ✅ ${rec.ruleId}: accepted → contrib lot (${n} record(s))`);
+    } else {
+      rejected++;
+      console.error(`  ❌ ${rec.ruleId}: ${res.reasons.join("; ")} — left staged`);
+    }
+  }
+  console.log(`\nDrained: ${accepted} accepted, ${rejected} left staged.`);
+  process.exit(0);
+}
+
+// ── Single-submission mode ──────────────────────────────────────────────────────
 const submission = flag("--submission");
 const trapId = flag("--trap");
 const consent = (flag("--consent") ?? "opt-in:train+eval") as ConsentScope;
 const corroboration = flag("--corroboration") ? Number(flag("--corroboration")) : undefined;
 
 if (!submission || !trapId) {
-  console.error("usage: npm run ingest:vti -- --submission <dir> --trap <ruleId> [--consent <scope>] [--corroboration <n>]");
+  console.error("usage:\n  ingest:vti -- --submission <dir> --trap <ruleId> [--consent <scope>] [--corroboration <n>]\n  ingest:vti -- --from-staging <projectDir>");
   process.exit(2);
 }
 
@@ -36,7 +96,6 @@ if (!VALID_CONSENT.includes(consent)) {
   process.exit(2);
 }
 
-// Resolve the trap's rule from the bundled packs (the oracle).
 let rule: Rule | undefined;
 for (const b of listBundledPacks()) {
   const found = loadPack(b.dir).rules.find((r) => r.id === trapId);
@@ -65,11 +124,6 @@ if (!result.accepted) {
   process.exit(1);
 }
 
-// Accepted — append to the SEPARATE, git-ignored contributor lot.
-const lotDir = join(repoRoot, "datasets", "contrib");
-mkdirSync(lotDir, { recursive: true });
-const lot = join(lotDir, "contrib-vti.jsonl");
-appendFileSync(lot, JSON.stringify(result.vti) + "\n");
-const count = existsSync(lot) ? readFileSync(lot, "utf8").split("\n").filter(Boolean).length : 1;
+const count = appendToLot(result.vti);
 console.log(`\n  ✅ ACCEPTED — license=contributor-grant-v1 consent=${consent}`);
 console.log(`     → datasets/contrib/contrib-vti.jsonl (${count} record(s); separate from the owned corpus)\n`);
