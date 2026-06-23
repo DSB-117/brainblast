@@ -1,0 +1,169 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/DSB-117/brainblast/main/schema/vti.schema.json",
+  "title": "Brainblast Verified Trap Instance (VTI)",
+  "description": "The sellable atom of the Brainblast training-data platform: a machine-verified error→fix→test→proof record for one coding trap, pinned to a specific SDK version, with source provenance and corroboration. Each record is reward-gradable (RED on the vulnerable snippet, GREEN on the fixed snippet, both proven by Brainblast's own static checker / generated test). See ROADMAP-TRAINING-DATA.md, Stage 0.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "trapId",
+    "sdk",
+    "severity",
+    "class",
+    "vulnerable",
+    "fixed",
+    "redGreenProof",
+    "provenance",
+    "license",
+    "consentScope",
+    "capturedAt"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema contract version. Consumers should reject a major they do not understand.",
+      "type": "string",
+      "const": "1.0"
+    },
+    "trapId": {
+      "description": "Stable identifier for the trap class. Equals the Brainblast rule id that proves it (e.g. metaplex-nft-royalty-zero).",
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "description": "Human-readable one-line description of the trap, from the rule title.",
+      "type": ["string", "null"]
+    },
+    "sdk": {
+      "description": "The external component this trap lives in, pinned to a version range or version.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "description": "Package / SDK / protocol name, e.g. @metaplex-foundation/js." },
+        "version": { "type": ["string", "null"], "description": "Version or semver range the trap applies to, e.g. >=0.18.0." },
+        "type": { "type": ["string", "null"], "description": "Component category, e.g. Blockchain, PaymentProcessor, Auth." }
+      }
+    },
+    "severity": {
+      "description": "Trap severity, inherited from the proving rule.",
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"]
+    },
+    "class": {
+      "description": "Trap taxonomy bucket — the failure family. Drives buyer filtering and the coverage heatmap (Stage 3).",
+      "type": "string",
+      "enum": [
+        "silent-zero-revenue",
+        "immutable-after-deploy",
+        "unchecked-staleness",
+        "auth-bypass",
+        "wrong-constant",
+        "unconfirmed-state",
+        "missing-slippage-guard",
+        "missing-verification",
+        "other"
+      ]
+    },
+    "vulnerable": {
+      "description": "The RED side: code that ships the trap.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lang", "snippet"],
+      "properties": {
+        "lang": { "type": "string", "enum": ["typescript", "rust", "config"] },
+        "path": { "type": ["string", "null"], "description": "Relative source path of the fixture this snippet came from." },
+        "snippet": { "type": "string", "minLength": 1, "description": "The vulnerable source." },
+        "detail": { "type": ["string", "null"], "description": "The checker's failDetail — why this is a trap." }
+      }
+    },
+    "fixed": {
+      "description": "The GREEN side: the corrected code.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lang", "snippet"],
+      "properties": {
+        "lang": { "type": "string", "enum": ["typescript", "rust", "config"] },
+        "path": { "type": ["string", "null"], "description": "Relative source path of the fixture this snippet came from." },
+        "snippet": { "type": "string", "minLength": 1, "description": "The fixed source." },
+        "detail": { "type": ["string", "null"], "description": "The checker's passDetail — why the fix resolves the trap." }
+      }
+    },
+    "generatedTest": {
+      "description": "The durable regression test that fails forever if the trap regresses. Null when the proving rule uses test.kind: none — in that case the static-checker RED/GREEN in redGreenProof is the complete proof (same treatment as Rust rules in scripts/prove.ts).",
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["kind", "source"],
+      "properties": {
+        "kind": { "type": "string", "description": "Test template kind from the rule (e.g. vitest, none)." },
+        "source": { "type": "string", "description": "Generated test source." }
+      }
+    },
+    "redGreenProof": {
+      "description": "The verification that makes this record reward-gradable. Produced by running Brainblast's own audit() over each fixture: the trap's rule must fail (RED) on the vulnerable snippet and pass (GREEN) on the fixed snippet.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["red", "green", "method", "verifiedAt"],
+      "properties": {
+        "red": { "type": "boolean", "description": "True when the rule produced result=fail on the vulnerable fixture." },
+        "green": { "type": "boolean", "description": "True when the rule produced result=pass on the fixed fixture." },
+        "method": {
+          "type": "string",
+          "enum": ["static-checker", "generated-test", "static-checker+generated-test"],
+          "description": "How RED/GREEN was established."
+        },
+        "checkKind": { "type": ["string", "null"], "description": "The rule's check.kind that produced the verdict." },
+        "verifiedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "provenance": {
+      "description": "Where the facts behind this trap came from — live-fetched source URLs and the pack that produced it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceUrls", "generator"],
+      "properties": {
+        "sourceUrls": {
+          "type": "array",
+          "items": { "type": "string", "format": "uri" },
+          "description": "Official-doc URLs the trap's facts were sourced from."
+        },
+        "pack": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "type": "string" },
+            "version": { "type": "string" },
+            "author": { "type": ["string", "null"] }
+          },
+          "description": "The Brainblast rule pack that produced this VTI."
+        },
+        "exploit": {
+          "type": ["object", "null"],
+          "additionalProperties": true,
+          "description": "Optional link to the real-world incident whose root cause this trap detects (from the rule's exploit block)."
+        },
+        "generator": { "type": "string", "description": "Tool + version that emitted this record, e.g. gen-vti@0.1.0." }
+      }
+    },
+    "corroborationCount": {
+      "description": "Distinct repos/users that confirmed this trap's fix (from graduation telemetry). 0 for purely synthetic records with no field confirmation yet.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "license": {
+      "description": "Licensing lot this record belongs to. synthetic-owned records are produced entirely from Brainblast's own packs/fixtures and carry no third-party consent obligation; contributor-grant-* records come from opt-in user contributions and MUST stay in a physically separate lot.",
+      "type": "string",
+      "enum": ["synthetic-owned", "contributor-grant-v1"]
+    },
+    "consentScope": {
+      "description": "What use the data may be put to. owned = Brainblast-owned, unrestricted. opt-in:* = scoped to the consent the contributor granted.",
+      "type": "string",
+      "enum": ["owned", "opt-in:train", "opt-in:eval", "opt-in:train+eval"]
+    },
+    "capturedAt": {
+      "description": "When this record was generated.",
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

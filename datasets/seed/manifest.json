@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0",
+  "generator": "gen-vti@0.1.0",
+  "generatedAt": "2026-06-23T18:59:28.069Z",
+  "license": "synthetic-owned",
+  "consentScope": "owned",
+  "counts": {
+    "records": 8,
+    "sdks": 8,
+    "packsScanned": 8
+  },
+  "classDistribution": {
+    "unconfirmed-state": 2,
+    "missing-slippage-guard": 3,
+    "silent-zero-revenue": 1,
+    "unchecked-staleness": 1,
+    "missing-verification": 1
+  },
+  "proof": [
+    {
+      "pack": "jito-bundle-zero-tip",
+      "rule": "jito-bundle-zero-tip",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "jupiter-quote-zero-slippage",
+      "rule": "jupiter-quote-zero-slippage",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "metaplex-nft-royalty-zero",
+      "rule": "metaplex-nft-royalty-zero",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "meteora-dlmm-zero-min-out",
+      "rule": "meteora-dlmm-zero-min-out",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "pyth-price-unchecked-staleness",
+      "rule": "pyth-price-unchecked-staleness",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "raydium-compute-zero-slippage",
+      "rule": "raydium-compute-zero-slippage",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "solana-sendtx-unconfirmed",
+      "rule": "solana-sendtx-unconfirmed",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "spl-transfer-not-checked-in-payout",
+      "rule": "spl-transfer-not-checked-in-payout",
+      "red": true,
+      "green": true,
+      "emitted": true
+    }
+  ]
+}
