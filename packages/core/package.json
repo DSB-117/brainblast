@@ -58,6 +58,7 @@
     "prove": "tsx scripts/prove.ts",
     "gen:vti": "tsx scripts/gen-vti.ts",
     "pack:dataset": "tsx scripts/pack-dataset.ts",
+    "ingest:vti": "tsx scripts/ingest-vti.ts",
     "bench": "tsx scripts/bench.ts",
     "synth": "tsx scripts/synth-prove.ts",
     "synth:bags": "tsx scripts/synth-prove.ts findings/bags-known-answer.json",

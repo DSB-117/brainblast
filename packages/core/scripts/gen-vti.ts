@@ -20,6 +20,7 @@ import { auditWithRule } from "../src/audit.ts";
 import { listBundledPacks } from "../src/bundledPacks.ts";
 import { loadPack } from "../src/packs.ts";
 import { validatePack } from "../src/pack.ts";
+import { TRAP_CLASSES, classifyTrap } from "../src/vtiClass.ts";
 import type { CheckResult, Rule } from "../src/types.ts";
 
 const GENERATOR = "gen-vti@0.1.0";
@@ -28,37 +29,8 @@ const SCHEMA_VERSION = "1.0";
 const repoRoot = join(fileURLToPath(new URL(".", import.meta.url)), "..", "..", "..");
 const outDir = join(repoRoot, "datasets", "seed");
 
-// ── Trap taxonomy ─────────────────────────────────────────────────────────────
-// Maps a rule to its VTI `class` (the failure family buyers filter on). Explicit
-// per-rule for the bundled packs; keyword fallback keeps future packs classified.
-type TrapClass =
-  | "silent-zero-revenue" | "immutable-after-deploy" | "unchecked-staleness"
-  | "auth-bypass" | "wrong-constant" | "unconfirmed-state"
-  | "missing-slippage-guard" | "missing-verification" | "other";
-
-const CLASS_BY_RULE: Record<string, TrapClass> = {
-  "jito-bundle-zero-tip": "unconfirmed-state",
-  "jupiter-quote-zero-slippage": "missing-slippage-guard",
-  "metaplex-nft-royalty-zero": "silent-zero-revenue",
-  "meteora-dlmm-zero-min-out": "missing-slippage-guard",
-  "pyth-price-unchecked-staleness": "unchecked-staleness",
-  "raydium-compute-zero-slippage": "missing-slippage-guard",
-  "solana-sendtx-unconfirmed": "unconfirmed-state",
-  "spl-transfer-not-checked-in-payout": "missing-verification",
-};
-
-function classify(rule: Rule): TrapClass {
-  if (CLASS_BY_RULE[rule.id]) return CLASS_BY_RULE[rule.id];
-  const hay = `${rule.id} ${rule.title}`.toLowerCase();
-  if (/royalt|fee|revenue|reward/.test(hay) && /zero|missing|0\b/.test(hay)) return "silent-zero-revenue";
-  if (/immutable|after (deploy|mint)|cannot be changed/.test(hay)) return "immutable-after-deploy";
-  if (/stale|freshness|expir/.test(hay)) return "unchecked-staleness";
-  if (/slippage|min.?out|amount.?out/.test(hay)) return "missing-slippage-guard";
-  if (/auth|jwt|verif|signature/.test(hay)) return "auth-bypass";
-  if (/confirm|land|finali/.test(hay)) return "unconfirmed-state";
-  if (/constant|lamports_per_sol|decimals|scal/.test(hay)) return "wrong-constant";
-  return "other";
-}
+// Trap taxonomy lives in ../src/vtiClass.ts (shared with the contributor ingest
+// pipeline so the two can never drift).
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // The RED check (first fail) carries the failDetail and the file the trap lives
@@ -125,7 +97,7 @@ for (const bundled of listBundledPacks()) {
       title: rule.title,
       sdk: { name: rule.component.name, version: rule.component.version ?? null, type: rule.component.type ?? null },
       severity: rule.severity,
-      class: classify(rule),
+      class: classifyTrap(rule),
       vulnerable: { lang, path: vuln.path, snippet: vuln.snippet, detail: vulnTarget?.detail ?? null },
       fixed: { lang, path: fixed.path, snippet: fixed.snippet, detail: fixedTarget?.detail ?? null },
       // All bundled rules use test.kind: none — the static checker IS the proof
@@ -158,7 +130,7 @@ for (const bundled of listBundledPacks()) {
 // Full JSON-Schema validation is run separately against schema/vti.schema.json
 // (see scripts/validate.sh); this catches mistakes at generation time.
 const SEV = new Set(["critical", "high", "medium", "low"]);
-const CLASSES = new Set(Object.values(CLASS_BY_RULE).concat(["immutable-after-deploy", "auth-bypass", "wrong-constant", "other"]));
+const CLASSES = new Set<string>(TRAP_CLASSES);
 let invalid = 0;
 for (const r of records as any[]) {
   const ok =

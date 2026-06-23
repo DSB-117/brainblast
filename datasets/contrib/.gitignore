@@ -1,0 +1,5 @@
+# Contributed VTIs are licensed user data — NOT auto-published to this repo.
+# The ingest pipeline writes them here locally; selling/publishing is a separate,
+# consent-governed step.
+contrib-vti.jsonl
+*.jsonl

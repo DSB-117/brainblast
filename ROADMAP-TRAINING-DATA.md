@@ -79,7 +79,7 @@ the bond on quality, and the dividend on supply.** Buyers are *nudged* into
 |---|---|---|---|
 | **0 ✅** | Define & capture the VTI | VTI schema v1 committed; seed records generate from existing packs | _shipped (`training-data`)_ |
 | **1 ◐** | Owned synthetic seed corpus + buyer validation | License-clean seed dataset + ≥1 paid pilot / signed LOI | Q3–Q4 2026 |
-| **2** | Consent & contribution pipeline | First consented user VTIs flowing; first `$BRAIN` data dividend paid | Q4 2026 – Q1 2027 |
+| **2 ◐** | Consent & contribution pipeline | First consented user VTIs flowing; first `$BRAIN` data dividend paid | Q4 2026 – Q1 2027 |
 | **3** | The data factory at scale | Continuous VTI production across N≥50 SDKs at a quality SLA | Q1–Q2 2027 |
 | **4** | Real-time feed + marketplace | Live subscription feed with paying customers settling in `$BRAIN`/USDC | Q2–Q3 2027 |
 | **5** | Eval/benchmark product + closed flywheel | Cited public benchmark + recurring eval revenue + self-sustaining token loop | Q3 2027+ |
@@ -212,6 +212,28 @@ Supply is now natively incentivized in the token.
 **Exit milestone:** ✅ First **consented, anonymized, license-clean user VTIs**
 flowing into a separated lot; **stake-and-slash live**; **first `$BRAIN` data
 dividend paid** to a contributor.
+
+**Progress (`training-data` branch):**
+- ✅ **Integrity core shipped.** `npm run ingest:vti -- --submission <dir> --trap
+  <ruleId>` (`packages/core/src/contrib/ingest.ts`) enforces three hard gates:
+  (1) **secret scan** — every file runs through Keyguard's `detectFileSecrets`;
+  any keypair/base58-secret/mnemonic refuses the whole submission (fail-closed);
+  (2) **reproduction** — the contributed vulnerable/fixed pair is re-proven
+  RED→GREEN against the trap's rule (the oracle), the exact gate `$BRAIN`
+  slashing keys off; (3) **consent/license** — accepted records are stamped
+  `contributor-grant-v1` + the contributor's `consentScope` and appended to a
+  **physically separate, git-ignored lot** (`datasets/contrib/`), never the
+  owned corpus. Paths are relativized to the submission dir so a contributor's
+  absolute filesystem path is never embedded.
+- ✅ **Hardening (CSO #A1).** Pack/trap ids are validated against
+  `^[a-z0-9][a-z0-9-]*$` in `validatePackManifest`, closing the path-traversal
+  vector before untrusted contributed packs are accepted.
+- ✅ Tested: accept / secret-reject / repro-reject + id-traversal, 518/518 green.
+- ☐ **Step 1 (telemetry capture path)** — the consent-gated content capture from
+  live `brainblast fix --apply` telemetry; the ingest gate is the receiving end.
+- ☐ **Steps 4–5 (`$BRAIN` stake-slash + dividend payout)** settle on-chain via
+  the `scripts/agent-stake` ops-wallet flow + registry; deferred (spends funds).
+  The reproduction gate above is already the slashing trigger.
 
 ---
 
