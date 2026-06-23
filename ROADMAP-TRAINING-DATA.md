@@ -1,7 +1,37 @@
 # Brainblast → AI Training-Data Platform: Roadmap
 
-**Status:** Strategic plan · drafted 2026-06-23 · anchored at **v0.8.3**
+**Last updated:** 2026-06-23 · anchored at **v0.8.3** · branch [`training-data`](https://github.com/DSB-117/brainblast/tree/training-data)
+**Current state:** Stage 0 shipped · Stages 1 & 2 in progress (engineering core landed; go-to-market + on-chain `$BRAIN` rails remain)
 **Companion to:** [`ROADMAP.md`](ROADMAP.md) (the core *Predict → Enforce → Watch → Compound* ladder)
+
+> **Legend:** ✅ shipped · ◐ in progress · ☐ not started. This document is a live
+> reference and is updated at the end of every task.
+
+---
+
+## What's shipped so far
+
+Everything below runs today on the `training-data` branch (524 tests green):
+
+- **The data asset exists.** `npm run gen:vti` turns Brainblast's own proven packs
+  into schema-valid [Verified Trap Instances](datasets/seed/README.md) — only when
+  a pack proves RED→GREEN through the real `validatePack` gate. Schema:
+  [`schema/vti.schema.json`](schema/vti.schema.json).
+- **It's a packaged product.** `npm run pack:dataset` emits versioned
+  [`datasets/v0.1.0/`](datasets/v0.1.0/) — an open `sample` lot, a `$BRAIN`-gated
+  `full` lot, a datasheet, and `SHA256SUMS`, with the access/pricing model
+  (USD price, 10% `$BRAIN` discount, USDC→buyback) in `index.json`.
+- **The eval wedge runs.** `npm run bench` ([`bench/`](bench/)) grades model code
+  with Brainblast's own checker as the oracle (RED = trap shipped, GREEN =
+  avoided); `--self-test` proves the oracle, `--submissions` scores + gates CI.
+- **Contribution is consent-safe.** `npm run ingest:vti` enforces three gates —
+  secret scan, RED→GREEN reproduction, consent/license — and writes to a
+  physically separate, git-ignored lot. `brainblast fix --apply` can (opt-in)
+  capture real fixes and drain them through the same gate.
+
+**Remaining everywhere:** the on-chain `$BRAIN` settlement/stake-slash/dividend
+rails (they spend funds) and the go-to-market steps (scout supply at scale, buyer
+pilots). Each stage below marks exactly what's done vs. pending.
 
 ---
 
@@ -80,9 +110,9 @@ the bond on quality, and the dividend on supply.** Buyers are *nudged* into
 | **0 ✅** | Define & capture the VTI | VTI schema v1 committed; seed records generate from existing packs | _shipped (`training-data`)_ |
 | **1 ◐** | Owned synthetic seed corpus + buyer validation | License-clean seed dataset + ≥1 paid pilot / signed LOI | Q3–Q4 2026 |
 | **2 ◐** | Consent & contribution pipeline | First consented user VTIs flowing; first `$BRAIN` data dividend paid | Q4 2026 – Q1 2027 |
-| **3** | The data factory at scale | Continuous VTI production across N≥50 SDKs at a quality SLA | Q1–Q2 2027 |
-| **4** | Real-time feed + marketplace | Live subscription feed with paying customers settling in `$BRAIN`/USDC | Q2–Q3 2027 |
-| **5** | Eval/benchmark product + closed flywheel | Cited public benchmark + recurring eval revenue + self-sustaining token loop | Q3 2027+ |
+| **3 ☐** | The data factory at scale | Continuous VTI production across N≥50 SDKs at a quality SLA | Q1–Q2 2027 |
+| **4 ☐** | Real-time feed + marketplace | Live subscription feed with paying customers settling in `$BRAIN`/USDC | Q2–Q3 2027 |
+| **5 ☐** | Eval/benchmark product + closed flywheel | Cited public benchmark + recurring eval revenue + self-sustaining token loop | Q3 2027+ |
 
 Stages are a **capability ladder, not a calendar.** Each ships only after the
 prior milestone holds. Windows are indicative.
@@ -403,8 +433,19 @@ more supply) documented end-to-end.
 
 ## Immediate next action
 
-**Stage 0, Step 1–2:** author `schema/vti.schema.json` and the generator that
-turns today's `packs/*/fixtures/{vulnerable,fixed}` + `synth-prove` proofs into
-schema-valid, `synthetic-owned` VTI records. It needs **no consent, no token, no
-buyer** — it just makes the sellable asset exist, fully within what the repo
-already has. Everything else compounds on top of it.
+The Stage 0–2 engineering core is in place (see [What's shipped](#whats-shipped-so-far)).
+The next moves, in priority order:
+
+1. **Supply (Stage 3).** Run `brainblast-scout` across the top SDKs to manufacture
+   new proven packs — each one flows automatically into the dataset (`gen:vti` →
+   `pack:dataset`) and the benchmark. This is the lever that turns 8 traps into a
+   corpus worth selling. *(Spends `$BRAIN` via staking — run deliberately.)*
+2. **On-chain `$BRAIN` rails (Stages 2 & 4).** Extend `scripts/agent-stake` from
+   "stake on a pack" to bond/slash on a contributed VTI, and wire the
+   buyback + data-dividend flow. The reproduction gate already shipped is the
+   slashing trigger.
+3. **Go-to-market (Stage 1, Steps 4–5).** Take `datasets/v0.1.0/sample/` + a
+   benchmark scorecard to buyers; land one paid pilot or LOI.
+
+Items 1 and 2 spend tokens/funds; item 3 is outreach. All three build on the
+shipped, verified foundation rather than blocking on each other.
