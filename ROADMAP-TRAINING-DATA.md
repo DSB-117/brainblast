@@ -1,7 +1,7 @@
 # Brainblast → AI Training-Data Platform: Roadmap
 
-**Last updated:** 2026-06-23 · anchored at **v0.8.3** · branch [`training-data`](https://github.com/DSB-117/brainblast/tree/training-data)
-**Current state:** Stage 0 shipped · Stages 1 & 2 in progress (engineering core landed; go-to-market + on-chain `$BRAIN` rails remain)
+**Last updated:** 2026-06-24 · anchored at **v0.8.3** · branch [`training-data`](https://github.com/DSB-117/brainblast/tree/training-data)
+**Current state:** Stage 0 shipped · Stages 1–3 in progress (every no-spend engineering core landed; go-to-market, scout supply at scale, and on-chain `$BRAIN` rails remain)
 **Companion to:** [`ROADMAP.md`](ROADMAP.md) (the core *Predict → Enforce → Watch → Compound* ladder)
 
 > **Legend:** ✅ shipped · ◐ in progress · ☐ not started. This document is a live
@@ -11,7 +11,7 @@
 
 ## What's shipped so far
 
-Everything below runs today on the `training-data` branch (524 tests green):
+Everything below runs today on the `training-data` branch (535 tests green):
 
 - **The data asset exists.** `npm run gen:vti` turns Brainblast's own proven packs
   into schema-valid [Verified Trap Instances](datasets/seed/README.md) — only when
@@ -28,6 +28,13 @@ Everything below runs today on the `training-data` branch (524 tests green):
   secret scan, RED→GREEN reproduction, consent/license — and writes to a
   physically separate, git-ignored lot. `brainblast fix --apply` can (opt-in)
   capture real fixes and drain them through the same gate.
+- **The corpus is managed and self-verifying.** `npm run corpus` scores every VTI
+  (severity × proof × corroboration), de-dups, and emits a class×SDK coverage map
+  ([`datasets/COVERAGE.md`](datasets/COVERAGE.md)) that doubles as scout's
+  work-orders. `npm run sla` re-proves the whole corpus still goes RED→GREEN,
+  re-validates the schema, checks seed↔packaged drift, and **exits non-zero on any
+  regression** ([`datasets/SLA.md`](datasets/SLA.md)) — the contractual integrity
+  surface for selling.
 
 **Remaining everywhere:** the on-chain `$BRAIN` settlement/stake-slash/dividend
 rails (they spend funds) and the go-to-market steps (scout supply at scale, buyer
