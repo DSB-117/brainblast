@@ -110,7 +110,7 @@ the bond on quality, and the dividend on supply.** Buyers are *nudged* into
 | **0 ✅** | Define & capture the VTI | VTI schema v1 committed; seed records generate from existing packs |
 | **1 ◐** | Owned synthetic seed corpus + buyer validation | License-clean seed dataset + ≥1 paid pilot / signed LOI |
 | **2 ◐** | Consent & contribution pipeline | First consented user VTIs flowing; first `$BRAIN` data dividend paid |
-| **3 ☐** | The data factory at scale | Continuous VTI production across N≥50 SDKs at a quality SLA |
+| **3 ◐** | The data factory at scale | Continuous VTI production across N≥50 SDKs at a quality SLA |
 | **4 ☐** | Real-time feed + marketplace | Live subscription feed with paying customers settling in `$BRAIN`/USDC |
 | **5 ☐** | Eval/benchmark product + closed flywheel | Cited public benchmark + recurring eval revenue + self-sustaining token loop |
 
@@ -299,6 +299,23 @@ supply engine with measurable quality — across enough SDKs to matter to a buye
 
 **`$BRAIN` role:** **curation staking** directs the factory; quality SLA is what
 makes `$BRAIN`-priced access worth a premium.
+
+**Progress (`training-data` branch):**
+- ✅ **Steps 2 + 3 — corpus intelligence shipped.** `npm run corpus`
+  (`packages/core/src/corpus.ts`) reads every lot (owned seed + the git-ignored
+  contributor lot when present) and emits `datasets/corpus-index.json` +
+  `datasets/COVERAGE.md`: a deterministic **quality score** per VTI
+  (severity × proof × corroboration, saturating at 5 repos), **exact dedup**
+  (trapId + SDK + whitespace-normalized snippet), and a **class × SDK coverage
+  heatmap** whose thin cells and uncovered classes are scout's work-orders. The
+  per-record `score` is the field pricing and the `$BRAIN` curation market key
+  off.
+- ☐ **Step 1 (scout fleet)** is the supply lever — spends `$BRAIN` + browses, so
+  pulled deliberately. The coverage map now tells it exactly where to dig
+  (today: 3 uncovered classes — immutable-after-deploy, auth-bypass,
+  wrong-constant — and 8 thin cells).
+- ☐ **Step 4 (curation market)** and **Step 5 (quality SLA monitoring)** build on
+  the score/coverage surface above; Step 4 needs the on-chain `$BRAIN` rails.
 
 **Exit milestone:** ✅ **Continuous VTI production across N≥50 SDKs** at a
 published quality SLA, with a live coverage heatmap and a working curation market.
