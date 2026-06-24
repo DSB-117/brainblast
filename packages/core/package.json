@@ -60,6 +60,7 @@
     "pack:dataset": "tsx scripts/pack-dataset.ts",
     "ingest:vti": "tsx scripts/ingest-vti.ts",
     "corpus": "tsx scripts/corpus-report.ts",
+    "sla": "tsx scripts/corpus-sla.ts",
     "bench": "tsx scripts/bench.ts",
     "synth": "tsx scripts/synth-prove.ts",
     "synth:bags": "tsx scripts/synth-prove.ts findings/bags-known-answer.json",

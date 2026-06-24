@@ -172,6 +172,30 @@ export function ingestContribution(input: IngestInput): IngestResult {
   return { accepted: true, trapId, reasons: [], secretsFound: [], proof, vti };
 }
 
+// Re-prove a snippet pair against a rule: RED on the vulnerable side, GREEN on
+// the fixed side. The integrity primitive behind the corpus SLA monitor — given
+// a stored VTI, does its trap still reproduce? Code is parsed, never executed.
+export function reproducePair(
+  rule: Rule,
+  vulnerableSource: string,
+  fixedSource: string,
+  fileName = "candidate.ts",
+): { red: boolean; green: boolean } {
+  const base = mkdtempSync(join(tmpdir(), "bb-repro-"));
+  try {
+    const fname = basename(fileName) || "candidate.ts";
+    mkdirSync(join(base, "vulnerable"), { recursive: true });
+    mkdirSync(join(base, "fixed"), { recursive: true });
+    writeFileSync(join(base, "vulnerable", fname), vulnerableSource);
+    writeFileSync(join(base, "fixed", fname), fixedSource);
+    const red = auditWithRule(join(base, "vulnerable"), rule).some((c) => c.result === "fail");
+    const green = !auditWithRule(join(base, "fixed"), rule).some((c) => c.result === "fail");
+    return { red, green };
+  } finally {
+    rmSync(base, { recursive: true, force: true });
+  }
+}
+
 // Ingest a captured before/after pair (snippets, not a directory). Materializes
 // the pair into a temp vulnerable/ + fixed/ layout, runs the same three gates,
 // and cleans up. Used to drain telemetry-captured contributions (capture.ts).

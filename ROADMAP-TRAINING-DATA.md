@@ -314,8 +314,17 @@ makes `$BRAIN`-priced access worth a premium.
   pulled deliberately. The coverage map now tells it exactly where to dig
   (today: 3 uncovered classes — immutable-after-deploy, auth-bypass,
   wrong-constant — and 8 thin cells).
-- ☐ **Step 4 (curation market)** and **Step 5 (quality SLA monitoring)** build on
-  the score/coverage surface above; Step 4 needs the on-chain `$BRAIN` rails.
+- ✅ **Step 5 — quality SLA / integrity monitor shipped.** `npm run sla`
+  (`scripts/corpus-sla.ts`) re-proves every VTI in every lot still goes
+  RED→GREEN (the **reproduction-rate SLA** — the freshness/decay signal), and
+  exits non-zero on any regression so it gates CI/release. It folds in two
+  prior-stage back-fills: **schema re-validation** of every record (Stage 0) and
+  a **seed↔packaged-lot drift check** (Stage 1, a gap that previously had no
+  guard). Today: 100% reproduction, 100% schema-valid, packaging in sync.
+  Emits `datasets/SLA.md` + `datasets/sla.json`. (Sharper "age from SDK release"
+  freshness needs release dates — a follow-up; today's age is since capture.)
+- ☐ **Step 4 (curation market)** builds on the score/coverage/SLA surface and
+  needs the on-chain `$BRAIN` rails.
 
 **Exit milestone:** ✅ **Continuous VTI production across N≥50 SDKs** at a
 published quality SLA, with a live coverage heatmap and a working curation market.
