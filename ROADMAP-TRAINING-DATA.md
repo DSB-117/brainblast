@@ -105,17 +105,17 @@ the bond on quality, and the dividend on supply.** Buyers are *nudged* into
 
 ## Roadmap at a glance
 
-| Stage | Theme | Exit milestone | Indicative window |
-|---|---|---|---|
-| **0 ✅** | Define & capture the VTI | VTI schema v1 committed; seed records generate from existing packs | _shipped (`training-data`)_ |
-| **1 ◐** | Owned synthetic seed corpus + buyer validation | License-clean seed dataset + ≥1 paid pilot / signed LOI | Q3–Q4 2026 |
-| **2 ◐** | Consent & contribution pipeline | First consented user VTIs flowing; first `$BRAIN` data dividend paid | Q4 2026 – Q1 2027 |
-| **3 ☐** | The data factory at scale | Continuous VTI production across N≥50 SDKs at a quality SLA | Q1–Q2 2027 |
-| **4 ☐** | Real-time feed + marketplace | Live subscription feed with paying customers settling in `$BRAIN`/USDC | Q2–Q3 2027 |
-| **5 ☐** | Eval/benchmark product + closed flywheel | Cited public benchmark + recurring eval revenue + self-sustaining token loop | Q3 2027+ |
+| Stage | Theme | Exit milestone |
+|---|---|---|
+| **0 ✅** | Define & capture the VTI | VTI schema v1 committed; seed records generate from existing packs |
+| **1 ◐** | Owned synthetic seed corpus + buyer validation | License-clean seed dataset + ≥1 paid pilot / signed LOI |
+| **2 ◐** | Consent & contribution pipeline | First consented user VTIs flowing; first `$BRAIN` data dividend paid |
+| **3 ☐** | The data factory at scale | Continuous VTI production across N≥50 SDKs at a quality SLA |
+| **4 ☐** | Real-time feed + marketplace | Live subscription feed with paying customers settling in `$BRAIN`/USDC |
+| **5 ☐** | Eval/benchmark product + closed flywheel | Cited public benchmark + recurring eval revenue + self-sustaining token loop |
 
 Stages are a **capability ladder, not a calendar.** Each ships only after the
-prior milestone holds. Windows are indicative.
+prior milestone holds.
 
 ---
 
