@@ -126,7 +126,7 @@ if (args[0] === "trust-graph") {
 }
 
 if (args[0] === "pack") {
-  await runPack(args.slice(1));
+  runPack(args.slice(1));
   process.exit(0);
 }
 
@@ -636,7 +636,7 @@ function runPacks(argv: string[]) {
   console.log(`${packs.length} pack(s). Each ships RED→GREEN fixtures; run 'brainblast pack validate <dir>' to verify.`);
 }
 
-async function runPack(argv: string[]) {
+function runPack(argv: string[]) {
   const sub = argv[0];
 
   if (sub === "init") {
@@ -669,7 +669,7 @@ async function runPack(argv: string[]) {
       console.error("usage: brainblast pack validate <dir>");
       process.exit(2);
     }
-    const result = await validatePack(dir);
+    const result = validatePack(dir);
     console.log(`pack: ${result.manifest.id} v${result.manifest.version} (${result.manifest.author})`);
     console.log(`  ${result.rules.length} rule(s)`);
     for (const r of result.ruleResults) {

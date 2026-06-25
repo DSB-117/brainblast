@@ -39,7 +39,10 @@ verdict (`RED | GREEN | UNKNOWN`).
 - **Breaking (type-only)**: the freshness `OracleVerdict` string union is now
   exported as `OracleFreshnessVerdict`; the bare `OracleVerdict` name belongs to
   the generalized verification oracle.
-- `validatePack` is now async (returns `Promise<PackValidateResult>`).
+- `validatePack` stays **synchronous** — the compiler oracle is async only by
+  interface; its sync core (`verifyCompile`) keeps `validatePack`'s signature
+  unchanged. The compiler branch and the `unverifiable` status are purely
+  additive, so the static prove gate is byte-identical to before.
 
 ## 0.6.0 — 2026-06-16
 

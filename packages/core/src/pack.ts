@@ -2,8 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { auditWithRule } from "./audit.ts";
 import { loadPack, PACK_MANIFEST_FILE } from "./packs.ts";
-import { compilerBackend } from "./oracle/backends/compiler.ts";
-import { proveRedGreen } from "./oracle/prove.ts";
+import { compilerBackend, verifyCompile } from "./oracle/backends/compiler.ts";
 import type { OracleMethod } from "./oracle/types.ts";
 import type { PackManifest, Rule } from "./types.ts";
 
@@ -86,93 +85,80 @@ export interface PackRuleValidation {
 //      FAIL against `fixed/`. Rules without fixtures are reported as
 //      "missing-fixtures" (a warning, not a hard failure) so a pack author
 //      can still iterate before wiring up the prove gate.
-export async function validatePack(dir: string): Promise<PackValidateResult> {
+export function validatePack(dir: string): PackValidateResult {
   const { manifest, rules } = loadPack(dir);
 
   const fixturesRoot = join(dir, "fixtures");
-  const ruleResults: PackRuleValidation[] = [];
-  for (const rule of rules) {
+  const ruleResults: PackRuleValidation[] = rules.map((rule) => {
     const ruleFixturesDir = join(fixturesRoot, rule.id);
     const vulnerableDir = join(ruleFixturesDir, "vulnerable");
     const fixedDir = join(ruleFixturesDir, "fixed");
 
     if (!existsSync(vulnerableDir) || !existsSync(fixedDir)) {
-      ruleResults.push({
+      return {
         ruleId: rule.id,
         status: "missing-fixtures",
         detail: `no fixtures/${rule.id}/{vulnerable,fixed}/ directory — prove gate skipped`,
-      });
-      continue;
+      };
     }
 
-    // A rule whose verdict the STATIC engine cannot decide (e.g. compiles-against-
-    // sdk) is proven by the Tier-1 compiler oracle instead — offline, no execution.
-    // Every other rule keeps the exact static RED→GREEN gate it had before v0.9.0.
+    // v0.9.0 — a rule whose verdict the STATIC engine cannot decide (e.g.
+    // compiles-against-sdk) is proven by the Tier-1 compiler oracle instead:
+    // offline, no execution, and SYNCHRONOUS (verifyCompile), so validatePack
+    // keeps its sync signature. Every other rule keeps the exact static
+    // RED→GREEN gate it had before v0.9.0 — the branch below is purely additive.
     if (compilerBackend.supports(rule)) {
-      const r = await proveRedGreen(compilerBackend, vulnerableDir, fixedDir, rule);
-      // The compiler oracle abstains (UNKNOWN) when it can't run — most often
-      // because the pinned SDK isn't installed in this environment. That's a
-      // missing tool, not a broken record: report it non-fatally.
-      if (r.redVerdict.color === "UNKNOWN" || r.greenVerdict.color === "UNKNOWN") {
-        ruleResults.push({
-          ruleId: rule.id,
-          status: "unverifiable",
-          method: "compiler",
-          detail: `compiler oracle could not verify here: ${r.redVerdict.color === "UNKNOWN" ? r.redVerdict.detail : r.greenVerdict.detail}`,
-        });
-        continue;
-      }
-      if (!r.red) {
-        ruleResults.push({
-          ruleId: rule.id,
-          status: "red-failed",
-          method: "compiler",
-          detail: `compiler oracle expected RED on fixtures/${rule.id}/vulnerable/, got ${r.redVerdict.color}: ${r.redVerdict.detail}`,
-        });
-        continue;
-      }
-      if (!r.green) {
-        ruleResults.push({
-          ruleId: rule.id,
-          status: "green-failed",
-          method: "compiler",
-          detail: `compiler oracle expected GREEN on fixtures/${rule.id}/fixed/, got ${r.greenVerdict.color}: ${r.greenVerdict.detail}`,
-        });
-        continue;
-      }
-      ruleResults.push({ ruleId: rule.id, status: "ok", method: "compiler", detail: "RED -> GREEN proven (compiler)" });
-      continue;
+      return validateCompilerRule(rule, vulnerableDir, fixedDir);
     }
 
     const redChecks = auditWithRule(vulnerableDir, rule);
     const redFails = redChecks.filter((c) => c.result === "fail");
     if (redFails.length === 0) {
-      ruleResults.push({
+      return {
         ruleId: rule.id,
         status: "red-failed",
-        method: "static-checker",
         detail: `expected at least one FAIL against fixtures/${rule.id}/vulnerable/, got none`,
-      });
-      continue;
+      };
     }
 
     const greenChecks = auditWithRule(fixedDir, rule);
     const greenFails = greenChecks.filter((c) => c.result === "fail");
     if (greenFails.length > 0) {
-      ruleResults.push({
+      return {
         ruleId: rule.id,
         status: "green-failed",
-        method: "static-checker",
         detail: `expected no FAIL against fixtures/${rule.id}/fixed/, got ${greenFails.length}`,
-      });
-      continue;
+      };
     }
 
-    ruleResults.push({ ruleId: rule.id, status: "ok", method: "static-checker", detail: "RED -> GREEN proven" });
-  }
+    return { ruleId: rule.id, status: "ok", detail: "RED -> GREEN proven" };
+  });
 
   const ok = ruleResults.every(
     (r) => r.status === "ok" || r.status === "missing-fixtures" || r.status === "unverifiable",
   );
   return { manifest, rules, ruleResults, ok };
+}
+
+// Prove a compiler-oracle rule (compiles-against-sdk) RED→GREEN, synchronously.
+// UNKNOWN on either side (most often: the pinned SDK isn't installed here) is a
+// missing tool, not a broken record — reported non-fatally as "unverifiable".
+function validateCompilerRule(rule: Rule, vulnerableDir: string, fixedDir: string): PackRuleValidation {
+  const red = verifyCompile({ dir: vulnerableDir, rule });
+  const green = verifyCompile({ dir: fixedDir, rule });
+  if (red.color === "UNKNOWN" || green.color === "UNKNOWN") {
+    return {
+      ruleId: rule.id,
+      status: "unverifiable",
+      method: "compiler",
+      detail: `compiler oracle could not verify here: ${red.color === "UNKNOWN" ? red.detail : green.detail}`,
+    };
+  }
+  if (red.color !== "RED") {
+    return { ruleId: rule.id, status: "red-failed", method: "compiler", detail: `compiler oracle expected RED on vulnerable/, got ${red.color}: ${red.detail}` };
+  }
+  if (green.color !== "GREEN") {
+    return { ruleId: rule.id, status: "green-failed", method: "compiler", detail: `compiler oracle expected GREEN on fixed/, got ${green.color}: ${green.detail}` };
+  }
+  return { ruleId: rule.id, status: "ok", method: "compiler", detail: "RED -> GREEN proven (compiler)" };
 }

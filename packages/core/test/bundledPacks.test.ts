@@ -14,10 +14,10 @@ describe("Protocol Pack Library — bundled packs", () => {
     expect(ids).toContain("jito-bundle-zero-tip");
   });
 
-  it("every bundled pack proves RED → GREEN (or has no fixtures)", async () => {
+  it("every bundled pack proves RED → GREEN (or has no fixtures)", () => {
     expect(packs.length).toBeGreaterThan(0);
     for (const p of packs) {
-      const result = await validatePack(p.dir);
+      const result = validatePack(p.dir);
       // Each rule must either prove RED→GREEN, be explicitly fixture-less, or be
       // unverifiable here (e.g. a compiler-proven pack whose pinned SDK isn't
       // installed in this environment) — all non-fatal.
@@ -31,10 +31,10 @@ describe("Protocol Pack Library — bundled packs", () => {
     }
   });
 
-  it("the v0.7.6 protocol packs each prove RED→GREEN (have fixtures)", async () => {
+  it("the v0.7.6 protocol packs each prove RED→GREEN (have fixtures)", () => {
     for (const id of ["pyth-price-unchecked-staleness", "meteora-dlmm-zero-min-out", "jito-bundle-zero-tip"]) {
       const pack = packs.find((p) => p.id === id)!;
-      const result = await validatePack(pack.dir);
+      const result = validatePack(pack.dir);
       expect(result.ruleResults.every((r) => r.status === "ok")).toBe(true);
     }
   });

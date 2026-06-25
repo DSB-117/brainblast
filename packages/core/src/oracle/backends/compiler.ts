@@ -107,7 +107,17 @@ export const compilerBackend: OracleBackend = {
   method: "compiler",
   tier: 1,
   supports,
-  async verify({ dir, rule }: OracleTarget): Promise<OracleVerdict> {
+  // The backend interface is async (Tier-2 backends genuinely are), but the
+  // compiler oracle is synchronous under the hood — `verifyCompile` is the sync
+  // core, so offline callers that must stay sync (e.g. `validatePack`, which
+  // training-data's gen-vti/ingest call synchronously) can use it without
+  // turning their own call chains async.
+  async verify(target: OracleTarget): Promise<OracleVerdict> {
+    return verifyCompile(target);
+  },
+};
+
+export function verifyCompile({ dir, rule }: OracleTarget): OracleVerdict {
     const t0 = Date.now();
     const sdk = String(rule.check?.params?.sdk ?? "");
     if (!sdk) {
@@ -183,8 +193,7 @@ export const compilerBackend: OracleBackend = {
     } finally {
       rmSync(scratch, { recursive: true, force: true });
     }
-  },
-};
+}
 
 function unknown(detail: string, t0: number): OracleVerdict {
   return { color: "UNKNOWN", method: "compiler", detail, durationMs: Date.now() - t0 };
