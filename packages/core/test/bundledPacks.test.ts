@@ -18,10 +18,12 @@ describe("Protocol Pack Library — bundled packs", () => {
     expect(packs.length).toBeGreaterThan(0);
     for (const p of packs) {
       const result = validatePack(p.dir);
-      // Each rule must either prove RED→GREEN or be explicitly fixture-less.
+      // Each rule must either prove RED→GREEN, be explicitly fixture-less, or be
+      // unverifiable here (e.g. a compiler-proven pack whose pinned SDK isn't
+      // installed in this environment) — all non-fatal.
       for (const r of result.ruleResults) {
         expect(
-          r.status === "ok" || r.status === "missing-fixtures",
+          r.status === "ok" || r.status === "missing-fixtures" || r.status === "unverifiable",
           `pack ${p.id} rule ${r.ruleId}: ${r.status} — ${r.detail}`,
         ).toBe(true);
       }

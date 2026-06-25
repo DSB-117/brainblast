@@ -58,7 +58,8 @@ Everything Brainblast does today, at a glance.
 - **Gates CI.** A `--ci` mode runs non-interactively (no prompts, documented defaults), and a dependency-free gate script turns `report.json` into an exit code — fail the build if any CRITICAL risk remains (`--fail-on=critical|high|…`) or the verdict is `blocked`.
 
 **Deterministic auditor — `npx brainblast`**
-- Published to npm as [`brainblast@0.8.3`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
+- Published to npm as [`brainblast@0.9.0`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
+- **v0.9.0 — The Generalized Oracle.** Verification is now a **pluggable interface**: the same RED→GREEN verdict can be established by the static checker (default, offline), by a **compiler** (`--oracle=compiler` — type-checks against the *pinned* SDK to catch hallucinated/moved APIs, the #1 agent error, with **zero code execution**), and — landing in v0.9.1 — by an executed test or a differential in a context-scaled sandbox. `brainblast verify <pack-dir>` re-proves a pack's records and prints a reproduction scorecard; `auditWithOracle(dir, rule, { oracle })` is the inline export. The default `npx brainblast` is byte-for-byte as offline as before.
 - A Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code *offline* (no network, no LLM) for **eighteen built-in integration traps**: Stripe webhook raw-body signature verification, Privy/JWT signature + `aud` + `iss` verification, Bags/Solana fee-share creator-inclusion, Token-2022 program-ID pinning, Metaplex metadata immutability, Anchor `init_if_needed` guards, committed `.env*` secrets, **graph-based, project-wide cross-file taint tracking** for secret leaks (`env-secret-leaked-to-sink`), command injection (`request-input-command-injection`), SQL injection via Prisma raw queries (`prisma-raw-injection`), open-redirect via tainted `res.redirect()` calls (`open-redirect`), JWT algorithm confusion (`jsonwebtoken-algorithm-pinned`), **Solana mint impersonation** (`solana-token-impersonation`), four **Anchor program-security checks** — missing `Signer` constraint on authority accounts (`anchor-signer-constraint-missing`), `UncheckedAccount` usage (`anchor-unchecked-account-type`), `find_program_address` in handler bodies (`anchor-pda-find-program-address`), and **unverified CPI target program** (`cpi-target-program-unverified`, the Wormhole pattern), and **silent zero-revenue fee configs** (`metaplex-seller-fee-zero` — royalties omitted/zeroed).
 - **`brainblast rico <CA>`** — token identity + quality check: verifies a contract address against the canonical mint registry (offline) and Jupiter (live), detects impersonators, and runs a Rico Maps forensic scan (risk score, snipers, cabal, bundle clusters, deployer flags).
 - Emits CI-readable `checks[]` and `checkTotals` into `report.json`, and can generate behavioral contract tests that fail on the vulnerable fixtures and pass on the fixed ones — the durable guardrail that keeps a fixed trap fixed.
@@ -179,14 +180,14 @@ Install gstack: run git clone --single-branch --depth 1 https://github.com/garry
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.8.3/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.9.0/install.sh | sh
 ```
 
 The installer pins to a tagged release, verifies SHA-256 checksums before writing any file, and auto-detects Claude Code, OpenClaw, and Codex. If gstack is missing, it warns you with the exact command to fix it. (It installs the Brainblast skill, but it does **not** install gstack for you — that is a one-time prerequisite above.)
 
 **Or tell your agent:**
 
-> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.8.3/install.sh | sh`
+> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.9.0/install.sh | sh`
 
 For the bleeding edge instead of a pinned release, prefix with `BRAINBLAST_REF=main`.
 

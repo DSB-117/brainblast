@@ -130,6 +130,11 @@ if (args[0] === "pack") {
   process.exit(0);
 }
 
+if (args[0] === "verify") {
+  await runVerify(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "packs") {
   runPacks(args.slice(1));
   process.exit(0);
@@ -260,8 +265,16 @@ const strict = args.includes("--strict");
 const failOnWallet = args.includes("--fail-on-wallet");
 const sinceIdx = args.indexOf("--since");
 const since = sinceIdx >= 0 ? args[sinceIdx + 1] : undefined;
+// Accept both `--oracle <v>` and `--oracle=<v>`.
+function flagValue(argv: string[], name: string): string | undefined {
+  const eq = argv.find((a) => a.startsWith(`--${name}=`));
+  if (eq) return eq.slice(name.length + 3);
+  const i = argv.indexOf(`--${name}`);
+  return i >= 0 ? argv[i + 1] : undefined;
+}
+const oracleArg = flagValue(args, "oracle");
 const targetDir =
-  args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--since") ?? process.cwd();
+  args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--since" && args[i - 1] !== "--oracle") ?? process.cwd();
 
 if (sinceIdx >= 0 && !since) {
   console.error("error: --since requires a <ref> argument, e.g. --since origin/main");
@@ -386,6 +399,42 @@ console.log(`  report:      ${reportPath}`);
 // Wallet config section — additive/advisory; only shown when relevant.
 if (walletReport && (walletReport.walletAdapterDetected || walletReport.findings.length > 0)) {
   console.log("\n" + renderWalletSection(walletReport));
+}
+
+// Oracle backends (v0.9.0) — additive, advisory. The default (`--oracle=static`
+// or omitted) leaves this whole block untouched, so the offline cost path is
+// byte-for-byte what it was in 0.8.3. When `--oracle=compiler|best` is passed,
+// any in-scope rule a higher-tier backend can decide (e.g. a `compiles-against-
+// sdk` rule) is verified against the target and reported — never folded into the
+// security verdict or the CI gate.
+if (oracleArg && oracleArg !== "static" && oracleArg !== "static-checker") {
+  const { parseOracleSelector, selectBackends } = await import("./oracle/index.ts");
+  let selection;
+  try {
+    selection = selectBackends(parseOracleSelector(oracleArg));
+  } catch (e: any) {
+    console.error(`error: ${e.message ?? e}`);
+    process.exit(2);
+  }
+  // Only the non-static backends add information here; static is already the
+  // primary scan above.
+  const extra = selection.backends.filter((b) => b.tier > 0);
+  const lines: string[] = [];
+  for (const rule of rules) {
+    for (const backend of extra) {
+      if (!backend.supports(rule)) continue;
+      const v = await backend.verify({ dir: targetDir, rule, context: "local" });
+      const tag = v.color === "RED" ? "RED " : v.color === "GREEN" ? "GREEN" : "UNK  ";
+      lines.push(`  [${tag}] ${rule.id} (${v.method})`);
+      lines.push(`          ${v.detail}`);
+    }
+  }
+  console.log(`\n── Oracle (${oracleArg}) ────────────────────────────────────────`);
+  if (lines.length === 0) {
+    console.log("  (no in-scope rule is decidable by a non-static backend)");
+  } else {
+    for (const l of lines) console.log(l);
+  }
 }
 
 // Opt-in wallet gating: fails only when --fail-on-wallet is passed AND a
@@ -624,14 +673,107 @@ function runPack(argv: string[]) {
     console.log(`pack: ${result.manifest.id} v${result.manifest.version} (${result.manifest.author})`);
     console.log(`  ${result.rules.length} rule(s)`);
     for (const r of result.ruleResults) {
-      const marker = r.status === "ok" ? "OK" : r.status === "missing-fixtures" ? "WARN" : "FAIL";
-      console.log(`  [${marker}] ${r.ruleId}: ${r.detail}`);
+      const marker =
+        r.status === "ok"
+          ? "OK"
+          : r.status === "missing-fixtures" || r.status === "unverifiable"
+            ? "WARN"
+            : "FAIL";
+      const via = r.method ? ` (${r.method})` : "";
+      console.log(`  [${marker}] ${r.ruleId}${via}: ${r.detail}`);
     }
     process.exit(result.ok ? 0 : 1);
   }
 
   console.error("usage: brainblast pack <init|validate> ...");
   process.exit(2);
+}
+
+// `brainblast verify <pack-dir> [--oracle=static|compiler|best]` — re-prove a
+// pack's records RED→GREEN with the backend each one needs, and print a
+// reproduction-rate scorecard. This is the reproducibility-receipt tool a BUYER
+// runs to check reward-gradability themselves: no trust in us required, they
+// re-run the oracle and get the same colors. Exit 1 if any record fails to
+// reproduce.
+async function runVerify(argv: string[]) {
+  if (argv.includes("--help") || argv.includes("-h") || argv.filter((a) => !a.startsWith("--")).length === 0) {
+    console.log("usage: brainblast verify <pack-dir> [--oracle=static|compiler|best] [--json]");
+    console.log("  Re-prove every record in a pack RED→GREEN through the oracle and print a");
+    console.log("  reproduction scorecard. Each record's claimed proof method is re-run; a record");
+    console.log("  that won't reproduce is reported (and exits 1). The offline Tier-0/1 backends");
+    console.log("  (static, compiler) run by default; Tier-2 (executed/differential) need");
+    console.log("  BRAINBLAST_ORACLE_EXEC=1 and land fully in v0.9.1.");
+    process.exit(argv.length === 0 ? 2 : 0);
+  }
+  const { selectBackends, parseOracleSelector } = await import("./oracle/index.ts");
+  const { proveWithBest, proofMethod } = await import("./oracle/prove.ts");
+  const { loadPack } = await import("./packs.ts");
+  const { existsSync } = await import("node:fs");
+
+  const dir = argv.find((a) => !a.startsWith("--"));
+  if (!dir) {
+    console.error("usage: brainblast verify <pack-dir> [--oracle=...] [--json]");
+    process.exit(2);
+  }
+  const eqOracle = argv.find((a) => a.startsWith("--oracle="));
+  const oIdx = argv.indexOf("--oracle");
+  const oracleArg = eqOracle ? eqOracle.slice("--oracle=".length) : oIdx >= 0 ? argv[oIdx + 1] : "best";
+  const jsonOut = argv.includes("--json");
+
+  let selector;
+  try {
+    selector = parseOracleSelector(oracleArg);
+  } catch (e: any) {
+    console.error(`brainblast verify: ${e.message ?? e}`);
+    process.exit(2);
+  }
+  const { backends } = selectBackends(selector);
+
+  let pack;
+  try {
+    pack = loadPack(dir);
+  } catch (e: any) {
+    console.error(`brainblast verify: ${e.message ?? e}`);
+    process.exit(2);
+  }
+
+  const rows: Array<{ ruleId: string; reproduced: boolean; method: string | null; detail: string }> = [];
+  for (const rule of pack.rules) {
+    const base = join(dir, "fixtures", rule.id);
+    const vulnerableDir = join(base, "vulnerable");
+    const fixedDir = join(base, "fixed");
+    if (!existsSync(vulnerableDir) || !existsSync(fixedDir)) {
+      rows.push({ ruleId: rule.id, reproduced: false, method: null, detail: "missing fixtures — cannot reproduce" });
+      continue;
+    }
+    const result = await proveWithBest(backends, vulnerableDir, fixedDir, rule);
+    if (result.proven) {
+      rows.push({
+        ruleId: rule.id,
+        reproduced: true,
+        method: proofMethod(result) as string,
+        detail: `RED→GREEN reproduced (${result.proven.redVerdict.detail.split(":")[0]})`,
+      });
+    } else {
+      const tried = result.attempts.map((a) => `${a.method}: red=${a.red} green=${a.green}`).join("; ");
+      rows.push({ ruleId: rule.id, reproduced: false, method: null, detail: tried || "no eligible backend" });
+    }
+  }
+
+  const reproduced = rows.filter((r) => r.reproduced).length;
+  if (jsonOut) {
+    console.log(JSON.stringify({ pack: pack.manifest.id, oracle: selector, reproduced, total: rows.length, rows }, null, 2));
+  } else {
+    console.log(`brainblast verify: ${pack.manifest.id} — oracle=${selector}`);
+    for (const r of rows) {
+      const mark = r.reproduced ? "REPRODUCED" : "FAILED    ";
+      const via = r.method ? ` [${r.method}]` : "";
+      console.log(`  [${mark}] ${r.ruleId}${via}`);
+      console.log(`             ${r.detail}`);
+    }
+    console.log(`  reproduction rate: ${reproduced}/${rows.length}`);
+  }
+  process.exit(reproduced === rows.length ? 0 : 1);
 }
 
 async function runTelemetry(argv: string[]) {

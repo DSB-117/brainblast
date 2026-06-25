@@ -1,0 +1,33 @@
+# Pure-data rule (facts). Binds to the `compiles-against-sdk` kind, decided by the
+# Tier-1 COMPILER oracle (not static analysis): the trap is "uses a Stripe resource
+# that doesn't exist at the pinned version." The vulnerable fixture fails to
+# type-check against stripe@17 (RED); the fixed fixture type-checks clean (GREEN).
+#
+# This is the demo that proves the v0.9.0 thesis OFF Solana: a sellable, reward-
+# gradable trap minted with ZERO code execution, on a current npm SDK, by the
+# compiler the agent already had to satisfy.
+#
+# Validate it:  brainblast pack validate packs/stripe-paymentintents-moved --oracle=compiler
+id: stripe-paymentintents-moved
+severity: high
+title: Stripe payment call targets a resource that does not exist at the pinned version
+component:
+  name: Stripe Node SDK
+  type: API
+  version: "17"
+  sourceUrl: https://github.com/stripe/stripe-node
+detect:
+  modules: ["stripe"]
+  nameRegex: "charge|payment|stripe|checkout"
+  triggerCalls: [create]
+  lang: typescript
+check:
+  kind: compiles-against-sdk
+  params:
+    sdk: stripe
+    version: "17.7.0"
+    # The vulnerable fixture is EXPECTED to fail type-checking; the fixed one is
+    # expected to compile clean. The compiler oracle reads these as RED / GREEN.
+    expectError: true
+test:
+  kind: none

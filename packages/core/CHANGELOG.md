@@ -2,6 +2,48 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.9.0 — 2026-06-25
+
+**The Generalized Oracle** — verification is now a pluggable interface
+(`OracleBackend`), not a single static pattern-matcher. Every backend answers the
+same question ("does this code ship the trap?") and returns the same two-color
+verdict (`RED | GREEN | UNKNOWN`).
+
+- **New module `src/oracle/`**: `OracleBackend` interface (`types.ts`), the shared
+  RED→GREEN gate (`proveRedGreen`, `proveWithBest`, `proofMethod` in `prove.ts`),
+  and four backends:
+  - `staticChecker` (Tier 0) — wraps today's `auditWithRule`; the default,
+    unchanged, offline, no execution.
+  - `compilerBackend` (Tier 1) — type-checks the candidate against the pinned SDK
+    via `ts-morph` (`tsc --noEmit`-equivalent), never running the program. New
+    checker kind `compiles-against-sdk`.
+  - `executedTestBackend` / `differentialBackend` (Tier 2) — interface shipped,
+    opt-in, abstain (UNKNOWN) until the sandbox lands in v0.9.1.
+- **New CLI `brainblast verify <pack-dir> [--oracle=...]`**: re-prove a pack's
+  records RED→GREEN and print a reproduction scorecard. Exit 1 if any record
+  fails to reproduce.
+- **`brainblast <dir> --oracle=static|compiler|executed|differential|best`**:
+  additive oracle section on the main audit; default `static` is unchanged.
+- **`brainblast pack validate`** routes `compiles-against-sdk` rules through the
+  compiler oracle; new non-fatal `unverifiable` status when the SDK isn't
+  installed.
+- **MCP**: new `brainblast_verify` tool.
+- **New public exports**: `auditWithOracle`, `proveRedGreen`, `proveWithBest`,
+  `proofMethod`, `staticChecker`, `compilerBackend`, `executedTestBackend`,
+  `differentialBackend`, `selectBackends`, `parseOracleSelector`, `tier2Enabled`,
+  and the oracle types (`OracleBackend`, `OracleColor`, `OracleMethod`,
+  `OracleVerdict`, `OracleTarget`, `OracleContext`, `OracleTier`, …).
+- **New bundled pack `stripe-paymentintents-moved`**: compiler-proven, off-Solana
+  (`stripe@17`), demonstrating a hallucinated/moved API caught with zero
+  execution.
+- **Breaking (type-only)**: the freshness `OracleVerdict` string union is now
+  exported as `OracleFreshnessVerdict`; the bare `OracleVerdict` name belongs to
+  the generalized verification oracle.
+- `validatePack` stays **synchronous** — the compiler oracle is async only by
+  interface; its sync core (`verifyCompile`) keeps `validatePack`'s signature
+  unchanged. The compiler branch and the `unverifiable` status are purely
+  additive, so the static prove gate is byte-identical to before.
+
 ## 0.6.0 — 2026-06-16
 
 - **`brainblast diff <pkg>@<from> <pkg>@<to>`**: new CLI subcommand that compares the OSV

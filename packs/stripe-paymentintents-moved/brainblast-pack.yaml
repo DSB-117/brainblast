@@ -1,0 +1,5 @@
+id: stripe-paymentintents-moved
+name: Stripe hallucinated payment API
+version: 0.1.0
+author: DSB-117
+description: "Compiler-proven (Tier 1): catches the #1 agent error — calling a Stripe resource that doesn't exist at the pinned version (stripe.paymentIntent.create instead of stripe.paymentIntents.create). Proven RED→GREEN by type-checking against stripe@17, with zero code execution."
