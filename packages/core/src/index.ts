@@ -181,8 +181,42 @@ export {
   DEFAULT_STALENESS_SLOTS,
   type OracleFreshness,
   type OracleOpts,
-  type OracleVerdict,
+  // Renamed in v0.9.0: the bare name `OracleVerdict` now belongs to the
+  // generalized verification oracle (below). The freshness verdict string union
+  // (FRESH | STALE | NO_HISTORY) is exported as OracleFreshnessVerdict.
+  type OracleVerdict as OracleFreshnessVerdict,
 } from "./oracle.ts";
+
+// ── The Generalized Oracle (v0.9.0) ───────────────────────────────────────────
+export {
+  staticChecker,
+  compilerBackend,
+  executedTestBackend,
+  differentialBackend,
+  ALL_BACKENDS,
+  BACKENDS_BY_METHOD,
+  ORACLE_SELECTORS,
+  parseOracleSelector,
+  selectBackends,
+  tier2Enabled,
+  auditWithOracle,
+  proveRedGreen,
+  proveWithBest,
+  proofMethod,
+  type OracleBackend,
+  type OracleColor,
+  type OracleMethod,
+  type OracleVerdict,
+  type OracleEvidence,
+  type OracleTarget,
+  type OracleContext,
+  type OracleTier,
+  type OracleSelector,
+  type BackendSelection,
+  type AuditWithOracleOptions,
+  type RedGreenResult,
+  type ProveWithBestResult,
+} from "./oracle/index.ts";
 
 // ── Protocol Pack Library (v0.7.6) ────────────────────────────────────────────
 export {

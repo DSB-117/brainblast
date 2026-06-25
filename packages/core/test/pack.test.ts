@@ -6,7 +6,7 @@ import { initPack, validatePack } from "../src/pack.ts";
 import { PACK_MANIFEST_FILE } from "../src/packs.ts";
 
 describe("initPack", () => {
-  it("scaffolds a manifest, rules/, and fixtures/", () => {
+  it("scaffolds a manifest, rules/, and fixtures/", async () => {
     const dir = join(mkdtempSync(join(tmpdir(), "bb-init-")), "my-pack");
     const manifestFile = initPack(dir, { id: "my-pack", author: "Me" });
 
@@ -15,7 +15,7 @@ describe("initPack", () => {
     expect(manifest).toContain("author: Me");
     expect(manifest).toContain("version: 0.1.0");
 
-    const result = validatePack(dir);
+    const result = await validatePack(dir);
     expect(result.ok).toBe(true);
     expect(result.manifest.id).toBe("my-pack");
     expect(result.rules).toEqual([]);
@@ -49,9 +49,9 @@ function packWithRule(ruleYaml: string, ruleId: string): string {
 }
 
 describe("validatePack", () => {
-  it("reports missing-fixtures for a rule with no fixtures directory", () => {
+  it("reports missing-fixtures for a rule with no fixtures directory", async () => {
     const dir = packWithRule(RULE_TEMPLATE("acme-no-fixtures"), "acme-no-fixtures");
-    const result = validatePack(dir);
+    const result = await validatePack(dir);
     expect(result.ok).toBe(true);
     expect(result.ruleResults).toEqual([
       {
@@ -62,13 +62,13 @@ describe("validatePack", () => {
     ]);
   });
 
-  it("throws if the manifest is invalid", () => {
+  it("throws if the manifest is invalid", async () => {
     const dir = mkdtempSync(join(tmpdir(), "bb-pack-"));
     writeFileSync(join(dir, PACK_MANIFEST_FILE), "id: bad");
-    expect(() => validatePack(dir)).toThrow(/invalid pack manifest/);
+    await expect(validatePack(dir)).rejects.toThrow(/invalid pack manifest/);
   });
 
-  it("passes the prove gate when vulnerable fails and fixed doesn't", () => {
+  it("passes the prove gate when vulnerable fails and fixed doesn't", async () => {
     const ruleId = "acme-positional-arg";
     const dir = packWithRule(RULE_TEMPLATE(ruleId), ruleId);
 
@@ -89,14 +89,14 @@ describe("validatePack", () => {
       `export function handler(rawBody: string, parsed: any) {\n  acmesdk.doAcmeThing(rawBody);\n}\n`,
     );
 
-    const result = validatePack(dir);
+    const result = await validatePack(dir);
     expect(result.ruleResults).toEqual([
-      { ruleId, status: "ok", detail: "RED -> GREEN proven" },
+      { ruleId, status: "ok", method: "static-checker", detail: "RED -> GREEN proven" },
     ]);
     expect(result.ok).toBe(true);
   });
 
-  it("reports red-failed when the vulnerable fixture doesn't trip the rule", () => {
+  it("reports red-failed when the vulnerable fixture doesn't trip the rule", async () => {
     const ruleId = "acme-no-trip";
     const dir = packWithRule(RULE_TEMPLATE(ruleId), ruleId);
 
@@ -109,7 +109,7 @@ describe("validatePack", () => {
     writeFileSync(join(vulnDir, "handler.ts"), `export function other() {}\n`);
     writeFileSync(join(fixedDir, "handler.ts"), `export function other() {}\n`);
 
-    const result = validatePack(dir);
+    const result = await validatePack(dir);
     expect(result.ok).toBe(false);
     expect(result.ruleResults[0].status).toBe("red-failed");
   });

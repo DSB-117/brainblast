@@ -2,6 +2,67 @@
 
 ## Unreleased
 
+## v0.9.0 — 2026-06-25
+
+**The Generalized Oracle** — `runChecker` was one static pattern-matcher; v0.9.0
+turns verification into a **pluggable interface** so the corpus can grow past
+hand-written Solana checkers into the long tail of agent errors — *without*
+changing the RED→GREEN contract, and keeping the cheap offline path the default.
+
+One verdict, many oracles. A trap is reward-gradable because a **deterministic
+procedure** returns RED on the vulnerable code and GREEN on the fixed code,
+runnable by anyone with no secret answer key. v0.9.0 makes that *procedure*
+pluggable while keeping the *verdict* identical (`RED | GREEN | UNKNOWN`):
+
+- **Tier 0 — `static-checker`** (default, unchanged): offline, deterministic, no
+  execution. The existing `audit()` engine, wrapped — *not* rewritten — as a
+  backend. The seam is a no-op: a parametrized test asserts the static backend's
+  verdict equals legacy `auditWithRule` on every bundled pack's fixtures.
+- **Tier 1 — `compiler`** (new, ships now): runs the **type-checker only**
+  (`tsc` via the existing `ts-morph` dependency) against the *pinned* SDK, never
+  the program. The vulnerable fixture fails to type-check (RED); the fixed one
+  compiles clean (GREEN). Offline, deterministic, no LLM, no code execution —
+  safe in every context. Catches the **#1 agent error**: calling an API that
+  doesn't exist / moved at that version. New rule kind `compiles-against-sdk`.
+- **Tier 2 — `executed-test` / `differential`** (interface shipped, sandbox in
+  v0.9.1): wired with the uniform interface, tier, `supports()`, and an honest
+  refusal. They run candidate code, which is a security question, so they are
+  **opt-in only** and currently **abstain (UNKNOWN, never RED)** until the
+  context-scaled sandbox lands — a light isolate for your own code locally, a
+  hardened container that *refuses rather than falls back* for contributor code
+  on ingest.
+
+The proof off Solana: a new bundled pack **`stripe-paymentintents-moved`** mints a
+sellable, reward-gradable trap on a current npm SDK (`stripe@17`) —
+`stripe.paymentIntent.create` vs `stripe.paymentIntents.create` — proven RED→GREEN
+by the compiler oracle with **zero code execution**.
+
+New surfaces:
+
+- **`brainblast verify <pack-dir> [--oracle=static|compiler|best]`** — re-prove a
+  pack's records RED→GREEN through the oracle and print a **reproduction
+  scorecard**. The receipt a buyer runs to check reward-gradability themselves.
+- **`brainblast <dir> --oracle=compiler|best`** — additive, advisory oracle
+  section on the main audit. The default (`static`) is byte-for-byte 0.8.3.
+- **`brainblast pack validate`** auto-routes `compiles-against-sdk` rules through
+  the compiler oracle (static rules keep their exact gate). A new
+  `unverifiable` status degrades gracefully when the pinned SDK isn't installed.
+- **MCP `brainblast_verify(dir, trapId, oracle)`** — any agent can ask the brain
+  to *prove* a fix, not just flag it.
+- **New public exports**: `auditWithOracle`, `proveRedGreen`, `proveWithBest`,
+  `proofMethod`, the four backends, `selectBackends`, `parseOracleSelector`, and
+  the oracle types.
+
+Discipline kept: the RED→GREEN contract is unchanged (only the number of ways to
+establish it grew); rules stay pure data binding to **vetted templates** (no
+backend executes contributor-authored logic as an oracle); the default
+`npx brainblast` stays offline, deterministic, LLM-free, and executes **no
+candidate code**. UNKNOWN counts as GREEN for *gating* but is never a proof.
+
+Note: the bare type name `OracleVerdict` now belongs to the generalized
+verification oracle; the on-chain freshness verdict union is exported as
+`OracleFreshnessVerdict`.
+
 ## v0.8.3 — 2026-06-22
 
 **Wallet Guard now runs in the default `npx brainblast .`** — so the

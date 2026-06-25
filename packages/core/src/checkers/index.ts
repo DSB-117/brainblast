@@ -16,6 +16,7 @@ import { anchorForbiddenAccountType } from "./anchorForbiddenAccountType.ts";
 import { anchorBodyCallPattern } from "./anchorBodyCallPattern.ts";
 import { anchorCpiUnverifiedProgram } from "./anchorCpiUnverifiedProgram.ts";
 import { feeConfigsZeroOrMissing } from "./feeConfigsZeroOrMissing.ts";
+import { compilesAgainstSdk } from "./compilesAgainstSdk.ts";
 import type { Candidate, RustCandidate, ConfigCandidate, CheckOutcome, Checker, RustChecker, ConfigChecker } from "../types.ts";
 
 // Registry of human-vetted checker templates. Rules bind to these by `kind`.
@@ -40,6 +41,8 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker> = {
   "anchor-body-call-pattern": anchorBodyCallPattern as RustChecker,
   "anchor-cpi-unverified-program": anchorCpiUnverifiedProgram as RustChecker,
   "fee-configs-zero-or-missing": feeConfigsZeroOrMissing,
+  // v0.9.0 — bound to the Tier-1 compiler oracle; static abstains (cant_tell).
+  "compiles-against-sdk": compilesAgainstSdk,
 };
 
 export function runChecker(kind: string, c: Candidate | RustCandidate | ConfigCandidate, params: any): CheckOutcome {

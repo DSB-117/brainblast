@@ -17,6 +17,7 @@
 //   brainblast_audit       — run the static auditor on a local directory
 //   brainblast_diff        — compare OSV risk profile between two package versions
 //   brainblast_osv_check   — query OSV.dev for advisories on one version
+//   brainblast_verify      — PROVE a fix: re-run a pack's RED→GREEN through the oracle
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -30,7 +31,7 @@ import { resolveRules } from "./resolveRules.ts";
 import { queryOsv } from "./osv.ts";
 import { diffVersions } from "./diff.ts";
 
-const VERSION = "0.6.0";
+const VERSION = "0.9.0";
 
 const TOOLS: Tool[] = [
   {
@@ -99,6 +100,38 @@ const TOOLS: Tool[] = [
         version: { type: "string", description: "Exact version string to check." },
       },
       required: ["ecosystem", "package", "version"],
+    },
+  },
+  {
+    name: "brainblast_verify",
+    description:
+      "PROVE a fix, don't just flag it. Re-run a brainblast rule pack's records through the " +
+      "generalized oracle (v0.9.0) and report which reproduce RED→GREEN — the vulnerable fixture " +
+      "verifies RED, the fixed fixture verifies GREEN. Offline Tier-0/1 backends (static, compiler) " +
+      "run by default with no code execution; Tier-2 (executed/differential) need an explicit opt-in " +
+      "and land fully in v0.9.1. This is the reproducibility receipt: the same procedure, re-runnable " +
+      "by anyone, returns the same color — no secret answer key.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        dir: {
+          type: "string",
+          description:
+            "Absolute path to a rule-pack directory (containing brainblast-pack.yaml, rules/, and " +
+            "fixtures/<rule-id>/{vulnerable,fixed}/).",
+        },
+        trapId: {
+          type: "string",
+          description: "Optional rule id to verify just one record; omit to verify the whole pack.",
+        },
+        oracle: {
+          type: "string",
+          description:
+            "Which backend(s): static | compiler | executed | differential | best. Default best " +
+            "(tries each allowed backend in trust order and records the strongest proof).",
+        },
+      },
+      required: ["dir"],
     },
   },
 ];
@@ -173,6 +206,57 @@ export async function startMcpServer(): Promise<void> {
               text: `OSV query failed: ${(e as Error).message ?? String(e)}`,
             },
           ],
+          isError: true,
+        };
+      }
+    }
+
+    if (name === "brainblast_verify") {
+      const { dir, trapId, oracle = "best" } = args as { dir: string; trapId?: string; oracle?: string };
+      try {
+        const { existsSync } = await import("node:fs");
+        const { join } = await import("node:path");
+        const { loadPack } = await import("./packs.ts");
+        const { selectBackends, parseOracleSelector } = await import("./oracle/index.ts");
+        const { proveWithBest, proofMethod } = await import("./oracle/prove.ts");
+
+        const { backends } = selectBackends(parseOracleSelector(oracle));
+        const pack = loadPack(dir);
+        const targets = trapId ? pack.rules.filter((r) => r.id === trapId) : pack.rules;
+        if (targets.length === 0) {
+          throw new Error(trapId ? `no rule '${trapId}' in pack ${pack.manifest.id}` : `pack ${pack.manifest.id} has no rules`);
+        }
+        const rows = [];
+        for (const rule of targets) {
+          const base = join(dir, "fixtures", rule.id);
+          const vulnerableDir = join(base, "vulnerable");
+          const fixedDir = join(base, "fixed");
+          if (!existsSync(vulnerableDir) || !existsSync(fixedDir)) {
+            rows.push({ ruleId: rule.id, reproduced: false, method: null, detail: "missing fixtures" });
+            continue;
+          }
+          const result = await proveWithBest(backends, vulnerableDir, fixedDir, rule);
+          rows.push({
+            ruleId: rule.id,
+            reproduced: !!result.proven,
+            method: result.proven ? proofMethod(result) : null,
+            detail: result.proven
+              ? `RED→GREEN reproduced via ${proofMethod(result)}`
+              : result.attempts.map((a) => `${a.method}: red=${a.red} green=${a.green}`).join("; "),
+          });
+        }
+        const reproduced = rows.filter((r) => r.reproduced).length;
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({ pack: pack.manifest.id, oracle, reproduced, total: rows.length, rows }, null, 2),
+            },
+          ],
+        };
+      } catch (e: unknown) {
+        return {
+          content: [{ type: "text" as const, text: `Verify failed: ${(e as Error).message ?? String(e)}` }],
           isError: true,
         };
       }
