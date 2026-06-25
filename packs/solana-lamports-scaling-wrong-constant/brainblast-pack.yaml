@@ -1,0 +1,5 @@
+id: solana-lamports-scaling-wrong-constant
+name: Solana SOL→lamports wrong scaling constant
+version: 0.1.0
+author: DSB-117
+description: "Differential-proven (Tier 2): catches a wrong scaling constant in SOL→lamports conversion (1e6 instead of 1e9) — a logic bug with NO static signature that ships transactions off by 1000x. Proven RED→GREEN by running the candidate against a vetted golden I/O table in the oracle sandbox. Opt-in (executes code): brainblast verify <pack> --oracle=differential."

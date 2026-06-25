@@ -32,6 +32,16 @@ export { staticChecker } from "./backends/staticChecker.ts";
 export { compilerBackend } from "./backends/compiler.ts";
 export { executedTestBackend } from "./backends/executedTest.ts";
 export { differentialBackend } from "./backends/differential.ts";
+export {
+  runInSandbox,
+  containerRuntime,
+  packageRoot,
+  makeSandboxDir,
+  copyCandidate,
+  type SandboxSpec,
+  type SandboxResult,
+  type SandboxStatus,
+} from "./sandbox.ts";
 
 // Every backend, indexed by method. Trust order is tier order.
 export const ALL_BACKENDS: OracleBackend[] = [

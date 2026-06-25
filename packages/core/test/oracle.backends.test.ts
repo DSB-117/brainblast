@@ -136,20 +136,22 @@ describe("oracle selectors + tier gating", () => {
   });
 });
 
-describe("Tier 2 backends are wired but abstain (no sandbox in v0.9.0)", () => {
-  const rule = { id: "x", test: { kind: "stripe-webhook-signature" }, check: { kind: "differential-io", params: { reference: "ref" } }, detect: {} } as unknown as Rule;
-
-  it("executed-test is tier 2 and returns UNKNOWN, never RED", async () => {
+describe("Tier 2 backends are gated OFF by default (execution is opt-in)", () => {
+  // Real RED→GREEN behavior + the ingest refuse path live in oracle.tier2.test.ts;
+  // here we assert the GATING invariant: Tier-2 never runs under the default
+  // offline path — it's excluded from `best` unless explicitly opted in.
+  it("executed-test and differential are tier 2", () => {
     expect(executedTestBackend.tier).toBe(2);
-    const v = await executedTestBackend.verify({ dir: ".", rule, context: "local" });
-    expect(v.color).toBe("UNKNOWN");
+    expect(differentialBackend.tier).toBe(2);
   });
 
-  it("differential is tier 2 and REFUSES on ingest (UNKNOWN, never a fallback)", async () => {
-    expect(differentialBackend.tier).toBe(2);
-    const v = await differentialBackend.verify({ dir: ".", rule, context: "ingest" });
-    expect(v.color).toBe("UNKNOWN");
-    expect(v.detail).toMatch(/hardened ingest sandbox/);
+  it("`best` excludes Tier-2 by default and includes it only when opted in", () => {
+    const off = selectBackends("best", { allowTier2: false }).backends.map((b) => b.method);
+    expect(off).not.toContain("executed-test");
+    expect(off).not.toContain("differential");
+    const on = selectBackends("best", { allowTier2: true }).backends.map((b) => b.method);
+    expect(on).toContain("executed-test");
+    expect(on).toContain("differential");
   });
 });
 

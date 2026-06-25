@@ -2,6 +2,48 @@
 
 ## Unreleased
 
+## v0.9.1 — 2026-06-25
+
+**Tier 2: the context-scaled sandbox.** v0.9.0 shipped the pluggable oracle with
+`executed-test` and `differential` as honest placeholders that *abstained*. v0.9.1
+makes them **run** — behind the safety boundary the interface was built for. Two
+more ways a verdict can be grounded in truth, now live.
+
+- **Sandbox core (`src/oracle/sandbox.ts`)** — two isolation strengths behind one
+  interface, selected by `target.context`:
+  - **Light isolate (`context:"local"`)** — a child process in an ephemeral dir
+    with a hard wall-clock timeout (kills the process), output-size cap, trimmed
+    env. Enough to stop a runaway test on *your own* code; not a malice defense
+    (no untrusted party locally), and it makes no claim of network isolation.
+  - **Hardened container (`context:"ingest"`)** — `docker/podman run --rm
+    --network=none --read-only --cap-drop=ALL --user nobody --memory/--cpus/
+    --pids-limit`. **Refuses → UNKNOWN if a container can't be stood up — never
+    falls back to the light isolate.** That refuse-on-missing is the load-bearing
+    property for ever running contributor code on our infra.
+  - A crash / timeout / refusal scores **UNKNOWN, never RED** — a failure to run
+    is not a proof.
+- **`executed-test` backend (real)** — renders the rule's **vetted** contract test
+  and runs it in the sandbox against the candidate; RED iff the contract fails.
+  Default **OFF** (`--oracle=executed`, or `--oracle=best` with
+  `BRAINBLAST_ORACLE_EXEC=1`). Proven RED→GREEN on the Stripe webhook-signature
+  contract, through the sandbox.
+- **`differential` backend (real, golden-I/O)** — new `check.kind:
+  "differential-io"`: runs *only the candidate* against a versioned, vetted
+  input→output table in the sandbox; RED iff any output diverges.
+- **New bundled pack `solana-lamports-scaling-wrong-constant`** — a SOL→lamports
+  converter using `1e6` instead of `1e9` (off by 1000×). A logic bug with **no
+  static signature**, proven RED→GREEN by the differential oracle — **closing the
+  previously-uncovered `wrong-constant` class.**
+- **`pack validate`** reports Tier-2 (`differential-io`) rules as non-fatal
+  `unverifiable` on the default offline path; prove them with the explicit opt-in
+  `brainblast verify <pack> --oracle=differential`.
+- **New public exports**: `runInSandbox`, `containerRuntime`, and the sandbox types.
+
+Discipline kept: the default `npx brainblast` still executes **no candidate code**
+and is byte-for-byte offline; an executed/differential RED only counts when the
+test/reference is a **vetted, owned** template (contributors supply fixtures,
+never oracles); UNKNOWN counts as GREEN for *gating* but is never a proof.
+
 ## v0.9.0 — 2026-06-25
 
 **The Generalized Oracle** — `runChecker` was one static pattern-matcher; v0.9.0

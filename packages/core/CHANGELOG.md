@@ -2,6 +2,29 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.9.1 — 2026-06-25
+
+**Tier 2: the context-scaled sandbox** — `executed-test` and `differential`
+(placeholders in 0.9.0) now execute candidate code behind a context-scaled isolate.
+
+- **`src/oracle/sandbox.ts`** — `runInSandbox` with two strengths: a light child-
+  process isolate (timeout + output cap) for `context:"local"`, and a hardened
+  `docker/podman` container (`--network=none`, read-only, `--cap-drop=ALL`,
+  non-root, memory/CPU/pid limits) for `context:"ingest"` that **refuses → UNKNOWN
+  rather than falling back** when no runtime is available. `containerRuntime()`
+  detects a usable daemon.
+- **`executedTestBackend`** — renders the rule's vetted contract test, runs it in
+  the sandbox; RED iff it fails. Default OFF (opt-in).
+- **`differentialBackend`** — new checker kind `differential-io`: runs the
+  candidate against a vetted golden I/O table in the sandbox; RED iff outputs
+  diverge. Honors `params.timeoutMs`.
+- **New bundled pack `solana-lamports-scaling-wrong-constant`** — closes the
+  uncovered `wrong-constant` class (SOL→lamports off by 1000×).
+- **`validatePack`** marks `differential-io` rules `unverifiable` (non-fatal) on
+  the offline path; prove via `brainblast verify <pack> --oracle=differential`.
+- **New public exports**: `runInSandbox`, `containerRuntime`, `SandboxSpec`,
+  `SandboxResult`, `SandboxStatus`.
+
 ## 0.9.0 — 2026-06-25
 
 **The Generalized Oracle** — verification is now a pluggable interface
