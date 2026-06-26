@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "generator": "corpus-sla@0.1.0",
+  "generatedAt": "2026-06-24T17:29:14.327Z",
+  "corpus": {
+    "total": 8,
+    "verifiable": 8,
+    "reproduced": 8,
+    "schemaValid": 8
+  },
+  "rates": {
+    "reproduction": 1,
+    "schemaValid": 1
+  },
+  "packaging": {
+    "checked": true,
+    "inSync": true,
+    "detail": "v0.1.0 full lot matches seed"
+  },
+  "lots": [
+    {
+      "lot": "synthetic-owned",
+      "total": 8,
+      "schemaValid": 8,
+      "reproduced": 8,
+      "unverifiable": 0,
+      "failures": [],
+      "ageDaysMedian": 1,
+      "ageDaysMax": 1
+    }
+  ],
+  "regression": false
+}

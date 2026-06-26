@@ -2,6 +2,28 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.9.2 — 2026-06-26
+
+**The data factory, prover-backed** (additive, default-off). Lands the training-data
+factory on `main` and routes its intake through the generalized oracle.
+
+- **New (ported, default-off):** `schema/vti.schema.json`, `src/contrib/{ingest,
+  capture}.ts`, `src/{corpus,vtiClass}.ts`, scripts `gen-vti` / `ingest-vti` /
+  `pack-dataset` / `corpus-report` / `corpus-sla` / `bench`, `datasets/`, `bench/`.
+  npm scripts: `gen:vti`, `ingest:vti`, `pack:dataset`, `corpus`, `sla`, `bench`.
+- **Prover-backed intake (keystone):** `ingestContribution`, `ingestCandidate`,
+  `reproducePair` are now async and call `proveWithBest(…, "ingest")` instead of
+  `auditWithRule`, so the factory captures compiler/executed-test/differential
+  traps. `context:"ingest"` forces the hardened sandbox (refuse, never fall back).
+  Gating semantics preserved (real RED required; UNKNOWN fixed side counts GREEN).
+- **`gen-vti`** stamps the real proving method via `validatePack`'s oracle result.
+- **Schema 1.1:** `redGreenProof.method` aligned to `OracleMethod` (+ `+`-joined
+  corroboration) via a pattern; new optional `corroboratingMethods`; 1.0 still valid.
+- **`packs.ts`:** `isSafeId` / `SAFE_ID_RE` exported; manifest ids validated as safe
+  path segments (path-traversal defense for contributed packs).
+- Default `npx brainblast` behavior, the `files` allowlist, and Tier-2/capture/
+  contribute opt-ins are all unchanged.
+
 ## 0.9.1 — 2026-06-25
 
 **Tier 2: the context-scaled sandbox** — `executed-test` and `differential`

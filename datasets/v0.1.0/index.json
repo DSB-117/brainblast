@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0",
+  "dataset": "brainblast-verified-traps",
+  "version": "0.1.0",
+  "generator": "pack-dataset@0.1.0",
+  "generatedAt": "2026-06-23T19:24:50.211Z",
+  "recordSchema": "schema/vti.schema.json",
+  "license": "synthetic-owned",
+  "consentScope": "owned",
+  "counts": {
+    "full": 8,
+    "sample": 3,
+    "sdks": 8
+  },
+  "classDistribution": {
+    "unconfirmed-state": 2,
+    "missing-slippage-guard": 3,
+    "silent-zero-revenue": 1,
+    "unchecked-staleness": 1,
+    "missing-verification": 1
+  },
+  "severityDistribution": {
+    "high": 8
+  },
+  "sdks": [
+    "@metaplex-foundation/js",
+    "@meteora-ag/dlmm",
+    "@raydium-io/raydium-sdk-v2",
+    "@solana/web3.js",
+    "Jito (block engine / bundles)",
+    "Jupiter Aggregator API",
+    "Pyth Network price feeds",
+    "SPL Token"
+  ],
+  "lots": {
+    "sample": {
+      "file": "sample/vti.jsonl",
+      "access": "open",
+      "price": null,
+      "note": "Openly licensed teaser for format/quality inspection."
+    },
+    "full": {
+      "file": "full/vti.jsonl",
+      "access": "brain-gated",
+      "priceUsd": 2500,
+      "brainDiscountPct": 10,
+      "priceBrainUsdEquivalent": 2250,
+      "settlement": [
+        "BRAIN",
+        "USDC->buyback"
+      ],
+      "note": "Pay in $BRAIN at a standing discount; USDC accepted and used to buy back $BRAIN into the contributor/burn pool."
+    }
+  }
+}
