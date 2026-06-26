@@ -31,14 +31,23 @@ tail it used to throw away).
   `OracleMethod` (`static-checker | compiler | executed-test | differential`, plus
   `+`-joined corroboration); new optional `corroboratingMethods`. 1.0 records stay
   valid; the SLA re-validates against 1.1.
-- **The bottleneck is gone — proven on disk.** A `differential` `wrong-constant`
-  trap (SOL→lamports off by 1000×) that the static checker **cannot** see is
-  rejected by intake with Tier-2 off and captured by the prover with Tier-2 on —
-  the inventory the factory used to leave on the floor.
+- **The bottleneck is gone — proven on disk.** A **compiler** trap (a hallucinated
+  Stripe API the static checker can't see) is now **captured end-to-end through the
+  full ingest gate** with method `compiler` — a non-static class the Tier-0-only
+  factory could never admit. And a `differential` `wrong-constant` trap (SOL→lamports
+  off by 1000×) is **rejected** by intake with Tier-2 off and **proven RED→GREEN by
+  the generalized prover** with Tier-2 on — the inventory the factory used to leave
+  on the floor.
+- **Tier-2 *executing* backends refuse on the ingest path.** Running a contributor's
+  code on our infra requires the hardened container; a portable in-container harness
+  (resolving the candidate's native deps across musl/glibc) is a tracked follow-on,
+  so `executed-test`/`differential` **refuse → reject** under `context:"ingest"`
+  (never fall back to light isolation). They remain fully functional under
+  `context:"local"`. Static + compiler (which execute nothing) flow through ingest.
 
 This is P0 of the Real-Time VTI Intake plan (local, default-off, nothing leaves the
-machine). Streaming delivery, the `brainblast_recall` tool, and the bench-delta are
-the follow-on phases.
+machine). The hardened-ingest execution harness, streaming delivery, the
+`brainblast_recall` tool, and the bench-delta are the follow-on phases.
 
 ## v0.9.1 — 2026-06-25
 

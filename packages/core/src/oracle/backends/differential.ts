@@ -83,6 +83,20 @@ export const differentialBackend: OracleBackend = {
     if (!supports(rule)) {
       return unknown("rule is missing differential-io params (export + cases[])", t0);
     }
+    // context "ingest" runs a CONTRIBUTOR's code on our infra, which demands the
+    // hardened container. Executing a tsx harness in that container needs the
+    // candidate's native deps resolvable inside it (esbuild/tree-sitter, musl vs
+    // glibc) — a portable hardened-harness that is a tracked follow-on, not part of
+    // v0.9.2. Until it lands we REFUSE (never fall back to light isolation). The
+    // differential oracle is fully functional under context "local".
+    if (context === "ingest") {
+      return unknown(
+        "Tier-2 execution on the ingest path requires the hardened-sandbox harness " +
+          '(follow-on); refusing rather than running contributor code under weaker ' +
+          'isolation. Proven instead under context "local".',
+        t0,
+      );
+    }
     const entryFile = p.entryFile ?? defaultEntry(dir);
     const sandbox = makeSandboxDir(".oracle-diff-");
     try {

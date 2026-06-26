@@ -114,14 +114,13 @@ describe("differential backend — golden-I/O closes the wrong-constant class", 
     expect(v.color).toBe("UNKNOWN");
   }, 20_000);
 
-  it("refuses on ingest when no container runtime is available", async () => {
+  it("refuses on the ingest path (UNKNOWN, never falls back to light isolation)", async () => {
+    // Tier-2 EXECUTING backends refuse under context:"ingest" — the hardened-
+    // container harness for contributor code is a follow-on. This holds regardless
+    // of whether a container runtime is present (and is fast: no container attempt).
     const v = await differentialBackend.verify({ dir: join(base, "vulnerable"), rule, context: "ingest" });
-    if (hasContainer) {
-      expect(["RED", "GREEN", "UNKNOWN"]).toContain(v.color);
-    } else {
-      expect(v.color).toBe("UNKNOWN");
-      expect(v.detail).toMatch(/refus/i);
-    }
+    expect(v.color).toBe("UNKNOWN");
+    expect(v.detail).toMatch(/refus/i);
   }, 60_000);
 });
 
