@@ -1,0 +1,43 @@
+# Pure-data rule (facts). Binds to the `differential-io` kind, decided by the
+# Tier-2 DIFFERENTIAL oracle (not static analysis): the trap is a WRONG SCALING
+# CONSTANT in SOL→lamports conversion. There is 1 SOL = 1_000_000_000 lamports
+# (1e9). An agent that "remembers" micro-units (1e6) ships a converter that is
+# off by 1000x — the code looks right, type-checks fine, and silently sends the
+# wrong amount. No static pattern catches a wrong constant; running it against a
+# vetted golden I/O table does.
+#
+# The golden table below IS the oracle of truth (vetted, owned). The vulnerable
+# fixture diverges from it (RED); the fixed fixture matches (GREEN).
+#
+# Tier 2 executes code — opt-in:
+#   brainblast verify packs/solana-lamports-scaling-wrong-constant --oracle=differential
+id: solana-lamports-scaling-wrong-constant
+severity: high
+title: SOL→lamports conversion uses the wrong scaling constant (off by 1000x)
+component:
+  name: Solana lamports arithmetic
+  type: Blockchain
+  version: unversioned
+  sourceUrl: https://solana.com/docs/references/terminology#lamport
+detect:
+  modules: []
+  nameRegex: "lamport|toLamports|solToLamports"
+  triggerCalls: []
+  lang: typescript
+check:
+  kind: differential-io
+  params:
+    entryFile: lamports.ts
+    export: solToLamports
+    # The vetted golden table: 1 SOL === 1_000_000_000 lamports.
+    cases:
+      - input: [1]
+        output: 1000000000
+      - input: [0.5]
+        output: 500000000
+      - input: [2.5]
+        output: 2500000000
+      - input: [0]
+        output: 0
+test:
+  kind: none

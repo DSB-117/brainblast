@@ -111,6 +111,21 @@ export function validatePack(dir: string): PackValidateResult {
       return validateCompilerRule(rule, vulnerableDir, fixedDir);
     }
 
+    // v0.9.1 — Tier-2 rules (differential-io) EXECUTE candidate code, so they are
+    // never run by the default offline `pack validate`. They're reported as
+    // non-fatal "unverifiable" here; prove them with the explicit opt-in:
+    //   brainblast verify <pack> --oracle=differential
+    if (rule.check?.kind === "differential-io") {
+      return {
+        ruleId: rule.id,
+        status: "unverifiable",
+        method: "differential",
+        detail:
+          "Tier-2 differential rule — executes the candidate, so it is not run by the " +
+          "default offline gate. Prove it with: brainblast verify <pack> --oracle=differential",
+      };
+    }
+
     const redChecks = auditWithRule(vulnerableDir, rule);
     const redFails = redChecks.filter((c) => c.result === "fail");
     if (redFails.length === 0) {

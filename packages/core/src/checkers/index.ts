@@ -17,6 +17,7 @@ import { anchorBodyCallPattern } from "./anchorBodyCallPattern.ts";
 import { anchorCpiUnverifiedProgram } from "./anchorCpiUnverifiedProgram.ts";
 import { feeConfigsZeroOrMissing } from "./feeConfigsZeroOrMissing.ts";
 import { compilesAgainstSdk } from "./compilesAgainstSdk.ts";
+import { differentialIo } from "./differentialIo.ts";
 import type { Candidate, RustCandidate, ConfigCandidate, CheckOutcome, Checker, RustChecker, ConfigChecker } from "../types.ts";
 
 // Registry of human-vetted checker templates. Rules bind to these by `kind`.
@@ -43,6 +44,8 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker> = {
   "fee-configs-zero-or-missing": feeConfigsZeroOrMissing,
   // v0.9.0 — bound to the Tier-1 compiler oracle; static abstains (cant_tell).
   "compiles-against-sdk": compilesAgainstSdk,
+  // v0.9.1 — bound to the Tier-2 differential oracle; static abstains (cant_tell).
+  "differential-io": differentialIo,
 };
 
 export function runChecker(kind: string, c: Candidate | RustCandidate | ConfigCandidate, params: any): CheckOutcome {
