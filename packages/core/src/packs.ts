@@ -6,6 +6,17 @@ import type { PackManifest, Rule } from "./types.ts";
 
 export const PACK_MANIFEST_FILE = "brainblast-pack.yaml";
 
+// A safe identifier for use as a filesystem path segment. Pack ids and rule ids
+// become directory names (e.g. fixtures/<rule-id>/, starters/<trap-id>/), so an
+// id containing a slash or "../" could traverse out of the intended directory
+// once we accept untrusted third-party / contributed packs (Stage 2). Bundled
+// ids already conform; this just makes the invariant enforced, not assumed.
+export const SAFE_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
+
+export function isSafeId(id: unknown): id is string {
+  return typeof id === "string" && id.length <= 128 && SAFE_ID_RE.test(id);
+}
+
 // Validate a pack manifest. This is the safety net for third-party packs:
 // a malformed manifest is rejected at load time, never silently run.
 export function validatePackManifest(m: any, file: string): void {
@@ -14,6 +25,7 @@ export function validatePackManifest(m: any, file: string): void {
     throw new Error(`invalid pack manifest in ${file}: not a mapping`);
   }
   if (!m.id || typeof m.id !== "string") errs.push("missing id");
+  else if (!isSafeId(m.id)) errs.push(`unsafe id ${JSON.stringify(m.id)} — must match ${SAFE_ID_RE}`);
   if (!m.name || typeof m.name !== "string") errs.push("missing name");
   if (!m.version || typeof m.version !== "string") errs.push("missing version");
   if (!m.author || typeof m.author !== "string") errs.push("missing author");

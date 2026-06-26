@@ -2,6 +2,56 @@
 
 ## Unreleased
 
+## v0.9.2 — 2026-06-26
+
+**The data factory, prover-backed.** v0.9.0/0.9.1 shipped the generalized oracle;
+the training-data factory (VTI schema, contributor ingest, corpus/SLA, bench) lived
+on a separate branch and still proved everything with its **weakest** oracle —
+Tier-0 static only. v0.9.2 lands the whole factory on `main` (additive, default-off)
+and **routes intake through the generalized prover**, so it can finally capture the
+trap classes only Tier-1/2 can prove (the `wrong-constant` / no-static-shape long
+tail it used to throw away).
+
+- **Data factory ported to `main`** (default-off, opt-in): `schema/vti.schema.json`,
+  `src/contrib/{ingest,capture}.ts`, `src/{corpus,vtiClass}.ts`, the
+  `gen:vti` / `ingest:vti` / `pack:dataset` / `corpus` / `sla` / `bench` scripts,
+  `datasets/`, `bench/`, and `ROADMAP-TRAINING-DATA.md`. None of it runs on a normal
+  `npx brainblast` — the audit path is byte-for-byte unchanged.
+- **Keystone — prover-backed intake.** The reproduction gate in `ingestContribution`
+  / `ingestCandidate` / `reproducePair` now calls `proveWithBest(selectBackends(
+  "best").backends, …, "ingest")` instead of the Tier-0 `auditWithRule`. `context:
+  "ingest"` forces the **hardened** sandbox and **refuses → reject** rather than
+  falling back. Gating semantics are preserved exactly (a real RED is required on
+  the vulnerable side; an UNKNOWN fixed side still counts as GREEN), so every
+  existing record still reproduces (SLA 100%).
+- **`gen-vti` records the true method** (e.g. a compiler-proven trap is stamped
+  `compiler`, not the old hard-coded `static-checker`); the SLA monitor re-proves
+  through the prover too.
+- **Schema → 1.1 (additive superset).** `redGreenProof.method` is aligned with
+  `OracleMethod` (`static-checker | compiler | executed-test | differential`, plus
+  `+`-joined corroboration); new optional `corroboratingMethods`. 1.0 records stay
+  valid; the SLA re-validates against 1.1.
+- **The bottleneck is gone — captured end-to-end through ingest.** Two non-static
+  classes the Tier-0-only factory could never admit now flow through the full ingest
+  gate: a **compiler** trap (a hallucinated Stripe API), and — running a contributor's
+  code in the **hardened container** — a `differential` `wrong-constant` trap
+  (SOL→lamports off by 1000×).
+- **Differential runs portably in the hardened sandbox.** The candidate is transpiled
+  to plain CommonJS **on the host** (via the bundled TypeScript compiler — compilation,
+  not execution) and run with plain `node` inside a `--network=none` container — no
+  `tsx`, no `node_modules`, no native deps. The local light-isolate and the ingest
+  container run the **identical command**, so the whole path is locally testable.
+  Where no container runtime exists, ingest **refuses → reject** (never falls back to
+  light isolation).
+- **`executed-test` still refuses on ingest** — its vitest contract needs a
+  vitest-capable sandbox image (a tracked follow-on). It is fully functional under
+  `context:"local"`. Static + compiler (which execute nothing) flow through ingest
+  unconditionally.
+
+This is P0 of the Real-Time VTI Intake plan (local, default-off, nothing leaves the
+machine). The vitest-capable sandbox image (for executed-test on ingest), streaming
+delivery, the `brainblast_recall` tool, and the bench-delta are the follow-on phases.
+
 ## v0.9.1 — 2026-06-25
 
 **Tier 2: the context-scaled sandbox.** v0.9.0 shipped the pluggable oracle with

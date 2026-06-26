@@ -1,6 +1,6 @@
 {
   "name": "brainblast",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "type": "module",
   "description": "Deterministic auditor for catastrophic AI-integration bugs: scan a repo, find the silent money/auth traps, and generate the behavioral test that proves they're fixed.",
   "keywords": [
@@ -56,6 +56,12 @@
     "prepublishOnly": "npm run typecheck && npm test && npm run build",
     "audit": "tsx src/cli.ts",
     "prove": "tsx scripts/prove.ts",
+    "gen:vti": "tsx scripts/gen-vti.ts",
+    "pack:dataset": "tsx scripts/pack-dataset.ts",
+    "ingest:vti": "tsx scripts/ingest-vti.ts",
+    "corpus": "tsx scripts/corpus-report.ts",
+    "sla": "tsx scripts/corpus-sla.ts",
+    "bench": "tsx scripts/bench.ts",
     "synth": "tsx scripts/synth-prove.ts",
     "synth:bags": "tsx scripts/synth-prove.ts findings/bags-known-answer.json",
     "test": "vitest run",

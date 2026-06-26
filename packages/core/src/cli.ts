@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { writeFileSync, mkdirSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
 import { audit } from "./audit.ts";
 import { getChangedRanges } from "./gitDiff.ts";
 import { loadMemory, saveMemory, updateMemory, precedentKey } from "./memory.ts";
@@ -22,6 +22,7 @@ import { applyDiffToFile, parseDiff } from "./fixers/applyDiff.ts";
 import { initPack, validatePack } from "./pack.ts";
 import { listBundledPacks, resolveBundledPackToken } from "./bundledPacks.ts";
 import { isTelemetryEnabled, recordGraduationEvents, telemetryFilePath, submitTelemetry } from "./telemetry.ts";
+import { isContributeEnabled, contributeConsentScope, contribStagingDir, stageContribution } from "./contrib/capture.ts";
 
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
@@ -871,6 +872,21 @@ async function runFix(argv: string[]) {
     return;
   }
 
+  // Contribution capture (opt-in): snapshot each soon-to-be-fixed file's BEFORE
+  // content so a confirmed RED→GREEN fix can be captured as a candidate VTI.
+  const contribute = isContributeEnabled(targetDir);
+  const beforeContent = new Map<string, string>();
+  if (contribute) {
+    for (const c of fixable) {
+      if (beforeContent.has(c.file)) continue;
+      try {
+        beforeContent.set(c.file, readFileSync(c.file, "utf8"));
+      } catch {
+        /* unreadable — skip capture for this file */
+      }
+    }
+  }
+
   // Apply bottom-up per file so earlier hunks don't shift later line numbers.
   const byFile = new Map<string, typeof fixable>();
   for (const c of fixable) {
@@ -915,6 +931,32 @@ async function runFix(argv: string[]) {
     if (events.length > 0) {
       recordGraduationEvents(targetDir, events);
       console.log(`\nTelemetry: recorded ${events.length} graduation event(s) to ${telemetryFilePath(targetDir)}`);
+    }
+  }
+
+  // Contribution capture (opt-in): stage the before/after content of each
+  // confirmed RED→GREEN fix. stageContribution refuses any pair holding a secret.
+  if (contribute) {
+    const graduated = fixable.filter((c) => !stillFailing.includes(c));
+    let stagedN = 0;
+    for (const c of graduated) {
+      const before = beforeContent.get(c.file);
+      if (before === undefined) continue;
+      let after: string;
+      try {
+        after = readFileSync(c.file, "utf8");
+      } catch {
+        continue;
+      }
+      const res = stageContribution(targetDir, { ruleId: c.ruleId, file: relative(targetDir, c.file), vulnerable: before, fixed: after });
+      if (res.staged) stagedN++;
+      else if (res.reason?.includes("secret")) console.log(`  [contribute] skipped ${c.ruleId}: ${res.reason}`);
+    }
+    if (stagedN > 0) {
+      console.log(
+        `\nContribute: staged ${stagedN} candidate(s) to ${contribStagingDir(targetDir)} ` +
+          `(consent=${contributeConsentScope(targetDir)}). Ingest with: npm run ingest:vti -- --from-staging .`,
+      );
     }
   }
 

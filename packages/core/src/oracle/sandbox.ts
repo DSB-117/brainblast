@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { readdirSync, mkdirSync, mkdtempSync, copyFileSync, statSync } from "node:fs";
+import { readdirSync, mkdirSync, mkdtempSync, copyFileSync, statSync, chmodSync } from "node:fs";
 import { join, relative, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { OracleContext } from "./types.ts";
@@ -129,6 +129,28 @@ function clamp(s: string | null, max: number): string {
   return s.length > max ? s.slice(0, max) + `\n…[truncated at ${max} bytes]` : s;
 }
 
+// Make a tree world-readable (files 0644, dirs 0755) so a non-root container user
+// can read a host-owned mkdtemp dir (default 0700). Best-effort; ignores errors.
+function makeWorldReadable(root: string): void {
+  const walk = (p: string) => {
+    let st;
+    try {
+      st = statSync(p);
+    } catch {
+      return;
+    }
+    try {
+      chmodSync(p, st.isDirectory() ? 0o755 : 0o644);
+    } catch {
+      /* best-effort */
+    }
+    if (st.isDirectory()) {
+      for (const e of readdirSync(p)) walk(join(p, e));
+    }
+  };
+  walk(root);
+}
+
 function isTimeout(r: ReturnType<typeof spawnSync>): boolean {
   // ONLY the wall-clock guard counts as a timeout. A maxBuffer overflow is
   // ENOBUFS (and also kills the child) — that is an output-cap "error", not a
@@ -191,6 +213,11 @@ function runHardened(spec: SandboxSpec, timeoutMs: number, maxOut: number, t0: n
     };
   }
   const image = spec.image ?? DEFAULT_IMAGE;
+  // The container runs as non-root (--user nobody, uid 65534), which won't match
+  // the host uid that owns the 0700 mkdtemp dir — so make the mounted tree world-
+  // readable (and dirs traversable) first. The contents are the candidate code we
+  // are about to run anyway; there is nothing secret to protect with mode bits here.
+  makeWorldReadable(spec.dir);
   const mounts = ["-v", `${spec.dir}:/work:ro`];
   for (const m of spec.readonlyMounts ?? []) mounts.push("-v", `${m}:${m}:ro`);
   const args = [

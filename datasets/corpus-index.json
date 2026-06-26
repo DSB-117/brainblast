@@ -1,0 +1,188 @@
+{
+  "schemaVersion": "1.0",
+  "generator": "corpus-report@0.1.0",
+  "generatedAt": "2026-06-24T01:08:31.271Z",
+  "lots": [
+    {
+      "path": "datasets/seed/seed-vti.jsonl",
+      "license": "synthetic-owned",
+      "count": 8
+    }
+  ],
+  "counts": {
+    "vtis": 8,
+    "unique": 8,
+    "duplicates": 0,
+    "sdks": 8,
+    "classes": 5
+  },
+  "severityDistribution": {
+    "high": 8
+  },
+  "classDistribution": {
+    "unconfirmed-state": 2,
+    "missing-slippage-guard": 3,
+    "silent-zero-revenue": 1,
+    "unchecked-staleness": 1,
+    "missing-verification": 1
+  },
+  "sdkDistribution": {
+    "Jito (block engine / bundles)": 1,
+    "Jupiter Aggregator API": 1,
+    "@metaplex-foundation/js": 1,
+    "@meteora-ag/dlmm": 1,
+    "Pyth Network price feeds": 1,
+    "@raydium-io/raydium-sdk-v2": 1,
+    "@solana/web3.js": 1,
+    "SPL Token": 1
+  },
+  "licenseDistribution": {
+    "synthetic-owned": 8
+  },
+  "quality": {
+    "mean": 48,
+    "median": 48,
+    "min": 48,
+    "max": 48,
+    "buckets": {
+      "high": 0,
+      "medium": 8,
+      "low": 0
+    }
+  },
+  "coverage": {
+    "matrix": {
+      "unconfirmed-state": {
+        "Jito (block engine / bundles)": 1,
+        "@solana/web3.js": 1
+      },
+      "missing-slippage-guard": {
+        "Jupiter Aggregator API": 1,
+        "@meteora-ag/dlmm": 1,
+        "@raydium-io/raydium-sdk-v2": 1
+      },
+      "silent-zero-revenue": {
+        "@metaplex-foundation/js": 1
+      },
+      "unchecked-staleness": {
+        "Pyth Network price feeds": 1
+      },
+      "missing-verification": {
+        "SPL Token": 1
+      }
+    },
+    "thinCells": [
+      {
+        "class": "unconfirmed-state",
+        "sdk": "Jito (block engine / bundles)"
+      },
+      {
+        "class": "unconfirmed-state",
+        "sdk": "@solana/web3.js"
+      },
+      {
+        "class": "missing-slippage-guard",
+        "sdk": "Jupiter Aggregator API"
+      },
+      {
+        "class": "missing-slippage-guard",
+        "sdk": "@meteora-ag/dlmm"
+      },
+      {
+        "class": "missing-slippage-guard",
+        "sdk": "@raydium-io/raydium-sdk-v2"
+      },
+      {
+        "class": "silent-zero-revenue",
+        "sdk": "@metaplex-foundation/js"
+      },
+      {
+        "class": "unchecked-staleness",
+        "sdk": "Pyth Network price feeds"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "SPL Token"
+      }
+    ],
+    "missingClasses": [
+      "immutable-after-deploy",
+      "auth-bypass",
+      "wrong-constant"
+    ]
+  },
+  "scored": [
+    {
+      "trapId": "jito-bundle-zero-tip",
+      "sdk": "Jito (block engine / bundles)",
+      "class": "unconfirmed-state",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "jupiter-quote-zero-slippage",
+      "sdk": "Jupiter Aggregator API",
+      "class": "missing-slippage-guard",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "metaplex-nft-royalty-zero",
+      "sdk": "@metaplex-foundation/js",
+      "class": "silent-zero-revenue",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "meteora-dlmm-zero-min-out",
+      "sdk": "@meteora-ag/dlmm",
+      "class": "missing-slippage-guard",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "pyth-price-unchecked-staleness",
+      "sdk": "Pyth Network price feeds",
+      "class": "unchecked-staleness",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "raydium-compute-zero-slippage",
+      "sdk": "@raydium-io/raydium-sdk-v2",
+      "class": "missing-slippage-guard",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "solana-sendtx-unconfirmed",
+      "sdk": "@solana/web3.js",
+      "class": "unconfirmed-state",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "spl-transfer-not-checked-in-payout",
+      "sdk": "SPL Token",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    }
+  ]
+}
