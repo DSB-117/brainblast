@@ -50,15 +50,16 @@ export const executedTestBackend: OracleBackend = {
       return unknown(`rule '${rule.id}' has no vetted test.kind to execute`, t0);
     }
     // context "ingest" (a contributor's code on our infra) requires the hardened
-    // container. Running a vitest contract inside it needs the candidate's native
-    // deps resolvable in the container — the portable hardened-harness is a tracked
-    // follow-on, not v0.9.2. Until it lands we REFUSE (never fall back to light
-    // isolation). The executed-test oracle is fully functional under context "local".
+    // container. The differential oracle runs in it portably (transpile to plain JS
+    // on the host → run `node`), but an executed-test CONTRACT needs vitest + the
+    // SDK at runtime inside the container — a purpose-built sandbox image, which is
+    // a tracked follow-on. Until that image exists we REFUSE (never fall back to
+    // light isolation). The executed-test oracle is fully functional under "local".
     if (context === "ingest") {
       return unknown(
-        "Tier-2 execution on the ingest path requires the hardened-sandbox harness " +
-          '(follow-on); refusing rather than running contributor code under weaker ' +
-          'isolation. Proven instead under context "local".',
+        "executed-test on the ingest path needs a vitest-capable hardened sandbox " +
+          "image (follow-on); refusing rather than running contributor code under " +
+          'weaker isolation. Proven instead under context "local".',
         t0,
       );
     }

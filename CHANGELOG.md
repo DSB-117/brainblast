@@ -31,23 +31,26 @@ tail it used to throw away).
   `OracleMethod` (`static-checker | compiler | executed-test | differential`, plus
   `+`-joined corroboration); new optional `corroboratingMethods`. 1.0 records stay
   valid; the SLA re-validates against 1.1.
-- **The bottleneck is gone — proven on disk.** A **compiler** trap (a hallucinated
-  Stripe API the static checker can't see) is now **captured end-to-end through the
-  full ingest gate** with method `compiler` — a non-static class the Tier-0-only
-  factory could never admit. And a `differential` `wrong-constant` trap (SOL→lamports
-  off by 1000×) is **rejected** by intake with Tier-2 off and **proven RED→GREEN by
-  the generalized prover** with Tier-2 on — the inventory the factory used to leave
-  on the floor.
-- **Tier-2 *executing* backends refuse on the ingest path.** Running a contributor's
-  code on our infra requires the hardened container; a portable in-container harness
-  (resolving the candidate's native deps across musl/glibc) is a tracked follow-on,
-  so `executed-test`/`differential` **refuse → reject** under `context:"ingest"`
-  (never fall back to light isolation). They remain fully functional under
-  `context:"local"`. Static + compiler (which execute nothing) flow through ingest.
+- **The bottleneck is gone — captured end-to-end through ingest.** Two non-static
+  classes the Tier-0-only factory could never admit now flow through the full ingest
+  gate: a **compiler** trap (a hallucinated Stripe API), and — running a contributor's
+  code in the **hardened container** — a `differential` `wrong-constant` trap
+  (SOL→lamports off by 1000×).
+- **Differential runs portably in the hardened sandbox.** The candidate is transpiled
+  to plain CommonJS **on the host** (via the bundled TypeScript compiler — compilation,
+  not execution) and run with plain `node` inside a `--network=none` container — no
+  `tsx`, no `node_modules`, no native deps. The local light-isolate and the ingest
+  container run the **identical command**, so the whole path is locally testable.
+  Where no container runtime exists, ingest **refuses → reject** (never falls back to
+  light isolation).
+- **`executed-test` still refuses on ingest** — its vitest contract needs a
+  vitest-capable sandbox image (a tracked follow-on). It is fully functional under
+  `context:"local"`. Static + compiler (which execute nothing) flow through ingest
+  unconditionally.
 
 This is P0 of the Real-Time VTI Intake plan (local, default-off, nothing leaves the
-machine). The hardened-ingest execution harness, streaming delivery, the
-`brainblast_recall` tool, and the bench-delta are the follow-on phases.
+machine). The vitest-capable sandbox image (for executed-test on ingest), streaming
+delivery, the `brainblast_recall` tool, and the bench-delta are the follow-on phases.
 
 ## v0.9.1 — 2026-06-25
 

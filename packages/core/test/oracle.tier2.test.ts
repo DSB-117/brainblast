@@ -114,13 +114,19 @@ describe("differential backend — golden-I/O closes the wrong-constant class", 
     expect(v.color).toBe("UNKNOWN");
   }, 20_000);
 
-  it("refuses on the ingest path (UNKNOWN, never falls back to light isolation)", async () => {
-    // Tier-2 EXECUTING backends refuse under context:"ingest" — the hardened-
-    // container harness for contributor code is a follow-on. This holds regardless
-    // of whether a container runtime is present (and is fast: no container attempt).
+  it("on ingest, runs in the hardened container (if present) or refuses (never light-isolates)", async () => {
+    // Under context:"ingest" the differential candidate is transpiled to CJS on
+    // the host and run with plain `node` in the hardened container. Where a runtime
+    // exists it verifies (RED/GREEN); where none does, it REFUSES → UNKNOWN. Either
+    // way it never falls back to light isolation.
     const v = await differentialBackend.verify({ dir: join(base, "vulnerable"), rule, context: "ingest" });
-    expect(v.color).toBe("UNKNOWN");
-    expect(v.detail).toMatch(/refus/i);
+    if (hasContainer) {
+      expect(v.color).toBe("RED"); // the wrong-constant diverges from the golden table
+      expect(v.evidence?.isolation).toBe("hardened");
+    } else {
+      expect(v.color).toBe("UNKNOWN");
+      expect(v.detail).toMatch(/refus/i);
+    }
   }, 60_000);
 });
 

@@ -16,10 +16,11 @@ factory on `main` and routes its intake through the generalized oracle.
   `auditWithRule`, so the factory captures compiler/executed-test/differential
   traps. `context:"ingest"` forces the hardened sandbox (refuse, never fall back).
   Gating semantics preserved (real RED required; UNKNOWN fixed side counts GREEN).
-  Tier-2 *executing* backends (executed-test/differential) **refuse → reject** under
-  `context:"ingest"` — the in-container harness for contributor code is a follow-on;
-  they never fall back to light isolation. Static + compiler (no execution) flow
-  through ingest, so a compiler-proven trap is captured end-to-end.
+  **differential** runs portably in the hardened container on ingest: the candidate
+  is transpiled to CommonJS on the host and run with plain `node` (no tsx/native
+  deps), so local and ingest run the identical command. **executed-test** still
+  refuses on ingest (vitest needs a sandbox image — follow-on); both never fall back
+  to light isolation. Static + compiler (no execution) flow through ingest.
 - **`gen-vti`** stamps the real proving method via `validatePack`'s oracle result.
 - **Schema 1.1:** `redGreenProof.method` aligned to `OracleMethod` (+ `+`-joined
   corroboration) via a pattern; new optional `corroboratingMethods`; 1.0 still valid.

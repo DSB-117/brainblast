@@ -6,8 +6,11 @@ import { fileURLToPath } from "node:url";
 import { ingestContribution } from "../src/contrib/ingest.ts";
 import { selectBackends } from "../src/oracle/index.ts";
 import { proveWithBest } from "../src/oracle/prove.ts";
+import { containerRuntime } from "../src/oracle/sandbox.ts";
 import { loadPack } from "../src/packs.ts";
 import type { Rule } from "../src/types.ts";
+
+const hasContainer = !!containerRuntime();
 
 // THE KEYSTONE PROOF (v0.9.2): the data factory's intake is no longer bottlenecked
 // on its weakest oracle. Before v0.9.2 the reproduction gate was Tier-0 static
@@ -77,14 +80,23 @@ describe("keystone: prover-backed intake captures the non-static long tail", () 
     expect(result.proven?.method).toBe("differential");
   }, 60_000);
 
-  it("a Tier-2 EXECUTING trap REFUSES on the ingest path (never falls back to light isolation)", async () => {
-    // The hardened-container harness that runs contributor code is a follow-on;
-    // until then differential/executed refuse under context:"ingest". Safe by
-    // construction — and fast (no container attempt).
+  it("differential trap survives INGEST end-to-end (hardened container), or refuses without one", async () => {
+    // The full keystone: a contributor's differential trap is verified by running
+    // it in the HARDENED sandbox. The candidate is transpiled to plain CJS on the
+    // host and executed with plain `node` in a --network=none container — no tsx,
+    // no node_modules, no native deps — so the container "just works". Where no
+    // container runtime exists, intake REFUSES (never falls back to light isolation).
     process.env.BRAINBLAST_ORACLE_EXEC = "1";
     const res = await ingestContribution({ submissionDir: diffSubmission, rule: diffRule(), consentScope: "opt-in:train+eval" });
-    expect(res.accepted).toBe(false);
-  }, 60_000);
+    if (hasContainer) {
+      expect(res.accepted).toBe(true);
+      expect(res.method).toBe("differential");
+      expect((res.vti as any)?.redGreenProof.method).toBe("differential");
+      expect((res.vti as any)?.schemaVersion).toBe("1.1");
+    } else {
+      expect(res.accepted).toBe(false); // refused: no hardened sandbox available
+    }
+  }, 120_000);
 
   it("a COMPILER trap is CAPTURED end-to-end through the full ingest gate (method=compiler)", async () => {
     // The compiler oracle executes nothing (reads source + types), so it is safe
