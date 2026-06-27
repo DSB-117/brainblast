@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.9.3 — 2026-06-27
+
 **The Agent Wallet (default-off).** A small, capped, Vault-recoverable Solana ops
 wallet an AI agent can generate and operate itself — the on-chain `$BRAIN`
 substrate the training-data roadmap's Stages 2 & 4 were deferred onto. Additive
