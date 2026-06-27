@@ -12,6 +12,7 @@ import {
   setActiveWallet,
   loadSecretKey,
   isRecoverable,
+  rotateWallet,
   walletManifestPath,
 } from "../src/wallet/agentWallet.ts";
 
@@ -102,6 +103,22 @@ describe("Agent Wallet (P0 — key lifecycle + recovery)", () => {
     setActiveWallet(a.pubkey);
     expect(getActiveWallet()?.pubkey).toBe(a.pubkey);
     expect(() => setActiveWallet("not-a-real-pubkey")).toThrow();
+  });
+
+  it("rotate generates a new active key and keeps the old one recoverable", () => {
+    const old = createWallet({ label: "v1" });
+    const { oldPubkey, oldSecret, newWallet } = rotateWallet({ label: "v2" });
+    expect(oldPubkey).toBe(old.pubkey);
+    expect(Array.from(oldSecret)).toEqual(old.secretKeyArray);
+    expect(getActiveWallet()?.pubkey).toBe(newWallet.pubkey);
+    expect(newWallet.pubkey).not.toBe(old.pubkey);
+    // Rotation never destroys a key — the old one is still in the Vault.
+    expect(isRecoverable(oldPubkey)).toBe(true);
+    expect(isRecoverable(newWallet.pubkey)).toBe(true);
+  });
+
+  it("rotate throws when there is no active wallet", () => {
+    expect(() => rotateWallet()).toThrow();
   });
 
   it("stores the Vault object encrypted (no plaintext secret on disk)", () => {

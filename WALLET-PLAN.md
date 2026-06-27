@@ -1,6 +1,6 @@
 # The Agent Wallet — plan
 
-**Status:** P0 in progress · additive, default-off · audit path unchanged
+**Status:** P0–P3 landed (engineering) · additive, default-off · audit path unchanged
 **Companion to:** [`ROADMAP-TRAINING-DATA.md`](ROADMAP-TRAINING-DATA.md) (this is the
 on-chain `$BRAIN` substrate its Stages 2 & 4 were deferred onto)
 
@@ -106,19 +106,32 @@ simulates the tx, checks Signguard + the session ledger, and refuses fail-closed
 
 ## Phases
 
-- **P0 ◐ — Wallet core + recovery.** Key lifecycle (generate / Vault-store /
-  recover-to-memory / address / active-manifest / rotate-keys) + `init` / `address`
-  / `list` CLI + tests. **Done when:** generate → Vault-store → recover round-trips,
-  the secret never lands in a repo path, and a wiped working tree recovers the
-  wallet from the Vault by pubkey. (`balance`/`sweep` need RPC — next increment.)
-- **P1 ☐ — Policy-governed staking.** `signWithPolicy()` + session ledger; port
-  `agent-stake` onto the Vault-managed wallet. **Done when:** an over-cap or
-  non-allowlisted stake is refused, proven by tests.
-- **P2 ☐ — Dividend receive wiring.** Wallet becomes the `$BRAIN` payout address;
-  `balance` reflects earnings. (Receiving is near-zero-risk — first live flow.)
-- **P3 ☐ — Tier-2 delegation.** `delegate` / `revoke` via SPL `approve`. **Done
-  when:** an owner-signed allowance lets the agent spend to the cap, and `revoke`
-  kills it on-chain.
+- **P0 ✅ — Wallet core + recovery.** Key lifecycle (generate / Vault-store /
+  recover-to-memory / address / active-manifest / rotate) + `init` / `address` /
+  `list` / `balance` / `sweep` / `rotate` CLI. The secret round-trips through the
+  Vault, never lands in a repo path, and a wiped working tree recovers it by
+  pubkey. `sweep` (the panic button) and `balance` are RPC-backed; `sweep` is
+  fail-closed to a configured owner address.
+- **P1 ✅ — Policy-governed staking.** `checkSpend()` gate + session ledger +
+  `signWithPolicy()` chokepoint (fail-closed: a refusal never touches the chain).
+  `wallet stake` bonds `$BRAIN` on a VTI through the gate; the in-core successor
+  to `scripts/agent-stake`, reading the secret from the Vault, not an env var.
+  Over-cap / non-allowlisted / unknown-program spends are refused, proven by tests.
+- **P2 ✅ — Dividend receive wiring.** The active wallet pubkey is the
+  `author_wallet` recorded on every stake, so dividends settle back to it;
+  `wallet balance` reflects earned `$BRAIN`/`$USDC`. (Receiving is unconstrained
+  inbound — near-zero-risk. The on-chain payout itself is registry/treasury-side.)
+- **P3 ✅ — Tier-2 delegation.** `wallet delegate` derives the owner's ATA and
+  emits the exact `spl-token approve` for the owner to run; `wallet revoke` emits
+  `spl-token revoke` (Tier-2) or zeroes the caps to disable autonomous spend
+  (Tier-1). `sendDelegatedTransfer` lets the agent spend the owner's tokens as the
+  approved delegate, bounded by the on-chain allowance.
+
+> **What "landed" means here:** the engineering — key handling, the policy gate,
+> tx construction, CLI — is built and tested (pure/offline paths fully; the
+> RPC-send legs are structured behind the tested gate). What remains before this
+> moves real value is operational: funding a wallet on mainnet, the registry-side
+> dividend payout, and a real `$BRAIN` price feed for the stake `--brain-amount`.
 
 ## Risks
 

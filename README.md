@@ -161,6 +161,16 @@ Wallet Guard  [BLOCK — wallet network/config mismatch]
 
 Verdict `allow / warn / block`, exit 1 on a critical mismatch (`--strict`, `--json`); `inspectWalletConfig(dir)` is the inline export. **As of v0.8.3 this also runs inside the default `npx brainblast .`** — printed as an additive "Wallet config" section and attached to `report.json` as `walletConfig`, kept out of `checks[]` so it never changes the security verdict or an existing CI gate. Opt into gating with `--fail-on-wallet`.
 
+## Agent Wallet — a capped, Vault-recoverable wallet your agent runs itself (default-off)
+
+So an AI agent can hold and move `$BRAIN`/`$USDC`/`$SOL` with near-zero friction — stake the anti-poisoning bond on data it contributes, earn dividends when that data sells — without a human wiring a raw secret into the environment. The rule it hangs on: this is a **small, capped, *sacrificial* ops wallet — never your principal.** The caps + recipient allowlist (not the at-rest encryption) are what bound a compromised agent. Opt-in; a normal `npx brainblast` audit is unchanged. Full design: [`WALLET-PLAN.md`](../../WALLET-PLAN.md).
+
+- **`brainblast wallet init`** generates an ed25519 Solana keypair (via `node:crypto`) and stores the secret **only** in the encrypted Vault — never a plaintext file — recoverable by pubkey. A wiped working tree (`git clean -fdx`) recovers from the Vault. The secret is surfaced **once** for your own backup.
+- **The spend gate.** Every outbound transaction passes `checkSpend()` — per-tx/session USD caps, recipient allowlist, unknown-program block — via a **fail-closed** `signWithPolicy()` chokepoint: a refusal never touches the chain. `wallet stake` bonds `$BRAIN` on a contributed VTI through the gate (the in-core successor to `scripts/agent-stake`, reading the Vault, not an env var).
+- **`wallet sweep <owner>`** is the panic button — drains everything to your address (fail-closed to a registered owner address); **`rotate`** swaps to a fresh key and sweeps the old one across; **`balance` / `policy` / `config`** round it out.
+- **Tier-2 (opt-in, agent never custodies principal):** `wallet delegate` emits the owner-side `spl-token approve` for a capped on-chain allowance; the agent spends as delegate; `wallet revoke` cancels it.
+- **Consent stays separate** — the wallet removes *economic* friction only; data capture stays behind the `BRAINBLAST_CONTRIBUTE=1` opt-in (default off).
+
 ## Prerequisites
 
 Brainblast is a workflow that runs *inside* a host agent. It needs a browser engine to fetch live docs.

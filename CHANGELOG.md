@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+**The Agent Wallet (default-off).** A small, capped, Vault-recoverable Solana ops
+wallet an AI agent can generate and operate itself — the on-chain `$BRAIN`
+substrate the training-data roadmap's Stages 2 & 4 were deferred onto. Additive
+and opt-in; a normal `npx brainblast` audit is byte-for-byte unchanged. The rule
+it hangs on: this is a **sacrificial capped wallet, never the owner's principal** —
+the caps + recipient allowlist (not the at-rest encryption) are what bound a
+compromised agent. See [`WALLET-PLAN.md`](../../WALLET-PLAN.md).
+- **`brainblast wallet init | address | list | balance | policy | config | stake |
+  sweep | rotate | delegate | revoke`** (`src/wallet/`). The secret is generated
+  with `node:crypto` (ed25519 — byte-identical to `@solana/web3.js`) and stored
+  **only** in the encrypted Vault (`backupBytes` — never a plaintext file),
+  recoverable by pubkey; a wiped working tree recovers from the Vault.
+- **The spend gate.** Every outbound tx passes `checkSpend()` (per-tx/session USD
+  caps, recipient allowlist, `blockUnknownPrograms`) via `signWithPolicy()`, which
+  is **fail-closed** — a refusal never touches the chain — and debits a session
+  ledger only on a successful non-sweep spend. `sweep` is the panic button: it
+  ignores spend caps but is fail-closed to a configured owner address.
+- **Staking.** `wallet stake` bonds `$BRAIN` on a contributed VTI through the gate
+  — the in-core successor to `scripts/agent-stake`, reading the secret from the
+  Vault instead of `AGENT_OPS_WALLET_SECRET`.
+- **Tier-2 (opt-in).** `wallet delegate`/`revoke` emit the owner-side `spl-token
+  approve`/`revoke` so the agent spends a capped on-chain allowance and never
+  custodies principal.
+- **Consent stays separate.** The wallet removes *economic* friction only; data
+  capture stays behind the existing `BRAINBLAST_CONTRIBUTE=1` opt-in (default off).
+- `@solana/web3.js` + `@solana/spl-token` promoted to runtime deps (lazy-loaded by
+  the network commands only). 21 new tests; 608 pass / 1 skip.
+
 ## v0.9.2 — 2026-06-26
 
 **The data factory, prover-backed.** v0.9.0/0.9.1 shipped the generalized oracle;

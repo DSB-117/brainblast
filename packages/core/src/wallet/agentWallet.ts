@@ -172,3 +172,14 @@ export function loadSecretKey(pubkey: string): Uint8Array {
 export function isRecoverable(pubkey: string): boolean {
   return listEntries().some((e) => e.pubkey === pubkey && e.kind === "solana-keypair-64");
 }
+
+// Rotate the active wallet: generate a fresh key (the new active), returning the
+// old + new so the caller can sweep old → new on-chain. The old wallet stays in
+// the Vault and the manifest (recoverable) — rotation never destroys a key.
+export function rotateWallet(opts: { label?: string } = {}): { oldPubkey: string; oldSecret: Uint8Array; newWallet: GeneratedWallet } {
+  const prev = getActiveWallet();
+  if (!prev) throw new Error("agent-wallet: no active wallet to rotate (run `wallet init`)");
+  const oldSecret = loadSecretKey(prev.pubkey);
+  const newWallet = createWallet({ label: opts.label ?? prev.label, tier: prev.tier });
+  return { oldPubkey: prev.pubkey, oldSecret, newWallet };
+}
