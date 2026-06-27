@@ -18,6 +18,7 @@
 //   brainblast_diff        — compare OSV risk profile between two package versions
 //   brainblast_osv_check   — query OSV.dev for advisories on one version
 //   brainblast_verify      — PROVE a fix: re-run a pack's RED→GREEN through the oracle
+//   brainblast_recall      — recall verified traps (VTIs) for an SDK before you code
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -31,7 +32,7 @@ import { resolveRules } from "./resolveRules.ts";
 import { queryOsv } from "./osv.ts";
 import { diffVersions } from "./diff.ts";
 
-const VERSION = "0.9.0";
+const VERSION = "0.9.4";
 
 const TOOLS: Tool[] = [
   {
@@ -132,6 +133,39 @@ const TOOLS: Tool[] = [
         },
       },
       required: ["dir"],
+    },
+  },
+  {
+    name: "brainblast_recall",
+    description:
+      "BEFORE writing integration code against an external SDK, recall the verified trap instances " +
+      "(VTIs) you should avoid. Each is a proven error→fix→test record pinned to an SDK, carrying its " +
+      "RED→GREEN reproducibility receipt (independently re-runnable — no secret answer key). Returns the " +
+      "vulnerable pattern, the fix, and the proof, so you write the correct integration the first time. " +
+      "Filter by sdk / class / severity. Reads local VTI lots you possess (full visibility) — pass `lots` " +
+      "or run where datasets/ exists. An empty result means no verified trap is on file for that filter, " +
+      "not that the SDK is safe.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        sdk: { type: "string", description: "Filter by SDK name (case-insensitive substring), e.g. 'web3.js', 'stripe', 'metaplex'." },
+        class: {
+          type: "string",
+          description:
+            "Trap class: silent-zero-revenue | immutable-after-deploy | unchecked-staleness | auth-bypass | " +
+            "wrong-constant | unconfirmed-state | missing-slippage-guard | missing-verification | other.",
+        },
+        min_severity: { type: "string", description: "Minimum severity and above: critical | high | medium | low." },
+        min_corroboration: { type: "number", description: "Minimum distinct-repo corroboration count." },
+        since: { type: "string", description: "ISO cursor: only records captured after this (the delta since you last recalled)." },
+        limit: { type: "number", description: "Max records to return." },
+        lots: {
+          type: "array",
+          items: { type: "string" },
+          description: "Absolute paths to .jsonl VTI lot files. Defaults to the repo's datasets/ lots if present.",
+        },
+      },
+      required: [],
     },
   },
 ];
@@ -287,6 +321,54 @@ export async function startMcpServer(): Promise<void> {
               text: `Diff failed: ${(e as Error).message ?? String(e)}`,
             },
           ],
+          isError: true,
+        };
+      }
+    }
+
+    if (name === "brainblast_recall") {
+      const a = args as {
+        sdk?: string;
+        class?: string;
+        min_severity?: string;
+        min_corroboration?: number;
+        since?: string;
+        limit?: number;
+        lots?: string[];
+      };
+      try {
+        const { recallFeed } = await import("./feedLots.ts");
+        const { lots, result, errors } = recallFeed({
+          lots: a.lots,
+          sdk: a.sdk,
+          class: a.class as any,
+          minSeverity: a.min_severity as any,
+          minCorroboration: a.min_corroboration,
+          since: a.since,
+          limit: a.limit,
+        });
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(
+                {
+                  lots,
+                  matched: result.counts.matchedQuery,
+                  returned: result.records.length,
+                  cursor: result.cursor,
+                  records: result.records,
+                  ...(errors.length ? { warnings: errors } : {}),
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      } catch (e: unknown) {
+        return {
+          content: [{ type: "text" as const, text: `Recall failed: ${(e as Error).message ?? String(e)}` }],
           isError: true,
         };
       }
