@@ -256,6 +256,11 @@ if (args[0] === "wallet-check") {
   process.exit(0);
 }
 
+if (args[0] === "wallet") {
+  await runWallet(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -1421,6 +1426,79 @@ async function runRescue(argv: string[]): Promise<void> {
   if (argv.includes("--json")) console.log(JSON.stringify(report, null, 2));
   else console.log(renderRescueText(report));
   process.exit(report.recoverableMissing > 0 || report.unbackedAtRisk > 0 ? 1 : 0);
+}
+
+async function runWallet(argv: string[]): Promise<void> {
+  const w = await import("./wallet/agentWallet.ts");
+  const sub = argv[0];
+  const rest = argv.slice(1);
+
+  if (!sub || sub === "--help" || sub === "-h") {
+    console.error("usage: brainblast wallet <command>");
+    console.error("  init [--label NAME]   generate a capped agent ops wallet, store it in the Vault");
+    console.error("  address               print the active wallet's pubkey (safe to share, for funding)");
+    console.error("  list                  list known agent wallets (pubkey, created, tier) — never secrets");
+    console.error("");
+    console.error("  The secret lives ONLY in the encrypted Vault (~/.brainblast/vault), recoverable by");
+    console.error("  pubkey. This is a SMALL, CAPPED, SACRIFICIAL wallet — never your main holdings.");
+    console.error("  Balance / sweep / staking land in the next increments (see WALLET-PLAN.md).");
+    process.exit(2);
+  }
+
+  if (sub === "init") {
+    const labelIdx = rest.indexOf("--label");
+    const label = labelIdx >= 0 ? rest[labelIdx + 1] : undefined;
+    const existing = w.getActiveWallet();
+    if (existing && !rest.includes("--force")) {
+      console.error(`wallet: an active wallet already exists (${existing.pubkey}).`);
+      console.error("Run `brainblast wallet address` to see it, or pass --force to generate another.");
+      process.exit(1);
+    }
+    const gen = w.createWallet({ label });
+    console.log(`✓ agent wallet created\n`);
+    console.log(`  pubkey:  ${gen.pubkey}`);
+    console.log(`  stored:  encrypted in the Vault (~/.brainblast/vault), recoverable by pubkey\n`);
+    console.log("  ── ONE-TIME SECRET BACKUP (shown once — save it somewhere safe) ──");
+    console.log("  This is a solana-keygen id.json array; `solana` can import it directly.");
+    console.log(`  ${JSON.stringify(gen.secretKeyArray)}\n`);
+    console.log("  ⚠ This is a SMALL, CAPPED, SACRIFICIAL ops wallet — fund it with only what an");
+    console.log("    agent may spend (e.g. $20–50 of SOL/$BRAIN). Never your main holdings.");
+    console.log(`  Fund it by sending SOL/$BRAIN/$USDC to the pubkey above.`);
+    process.exit(0);
+  }
+
+  if (sub === "address") {
+    const active = w.getActiveWallet();
+    if (!active) {
+      console.error("wallet: no active wallet. Run `brainblast wallet init` first.");
+      process.exit(1);
+    }
+    const recoverable = w.isRecoverable(active.pubkey);
+    console.log(active.pubkey);
+    if (!recoverable) {
+      console.error(`⚠ warning: this wallet is NOT recoverable from the Vault — the secret may be lost.`);
+      process.exit(1);
+    }
+    process.exit(0);
+  }
+
+  if (sub === "list") {
+    const wallets = w.listWallets();
+    if (wallets.length === 0) {
+      console.log("No agent wallets. Run `brainblast wallet init` to create one.");
+      process.exit(0);
+    }
+    const active = w.getActiveWallet();
+    for (const rec of wallets) {
+      const mark = active && rec.pubkey === active.pubkey ? "*" : " ";
+      const rec_ok = w.isRecoverable(rec.pubkey) ? "" : "  ⚠ not recoverable";
+      console.log(`${mark} ${rec.pubkey}  ${rec.tier}  ${rec.createdAt}${rec.label ? `  (${rec.label})` : ""}${rec_ok}`);
+    }
+    process.exit(0);
+  }
+
+  console.error(`wallet: unknown subcommand "${sub}". Try \`brainblast wallet --help\`.`);
+  process.exit(2);
 }
 
 async function runVault(argv: string[]): Promise<void> {

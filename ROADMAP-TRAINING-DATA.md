@@ -3,6 +3,7 @@
 **Last updated:** 2026-06-24 · anchored at **v0.8.3** · branch [`training-data`](https://github.com/DSB-117/brainblast/tree/training-data)
 **Current state:** Stage 0 shipped · Stages 1–3 in progress (every no-spend engineering core landed; go-to-market, scout supply at scale, and on-chain `$BRAIN` rails remain)
 **Companion to:** [`ROADMAP.md`](ROADMAP.md) (the core *Predict → Enforce → Watch → Compound* ladder)
+**On-chain substrate:** [`WALLET-PLAN.md`](WALLET-PLAN.md) — the Agent Wallet (capped, Vault-recoverable ops wallet) is the rail the deferred `$BRAIN` stake/dividend flows in Stages 2 & 4 settle on.
 
 > **Legend:** ✅ shipped · ◐ in progress · ☐ not started. This document is a live
 > reference and is updated at the end of every task.
