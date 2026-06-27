@@ -1436,8 +1436,8 @@ async function runRescue(argv: string[]): Promise<void> {
 
 async function runFeed(argv: string[]): Promise<void> {
   const { selectFeed, tierForBrain, TIER_ENTITLEMENTS } = await import("./feed.ts");
+  const { resolveLotPaths, readLots } = await import("./feedLots.ts");
   const { TRAP_CLASSES } = await import("./vtiClass.ts");
-  const { readFileSync, existsSync } = await import("node:fs");
 
   if (argv.includes("--help") || argv.includes("-h")) {
     console.error("usage: brainblast feed [--lot FILE]... [filters] [--tier T | --wallet-tier]");
@@ -1473,31 +1473,13 @@ async function runFeed(argv: string[]): Promise<void> {
   };
 
   // Resolve lots: explicit --lot wins; else the repo's default lots if present.
-  let lotPaths = allVals("--lot");
-  if (lotPaths.length === 0) {
-    lotPaths = ["datasets/seed/seed-vti.jsonl", "datasets/contrib/contrib-vti.jsonl"].filter((p) => existsSync(p));
-  }
+  const lotPaths = resolveLotPaths(allVals("--lot"));
   if (lotPaths.length === 0) {
     console.error("feed: no VTI lots found. Pass --lot <file.jsonl> (a lot you received), or run from a repo with datasets/.");
     process.exit(1);
   }
-
-  const vtis: any[] = [];
-  for (const p of lotPaths) {
-    if (!existsSync(p)) {
-      console.error(`feed: lot not found: ${p}`);
-      process.exit(1);
-    }
-    for (const line of readFileSync(p, "utf8").split("\n")) {
-      const t = line.trim();
-      if (!t) continue;
-      try {
-        vtis.push(JSON.parse(t));
-      } catch {
-        console.error(`feed: skipping malformed line in ${p}`);
-      }
-    }
-  }
+  const { vtis, errors } = readLots(lotPaths);
+  for (const e of errors) console.error(`feed: ${e}`);
 
   // Validate the class filter.
   const cls = val("--class");

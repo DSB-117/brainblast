@@ -393,7 +393,7 @@ Add to `claude.json`:
 }
 ```
 
-Tools exposed: `brainblast_audit(dir)`, `brainblast_diff(ecosystem, package, from_version, to_version)`, `brainblast_osv_check(ecosystem, package, version)`.
+Tools exposed: `brainblast_audit(dir)`, `brainblast_diff(ecosystem, package, from_version, to_version)`, `brainblast_osv_check(ecosystem, package, version)`, `brainblast_verify(dir, trapId?, oracle?)`, and `brainblast_recall(sdk?, class?, min_severity?, since?, lots?)` — recall the verified traps (with their RED→GREEN receipts and fixes) for an SDK **before** writing the integration, straight from the agent's tools.
 
 ## Upgrade risk diff (v0.6.0)
 
