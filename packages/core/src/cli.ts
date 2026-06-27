@@ -256,6 +256,11 @@ if (args[0] === "wallet-check") {
   process.exit(0);
 }
 
+if (args[0] === "wallet") {
+  await runWallet(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -1421,6 +1426,337 @@ async function runRescue(argv: string[]): Promise<void> {
   if (argv.includes("--json")) console.log(JSON.stringify(report, null, 2));
   else console.log(renderRescueText(report));
   process.exit(report.recoverableMissing > 0 || report.unbackedAtRisk > 0 ? 1 : 0);
+}
+
+async function runWallet(argv: string[]): Promise<void> {
+  const w = await import("./wallet/agentWallet.ts");
+  const sub = argv[0];
+  const rest = argv.slice(1);
+  const requireAddress = (addr: string | undefined, what: string): string => {
+    if (!addr || !isValidSolanaAddress(addr)) {
+      console.error(`wallet: ${what} "${addr ?? ""}" is not a valid Solana address.`);
+      process.exit(2);
+    }
+    return addr;
+  };
+
+  if (!sub || sub === "--help" || sub === "-h") {
+    console.error("usage: brainblast wallet <command>");
+    console.error("  init [--label NAME] [--owner ADDR]  generate a capped agent ops wallet into the Vault");
+    console.error("  address                             print the active wallet's pubkey (for funding)");
+    console.error("  list                                list known agent wallets (never secrets)");
+    console.error("  balance                             SOL / $BRAIN / $USDC vs caps + session budget  [network]");
+    console.error("  policy                              show the spend policy governing this wallet");
+    console.error("  config --owner ADDR | --max-usd-per-tx N | --max-usd-per-session N |");
+    console.error("         --max-brain-per-tx N | --max-brain-per-session N");
+    console.error("  stake --pack-id ID --rule-id ID --stake-usd N --brain-amount N   bond a VTI  [network]");
+    console.error("  sweep <to>                          drain everything to an owner address — panic button  [network]");
+    console.error("  rotate [--label NAME]               new key, sweep old → new, re-Vault  [network]");
+    console.error("  delegate --owner ADDR --token brain|usdc --amount N   Tier-2: emit owner `approve`");
+    console.error("  revoke [--owner ADDR --token brain|usdc]             Tier-2 revoke / Tier-1 disable spend");
+    console.error("");
+    console.error("  The secret lives ONLY in the encrypted Vault (~/.brainblast/vault), recoverable by");
+    console.error("  pubkey. This is a SMALL, CAPPED, SACRIFICIAL wallet — never your main holdings. Every");
+    console.error("  outbound tx passes the spend policy (caps + recipient allowlist) before it is signed.");
+    process.exit(2);
+  }
+
+  if (sub === "init") {
+    const labelIdx = rest.indexOf("--label");
+    const label = labelIdx >= 0 ? rest[labelIdx + 1] : undefined;
+    const existing = w.getActiveWallet();
+    if (existing && !rest.includes("--force")) {
+      console.error(`wallet: an active wallet already exists (${existing.pubkey}).`);
+      console.error("Run `brainblast wallet address` to see it, or pass --force to generate another.");
+      process.exit(1);
+    }
+    const ownerIdx = rest.indexOf("--owner");
+    const owner = ownerIdx >= 0 ? rest[ownerIdx + 1] : undefined;
+    if (owner) requireAddress(owner, "owner address");
+    const gen = w.createWallet({ label });
+    if (owner) {
+      const { addOwnerSweepAddress } = await import("./wallet/policy.ts");
+      addOwnerSweepAddress(owner);
+    }
+    console.log(`✓ agent wallet created\n`);
+    console.log(`  pubkey:  ${gen.pubkey}`);
+    console.log(`  stored:  encrypted in the Vault (~/.brainblast/vault), recoverable by pubkey`);
+    if (owner) console.log(`  owner:   ${owner}  (registered sweep target)`);
+    console.log("");
+    console.log("  ── ONE-TIME SECRET BACKUP (shown once — save it somewhere safe) ──");
+    console.log("  This is a solana-keygen id.json array; `solana` can import it directly.");
+    console.log(`  ${JSON.stringify(gen.secretKeyArray)}\n`);
+    console.log("  ⚠ This is a SMALL, CAPPED, SACRIFICIAL ops wallet — fund it with only what an");
+    console.log("    agent may spend (e.g. $20–50 of SOL/$BRAIN). Never your main holdings.");
+    console.log(`  Fund it by sending SOL/$BRAIN/$USDC to the pubkey above.`);
+    if (!owner) {
+      console.log(`  Set your sweep (panic-button) address: brainblast wallet config --owner <addr>`);
+    }
+    process.exit(0);
+  }
+
+  if (sub === "address") {
+    const active = w.getActiveWallet();
+    if (!active) {
+      console.error("wallet: no active wallet. Run `brainblast wallet init` first.");
+      process.exit(1);
+    }
+    const recoverable = w.isRecoverable(active.pubkey);
+    console.log(active.pubkey);
+    if (!recoverable) {
+      console.error(`⚠ warning: this wallet is NOT recoverable from the Vault — the secret may be lost.`);
+      process.exit(1);
+    }
+    process.exit(0);
+  }
+
+  if (sub === "list") {
+    const wallets = w.listWallets();
+    if (wallets.length === 0) {
+      console.log("No agent wallets. Run `brainblast wallet init` to create one.");
+      process.exit(0);
+    }
+    const active = w.getActiveWallet();
+    for (const rec of wallets) {
+      const mark = active && rec.pubkey === active.pubkey ? "*" : " ";
+      const rec_ok = w.isRecoverable(rec.pubkey) ? "" : "  ⚠ not recoverable";
+      console.log(`${mark} ${rec.pubkey}  ${rec.tier}  ${rec.createdAt}${rec.label ? `  (${rec.label})` : ""}${rec_ok}`);
+    }
+    process.exit(0);
+  }
+
+  if (sub === "policy") {
+    const { loadWalletPolicy, readSessionSpend, readSessionBrain } = await import("./wallet/policy.ts");
+    const { policy, source } = loadWalletPolicy();
+    console.log(`spend policy  (${source})`);
+    console.log(`  per-tx cap:        $${policy.maxUsdPerTx}`);
+    console.log(`  per-session cap:   $${policy.maxUsdPerSession}  (spent this session: $${readSessionSpend().toFixed(2)})`);
+    console.log(`  $BRAIN per-tx:     ${policy.maxBrainPerTx ?? "(none — autonomous $BRAIN spend disabled)"}`);
+    console.log(`  $BRAIN per-session:${policy.maxBrainPerSession != null ? " " + policy.maxBrainPerSession : " (none)"}  (spent this session: ${readSessionBrain()})`);
+    console.log(`  per-tx SOL cap:    ${policy.maxSolPerTx ?? "none"}`);
+    console.log(`  owner sweep addrs: ${policy.ownerSweepAddresses.length ? policy.ownerSweepAddresses.join(", ") : "(none — set one with `wallet config --owner <addr>`)"}`);
+    console.log(`  allowed recipients:${policy.allowedRecipients.length ? " " + policy.allowedRecipients.join(", ") : " (any, capped)"}`);
+    console.log(`  block unknown programs: ${policy.blockUnknownPrograms}`);
+    process.exit(0);
+  }
+
+  if (sub === "config") {
+    const { loadWalletPolicy, saveWalletPolicy, addOwnerSweepAddress } = await import("./wallet/policy.ts");
+    const val = (flag: string): string | undefined => {
+      const i = rest.indexOf(flag);
+      return i >= 0 ? rest[i + 1] : undefined;
+    };
+    let changed = false;
+    const owner = val("--owner");
+    if (owner) {
+      requireAddress(owner, "owner address");
+      addOwnerSweepAddress(owner);
+      console.log(`✓ registered owner sweep address: ${owner}`);
+      changed = true;
+    }
+    const perTx = val("--max-usd-per-tx");
+    const perSession = val("--max-usd-per-session");
+    const brainTx = val("--max-brain-per-tx");
+    const brainSession = val("--max-brain-per-session");
+    if (perTx || perSession || brainTx || brainSession) {
+      const { policy } = loadWalletPolicy();
+      if (perTx) policy.maxUsdPerTx = Number(perTx);
+      if (perSession) policy.maxUsdPerSession = Number(perSession);
+      if (brainTx) policy.maxBrainPerTx = Number(brainTx);
+      if (brainSession) policy.maxBrainPerSession = Number(brainSession);
+      saveWalletPolicy(policy);
+      console.log(`✓ caps updated: per-tx $${policy.maxUsdPerTx}, per-session $${policy.maxUsdPerSession}`);
+      if (brainTx || brainSession)
+        console.log(`  $BRAIN caps: per-tx ${policy.maxBrainPerTx ?? "(none)"}, per-session ${policy.maxBrainPerSession ?? "(none)"}`);
+      changed = true;
+    }
+    if (!changed) {
+      console.error("config: nothing to do. Pass --owner ADDR, --max-usd-per-tx N, --max-usd-per-session N,");
+      console.error("        --max-brain-per-tx N, or --max-brain-per-session N.");
+      process.exit(2);
+    }
+    process.exit(0);
+  }
+
+  if (sub === "balance") {
+    const active = w.getActiveWallet();
+    if (!active) {
+      console.error("wallet: no active wallet. Run `brainblast wallet init` first.");
+      process.exit(1);
+    }
+    const { getBalances } = await import("./wallet/chain.ts");
+    const { loadWalletPolicy } = await import("./wallet/policy.ts");
+    try {
+      const b = await getBalances(active.pubkey);
+      console.log(`${active.pubkey}`);
+      console.log(`  SOL:    ${b.sol}`);
+      console.log(`  $BRAIN: ${b.brain.uiAmount}`);
+      console.log(`  USDC:   ${b.usdc.uiAmount}`);
+      const { policy } = loadWalletPolicy();
+      // If holdings dwarf the session cap, the wallet is over-funded for an ops
+      // wallet — nudge the user to sweep the excess.
+      if (b.usdc.uiAmount > policy.maxUsdPerSession * 4) {
+        console.log(`  ⚠ this wallet holds more than 4× the session cap ($${policy.maxUsdPerSession}). It is meant`);
+        console.log(`    to be small + sacrificial — consider sweeping the excess: brainblast wallet sweep <owner>`);
+      }
+      process.exit(0);
+    } catch (e: any) {
+      console.error(`wallet balance: ${e?.message ?? String(e)}`);
+      process.exit(1);
+    }
+  }
+
+  if (sub === "stake") {
+    const val = (flag: string): string | undefined => {
+      const i = rest.indexOf(flag);
+      return i >= 0 ? rest[i + 1] : undefined;
+    };
+    const packId = val("--pack-id");
+    const ruleId = val("--rule-id");
+    const stakeUsd = Number(val("--stake-usd"));
+    const brainAmount = Number(val("--brain-amount"));
+    if (!packId || !ruleId || !Number.isFinite(stakeUsd) || !Number.isFinite(brainAmount)) {
+      console.error("usage: brainblast wallet stake --pack-id ID --rule-id ID --stake-usd N --brain-amount N");
+      process.exit(2);
+    }
+    const { stakeBond } = await import("./wallet/stake.ts");
+    try {
+      const r = await stakeBond({ packId, ruleId, stakeUsd, brainAmount });
+      if (!r.ok) {
+        console.error(`✗ refused by spend policy (${r.decision.policySource}):`);
+        for (const v of r.decision.violations) console.error(`  - ${v}`);
+        process.exit(1);
+      }
+      console.log(`✓ staked $${stakeUsd} (${brainAmount} $BRAIN) on ${packId}/${ruleId}`);
+      console.log(`  stake:  ${r.stakeId}  memo ${r.memoCode}  →  ${r.payTo}`);
+      console.log(`  tx:     ${r.signature}`);
+      process.exit(0);
+    } catch (e: any) {
+      console.error(`wallet stake: ${e?.message ?? String(e)}`);
+      process.exit(1);
+    }
+  }
+
+  if (sub === "sweep") {
+    const to = rest.find((a) => !a.startsWith("--"));
+    if (!to) {
+      console.error("usage: brainblast wallet sweep <owner-address>");
+      process.exit(2);
+    }
+    requireAddress(to, "sweep target");
+    const active = w.getActiveWallet();
+    if (!active) {
+      console.error("wallet: no active wallet.");
+      process.exit(1);
+    }
+    const { signWithPolicy } = await import("./wallet/policy.ts");
+    const { sweepAll } = await import("./wallet/chain.ts");
+    const secret = w.loadSecretKey(active.pubkey);
+    let movedSol = 0;
+    let sigs: string[] = [];
+    const result = await signWithPolicy({ purpose: "sweep", recipient: to, usd: 0 }, async () => {
+      const r = await sweepAll(secret, to);
+      movedSol = r.movedSol;
+      sigs = r.signatures;
+      return r.signatures[r.signatures.length - 1] ?? "(nothing to move)";
+    });
+    if (!result.ok) {
+      console.error(`✗ sweep refused by spend policy (${result.decision.policySource}):`);
+      for (const v of result.decision.violations) console.error(`  - ${v}`);
+      process.exit(1);
+    }
+    console.log(`✓ swept ${active.pubkey} → ${to}`);
+    console.log(`  moved ~${movedSol} SOL + all $BRAIN/USDC in ${sigs.length} tx`);
+    for (const s of sigs) console.log(`  tx: ${s}`);
+    process.exit(0);
+  }
+
+  if (sub === "rotate") {
+    const labelIdx = rest.indexOf("--label");
+    const label = labelIdx >= 0 ? rest[labelIdx + 1] : undefined;
+    const { sweepAll } = await import("./wallet/chain.ts");
+    try {
+      const { oldPubkey, oldSecret, newWallet } = w.rotateWallet({ label });
+      console.log(`✓ new active wallet: ${newWallet.pubkey}`);
+      console.log(`  ── ONE-TIME SECRET BACKUP (save it) ──`);
+      console.log(`  ${JSON.stringify(newWallet.secretKeyArray)}`);
+      console.log(`  sweeping old wallet ${oldPubkey} → new...`);
+      const r = await sweepAll(oldSecret, newWallet.pubkey);
+      console.log(`  moved ~${r.movedSol} SOL + tokens in ${r.signatures.length} tx`);
+      console.log(`  (old key remains recoverable in the Vault)`);
+      process.exit(0);
+    } catch (e: any) {
+      console.error(`wallet rotate: ${e?.message ?? String(e)}`);
+      process.exit(1);
+    }
+  }
+
+  if (sub === "delegate") {
+    const val = (flag: string): string | undefined => {
+      const i = rest.indexOf(flag);
+      return i >= 0 ? rest[i + 1] : undefined;
+    };
+    const owner = val("--owner");
+    const token = val("--token") ?? "brain";
+    const amount = Number(val("--amount"));
+    const active = w.getActiveWallet();
+    if (!active) {
+      console.error("wallet: no active wallet. Run `brainblast wallet init` first.");
+      process.exit(1);
+    }
+    if (!owner || !Number.isFinite(amount)) {
+      console.error("usage: brainblast wallet delegate --owner ADDR --token brain|usdc --amount N");
+      process.exit(2);
+    }
+    requireAddress(owner, "owner address");
+    const { buildDelegateInstructions } = await import("./wallet/delegate.ts");
+    const d = await buildDelegateInstructions({ ownerPubkey: owner, agentPubkey: active.pubkey, token, uiAmount: amount });
+    // Mark the active wallet as Tier-2 (delegated) — it now spends an allowance,
+    // not its own principal.
+    try {
+      w.setActiveWallet(active.pubkey);
+    } catch {
+      /* manifest already consistent */
+    }
+    console.log(`Tier-2 delegation — run this from YOUR wallet (the one holding the ${d.label}):\n`);
+    console.log(`  ${d.approveCommand}\n`);
+    console.log(`  owner token account: ${d.ownerTokenAccount}`);
+    console.log(`  delegate (agent):    ${d.delegate}`);
+    console.log(`  allowance:           ${d.uiAmount} ${d.label}\n`);
+    console.log(`  ${d.note}`);
+    process.exit(0);
+  }
+
+  if (sub === "revoke") {
+    const val = (flag: string): string | undefined => {
+      const i = rest.indexOf(flag);
+      return i >= 0 ? rest[i + 1] : undefined;
+    };
+    const owner = val("--owner");
+    const token = val("--token") ?? "brain";
+    if (owner) {
+      requireAddress(owner, "owner address");
+      // Tier-2: emit the on-chain revoke for the owner to run.
+      const { buildRevokeInstructions } = await import("./wallet/delegate.ts");
+      const r = await buildRevokeInstructions({ ownerPubkey: owner, token });
+      console.log(`Tier-2 revoke — run this from YOUR wallet:\n`);
+      console.log(`  ${r.revokeCommand}\n`);
+      console.log(`  This cancels the agent's delegated allowance on ${r.ownerTokenAccount} on-chain.`);
+      process.exit(0);
+    }
+    // Tier-1: disable autonomous spend by zeroing the session cap.
+    const { loadWalletPolicy, saveWalletPolicy } = await import("./wallet/policy.ts");
+    const { policy } = loadWalletPolicy();
+    policy.maxUsdPerSession = 0;
+    policy.maxUsdPerTx = 0;
+    saveWalletPolicy(policy);
+    console.log("✓ autonomous spend disabled (caps set to $0). Raise them with `wallet config` to re-enable.");
+    console.log("  Sweep is still available (it ignores spend caps) to recover funds.");
+    process.exit(0);
+  }
+
+  console.error(`wallet: unknown subcommand "${sub}". Try \`brainblast wallet --help\`.`);
+  process.exit(2);
 }
 
 async function runVault(argv: string[]): Promise<void> {

@@ -163,6 +163,37 @@ export function backupFile(filePath: string, meta: BackupMeta = {}): { hash: str
   return { hash, deduped };
 }
 
+// Back up raw bytes (never read from a file). The Agent Wallet uses this so its
+// secret is encrypted straight from memory into the Vault — it never exists as a
+// plaintext file anywhere. `logicalPath` is a synthetic identifier (e.g.
+// "agent-wallet:<pubkey>"), not a filesystem path.
+export function backupBytes(
+  plain: Buffer,
+  logicalPath: string,
+  meta: BackupMeta = {},
+): { hash: string; deduped: boolean } {
+  const hash = sha256(plain);
+  ensureVault();
+  const objPath = join(objectsDir(), `${hash}.enc`);
+  let deduped = true;
+  if (!existsSync(objPath)) {
+    writeFileSync(objPath, encrypt(plain), { mode: 0o600 });
+    deduped = false;
+  }
+  const ix = loadIndex();
+  ix.entries.push({
+    path: logicalPath,
+    hash,
+    ts: new Date().toISOString(),
+    size: plain.length,
+    pubkey: meta.pubkey,
+    kind: meta.kind,
+    tier: meta.tier,
+  });
+  saveIndex(ix);
+  return { hash, deduped };
+}
+
 function entriesForPath(abs: string, ix = loadIndex()): VaultEntry[] {
   return ix.entries.filter((e) => e.path === abs).sort((a, b) => b.ts.localeCompare(a.ts));
 }
@@ -223,6 +254,19 @@ export function restore(
   mkdirSync(dirname(dest), { recursive: true });
   writeFileSync(dest, plain, { mode: 0o600 });
   return { restoredTo: dest, hash: entry.hash, ts: entry.ts };
+}
+
+// Decrypt the latest snapshot for a pubkey straight to memory — never touching
+// disk. This is how the Agent Wallet reconstructs its secret to sign with: the
+// plaintext key exists only in the signing process's heap, never as a file.
+export function readLatestByPubkey(pubkey: string): Buffer {
+  const entries = loadIndex()
+    .entries.filter((e) => e.pubkey === pubkey)
+    .sort((a, b) => b.ts.localeCompare(a.ts));
+  if (entries.length === 0) throw new Error(`vault: no snapshot found for pubkey ${pubkey}`);
+  const objPath = join(objectsDir(), `${entries[0].hash}.enc`);
+  if (!existsSync(objPath)) throw new Error(`vault: object ${entries[0].hash} missing`);
+  return decrypt(readFileSync(objPath));
 }
 
 // Soft-delete: back the file up, then remove it. The agent's intent ("clean
