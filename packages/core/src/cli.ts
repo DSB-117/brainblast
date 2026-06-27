@@ -23,6 +23,7 @@ import { initPack, validatePack } from "./pack.ts";
 import { listBundledPacks, resolveBundledPackToken } from "./bundledPacks.ts";
 import { isTelemetryEnabled, recordGraduationEvents, telemetryFilePath, submitTelemetry } from "./telemetry.ts";
 import { isContributeEnabled, contributeConsentScope, contribStagingDir, stageContribution } from "./contrib/capture.ts";
+import type { FeedTier, FeedQuery } from "./feed.ts";
 
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
@@ -258,6 +259,11 @@ if (args[0] === "wallet-check") {
 
 if (args[0] === "wallet") {
   await runWallet(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "feed") {
+  await runFeed(args.slice(1));
   process.exit(0);
 }
 
@@ -1426,6 +1432,140 @@ async function runRescue(argv: string[]): Promise<void> {
   if (argv.includes("--json")) console.log(JSON.stringify(report, null, 2));
   else console.log(renderRescueText(report));
   process.exit(report.recoverableMissing > 0 || report.unbackedAtRisk > 0 ? 1 : 0);
+}
+
+async function runFeed(argv: string[]): Promise<void> {
+  const { selectFeed, tierForBrain, TIER_ENTITLEMENTS } = await import("./feed.ts");
+  const { TRAP_CLASSES } = await import("./vtiClass.ts");
+  const { readFileSync, existsSync } = await import("node:fs");
+
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.error("usage: brainblast feed [--lot FILE]... [filters] [--tier T | --wallet-tier]");
+    console.error("  Stream the delta of verified trap instances (VTIs) as NDJSON — one record per");
+    console.error("  line — each carrying its RED→GREEN reproducibility receipt. Resume with --since.");
+    console.error("");
+    console.error("  --lot FILE              a .jsonl VTI lot (repeatable). Default: datasets/seed +");
+    console.error("                         datasets/contrib if present.");
+    console.error("  --since CURSOR          only records newer than this capturedAt cursor (the delta)");
+    console.error("  --sdk SUBSTR            filter by SDK name (case-insensitive substring)");
+    console.error("  --class CLASS           filter by trap class");
+    console.error("  --severity LEVEL        minimum severity (critical|high|medium|low) and above");
+    console.error("  --min-corroboration N   minimum distinct-repo corroboration");
+    console.error("  --limit N               cap records (further bounded by the tier)");
+    console.error("  --tier T                sample | standard | firehose (explicit)");
+    console.error("  --wallet-tier           compute the tier from the active wallet's $BRAIN  [network]");
+    console.error("  --summary               print only the feed_meta line (no records)");
+    console.error("");
+    console.error("  Tiers gate the trainable payload + freshness: sample = metadata + receipt only");
+    console.error("  (the proof), paid tiers unlock fixtures + the fresh delta. Tier eligibility from");
+    console.error("  $BRAIN is advisory/client-side; real entitlement is enforced at distribution.");
+    process.exit(2);
+  }
+
+  const val = (flag: string): string | undefined => {
+    const i = argv.indexOf(flag);
+    return i >= 0 ? argv[i + 1] : undefined;
+  };
+  const allVals = (flag: string): string[] => {
+    const out: string[] = [];
+    for (let i = 0; i < argv.length; i++) if (argv[i] === flag && argv[i + 1]) out.push(argv[i + 1]);
+    return out;
+  };
+
+  // Resolve lots: explicit --lot wins; else the repo's default lots if present.
+  let lotPaths = allVals("--lot");
+  if (lotPaths.length === 0) {
+    lotPaths = ["datasets/seed/seed-vti.jsonl", "datasets/contrib/contrib-vti.jsonl"].filter((p) => existsSync(p));
+  }
+  if (lotPaths.length === 0) {
+    console.error("feed: no VTI lots found. Pass --lot <file.jsonl> (a lot you received), or run from a repo with datasets/.");
+    process.exit(1);
+  }
+
+  const vtis: any[] = [];
+  for (const p of lotPaths) {
+    if (!existsSync(p)) {
+      console.error(`feed: lot not found: ${p}`);
+      process.exit(1);
+    }
+    for (const line of readFileSync(p, "utf8").split("\n")) {
+      const t = line.trim();
+      if (!t) continue;
+      try {
+        vtis.push(JSON.parse(t));
+      } catch {
+        console.error(`feed: skipping malformed line in ${p}`);
+      }
+    }
+  }
+
+  // Validate the class filter.
+  const cls = val("--class");
+  if (cls && !(TRAP_CLASSES as readonly string[]).includes(cls)) {
+    console.error(`feed: unknown class "${cls}". One of: ${TRAP_CLASSES.join(", ")}`);
+    process.exit(2);
+  }
+  const sev = val("--severity");
+  if (sev && !["critical", "high", "medium", "low"].includes(sev)) {
+    console.error(`feed: --severity must be critical|high|medium|low`);
+    process.exit(2);
+  }
+
+  // Determine the tier: explicit override → wallet-derived → sample default.
+  let tier: FeedTier = "sample";
+  const tierArg = val("--tier");
+  if (tierArg) {
+    if (!["sample", "standard", "firehose"].includes(tierArg)) {
+      console.error(`feed: --tier must be sample|standard|firehose`);
+      process.exit(2);
+    }
+    tier = tierArg as FeedTier;
+  } else if (argv.includes("--wallet-tier")) {
+    const w = await import("./wallet/agentWallet.ts");
+    const active = w.getActiveWallet();
+    if (!active) {
+      console.error("feed: --wallet-tier needs an active wallet (run `brainblast wallet init`)");
+      process.exit(1);
+    }
+    const { getBalances } = await import("./wallet/chain.ts");
+    try {
+      const bal = await getBalances(active.pubkey);
+      tier = tierForBrain(bal.brain.uiAmount);
+    } catch (e: any) {
+      console.error(`feed: could not read wallet balance: ${e?.message ?? e}`);
+      process.exit(1);
+    }
+  }
+
+  const query: FeedQuery = {
+    sdk: val("--sdk"),
+    class: cls as any,
+    minSeverity: sev as any,
+    minCorroboration: val("--min-corroboration") != null ? Number(val("--min-corroboration")) : undefined,
+    since: val("--since"),
+    limit: val("--limit") != null ? Number(val("--limit")) : undefined,
+    now: val("--now"),
+  };
+
+  const result = selectFeed(vtis, query, tier);
+  const ent = TIER_ENTITLEMENTS[tier];
+
+  // NDJSON: a meta header, then one record per line, then a completion event
+  // carrying the resume cursor — the same tail-the-stdout contract as `watch`.
+  console.log(
+    JSON.stringify({
+      type: "feed_meta",
+      tier,
+      entitlement: { maxRecords: ent.maxRecords, includeFixtures: ent.includeFixtures, freshnessHoldbackHours: ent.freshnessHoldbackHours },
+      lots: lotPaths,
+      query: { sdk: query.sdk, class: query.class, minSeverity: query.minSeverity, minCorroboration: query.minCorroboration, since: query.since },
+    }),
+  );
+  if (!argv.includes("--summary")) {
+    for (const rec of result.records) console.log(JSON.stringify({ type: "vti", ...rec }));
+  }
+  console.log(JSON.stringify({ type: "feed_complete", cursor: result.cursor, counts: result.counts }));
+  process.exit(0);
 }
 
 async function runWallet(argv: string[]): Promise<void> {

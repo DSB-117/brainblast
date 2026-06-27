@@ -171,6 +171,22 @@ So an AI agent can hold and move `$BRAIN`/`$USDC`/`$SOL` with near-zero friction
 - **Tier-2 (opt-in, agent never custodies principal):** `wallet delegate` emits the owner-side `spl-token approve` for a capped on-chain allowance; the agent spends as delegate; `wallet revoke` cancels it.
 - **Consent stays separate** — the wallet removes *economic* friction only; data capture stays behind the `BRAINBLAST_CONTRIBUTE=1` opt-in (default off).
 
+## VTI feed — a subscription to the verified-trap delta (default-off)
+
+The training-data platform's product surface ([ROADMAP-TRAINING-DATA.md](../../ROADMAP-TRAINING-DATA.md), Stage 4). Brainblast manufactures **Verified Trap Instances** — `error→fix→test→RED/GREEN-proof` records pinned to a specific SDK version. `brainblast feed` turns that corpus from a static dump into a **subscription to the delta**: stream the newly-verified VTIs that match your stack, each with its reproducibility receipt, and resume from a cursor.
+
+```
+$ brainblast feed --lot my-lot.jsonl --sdk web3.js --severity high --since 2026-06-23T18:59:28Z
+{"type":"feed_meta","tier":"sample","entitlement":{"maxRecords":5,"includeFixtures":false,...}}
+{"type":"vti","trapId":"solana-sendtx-unconfirmed","severity":"high","receipt":{"red":true,"green":true,...},...}
+{"type":"feed_complete","cursor":"2026-06-23T18:59:28.069Z","counts":{"matchedQuery":1,"emitted":1,...}}
+```
+
+- **NDJSON stream** — same tail-the-stdout contract as `watch`: `feed_meta` → one `vti` per line → `feed_complete` with the resume cursor. Filter by `--sdk` / `--class` / `--severity` (min-and-above) / `--min-corroboration` / `--since` / `--limit`.
+- **Tiered access** — `sample → standard → firehose`: record caps, fixtures gating, and a freshness holdback. **Sample withholds the trainable fixtures** (metadata + RED→GREEN receipt only); paid tiers unlock the payload + the fresh delta. `--wallet-tier` maps your Agent Wallet's `$BRAIN` balance to a tier.
+- **Reproducibility receipts** on every record — the `red`/`green`/`method` proof + `sourceUrls`, so a buyer can independently verify reward-gradability. Only RED→GREEN-proven records are emitted.
+- **Honest client/server split** — the local feed computes tier *eligibility* and formats the delta from lots you hold; **real entitlement is enforced at distribution** (the marketplace + on-chain settlement are server-side).
+
 ## Prerequisites
 
 Brainblast is a workflow that runs *inside* a host agent. It needs a browser engine to fetch live docs.

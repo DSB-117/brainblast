@@ -369,6 +369,29 @@ exact stack, settled in `$BRAIN`.
 all revenue either *is* `$BRAIN` (discounted) or *buys* `$BRAIN` (USDC→buyback);
 dividends pay suppliers in `$BRAIN`. Full two-sided loop in token.
 
+**Progress (`feat/v0.9.4-vti-feed`, stacked on the v0.9.3 wallet):**
+- ✅ **Step 1 — the streaming feed shipped.** `brainblast feed` (`src/feed.ts`)
+  reads any VTI lot(s) and emits the corpus as an NDJSON stream — the same
+  tail-the-stdout contract as `watch` (`feed_meta` → `vti`… → `feed_complete`).
+  **The delta is real:** `--since <cursor>` returns only records newer than the
+  caller's last `capturedAt`, and `feed_complete` carries the next cursor, so a
+  consumer resumes without re-pulling. Filterable by `--sdk` / `--class` /
+  `--severity` (min-and-above) / `--min-corroboration`. Only RED→GREEN-proven
+  records are ever emitted.
+- ✅ **Step 4 — tiered access shipped (eligibility).** `sample → standard →
+  firehose` with per-tier entitlements (record cap, fixtures gating, freshness
+  holdback). `--wallet-tier` maps the v0.9.3 wallet's `$BRAIN` balance to a tier
+  via `tierForBrain`. **Sample withholds the trainable fixtures** (metadata +
+  receipt only — the proof); paid tiers unlock the payload and the fresh delta.
+- ✅ **Step 5 — reproducibility receipts shipped.** Every streamed record carries
+  its RED→GREEN `receipt` (`red`/`green`/`method`/`verifiedAt`) + `sourceUrls`, so
+  a buyer can independently verify reward-gradability.
+- ☐ **Steps 2 + 3 — marketplace surface + on-chain settlement** are the
+  server/registry side (real entitlement enforcement, metered billing, USDC→
+  buyback). The local feed computes tier *eligibility* and formats the delta;
+  **real entitlement is enforced at distribution** — the honest client/server
+  split (the same posture as the wallet's threat-model note).
+
 **Exit milestone:** ✅ **Live subscription feed with paying customers**, settled in
 `$BRAIN` (and USDC→buyback), tiered access enforced, reproducibility receipts
 shipping with every record.
