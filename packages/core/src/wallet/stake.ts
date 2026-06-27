@@ -5,7 +5,7 @@
 // var) and every send passes signWithPolicy() first (caps + session ledger).
 
 import { loadSecretKey, getActiveWallet } from "./agentWallet.ts";
-import { signWithPolicy, type SignResult } from "./policy.ts";
+import { signWithPolicy, checkSpend, type SignResult } from "./policy.ts";
 import { brainMint, sendTokenTransfer } from "./chain.ts";
 
 function apiBase(): string {
@@ -30,6 +30,18 @@ export interface StakeOutcome extends SignResult {
 export async function stakeBond(args: StakeArgs): Promise<StakeOutcome> {
   const active = getActiveWallet();
   if (!active) throw new Error("wallet: no active agent wallet (run `brainblast wallet init`)");
+
+  // Pre-flight the gate BEFORE any network/side-effect: an over-cap or unbounded
+  // stake is refused without ever registering anything server-side. The recipient
+  // isn't known yet, but stake caps don't depend on it.
+  const preflight = checkSpend({
+    purpose: "stake",
+    recipient: "(pending)",
+    usd: args.stakeUsd,
+    brainAmount: args.brainAmount,
+  });
+  if (!preflight.ok) return { ...({ ok: false, decision: preflight } as SignResult) };
+
   const secret = loadSecretKey(active.pubkey);
 
   const res = await fetch(`${apiBase()}/api/stakes`, {
@@ -50,7 +62,9 @@ export async function stakeBond(args: StakeArgs): Promise<StakeOutcome> {
   // The gate runs BEFORE the transfer; a cap/recipient violation refuses here
   // and nothing is sent.
   const result = await signWithPolicy(
-    { purpose: "stake", recipient: stake.pay_to, usd: args.stakeUsd },
+    // brainAmount is the ENFORCEABLE bound — what actually leaves the wallet —
+    // so the gate can't be evaded by understating stakeUsd.
+    { purpose: "stake", recipient: stake.pay_to, usd: args.stakeUsd, brainAmount: args.brainAmount },
     () =>
       sendTokenTransfer({
         secret,

@@ -1447,7 +1447,8 @@ async function runWallet(argv: string[]): Promise<void> {
     console.error("  list                                list known agent wallets (never secrets)");
     console.error("  balance                             SOL / $BRAIN / $USDC vs caps + session budget  [network]");
     console.error("  policy                              show the spend policy governing this wallet");
-    console.error("  config --owner ADDR | --max-usd-per-tx N | --max-usd-per-session N");
+    console.error("  config --owner ADDR | --max-usd-per-tx N | --max-usd-per-session N |");
+    console.error("         --max-brain-per-tx N | --max-brain-per-session N");
     console.error("  stake --pack-id ID --rule-id ID --stake-usd N --brain-amount N   bond a VTI  [network]");
     console.error("  sweep <to>                          drain everything to an owner address — panic button  [network]");
     console.error("  rotate [--label NAME]               new key, sweep old → new, re-Vault  [network]");
@@ -1525,11 +1526,13 @@ async function runWallet(argv: string[]): Promise<void> {
   }
 
   if (sub === "policy") {
-    const { loadWalletPolicy, readSessionSpend } = await import("./wallet/policy.ts");
+    const { loadWalletPolicy, readSessionSpend, readSessionBrain } = await import("./wallet/policy.ts");
     const { policy, source } = loadWalletPolicy();
     console.log(`spend policy  (${source})`);
     console.log(`  per-tx cap:        $${policy.maxUsdPerTx}`);
     console.log(`  per-session cap:   $${policy.maxUsdPerSession}  (spent this session: $${readSessionSpend().toFixed(2)})`);
+    console.log(`  $BRAIN per-tx:     ${policy.maxBrainPerTx ?? "(none — autonomous $BRAIN spend disabled)"}`);
+    console.log(`  $BRAIN per-session:${policy.maxBrainPerSession != null ? " " + policy.maxBrainPerSession : " (none)"}  (spent this session: ${readSessionBrain()})`);
     console.log(`  per-tx SOL cap:    ${policy.maxSolPerTx ?? "none"}`);
     console.log(`  owner sweep addrs: ${policy.ownerSweepAddresses.length ? policy.ownerSweepAddresses.join(", ") : "(none — set one with `wallet config --owner <addr>`)"}`);
     console.log(`  allowed recipients:${policy.allowedRecipients.length ? " " + policy.allowedRecipients.join(", ") : " (any, capped)"}`);
@@ -1553,16 +1556,23 @@ async function runWallet(argv: string[]): Promise<void> {
     }
     const perTx = val("--max-usd-per-tx");
     const perSession = val("--max-usd-per-session");
-    if (perTx || perSession) {
+    const brainTx = val("--max-brain-per-tx");
+    const brainSession = val("--max-brain-per-session");
+    if (perTx || perSession || brainTx || brainSession) {
       const { policy } = loadWalletPolicy();
       if (perTx) policy.maxUsdPerTx = Number(perTx);
       if (perSession) policy.maxUsdPerSession = Number(perSession);
+      if (brainTx) policy.maxBrainPerTx = Number(brainTx);
+      if (brainSession) policy.maxBrainPerSession = Number(brainSession);
       saveWalletPolicy(policy);
       console.log(`✓ caps updated: per-tx $${policy.maxUsdPerTx}, per-session $${policy.maxUsdPerSession}`);
+      if (brainTx || brainSession)
+        console.log(`  $BRAIN caps: per-tx ${policy.maxBrainPerTx ?? "(none)"}, per-session ${policy.maxBrainPerSession ?? "(none)"}`);
       changed = true;
     }
     if (!changed) {
-      console.error("config: nothing to do. Pass --owner ADDR, --max-usd-per-tx N, or --max-usd-per-session N.");
+      console.error("config: nothing to do. Pass --owner ADDR, --max-usd-per-tx N, --max-usd-per-session N,");
+      console.error("        --max-brain-per-tx N, or --max-brain-per-session N.");
       process.exit(2);
     }
     process.exit(0);

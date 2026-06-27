@@ -30,9 +30,38 @@ the spine of this design:
 > revocation/sweep. Worst case under prompt-injection or key leak is the
 > *capped balance at that moment*, never the owner's holdings.
 
-The **caps + recipient allowlist — not the at-rest encryption — are what bound a
-compromised agent.** We say that plainly; the encryption defends the backup, the
-policy defends the funds.
+## Trust boundary & threat model (read this before trusting it)
+
+Be precise about what the in-process gate does and does not stop — overclaiming
+here would betray the product's whole premise.
+
+**What the spend gate (caps + allowlist + fail-closed `signWithPolicy`) defends
+against:** a **prompt-injected agent operating through the documented tool
+surface**, and honest over-spend / fat-finger mistakes. An agent tricked into
+"stake everything" or "send funds to <attacker>" is refused: the $BRAIN it can
+move per tx/session is capped (by the *actual token amount*, not a caller-asserted
+USD figure — see the red-team note below), sweep is fail-closed to a registered
+owner address, and a refusal never touches the chain.
+
+**What it does NOT defend against — a fully *code-execution*-compromised agent.**
+The policy file, the session ledger, and the wallet manifest are plain files the
+agent's own UID can rewrite, and the chain primitives are importable directly. An
+attacker with arbitrary code execution in the agent process can raise its own
+caps, register its own sweep address, reset the ledger, or bypass the gate and
+sign directly with the Vault-decrypted key. **No in-process control can stop
+this** — the secret and the policy live in the same trust domain as the attacker.
+We do not pretend otherwise.
+
+**So the real bounds for a fully-compromised agent are three, in order:**
+1. **A small, sacrificial balance.** This is the primary defense. Fund the wallet
+   with only what an agent may spend; the max loss is that balance.
+2. **Tier-2 on-chain delegation** (P3). The SPL Token program enforces the
+   allowance — the agent *cannot* rewrite it. This is the only cryptographically
+   bounded spend path; prefer it for anything beyond trivial amounts.
+3. **Human sweep / rotate.** Recovery is always available to the owner.
+
+The encryption-at-rest defends the *backup* (repo/disk leak), not the live
+process. Stated plainly so no one over-trusts the hot path.
 
 ## Built on three existing primitives
 
@@ -137,7 +166,9 @@ simulates the tx, checks Signguard + the session ledger, and refuses fail-closed
 
 | Risk | Mitigation |
 |---|---|
-| Agent prompt-injected into draining the wallet | Hard caps + recipient allowlist + `blockUnknownPrograms` (Signguard) |
+| Agent prompt-injected into draining the wallet | Hard caps + recipient allowlist + `blockUnknownPrograms`, enforced fail-closed by `signWithPolicy` |
+| **Cap evasion via USD/token decoupling** (red-team find) | The gate bounds the **actual `$BRAIN` amount leaving**, not the caller-asserted USD; fail-closed until a token cap is set |
+| Agent with full code execution bypasses the gate | Out of in-process scope — bounded by small balance + Tier-2 on-chain allowance + sweep (see threat-model section) |
 | Key leak via repo / backup | Vault AES-256-GCM at rest; secret never on a repo path or in a log |
 | User over-funds the wallet | `balance`/`init` warn loudly when balance exceeds the session cap; suggest sweeping excess |
 | Consent silently enabled by funding | Capture consent stays a separate, default-off toggle |

@@ -14,14 +14,28 @@ compromised agent. See [`WALLET-PLAN.md`](../../WALLET-PLAN.md).
   with `node:crypto` (ed25519 — byte-identical to `@solana/web3.js`) and stored
   **only** in the encrypted Vault (`backupBytes` — never a plaintext file),
   recoverable by pubkey; a wiped working tree recovers from the Vault.
-- **The spend gate.** Every outbound tx passes `checkSpend()` (per-tx/session USD
-  caps, recipient allowlist, `blockUnknownPrograms`) via `signWithPolicy()`, which
-  is **fail-closed** — a refusal never touches the chain — and debits a session
-  ledger only on a successful non-sweep spend. `sweep` is the panic button: it
-  ignores spend caps but is fail-closed to a configured owner address.
+- **The spend gate.** Every outbound tx passes `checkSpend()` via
+  `signWithPolicy()`, which is **fail-closed** (a refusal never touches the chain)
+  and debits per-currency session ledgers only on a successful non-sweep spend.
+  Bounds: per-tx/session USD caps, **per-tx/session `$BRAIN` caps on the actual
+  token amount that leaves** (see hardening below), a SOL per-tx cap, recipient
+  allowlist, and `blockUnknownPrograms`. `sweep` is the panic button: it ignores
+  spend caps but is fail-closed to a registered owner address.
 - **Staking.** `wallet stake` bonds `$BRAIN` on a contributed VTI through the gate
   — the in-core successor to `scripts/agent-stake`, reading the secret from the
-  Vault instead of `AGENT_OPS_WALLET_SECRET`.
+  Vault instead of `AGENT_OPS_WALLET_SECRET`. Autonomous `$BRAIN` spend is
+  **disabled until you set a `$BRAIN` cap** (`wallet config --max-brain-per-tx N`)
+  — fail-closed by default.
+- **Red-team hardening (pre-merge security pass).** Fixed a cap-evasion bug: the
+  gate capped a caller-asserted USD figure while the transfer sent an independent
+  `brainAmount`, so an understated USD could drain an unbounded token amount. The
+  gate now bounds the **actual `$BRAIN` amount leaving** and fail-closes when no
+  token cap is set; staking pre-flights the gate before any network call. Added a
+  14-case red-team suite (base58-vs-reference fuzz, NaN/negative/Infinity, the
+  decoupling exploit, fail-closed sweep, "refusal never sends / never debits").
+  Documented the honest trust boundary in `WALLET-PLAN.md`: the gate stops a
+  prompt-injected agent, **not** a code-execution-compromised one — that case is
+  bounded by a small balance, Tier-2 on-chain delegation, and human sweep.
 - **Tier-2 (opt-in).** `wallet delegate`/`revoke` emit the owner-side `spl-token
   approve`/`revoke` so the agent spends a capped on-chain allowance and never
   custodies principal.

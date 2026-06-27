@@ -26,9 +26,15 @@ export type SpendPurpose = "sweep" | "stake" | "transfer";
 
 export interface WalletSpendPolicy {
   version: string;
-  // USD caps — the universal guard, independent of token/price.
+  // USD caps — a convenience bound on the caller-asserted value of a spend.
   maxUsdPerTx: number;
   maxUsdPerSession: number;
+  // $BRAIN caps — the ENFORCEABLE bound on what actually leaves the wallet in a
+  // stake (the USD figure is caller-asserted and can be understated; the token
+  // amount is what's really transferred). null = NOT configured, which makes a
+  // $BRAIN spend fail-closed (refused) until a cap is set.
+  maxBrainPerTx: number | null;
+  maxBrainPerSession: number | null;
   // SOL leaving the wallet in one tx (gas + transfers). null = no extra cap.
   maxSolPerTx: number | null;
   // Generic transfers must go to one of these (empty = any, still capped).
@@ -46,6 +52,10 @@ export const DEFAULT_WALLET_POLICY: WalletSpendPolicy = {
   version: "1",
   maxUsdPerTx: 25,
   maxUsdPerSession: 50,
+  // null by default → autonomous $BRAIN spend is fail-closed until the operator
+  // sets a token cap they understand against the current price.
+  maxBrainPerTx: null,
+  maxBrainPerSession: null,
   maxSolPerTx: 1,
   allowedRecipients: [],
   ownerSweepAddresses: [],
@@ -112,36 +122,63 @@ export function addOwnerSweepAddress(addr: string): string {
   return saveWalletPolicy(policy);
 }
 
-export function readSessionSpend(): number {
+interface SessionLedger {
+  spentUsd: number;
+  spentBrain: number;
+}
+
+function readSession(): SessionLedger {
   const p = sessionPath();
-  if (!existsSync(p)) return 0;
+  if (!existsSync(p)) return { spentUsd: 0, spentBrain: 0 };
   try {
-    return Number(JSON.parse(readFileSync(p, "utf8")).spentUsd ?? 0) || 0;
+    const j = JSON.parse(readFileSync(p, "utf8"));
+    return { spentUsd: Number(j.spentUsd) || 0, spentBrain: Number(j.spentBrain) || 0 };
   } catch {
-    return 0;
+    return { spentUsd: 0, spentBrain: 0 };
   }
 }
 
-export function recordSessionSpend(usd: number): number {
-  const total = readSessionSpend() + usd;
+// Read-modify-write the whole ledger so debiting one currency never clobbers the
+// other's running total.
+function writeSession(s: SessionLedger): void {
   const p = sessionPath();
   mkdirSync(dirname(p), { recursive: true });
-  writeFileSync(p, JSON.stringify({ spentUsd: total, updatedAt: new Date().toISOString() }, null, 2), {
-    mode: 0o600,
-  });
-  return total;
+  writeFileSync(
+    p,
+    JSON.stringify({ spentUsd: s.spentUsd, spentBrain: s.spentBrain, updatedAt: new Date().toISOString() }, null, 2),
+    { mode: 0o600 },
+  );
+}
+
+export function readSessionSpend(): number {
+  return readSession().spentUsd;
+}
+export function readSessionBrain(): number {
+  return readSession().spentBrain;
+}
+
+export function recordSessionSpend(usd: number): number {
+  const s = readSession();
+  s.spentUsd += usd;
+  writeSession(s);
+  return s.spentUsd;
+}
+export function recordSessionBrain(brain: number): number {
+  const s = readSession();
+  s.spentBrain += brain;
+  writeSession(s);
+  return s.spentBrain;
 }
 
 export function resetSessionSpend(): void {
-  const p = sessionPath();
-  mkdirSync(dirname(p), { recursive: true });
-  writeFileSync(p, JSON.stringify({ spentUsd: 0, updatedAt: new Date().toISOString() }, null, 2), { mode: 0o600 });
+  writeSession({ spentUsd: 0, spentBrain: 0 });
 }
 
 export interface SpendRequest {
   purpose: SpendPurpose;
   recipient: string;
-  usd: number; // USD value of what's leaving (the cap currency)
+  usd: number; // caller-asserted USD value of the spend (a convenience bound)
+  brainAmount?: number; // $BRAIN actually leaving — the ENFORCEABLE bound
   sol?: number; // SOL leaving, if any (for the SOL cap)
   programIds?: string[]; // programs the tx touches, for blockUnknownPrograms
 }
@@ -150,7 +187,8 @@ export interface SpendDecision {
   ok: boolean;
   violations: string[];
   policySource: string;
-  sessionSpentBefore: number;
+  sessionSpentBefore: number; // USD spent this session before this request
+  sessionBrainBefore: number; // $BRAIN spent this session before this request
 }
 
 // The gate. Pure: it reads the policy + session ledger and returns a verdict;
@@ -158,7 +196,9 @@ export interface SpendDecision {
 export function checkSpend(req: SpendRequest, policy?: WalletSpendPolicy): SpendDecision {
   const loaded = policy ? { policy, source: "(provided)" } : loadWalletPolicy();
   const pol = loaded.policy;
-  const sessionSpentBefore = readSessionSpend();
+  const session = readSession();
+  const sessionSpentBefore = session.spentUsd;
+  const sessionBrainBefore = session.spentBrain;
   const violations: string[] = [];
 
   if (req.purpose === "sweep") {
@@ -187,6 +227,32 @@ export function checkSpend(req: SpendRequest, policy?: WalletSpendPolicy): Spend
     if (req.sol != null && pol.maxSolPerTx != null && req.sol > pol.maxSolPerTx) {
       violations.push(`${req.sol} SOL exceeds per-tx SOL cap ${pol.maxSolPerTx}`);
     }
+    // The $BRAIN amount is what ACTUALLY leaves — bound it directly, not via the
+    // caller-asserted USD. Validity is checked first (negative/NaN/Infinity are
+    // rejected outright), then the caps. Fail-closed: a $BRAIN spend with no token
+    // cap set is refused — the USD cap alone is not a real bound on the transfer.
+    if (req.brainAmount != null) {
+      if (!Number.isFinite(req.brainAmount) || req.brainAmount < 0) {
+        violations.push(`invalid $BRAIN amount: ${req.brainAmount}`);
+      } else if (req.brainAmount > 0) {
+        if (pol.maxBrainPerTx == null) {
+          violations.push(
+            "no $BRAIN per-tx cap configured; autonomous $BRAIN spend is disabled until you run " +
+              "`brainblast wallet config --max-brain-per-tx <amount>`",
+          );
+        } else {
+          if (req.brainAmount > pol.maxBrainPerTx) {
+            violations.push(`${req.brainAmount} $BRAIN exceeds per-tx cap ${pol.maxBrainPerTx}`);
+          }
+          if (pol.maxBrainPerSession != null && sessionBrainBefore + req.brainAmount > pol.maxBrainPerSession) {
+            violations.push(
+              `${req.brainAmount} $BRAIN would bring session spend to ${sessionBrainBefore + req.brainAmount}, ` +
+                `over the $BRAIN session cap ${pol.maxBrainPerSession} (already ${sessionBrainBefore})`,
+            );
+          }
+        }
+      }
+    }
     // A generic transfer must go to an allowlisted recipient (if any are set).
     // "stake" goes to the registry's protocol-resolved pay_to — caps only.
     if (req.purpose === "transfer" && pol.allowedRecipients.length > 0 && !pol.allowedRecipients.includes(req.recipient)) {
@@ -201,7 +267,7 @@ export function checkSpend(req: SpendRequest, policy?: WalletSpendPolicy): Spend
     }
   }
 
-  return { ok: violations.length === 0, violations, policySource: loaded.source, sessionSpentBefore };
+  return { ok: violations.length === 0, violations, policySource: loaded.source, sessionSpentBefore, sessionBrainBefore };
 }
 
 export interface SignResult {
@@ -223,7 +289,12 @@ export async function signWithPolicy(
 ): Promise<SignResult> {
   const decision = checkSpend(request, policy);
   if (!decision.ok) return { ok: false, decision };
+  // executor() does the real broadcast; if it throws (failed send) we propagate
+  // and DO NOT debit — the ledger only ever reflects funds that actually moved.
   const signature = await executor();
-  if (request.purpose !== "sweep") recordSessionSpend(request.usd);
+  if (request.purpose !== "sweep") {
+    recordSessionSpend(request.usd);
+    if (request.brainAmount && request.brainAmount > 0) recordSessionBrain(request.brainAmount);
+  }
   return { ok: true, signature, decision };
 }
