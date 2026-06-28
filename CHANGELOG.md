@@ -2,6 +2,40 @@
 
 ## Unreleased
 
+## v0.9.4 — 2026-06-27
+
+**The VTI feed (Stage 4 of the training-data roadmap).** `brainblast feed` turns
+the verified-trap corpus from a static dataset into a **subscription to the
+delta** — the product surface a lab plugs into its own eval/training loop. Reads
+any VTI lot(s) and streams NDJSON (the same tail-the-stdout contract as `watch`):
+`feed_meta` → one `vti` per line → `feed_complete`. Additive; the audit path is
+unchanged.
+- **The delta is real.** `--since <cursor>` emits only records newer than the
+  caller's last `capturedAt`; `feed_complete` returns the next cursor, so a
+  consumer resumes without re-pulling. Filter by `--sdk` / `--class` /
+  `--severity` (min-and-above) / `--min-corroboration` / `--limit`.
+- **Tiered access** (`sample → standard → firehose`): per-tier record caps,
+  fixtures gating, and a freshness holdback (freshness is the moat). **Sample
+  withholds the trainable fixtures** — metadata + the RED→GREEN receipt only;
+  paid tiers unlock the payload and the fresh delta. `--wallet-tier` maps the
+  v0.9.3 wallet's `$BRAIN` balance to a tier (`tierForBrain`).
+- **Reproducibility receipts** ship on every record (`red`/`green`/`method`/
+  `verifiedAt` + `sourceUrls`) — independent reward-gradability, the credibility
+  feature scraped data can't offer. Only RED→GREEN-proven records are emitted.
+- **Honest client/server split:** the local feed computes tier *eligibility* and
+  formats the delta from lots you possess; **real entitlement is enforced at
+  distribution** (the marketplace surface + on-chain settlement are the
+  server-side follow-ons).
+
+**`brainblast_recall` — the feed, in-tool over MCP.** A new MCP tool so an agent
+in Cursor / Copilot / Claude can recall the verified traps for an SDK **before**
+writing the integration: it returns the proven `error→fix→test` records — with
+their RED→GREEN receipts and the fix — for whatever VTI lots are present. Reads
+lots you possess (full visibility — gating is a *distribution* concern), filters
+by `sdk` / `class` / `min_severity` / `min_corroboration` / `since`. Lot loading
+is factored into `src/feedLots.ts`, shared by the `feed` CLI and `recall`. 16 new
+tests (feed + recall); suite at **638 pass / 1 skip**, typecheck clean.
+
 ## v0.9.3 — 2026-06-27
 
 **The Agent Wallet (default-off).** A small, capped, Vault-recoverable Solana ops
