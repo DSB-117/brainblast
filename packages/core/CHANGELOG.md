@@ -2,6 +2,27 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.9.4 — 2026-06-28
+
+**The VTI feed.** Adds a cursor-resumable NDJSON subscription surface for
+verified trap instances, with SDK/class/severity/corroboration filters, tiered
+fixture access, freshness holdback, and RED→GREEN reproducibility receipts.
+
+- New `brainblast feed` CLI with `sample`, `standard`, and `firehose` tiers.
+- New MCP tool `brainblast_recall` for retrieving proven traps before coding.
+- Shared VTI lot loading in `src/feedLots.ts`; only RED→GREEN-proven records emit.
+- 16 new feed/recall tests; full suite at 638 pass / 1 skip.
+
+## 0.9.3 — 2026-06-27
+
+**The Agent Wallet.** Adds a default-off, capped, Vault-recoverable Solana ops
+wallet for agent-controlled staking and transfers without exposing principal.
+
+- New `wallet init|address|list|balance|policy|config|stake|sweep|rotate|delegate|revoke` commands.
+- Fail-closed spend policy with SOL, USD, and `$BRAIN` caps plus recipient/program allowlists.
+- Vault-only secret storage, owner-only emergency sweep, and opt-in on-chain delegation.
+- Red-team hardening covers cap evasion, invalid numeric inputs, fail-closed sends, and recovery.
+
 ## 0.9.2 — 2026-06-26
 
 **The data factory, prover-backed** (additive, default-off). Lands the training-data

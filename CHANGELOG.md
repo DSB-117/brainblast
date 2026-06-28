@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## v0.9.4 — 2026-06-27
+## v0.9.4 — 2026-06-28
 
 **The VTI feed (Stage 4 of the training-data roadmap).** `brainblast feed` turns
 the verified-trap corpus from a static dataset into a **subscription to the
@@ -35,6 +35,9 @@ lots you possess (full visibility — gating is a *distribution* concern), filte
 by `sdk` / `class` / `min_severity` / `min_corroboration` / `since`. Lot loading
 is factored into `src/feedLots.ts`, shared by the `feed` CLI and `recall`. 16 new
 tests (feed + recall); suite at **638 pass / 1 skip**, typecheck clean.
+
+**Release finalization.** Updated the installer default, skill metadata, GitHub
+Action examples, npm changelog, and verified installer checksums to `v0.9.4`.
 
 ## v0.9.3 — 2026-06-27
 

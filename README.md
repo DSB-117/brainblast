@@ -379,7 +379,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: DSB-117/brainblast/action@v0.6.0
+      - uses: DSB-117/brainblast/action@v0.9.4
         with:
           fail-on: critical   # critical | high | medium | low | never
 ```
@@ -462,7 +462,7 @@ curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh 
 
 **Specific version:**
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.6.0 sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.9.4 sh
 ```
 
 The installer is idempotent: the Claude Code skill is overwritten in place, and the Codex adapter block is replaced (not duplicated) via its `<!-- BRAINBLAST:START/END -->` markers.
