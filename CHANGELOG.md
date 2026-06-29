@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.9.5 — 2026-06-29
+
+**Marketplace surface + automatic intake.** The two halves of the verified-trap
+market: a gated demand side (storefront, signed-grant entitlement, metered usage)
+and an automatic supply side (the one-command intake conveyor). Together they turn
+the corpus from a dataset into a working, two-sided market — automatic supply in,
+gated market out. Both halves are additive; the audit path is unchanged.
+
 **Automatic intake — the data-factory conveyor (R1 of the training-data
 roadmap, North Star #2).** Producing a verified trap should be streamlined and
 **never block on spend**. Two changes deliver that:
