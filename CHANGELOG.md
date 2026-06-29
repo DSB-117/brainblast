@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+**Automatic intake — the data-factory conveyor (R1 of the training-data
+roadmap, North Star #2).** Producing a verified trap should be streamlined and
+**never block on spend**. Two changes deliver that:
+- **`npm run intake`** (`scripts/intake.ts`) chains the whole pipe in one command:
+  `gen:vti → pack:dataset → corpus → catalog`, so a freshly-proven pack lands in
+  the seed lot, the **sellable** packaged lots, the corpus index, and the
+  storefront (`datasets/CATALOG.md`) together. `npm run intake -- --pack
+  packs/<id>` validates that pack RED→GREEN first and is **fail-closed** (a bad or
+  non-existent pack aborts before anything regenerates). Keeping `pack:dataset` in
+  the chain keeps the seed↔packaged drift gate (`npm run sla`) green — "trap found
+  → sellable" means the packaged lot moved too. *(Running it surfaced + ingested a
+  bundled `wrong-constant` pack the committed corpus had drifted past: 8 → 9
+  VTIs, 5 → 6 trap classes.)*
+- **Scout staking is now explicitly opt-in.** `.claude/skills/brainblast-scout`
+  reframed so Phases 1–4 (research → prove → package → submit + intake) are the
+  no-spend default and **Phase 5 (stake `$BRAIN`) is an optional quality bond**,
+  run only when the capped ops-wallet is configured — never required to produce or
+  sell the data.
+- 3 new tests (the fail-closed `--pack` gate); suite **655 pass / 1 skip**,
+  typecheck + build clean.
+
 **The marketplace surface (Stage 4 Step 2 of the training-data roadmap).** The
 feed computes tier *eligibility* client-side; its own comments said five times
 that "real entitlement is enforced server-side at distribution." This release is

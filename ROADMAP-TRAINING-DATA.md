@@ -1,6 +1,6 @@
 # Brainblast → AI Training-Data Platform: Roadmap
 
-**Last updated:** 2026-06-29 · anchored at **v0.9.4** (+ unreleased marketplace surface)
+**Last updated:** 2026-06-29 · anchored at **v0.9.4** (+ unreleased v0.9.5: marketplace surface + automatic intake)
 **Current state:** Stage 0 shipped · Stages 1–4 engineering substantially landed —
 **every no-spend core now exists**, including the Stage 4 marketplace surface
 (catalog + signed-grant entitlement + metered usage ledger). What remains is what
@@ -41,7 +41,7 @@ This is the single source of truth for status. The detailed per-stage sections
 below are the *reference*; **this table and the ordered plan that follows are what
 we execute against.**
 
-### ✅ DONE (runs today — 652 tests green, 1 skipped)
+### ✅ DONE (runs today — 655 tests green, 1 skipped)
 
 | Capability | Surface | Stage |
 |---|---|---|
@@ -54,12 +54,12 @@ we execute against.**
 | Streaming delta feed (NDJSON, `--since` cursor, filters, receipts) | `brainblast feed`, `brainblast_recall` (MCP) | 4.1, 4.5 |
 | Tiered access *eligibility* (`sample/standard/firehose`, wallet→tier) | `feed --tier` / `--wallet-tier` | 4.4 |
 | **Marketplace surface (local-first):** storefront + signed-grant entitlement + metered usage ledger | `brainblast catalog` / `grant` / `usage`, `feed --grant`, `npm run catalog` | 4.2 |
+| **Automatic intake conveyor** + stake-free scout default (R1) | `npm run intake` (`gen:vti→pack:dataset→corpus→catalog`), scout Phase 5 opt-in | 1.1 / 3.1 |
 
 ### ☐ REMAINING (nothing below is half-built — these have not started)
 
 | Work | Why it's not done yet | Stage |
 |---|---|---|
-| Stake-free scout **by default** + one-shot `intake` chain | ergonomics gap — serves North Star #2 | 1.1 / 3.1 |
 | **ed25519 grants** (replace shared-secret HMAC → publicly verifiable) | foundation for multi-party | 4.2→4.3 |
 | **Hosted distribution endpoint** (public catalog + feed-over-HTTP gated by grant + server-side authoritative ledger) | needs infra/deploy | 4.2→4.3 |
 | **On-chain settlement** (pay `$BRAIN`/USDC → auto-mint grant; USDC→buyback) | spends funds | 4.3 |
@@ -83,15 +83,19 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
 > Only then do we turn on money (R4–R6) and scale supply (R7). GTM (R8) runs in
 > parallel from now. R9–R10 are the end-state.
 
-- ☐ **R1 — Stake-free scout + automatic intake. `[no-spend]` — DO FIRST.**
-  Serves North Star #2. (a) Amend `.claude/skills/brainblast-scout/SKILL.md` so
-  Phases 1–4 are the default "produce data" path and **Phase 5 (stake) is
-  explicitly opt-in** (only when ops-wallet + caps are set); fix the skill
-  description so it no longer implies staking is required. (b) Add a one-shot
-  `brainblast intake` (and `npm run intake`) that chains `pack validate →
-  gen:vti → corpus → catalog`, so a freshly-proven pack lands in the corpus **and**
-  the storefront in one command. **Exit:** a new pack goes from proven → catalog
-  entry with no `$BRAIN` and no manual steps.
+- ✅ **R1 — Stake-free scout + automatic intake. `[no-spend]` — DONE (v0.9.5).**
+  Serves North Star #2. (a) `.claude/skills/brainblast-scout/SKILL.md` reframed:
+  Phases 1–4 are the no-spend default and **Phase 5 (stake) is an explicit opt-in
+  bond**, run only when the ops-wallet + caps are set; the description no longer
+  implies staking is required. (b) **`npm run intake`** (`scripts/intake.ts`)
+  chains `gen:vti → pack:dataset → corpus → catalog`; `--pack <dir>` validates the
+  pack RED→GREEN first and is fail-closed. *(Implemented as an `npm run` script —
+  consistent with the rest of the data-factory family `gen:vti`/`pack:dataset`/
+  `corpus`/`catalog`/`sla`, which are all npm scripts, not CLI verbs; intake is a
+  repo-operator command that regenerates committed `datasets/` artifacts.)*
+  **Exit met:** a bundled pack the committed corpus had drifted past was ingested
+  end-to-end with no `$BRAIN` and no manual glue (8 → 9 VTIs, 5 → 6 classes,
+  `npm run sla` green). 3 fail-closed-gate tests; suite 655 pass / 1 skip.
 
 - ☐ **R2 — ed25519 grants (replace HMAC). `[no-spend]`.**
   Foundation for a multi-party market + North Star #1. Swap `signGrant` /
@@ -139,7 +143,8 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   models are most stale). The coverage map names the gaps (today: 3 uncovered
   classes — immutable-after-deploy, auth-bypass, wrong-constant — and 8 thin
   cells). **Exit:** continuous VTI production across N≥50 SDKs; corpus grows from
-  8 to a sellable size. *(Staking each pack is optional per R1.)*
+  today's 9 to a sellable size. *(Per R1, data production is no-spend — `npm run
+  intake` lands each pack; staking each pack is optional.)*
 
 - ☐ **R8 — Buyer pilots. `[outreach]` — run in parallel from now.**
   (Stage 1.4–1.5) Take `datasets/CATALOG.md` + `datasets/v0.1.0/sample/` + a
@@ -169,7 +174,7 @@ flow is hardened for a public audience.
 
 ## What's shipped so far
 
-Everything below runs today (652 tests green, 1 skipped):
+Everything below runs today (655 tests green, 1 skipped):
 
 - **The data asset exists.** `npm run gen:vti` turns Brainblast's own proven packs
   into schema-valid [Verified Trap Instances](datasets/seed/README.md) — only when
@@ -678,11 +683,13 @@ more supply) documented end-to-end.
 **See [Remaining work — execute in THIS exact order](#-remaining-work--execute-in-this-exact-order)
 (R1–R10) — that is the authoritative plan.** Do not re-derive priorities here.
 
-The very next task is **R1 — stake-free scout + automatic `intake` chain
-`[no-spend]`**: it serves North Star #2, costs nothing, and unblocks growing the
-corpus from 8 traps to a sellable size. Then **R2 (ed25519 grants)** and **R3
-(hosted endpoint)** make the market public before any money is turned on. **R8
-(buyer outreach)** runs in parallel from now.
+**R1 is done (v0.9.5).** The very next task is **R2 — ed25519 grants
+`[no-spend]`**: replace the shared-secret HMAC in `src/marketplace.ts` with
+publicly-verifiable ed25519 signatures (reuse the wallet's keypair as the
+distributor identity), the foundation for a multi-party market. Then **R3 (hosted
+endpoint)** makes the market public before any money is turned on. **R7 (scout
+fleet)** and **R8 (buyer outreach)** run in parallel from now — R1 made scout's
+data production no-spend, so growing the corpus past today's 9 traps is unblocked.
 
 When you finish any R-item: tick its checkbox, move its row in the
 [Done vs. Remaining ledger](#-done-vs-remaining--the-authoritative-ledger) from

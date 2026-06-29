@@ -1,22 +1,23 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-06-29T18:11:03.692Z",
+  "generatedAt": "2026-06-29T18:58:49.438Z",
   "counts": {
-    "total": 8,
-    "proven": 8,
-    "sdks": 8,
-    "classes": 5
+    "total": 9,
+    "proven": 9,
+    "sdks": 9,
+    "classes": 6
   },
   "severityDistribution": {
-    "high": 8
+    "high": 9
   },
   "classDistribution": {
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
     "silent-zero-revenue": 1,
     "unchecked-staleness": 1,
-    "missing-verification": 1
+    "missing-verification": 1,
+    "other": 1
   },
   "sdkDistribution": {
     "Jito (block engine / bundles)": 1,
@@ -26,10 +27,11 @@
     "Pyth Network price feeds": 1,
     "@raydium-io/raydium-sdk-v2": 1,
     "@solana/web3.js": 1,
-    "SPL Token": 1
+    "SPL Token": 1,
+    "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 8
+    "synthetic-owned": 9
   },
   "quality": {
     "mean": 48,
@@ -37,8 +39,8 @@
     "max": 48
   },
   "freshness": {
-    "oldest": "2026-06-23T18:59:28.069Z",
-    "newest": "2026-06-23T18:59:28.069Z"
+    "oldest": "2026-06-29T18:58:48.156Z",
+    "newest": "2026-06-29T18:58:48.156Z"
   },
   "tiers": [
     {
@@ -82,7 +84,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-06-23T18:59:28.069Z",
+      "capturedAt": "2026-06-29T18:58:48.156Z",
       "sourceUrls": [
         "https://docs.jito.wtf/lowlatencytxnsend/"
       ],
@@ -90,7 +92,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-06-23T18:59:28.069Z"
+        "verifiedAt": "2026-06-29T18:58:48.156Z"
       }
     },
     {
@@ -105,7 +107,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-06-23T18:59:28.069Z",
+      "capturedAt": "2026-06-29T18:58:48.156Z",
       "sourceUrls": [
         "https://station.jup.ag/docs/apis/swap-api"
       ],
@@ -113,7 +115,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-06-23T18:59:28.069Z"
+        "verifiedAt": "2026-06-29T18:58:48.156Z"
       }
     },
     {
@@ -128,7 +130,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-06-23T18:59:28.069Z",
+      "capturedAt": "2026-06-29T18:58:48.156Z",
       "sourceUrls": [
         "https://developers.metaplex.com/token-metadata/mint"
       ],
@@ -136,7 +138,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-06-23T18:59:28.069Z"
+        "verifiedAt": "2026-06-29T18:58:48.156Z"
       }
     },
     {
@@ -151,7 +153,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-06-23T18:59:28.069Z",
+      "capturedAt": "2026-06-29T18:58:48.156Z",
       "sourceUrls": [
         "https://docs.meteora.ag/product-overview/meteora-liquidity-pools/dlmm-overview"
       ],
@@ -159,7 +161,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-06-23T18:59:28.069Z"
+        "verifiedAt": "2026-06-29T18:58:48.156Z"
       }
     },
     {
@@ -174,7 +176,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-06-23T18:59:28.069Z",
+      "capturedAt": "2026-06-29T18:58:48.156Z",
       "sourceUrls": [
         "https://docs.pyth.network/price-feeds/best-practices#price-availability"
       ],
@@ -182,7 +184,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-06-23T18:59:28.069Z"
+        "verifiedAt": "2026-06-29T18:58:48.156Z"
       }
     }
   ]

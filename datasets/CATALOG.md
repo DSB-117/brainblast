@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-06-29T18:11:03.692Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-06-29T18:58:49.438Z from 1 lot(s): seed-vti.jsonl._
 
-**8 verified trap instances** across **8 SDKs** and **5 trap classes**. Quality score mean 48/100 (range 48–48). Freshness: 2026-06-23T18:59:28.069Z → 2026-06-23T18:59:28.069Z.
+**9 verified trap instances** across **9 SDKs** and **6 trap classes**. Quality score mean 48/100 (range 48–48). Freshness: 2026-06-29T18:58:48.156Z → 2026-06-29T18:58:48.156Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -25,6 +25,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | silent-zero-revenue | 1 |
 | unchecked-staleness | 1 |
 | missing-verification | 1 |
+| other | 1 |
 
 ## Coverage by SDK
 
@@ -38,6 +39,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | @raydium-io/raydium-sdk-v2 | 1 |
 | @solana/web3.js | 1 |
 | SPL Token | 1 |
+| Stripe Node SDK | 1 |
 
 ## Sample (receipt-only teasers)
 
