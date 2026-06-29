@@ -1,7 +1,11 @@
 # Brainblast → AI Training-Data Platform: Roadmap
 
-**Last updated:** 2026-06-24 · anchored at **v0.8.3** · branch [`training-data`](https://github.com/DSB-117/brainblast/tree/training-data)
-**Current state:** Stage 0 shipped · Stages 1–3 in progress (every no-spend engineering core landed; go-to-market, scout supply at scale, and on-chain `$BRAIN` rails remain)
+**Last updated:** 2026-06-29 · anchored at **v0.9.4** (+ unreleased marketplace surface)
+**Current state:** Stage 0 shipped · Stages 1–4 engineering substantially landed —
+**every no-spend core now exists**, including the Stage 4 marketplace surface
+(catalog + signed-grant entitlement + metered usage ledger). What remains is what
+*spends*: on-chain `$BRAIN` settlement (Stages 2–4), scout supply at scale
+(Stage 3), and go-to-market (buyer pilots).
 **Companion to:** [`ROADMAP.md`](ROADMAP.md) (the core *Predict → Enforce → Watch → Compound* ladder)
 **On-chain substrate:** [`WALLET-PLAN.md`](WALLET-PLAN.md) — the Agent Wallet (capped, Vault-recoverable ops wallet) is the rail the deferred `$BRAIN` stake/dividend flows in Stages 2 & 4 settle on.
 
@@ -10,9 +14,162 @@
 
 ---
 
+## Product North Stars (two invariants every remaining task must honor)
+
+These were set after the marketplace surface landed. They are not stages — they
+are **constraints on how the remaining stages are built**. Any task that violates
+one is wrong, however much else it ships.
+
+1. **The marketplace is free-flowing & easily accessible.** The catalog and the
+   `sample` tier are **always public and anonymous — no signup, no key, no
+   payment** to browse and inspect. All *paid* access is **self-serve** (prove a
+   wallet's `$BRAIN`/payment → a grant is minted automatically); a human issuer
+   is never in the critical path. Friction exists only at the trainable-payload
+   boundary, never at discovery.
+2. **Data/VTI intake is streamlined & automatic.** Producing a new verified trap
+   must **never block on spend**. Scout Phases 1–4 (research → prove → package →
+   submit) are no-spend and are the default; staking is an *optional bond* layered
+   on top. A single `intake` step takes a freshly-proven pack all the way into the
+   corpus **and** the storefront. The pipeline should approach: trap found →
+   sellable, with no manual glue.
+
+---
+
+## ⭐ Done vs. Remaining — the authoritative ledger
+
+This is the single source of truth for status. The detailed per-stage sections
+below are the *reference*; **this table and the ordered plan that follows are what
+we execute against.**
+
+### ✅ DONE (runs today — 652 tests green, 1 skipped)
+
+| Capability | Surface | Stage |
+|---|---|---|
+| VTI schema + generator (RED→GREEN-gated) | `schema/vti.schema.json`, `npm run gen:vti` | 0 |
+| Packaged dataset (sample/full lots, datasheet, SHA256SUMS, pricing) | `npm run pack:dataset`, `datasets/v0.1.0/` | 1.2 |
+| Eval/benchmark harness (oracle = our checker) | `npm run bench`, `bench/` | 1.3 |
+| Consent-safe contribution (secret-scan → repro → license → separate lot) | `npm run ingest:vti`, opt-in `fix --apply` capture | 2.1–2.3 |
+| Corpus intelligence (score, dedup, class×SDK coverage map) | `npm run corpus`, `datasets/COVERAGE.md` | 3.2–3.3 |
+| Quality/integrity SLA (re-prove all RED→GREEN, schema, drift; CI gate) | `npm run sla`, `datasets/SLA.md` | 3.5 |
+| Streaming delta feed (NDJSON, `--since` cursor, filters, receipts) | `brainblast feed`, `brainblast_recall` (MCP) | 4.1, 4.5 |
+| Tiered access *eligibility* (`sample/standard/firehose`, wallet→tier) | `feed --tier` / `--wallet-tier` | 4.4 |
+| **Marketplace surface (local-first):** storefront + signed-grant entitlement + metered usage ledger | `brainblast catalog` / `grant` / `usage`, `feed --grant`, `npm run catalog` | 4.2 |
+
+### ☐ REMAINING (nothing below is half-built — these have not started)
+
+| Work | Why it's not done yet | Stage |
+|---|---|---|
+| Stake-free scout **by default** + one-shot `intake` chain | ergonomics gap — serves North Star #2 | 1.1 / 3.1 |
+| **ed25519 grants** (replace shared-secret HMAC → publicly verifiable) | foundation for multi-party | 4.2→4.3 |
+| **Hosted distribution endpoint** (public catalog + feed-over-HTTP gated by grant + server-side authoritative ledger) | needs infra/deploy | 4.2→4.3 |
+| **On-chain settlement** (pay `$BRAIN`/USDC → auto-mint grant; USDC→buyback) | spends funds | 4.3 |
+| **Stake-and-slash on VTIs + data-dividend payout** | spends funds (repro gate is the slash trigger, already built) | 2.4–2.5 |
+| **Curation market** (stake to up-rank; reward accurate curators) | spends funds; needs on-chain rails | 3.4 |
+| **Scout fleet at scale** (N≥50 SDKs, scheduled, freshness-first) | data-production is now no-spend; automation + run is the lever | 3.1 |
+| **Buyer pilots** (≥1 paid pilot / LOI) | outreach | 1.4–1.5 |
+| **Public benchmark + private eval product** | depends on a corpus worth citing | 5.1–5.2 |
+| **Governance + mature dividend/burn + documented compounding loop** | end-state; depends on all above | 5.3–5.5 |
+
+---
+
+## 🧭 Remaining work — execute in THIS exact order
+
+Each item is tagged `[no-spend]` / `[infra]` / `[spend]` / `[outreach]`. **Do not
+start an item until every item above it is ✅** unless the tag explicitly says it
+runs in parallel. Update the checkbox and the ledger above at the end of each.
+
+> **Why this order:** the two no-spend engineering items (R1, R2) unblock both
+> North Stars and cost nothing. R3 makes the market *public* without yet spending.
+> Only then do we turn on money (R4–R6) and scale supply (R7). GTM (R8) runs in
+> parallel from now. R9–R10 are the end-state.
+
+- ☐ **R1 — Stake-free scout + automatic intake. `[no-spend]` — DO FIRST.**
+  Serves North Star #2. (a) Amend `.claude/skills/brainblast-scout/SKILL.md` so
+  Phases 1–4 are the default "produce data" path and **Phase 5 (stake) is
+  explicitly opt-in** (only when ops-wallet + caps are set); fix the skill
+  description so it no longer implies staking is required. (b) Add a one-shot
+  `brainblast intake` (and `npm run intake`) that chains `pack validate →
+  gen:vti → corpus → catalog`, so a freshly-proven pack lands in the corpus **and**
+  the storefront in one command. **Exit:** a new pack goes from proven → catalog
+  entry with no `$BRAIN` and no manual steps.
+
+- ☐ **R2 — ed25519 grants (replace HMAC). `[no-spend]`.**
+  Foundation for a multi-party market + North Star #1. Swap `signGrant` /
+  `verifyGrant` in `src/marketplace.ts` from shared-secret HMAC to **ed25519**:
+  the distributor holds a private key and **publishes its public key**, so anyone
+  can verify a grant without the secret. Reuse the wallet's ed25519 keypair
+  (`src/wallet/`) as the distributor identity. The verify path was deliberately
+  isolated so only these two functions change. **Exit:** `grant verify` works with
+  only the public key; a forged grant still fails; all tests green.
+
+- ☐ **R3 — Hosted distribution endpoint. `[infra]`.**
+  The "public" in public market, and where "entitlement enforced at distribution"
+  becomes literally true. A small service (`registry.brainblast.tech`) that: (a)
+  serves the **catalog publicly and free** (North Star #1); (b) serves `feed` over
+  HTTP, gated by a presented ed25519 grant (verified server-side); (c) holds the
+  full lots and writes the **authoritative usage ledger server-side**. The local
+  CLI becomes a client: `brainblast feed --remote <url> --grant <file>`. **Exit:**
+  a third party with only a grant + the public URL can pull their entitled delta;
+  the server holds the payload, the client never sees more than its tier.
+
+- ☐ **R4 — On-chain settlement + self-serve grants. `[spend]`.**
+  Closes North Star #1's "self-serve" requirement. Pay `$BRAIN` (at the standing
+  10% discount) or USDC → treasury → **grant auto-minted**; *holding* `$BRAIN`
+  maps to a standing tier via `tierForBrain` (no per-pull invoice). USDC triggers
+  **buyback-and-distribute** to the contributor/burn pool. Generalize the wallet's
+  capped spend-gate into the buyer-side payment path. **Exit:** a buyer self-serves
+  a paid grant end-to-end with no human issuer; one USDC sale triggers a buyback.
+
+- ☐ **R5 — Stake-and-slash on VTIs + data dividend. `[spend]`.** (Stage 2.4–2.5)
+  Extend `scripts/agent-stake` (and the in-core `wallet stake`) from "stake on a
+  pack" to **bond on a contributed VTI**; the already-built reproduction gate is
+  the **slash trigger**. When a VTI sells/streams, pay the contributor a `$BRAIN`
+  **dividend** weighted by corroboration × severity. **Exit:** first bond posted,
+  first non-reproducing submission slashed, first dividend paid.
+
+- ☐ **R6 — Curation market. `[spend]`.** (Stage 3.4)
+  Holders stake `$BRAIN` to up-rank traps they believe labs will buy; accurate
+  curators earn, the rest lose. Built on the existing `score`/coverage/SLA surface.
+  **Exit:** curation stake measurably reweights what scout produces next.
+
+- ☐ **R7 — Scout fleet at scale. `[spend: stake optional]` — run in parallel after R1.**
+  (Stage 3.1) Data *production* is no-spend after R1; this item is the
+  **automation + the deliberate runs**: parallelize scout across the top N≥50
+  SDKs/protocols on a schedule, **freshness-first** (newly-shipped APIs, where
+  models are most stale). The coverage map names the gaps (today: 3 uncovered
+  classes — immutable-after-deploy, auth-bypass, wrong-constant — and 8 thin
+  cells). **Exit:** continuous VTI production across N≥50 SDKs; corpus grows from
+  8 to a sellable size. *(Staking each pack is optional per R1.)*
+
+- ☐ **R8 — Buyer pilots. `[outreach]` — run in parallel from now.**
+  (Stage 1.4–1.5) Take `datasets/CATALOG.md` + `datasets/v0.1.0/sample/` + a
+  benchmark scorecard to 5–10 target buyers. Capture format fit, freshness value,
+  licensing bar, willingness to pay, settlement-rail preference. **Exit:** ≥1 paid
+  pilot or signed LOI; buyer requirements documented.
+
+- ☐ **R9 — Public benchmark + private eval product. `[infra/outreach]`.**
+  (Stage 5.1–5.2) Publish the versioned, always-fresh "does model X ship this
+  silent failure?" benchmark (free, a marketing surface); sell held-out VTI suites
+  as recurring evals. **Exit:** benchmark public + cited; first recurring eval
+  contract.
+
+- ☐ **R10 — Governance + mature token loop. `[spend]`.**
+  (Stage 5.3–5.5) `$BRAIN` stake-weighted votes on licensing/taxonomy/slashing;
+  steady-state revenue → buyback → dividend/burn, documented end-to-end; the
+  Compound rung (every customer-CI fix can opt-in to become tomorrow's VTI) wired
+  to close the flywheel. **Exit:** the loop self-sustains (revenue ≥ emissions
+  value) and its accounting is public.
+
+**Legal gate (applies before R3 opens anything to the public):** open the
+**owned synthetic corpus** publicly first (zero consent obligation). Contributed
+lots stay behind `contributor-grant-v1` separation until the consent/revocation
+flow is hardened for a public audience.
+
+---
+
 ## What's shipped so far
 
-Everything below runs today on the `training-data` branch (535 tests green):
+Everything below runs today (652 tests green, 1 skipped):
 
 - **The data asset exists.** `npm run gen:vti` turns Brainblast's own proven packs
   into schema-valid [Verified Trap Instances](datasets/seed/README.md) — only when
@@ -36,10 +193,22 @@ Everything below runs today on the `training-data` branch (535 tests green):
   re-validates the schema, checks seed↔packaged drift, and **exits non-zero on any
   regression** ([`datasets/SLA.md`](datasets/SLA.md)) — the contractual integrity
   surface for selling.
+- **It's a marketplace, not just a dataset.** `npm run catalog` emits the
+  buyer-facing storefront ([`datasets/CATALOG.md`](datasets/CATALOG.md) + JSON):
+  coverage, freshness, the tier/price ladder, and receipt-only teasers.
+  `brainblast grant issue|verify` signs an access grant (buyer/tier/lot-scope/
+  expiry) that `brainblast feed --grant` enforces at distribution — so a buyer
+  can't self-assert a tier — and every grant-backed pull is metered to a
+  hash-chained ledger that `brainblast usage` verifies + summarizes per buyer.
+  Settlement stays out-of-band (it spends funds); this surface quotes price and
+  accounts usage, never moves money.
 
-**Remaining everywhere:** the on-chain `$BRAIN` settlement/stake-slash/dividend
-rails (they spend funds) and the go-to-market steps (scout supply at scale, buyer
-pilots). Each stage below marks exactly what's done vs. pending.
+**Remaining** is enumerated and sequenced in the
+[Done vs. Remaining ledger](#-done-vs-remaining--the-authoritative-ledger) and the
+[ordered R1–R10 plan](#-remaining-work--execute-in-this-exact-order) above. In one
+line: two no-spend engineering items (stake-free intake; ed25519 grants), then
+public hosting, then the on-chain money/stake/dividend rails, supply at scale, and
+go-to-market. Each per-stage section below is the detailed reference.
 
 ---
 
@@ -113,17 +282,19 @@ the bond on quality, and the dividend on supply.** Buyers are *nudged* into
 
 ## Roadmap at a glance
 
-| Stage | Theme | Exit milestone |
-|---|---|---|
-| **0 ✅** | Define & capture the VTI | VTI schema v1 committed; seed records generate from existing packs |
-| **1 ◐** | Owned synthetic seed corpus + buyer validation | License-clean seed dataset + ≥1 paid pilot / signed LOI |
-| **2 ◐** | Consent & contribution pipeline | First consented user VTIs flowing; first `$BRAIN` data dividend paid |
-| **3 ◐** | The data factory at scale | Continuous VTI production across N≥50 SDKs at a quality SLA |
-| **4 ☐** | Real-time feed + marketplace | Live subscription feed with paying customers settling in `$BRAIN`/USDC |
-| **5 ☐** | Eval/benchmark product + closed flywheel | Cited public benchmark + recurring eval revenue + self-sustaining token loop |
+| Stage | Theme | Engineering | What's left | Exit milestone |
+|---|---|---|---|---|
+| **0** | Define & capture the VTI | ✅ done | — | VTI schema v1 committed; seed records generate from existing packs |
+| **1** | Owned synthetic seed corpus + buyer validation | ✅ done | supply (R7), pilots (R8) | License-clean seed dataset + ≥1 paid pilot / signed LOI |
+| **2** | Consent & contribution pipeline | ✅ core done | stake-slash + dividend (R5) | First consented user VTIs flowing; first `$BRAIN` data dividend paid |
+| **3** | The data factory at scale | ✅ core done | scout fleet (R7), curation (R6) | Continuous VTI production across N≥50 SDKs at a quality SLA |
+| **4** | Real-time feed + marketplace | ◐ surface done | ed25519 (R2), hosting (R3), settlement (R4) | Live subscription feed with paying customers settling in `$BRAIN`/USDC |
+| **5** | Eval/benchmark product + closed flywheel | ☐ not started | benchmark (R9), governance (R10) | Cited public benchmark + recurring eval revenue + self-sustaining token loop |
 
-Stages are a **capability ladder, not a calendar.** Each ships only after the
-prior milestone holds.
+Stages are a **capability ladder, not a calendar.** The **engineering** for Stages
+0–4's no-spend core is done; what's left is sequenced concretely in
+[Remaining work — execute in THIS exact order](#-remaining-work--execute-in-this-exact-order)
+(R1–R10). Each stage's exit still gates on its milestone holding.
 
 ---
 
@@ -386,11 +557,25 @@ dividends pay suppliers in `$BRAIN`. Full two-sided loop in token.
 - ✅ **Step 5 — reproducibility receipts shipped.** Every streamed record carries
   its RED→GREEN `receipt` (`red`/`green`/`method`/`verifiedAt`) + `sourceUrls`, so
   a buyer can independently verify reward-gradability.
-- ☐ **Steps 2 + 3 — marketplace surface + on-chain settlement** are the
-  server/registry side (real entitlement enforcement, metered billing, USDC→
-  buyback). The local feed computes tier *eligibility* and formats the delta;
-  **real entitlement is enforced at distribution** — the honest client/server
-  split (the same posture as the wallet's threat-model note).
+- ✅ **Step 2 — marketplace surface shipped (local-first).** The feed computed
+  tier *eligibility* and deferred "real entitlement is enforced at distribution"
+  — that distribution layer now exists (`src/marketplace.ts` + the `catalog` /
+  `grant` / `usage` CLI + `feed --grant`). **The storefront:** `brainblast
+  catalog` emits a buyer-facing catalog (JSON + committed `datasets/CATALOG.md`)
+  — coverage, freshness, the tier/price ladder, and receipt-only teasers
+  (`npm run catalog`). **The enforced entitlement:** `brainblast grant
+  issue|verify` signs an access grant (buyer/tier/lot-scope/expiry,
+  `BRAINBLAST_MARKET_SECRET`); `feed --grant <file>` serves the tier/lots from the
+  *verified* grant, so a buyer can no longer self-assert `--tier firehose` (a
+  forged tier fails the signature). **The accounting:** every grant-backed pull
+  appends to a hash-chained usage ledger; `brainblast usage` verifies the chain +
+  summarizes per buyer (the billing basis). 14 tests; suite 652 pass / 1 skip.
+- ☐ **Step 3 — on-chain settlement** (USDC→buyback, `$BRAIN` debits) and a hosted
+  multi-party registry remain: they spend funds / need infra. The local surface
+  *quotes* the price and *accounts* the usage; it never moves money — the same
+  honest client/server split as the wallet threat-model note. The HMAC grant is
+  structured so production swaps in ed25519 signatures for multi-party
+  distribution.
 
 **Exit milestone:** ✅ **Live subscription feed with paying customers**, settled in
 `$BRAIN` (and USDC→buyback), tiered access enforced, reproducibility receipts
@@ -490,19 +675,15 @@ more supply) documented end-to-end.
 
 ## Immediate next action
 
-The Stage 0–2 engineering core is in place (see [What's shipped](#whats-shipped-so-far)).
-The next moves, in priority order:
+**See [Remaining work — execute in THIS exact order](#-remaining-work--execute-in-this-exact-order)
+(R1–R10) — that is the authoritative plan.** Do not re-derive priorities here.
 
-1. **Supply (Stage 3).** Run `brainblast-scout` across the top SDKs to manufacture
-   new proven packs — each one flows automatically into the dataset (`gen:vti` →
-   `pack:dataset`) and the benchmark. This is the lever that turns 8 traps into a
-   corpus worth selling. *(Spends `$BRAIN` via staking — run deliberately.)*
-2. **On-chain `$BRAIN` rails (Stages 2 & 4).** Extend `scripts/agent-stake` from
-   "stake on a pack" to bond/slash on a contributed VTI, and wire the
-   buyback + data-dividend flow. The reproduction gate already shipped is the
-   slashing trigger.
-3. **Go-to-market (Stage 1, Steps 4–5).** Take `datasets/v0.1.0/sample/` + a
-   benchmark scorecard to buyers; land one paid pilot or LOI.
+The very next task is **R1 — stake-free scout + automatic `intake` chain
+`[no-spend]`**: it serves North Star #2, costs nothing, and unblocks growing the
+corpus from 8 traps to a sellable size. Then **R2 (ed25519 grants)** and **R3
+(hosted endpoint)** make the market public before any money is turned on. **R8
+(buyer outreach)** runs in parallel from now.
 
-Items 1 and 2 spend tokens/funds; item 3 is outreach. All three build on the
-shipped, verified foundation rather than blocking on each other.
+When you finish any R-item: tick its checkbox, move its row in the
+[Done vs. Remaining ledger](#-done-vs-remaining--the-authoritative-ledger) from
+REMAINING to DONE, and update the [glance table](#roadmap-at-a-glance).
