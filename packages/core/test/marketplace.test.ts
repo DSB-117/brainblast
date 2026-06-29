@@ -3,6 +3,8 @@ import {
   buildCatalog,
   issueGrant,
   verifyGrant,
+  generateDistributorKeypair,
+  addressFromSecretKey,
   appendUsage,
   verifyLedger,
   summarizeUsage,
@@ -10,7 +12,11 @@ import {
   TIER_PRICING,
   LEDGER_GENESIS,
   type UsageEntry,
+  type GrantSigner,
+  type GrantVerifier,
 } from "../src/marketplace.ts";
+import { base58Encode, base58Decode } from "../src/base58.ts";
+import { createHmac } from "node:crypto";
 import type { CorpusVti } from "../src/corpus.ts";
 
 function vti(over: Partial<CorpusVti> & { trapId: string }): CorpusVti {
@@ -73,44 +79,111 @@ describe("catalog — the storefront", () => {
   });
 });
 
-describe("grant — the distribution entitlement", () => {
-  it("a freshly issued grant verifies", () => {
-    const g = issueGrant({ buyer: "acme", tier: "standard", lots: [], secret: SECRET, ttlDays: 30, now: NOW });
-    const v = verifyGrant(g, SECRET, NOW);
+describe("base58", () => {
+  it("round-trips arbitrary bytes (incl. leading zeros)", () => {
+    for (const hex of ["00", "0000ff", "deadbeef", "01".repeat(32)]) {
+      const b = Buffer.from(hex, "hex");
+      expect(base58Decode(base58Encode(b)).equals(b)).toBe(true);
+    }
+  });
+  it("throws on a non-base58 char", () => {
+    expect(() => base58Decode("0OIl")).toThrow(); // 0, O, I, l are not in the alphabet
+  });
+});
+
+describe("grant — ed25519 (publicly verifiable, the multi-party foundation)", () => {
+  const dist = generateDistributorKeypair();
+  const signer: GrantSigner = { alg: "ed25519", secretKey: dist.secretKey };
+  const verifier: GrantVerifier = { alg: "ed25519", publicKey: dist.address };
+
+  it("keypair address matches the address derived from the secret key", () => {
+    expect(addressFromSecretKey(dist.secretKey)).toBe(dist.address);
+  });
+
+  it("verifies with ONLY the distributor public key — no secret", () => {
+    const g = issueGrant({ buyer: "acme", tier: "standard", lots: [], signer, ttlDays: 30, now: NOW });
+    expect(g.alg).toBe("ed25519");
+    expect(g.signer).toBe(dist.address);
+    const v = verifyGrant(g, verifier, NOW);
     expect(v.valid).toBe(true);
     expect(v.tier).toBe("standard");
     expect(v.buyer).toBe("acme");
+    expect(v.signer).toBe(dist.address);
   });
 
   it("rejects a forged tier — the buyer cannot self-upgrade", () => {
-    const g = issueGrant({ buyer: "acme", tier: "sample", lots: [], secret: SECRET, ttlDays: 30, now: NOW });
-    const tampered = { ...g, tier: "firehose" as const };
-    const v = verifyGrant(tampered, SECRET, NOW);
+    const g = issueGrant({ buyer: "acme", tier: "sample", lots: [], signer, ttlDays: 30, now: NOW });
+    const v = verifyGrant({ ...g, tier: "firehose" }, verifier, NOW);
     expect(v.valid).toBe(false);
     expect(v.reason).toBe("bad-signature");
   });
 
-  it("rejects a grant signed with a different secret", () => {
-    const g = issueGrant({ buyer: "acme", tier: "firehose", lots: [], secret: SECRET, ttlDays: 30, now: NOW });
-    expect(verifyGrant(g, "wrong-secret", NOW).valid).toBe(false);
+  it("rejects a grant from an UNTRUSTED distributor (different keypair)", () => {
+    const other = generateDistributorKeypair();
+    const g = issueGrant({ buyer: "acme", tier: "firehose", lots: [], signer: { alg: "ed25519", secretKey: other.secretKey }, ttlDays: 30, now: NOW });
+    // We verify against OUR trusted address — the grant was signed by someone else.
+    const v = verifyGrant(g, verifier, NOW);
+    expect(v.valid).toBe(false);
+    expect(v.reason).toBe("untrusted-signer");
+  });
+
+  it("rejects an attacker who rewrites `signer` to our address but keeps their sig", () => {
+    const other = generateDistributorKeypair();
+    const g = issueGrant({ buyer: "acme", tier: "firehose", lots: [], signer: { alg: "ed25519", secretKey: other.secretKey }, ttlDays: 30, now: NOW });
+    const v = verifyGrant({ ...g, signer: dist.address }, verifier, NOW);
+    expect(v.valid).toBe(false);
+    expect(v.reason).toBe("bad-signature");
+  });
+
+  it("rejects an hmac verifier against an ed25519 grant (wrong-verifier)", () => {
+    const g = issueGrant({ buyer: "acme", tier: "standard", lots: [], signer, ttlDays: 30, now: NOW });
+    const v = verifyGrant(g, { alg: "hmac-sha256", secret: SECRET }, NOW);
+    expect(v.valid).toBe(false);
+    expect(v.reason).toBe("wrong-verifier");
   });
 
   it("honors expiry", () => {
-    const g = issueGrant({ buyer: "acme", tier: "standard", lots: [], secret: SECRET, ttlDays: 1, now: NOW });
-    expect(verifyGrant(g, SECRET, "2026-06-29T12:00:00.000Z").valid).toBe(true); // within 1 day
-    const v = verifyGrant(g, SECRET, "2026-07-05T00:00:00.000Z"); // past
-    expect(v.valid).toBe(false);
-    expect(v.reason).toBe("expired");
+    const g = issueGrant({ buyer: "acme", tier: "standard", lots: [], signer, ttlDays: 1, now: NOW });
+    expect(verifyGrant(g, verifier, "2026-06-29T12:00:00.000Z").valid).toBe(true);
+    expect(verifyGrant(g, verifier, "2026-07-05T00:00:00.000Z").reason).toBe("expired");
+  });
+});
+
+describe("grant — legacy hmac (backward compat) + common", () => {
+  const signer: GrantSigner = { alg: "hmac-sha256", secret: SECRET };
+  const verifier: GrantVerifier = { alg: "hmac-sha256", secret: SECRET };
+
+  it("a v0.9.5-style hmac grant still verifies", () => {
+    const g = issueGrant({ buyer: "acme", tier: "standard", lots: [], signer, ttlDays: 30, now: NOW });
+    expect(g.alg).toBe("hmac-sha256");
+    expect(verifyGrant(g, verifier, NOW).valid).toBe(true);
   });
 
-  it("ttlDays null = never expires", () => {
-    const g = issueGrant({ buyer: "acme", tier: "standard", lots: [], secret: SECRET, ttlDays: null, now: NOW });
-    expect(g.expiresAt).toBeNull();
-    expect(verifyGrant(g, SECRET, "2099-01-01T00:00:00.000Z").valid).toBe(true);
+  it("verifies a genuine pre-R2 grant (no alg field, hmac over the bare payload)", () => {
+    // Faithfully reconstruct what v0.9.5 wrote to disk: the payload + a hex hmac
+    // over canonicalJson(payload), with NO alg/signer fields.
+    const payload = {
+      grantVersion: "1.0" as const,
+      buyer: "acme",
+      tier: "standard" as const,
+      lots: [] as string[],
+      issuedAt: NOW,
+      expiresAt: null,
+      nonce: "deadbeefdeadbeef",
+    };
+    const sig = createHmac("sha256", SECRET).update(canonicalJson(payload)).digest("hex");
+    const legacy = { ...payload, sig };
+    expect(verifyGrant(legacy as any, verifier, NOW).valid).toBe(true);
+  });
+
+  it("rejects a forged tier and a wrong secret", () => {
+    const g = issueGrant({ buyer: "acme", tier: "sample", lots: [], signer, ttlDays: 30, now: NOW });
+    expect(verifyGrant({ ...g, tier: "firehose" }, verifier, NOW).reason).toBe("bad-signature");
+    expect(verifyGrant(g, { alg: "hmac-sha256", secret: "wrong" }, NOW).valid).toBe(false);
   });
 
   it("flags malformed grants", () => {
-    expect(verifyGrant({} as any, SECRET, NOW).reason).toBe("malformed");
+    expect(verifyGrant({} as any, verifier, NOW).reason).toBe("malformed");
   });
 });
 
