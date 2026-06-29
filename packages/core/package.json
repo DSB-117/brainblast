@@ -61,6 +61,7 @@
     "ingest:vti": "tsx scripts/ingest-vti.ts",
     "corpus": "tsx scripts/corpus-report.ts",
     "catalog": "tsx scripts/catalog.ts",
+    "intake": "tsx scripts/intake.ts",
     "sla": "tsx scripts/corpus-sla.ts",
     "bench": "tsx scripts/bench.ts",
     "synth": "tsx scripts/synth-prove.ts",

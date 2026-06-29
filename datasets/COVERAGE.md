@@ -1,21 +1,22 @@
 # Corpus coverage — Brainblast Verified Traps
 
-_Generated 2026-06-24T01:08:31.271Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
+_Generated 2026-06-29T18:58:49.430Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
 
 ## Summary
-- **8** VTIs (8 unique, 0 duplicate) across **8** SDKs and **5** trap classes.
+- **9** VTIs (9 unique, 0 duplicate) across **9** SDKs and **6** trap classes.
 - **Quality** (0–100): mean 48, median 48, range 48–48.
-  Buckets — high (≥70): 0, medium (40–69): 8, low (<40): 0.
-- **Lots:** synthetic-owned (8).
+  Buckets — high (≥70): 0, medium (40–69): 9, low (<40): 0.
+- **Lots:** synthetic-owned (9).
 
 ## Coverage heatmap (class × SDK, unique records)
-| class \ sdk | @metaplex-foundation/js | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token |
-|---|---|---|---|---|---|---|---|---|
-| missing-slippage-guard | · | 1 | 1 | · | · | 1 | · | · |
-| missing-verification | · | · | · | · | · | · | · | 1 |
-| silent-zero-revenue | 1 | · | · | · | · | · | · | · |
-| unchecked-staleness | · | · | · | · | · | · | 1 | · |
-| unconfirmed-state | · | · | · | 1 | 1 | · | · | · |
+| class \ sdk | @metaplex-foundation/js | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Stripe Node SDK |
+|---|---|---|---|---|---|---|---|---|---|
+| missing-slippage-guard | · | 1 | 1 | · | · | 1 | · | · | · |
+| missing-verification | · | · | · | · | · | · | · | 1 | · |
+| other | · | · | · | · | · | · | · | · | 1 |
+| silent-zero-revenue | 1 | · | · | · | · | · | · | · | · |
+| unchecked-staleness | · | · | · | · | · | · | 1 | · | · |
+| unconfirmed-state | · | · | · | 1 | 1 | · | · | · | · |
 
 (`·` = no coverage yet.)
 
@@ -29,6 +30,7 @@ _Generated 2026-06-24T01:08:31.271Z by corpus-report@0.1.0. Source of truth: `da
 - silent-zero-revenue · @metaplex-foundation/js
 - unchecked-staleness · Pyth Network price feeds
 - missing-verification · SPL Token
+- other · Stripe Node SDK
 
 **Uncovered trap classes** (no instance yet):
 - immutable-after-deploy

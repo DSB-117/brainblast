@@ -1,7 +1,7 @@
 ---
 name: brainblast-scout
 version: 0.1.0
-description: Sends an agent on a scouting mission to find real-world coding traps (footguns in popular SDKs/protocols), synthesize the finding into a proven brainblast rule pack, submit it to the pack registry, and stake $BRAIN on it.
+description: Sends an agent on a scouting mission to find real-world coding traps (footguns in popular SDKs/protocols), synthesize the finding into a proven brainblast rule pack, and submit it to the pack registry. Staking $BRAIN on the pack is an optional, opt-in bond (Phase 5) — never required to produce or sell the data.
 allowed-tools:
   - Bash
   - Read
@@ -20,12 +20,23 @@ triggers:
 
 End-to-end pipeline for an agent to go find a new "silent footgun" in some
 external SDK/protocol, turn it into a proven brainblast knowledge pack, and
-submit + stake it — the same workflow used to produce
+submit it — the same workflow used to produce
 `packs/jupiter-quote-zero-slippage` and `packs/spl-transfer-not-checked-in-payout`.
 
-Five phases. Each phase fails closed: if a phase doesn't produce a clean
-result, stop and surface a draft for human review rather than forcing it
-through.
+**Default scope is Phases 1–4 — they are entirely no-spend** (research → prove →
+package → submit). They are all you need to *produce and sell* the data: a pack
+that lands in `packs/` flows straight into the corpus and the storefront via
+`npm run intake` (`gen:vti → pack:dataset → corpus → catalog`), no `$BRAIN`
+required. **Phase 5 (stake) is OPTIONAL and opt-in** — a quality bond layered on
+top, run only when the operator has set up the capped ops-wallet + caps. This is
+North Star #2 of `ROADMAP-TRAINING-DATA.md`: data intake never blocks on spend.
+
+Each phase fails closed: if a phase doesn't produce a clean result, stop and
+surface a draft for human review rather than forcing it through.
+
+> **Stop after Phase 4 by default.** Only proceed to Phase 5 if the user has
+> explicitly asked to stake AND the ops-wallet env (`AGENT_OPS_WALLET_SECRET` +
+> caps) is configured. Producing the data does not require it.
 
 ## Phase 1 — Scout
 
@@ -102,7 +113,26 @@ Must pass before continuing.
 3. The registry's daily cron (`/api/cron/sync`) will pick it up automatically
    once the PR merges — no manual sync call needed.
 
-## Phase 5 — Stake $BRAIN
+4. **Run intake so the pack becomes sellable data (no-spend).** Once the pack is
+   in `packs/`, from `packages/core/`:
+
+   ```bash
+   npm run intake -- --pack ../../packs/<pack-id>
+   ```
+
+   This validates the pack RED→GREEN, then runs the conveyor
+   (`gen:vti → pack:dataset → corpus → catalog`) so the new trap lands in the
+   seed lot, the packaged/sellable lots, the corpus index, and the storefront
+   (`datasets/CATALOG.md`) in one step. Confirm `npm run sla` still passes.
+   **This is the end of the no-spend default path — the data is now produced and
+   sellable.**
+
+## Phase 5 — Stake $BRAIN (OPTIONAL — opt-in bond, spends funds)
+
+**Skip this unless the user explicitly asked to stake and the ops-wallet is
+configured.** Staking is a *quality bond*, not a requirement: the data is already
+produced and sellable after Phase 4's intake. The reproduction gate intake just
+ran is the same RED→GREEN check a stake would be slashed against.
 
 **Security model**: staking is paid from a small, dedicated "ops wallet" —
 *not* the user's main wallet. The user funds this wallet periodically (e.g.

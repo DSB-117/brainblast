@@ -1,20 +1,21 @@
 {
-  "schemaVersion": "1.0",
-  "generator": "gen-vti@0.1.0",
-  "generatedAt": "2026-06-23T18:59:28.069Z",
+  "schemaVersion": "1.1",
+  "generator": "gen-vti@0.2.0",
+  "generatedAt": "2026-06-29T18:58:48.156Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 8,
-    "sdks": 8,
-    "packsScanned": 8
+    "records": 9,
+    "sdks": 9,
+    "packsScanned": 10
   },
   "classDistribution": {
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
     "silent-zero-revenue": 1,
     "unchecked-staleness": 1,
-    "missing-verification": 1
+    "missing-verification": 1,
+    "other": 1
   },
   "proof": [
     {
@@ -60,6 +61,14 @@
       "emitted": true
     },
     {
+      "pack": "solana-lamports-scaling-wrong-constant",
+      "rule": "solana-lamports-scaling-wrong-constant",
+      "red": true,
+      "green": false,
+      "emitted": false,
+      "note": "unverifiable: Tier-2 differential rule — executes the candidate, so it is not run by the default offline gate. Prove it with: brainblast verify <pack> --oracle=differential"
+    },
+    {
       "pack": "solana-sendtx-unconfirmed",
       "rule": "solana-sendtx-unconfirmed",
       "red": true,
@@ -69,6 +78,13 @@
     {
       "pack": "spl-transfer-not-checked-in-payout",
       "rule": "spl-transfer-not-checked-in-payout",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "stripe-paymentintents-moved",
+      "rule": "stripe-paymentintents-moved",
       "red": true,
       "green": true,
       "emitted": true
