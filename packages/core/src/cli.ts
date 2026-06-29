@@ -1780,15 +1780,18 @@ async function runGrant(argv: string[]): Promise<void> {
   };
 
   if (!sub || argv.includes("--help") || argv.includes("-h")) {
-    console.error("usage: brainblast grant <keygen|issue|verify> [opts]");
+    console.error("usage: brainblast grant <keygen|issue|verify|quote> [opts]");
     console.error("  keygen [--out FILE]");
     console.error("         generate a distributor identity (ed25519). Publish the address; keep secretKey.");
-    console.error("  issue  --buyer ID --tier T [--lot NAME]... [--ttl-days N] [--out FILE]");
-    console.error("         sign an access grant. ed25519 (recommended): BRAINBLAST_MARKET_KEY=<secretKey>");
-    console.error("         (or --key / --key-file). Legacy hmac: BRAINBLAST_MARKET_SECRET (or --secret).");
+    console.error("  issue  --buyer ID (--tier T | --for-brain N | --wallet) [--lot NAME]... [--ttl-days N] [--out FILE]");
+    console.error("         sign an access grant. Tier is explicit (--tier) or SIZED from $BRAIN held");
+    console.error("         (--for-brain N, or --wallet to read the active wallet). ed25519 (recommended):");
+    console.error("         BRAINBLAST_MARKET_KEY=<secretKey> (or --key / --key-file). Legacy hmac: --secret.");
     console.error("  verify --grant FILE [--pubkey ADDR]");
     console.error("         ed25519 grants verify with ONLY the distributor address (BRAINBLAST_MARKET_PUBKEY");
     console.error("         or --pubkey) — no secret needed. Legacy hmac grants need the shared secret.");
+    console.error("  quote  (--brain N | --wallet)");
+    console.error("         self-serve eligibility: the tier/price your $BRAIN qualifies for. No key needed.");
     process.exit(2);
   }
 
@@ -1810,9 +1813,21 @@ async function runGrant(argv: string[]): Promise<void> {
 
   if (sub === "issue") {
     const buyer = val("--buyer");
-    const tier = val("--tier") as FeedTier | undefined;
+    // Tier: explicit --tier wins; else SIZED from $BRAIN held (self-serve, R4) via
+    // --for-brain <n> (pure) or --wallet (reads the active wallet's balance).
+    let tier = val("--tier") as FeedTier | undefined;
+    if (!tier && val("--for-brain") != null) {
+      tier = mp.accessQuote(Number(val("--for-brain"))).tier;
+      console.error(`grant: ${val("--for-brain")} $BRAIN → tier ${tier}`);
+    }
+    if (!tier && rest.includes("--wallet")) {
+      const held = await readActiveWalletBrain();
+      if (held == null) process.exit(1);
+      tier = mp.accessQuote(held).tier;
+      console.error(`grant: wallet holds ${held} $BRAIN → tier ${tier}`);
+    }
     if (!buyer || !tier || !["sample", "standard", "firehose"].includes(tier)) {
-      console.error("grant issue: --buyer ID and --tier sample|standard|firehose are required");
+      console.error("grant issue: --buyer ID and a tier are required — pass --tier T, or size it from $BRAIN with --for-brain N / --wallet");
       process.exit(2);
     }
     const keyFile = val("--key-file");
@@ -1867,8 +1882,43 @@ async function runGrant(argv: string[]): Promise<void> {
     process.exit(v.valid ? 0 : 1);
   }
 
+  if (sub === "quote") {
+    // Self-serve eligibility (R4): "given the $BRAIN you hold, what tier/price?"
+    // Pure + no signing key needed — just maps a balance through accessQuote.
+    let held: number | undefined;
+    if (val("--brain") != null) held = Number(val("--brain"));
+    else if (rest.includes("--wallet")) {
+      held = await readActiveWalletBrain();
+      if (held == null) process.exit(1);
+    } else {
+      console.error("grant quote: pass --brain N (a $BRAIN balance) or --wallet (read the active wallet)");
+      process.exit(2);
+    }
+    console.log(JSON.stringify(mp.accessQuote(held!), null, 2));
+    process.exit(0);
+  }
+
   console.error(`grant: unknown subcommand "${sub}"`);
   process.exit(2);
+}
+
+// Read the active agent wallet's $BRAIN balance (the --wallet path for grant
+// sizing/quoting). Network read; no spend. Mirrors feed --wallet-tier.
+async function readActiveWalletBrain(): Promise<number | undefined> {
+  const w = await import("./wallet/agentWallet.ts");
+  const active = w.getActiveWallet();
+  if (!active) {
+    console.error("grant: --wallet needs an active wallet (run `brainblast wallet init`)");
+    return undefined;
+  }
+  const { getBalances } = await import("./wallet/chain.ts");
+  try {
+    const bal = await getBalances(active.pubkey);
+    return bal.brain.uiAmount;
+  } catch (e: any) {
+    console.error(`grant: could not read wallet balance: ${e?.message ?? e}`);
+    return undefined;
+  }
 }
 
 // Build the verifier for a grant from its own `alg`, drawing the trust root from

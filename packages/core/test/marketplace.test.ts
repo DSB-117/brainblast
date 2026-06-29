@@ -9,6 +9,7 @@ import {
   verifyLedger,
   summarizeUsage,
   canonicalJson,
+  accessQuote,
   TIER_PRICING,
   LEDGER_GENESIS,
   type UsageEntry,
@@ -76,6 +77,48 @@ describe("catalog — the storefront", () => {
     expect(cat.tiers.map((t) => t.tier)).toEqual(["sample", "standard", "firehose"]);
     expect(cat.tiers[0].priceUsd).toBeNull(); // sample is free
     expect(TIER_PRICING.standard.brainDiscountPct).toBe(10);
+  });
+});
+
+describe("accessQuote — self-serve eligibility from $BRAIN held (R4)", () => {
+  it("0 $BRAIN → sample (free, open), upgrade to standard short the full threshold", () => {
+    const q = accessQuote(0);
+    expect(q.tier).toBe("sample");
+    expect(q.access).toBe("open");
+    expect(q.priceUsd).toBeNull();
+    expect(q.upgrade).toEqual({ tier: "standard", minBrain: 1000, brainShort: 1000 });
+  });
+
+  it("partial holding reports how much more buys the next tier", () => {
+    const q = accessQuote(600);
+    expect(q.tier).toBe("sample");
+    expect(q.upgrade?.brainShort).toBe(400); // 1000 - 600
+  });
+
+  it("crossing a threshold lands the tier", () => {
+    expect(accessQuote(1000).tier).toBe("standard");
+    expect(accessQuote(9999).tier).toBe("standard");
+    expect(accessQuote(10_000).tier).toBe("firehose");
+  });
+
+  it("standard quotes its price + the firehose upgrade", () => {
+    const q = accessQuote(1500);
+    expect(q.tier).toBe("standard");
+    expect(q.priceUsd).toBe(TIER_PRICING.standard.priceUsd);
+    expect(q.priceBrain).toBe(TIER_PRICING.standard.priceBrainUsdEquivalent);
+    expect(q.upgrade).toEqual({ tier: "firehose", minBrain: 10_000, brainShort: 8500 });
+  });
+
+  it("firehose is the top — no upgrade", () => {
+    const q = accessQuote(50_000);
+    expect(q.tier).toBe("firehose");
+    expect(q.upgrade).toBeNull();
+  });
+
+  it("clamps junk input (negative / NaN) to 0 → sample", () => {
+    expect(accessQuote(-100).tier).toBe("sample");
+    expect(accessQuote(Number.NaN).tier).toBe("sample");
+    expect(accessQuote(-100).brainHeld).toBe(0);
   });
 });
 
