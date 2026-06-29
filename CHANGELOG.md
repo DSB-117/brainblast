@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+**The hosted distribution endpoint — `brainblast serve` (R3 of the training-data
+roadmap).** Where "real entitlement is enforced at distribution" stops being a
+comment and becomes literally true: the **server holds the full lots**, and a
+client with a grant receives only what its tier entitles. A zero-dep `node:http`
+server, consistent with the codebase's single-CLI ethos.
+- **Routes.** `GET /healthz`; `GET /catalog` — the storefront, **public +
+  anonymous** (North Star #1, no grant to browse); `GET /feed` — **anonymous →
+  the open sample tier**, or with a `x-brainblast-grant` header → the **entitled
+  tier** (verified with only the distributor's published **ed25519** address from
+  R2, no shared secret). Filterable by `?sdk=&class=&severity=&min_corroboration=
+  &since=&limit=`; lot-scope from the grant is enforced server-side.
+- **Authoritative metering.** A successful gated pull is appended to the server's
+  hash-chained usage ledger; a rejected pull is never metered; a broken ledger
+  fail-closes the request (500).
+- **The local CLI becomes a client.** `brainblast feed --remote <url>` sends the
+  grant as a header and streams the entitled NDJSON back — the honest
+  client/server split, now real. The server is the authoritative source of the
+  payload; the client only ever sees its tier.
+- **Pure, testable core.** Request→response logic lives in `src/server.ts`
+  (ledger IO injected as a callback); the `node:http` binding + lot/ledger loading
+  are in the CLI. 11 handler tests (public catalog, anonymous sample, gated
+  unlock + metering, forged-tier 403, untrusted-distributor 403, no-meter-on-
+  reject, lot-scope, query filters, routing). Suite **673 pass / 1 skip**.
+
+> Honesty held: this is the reference server. Deploying it as
+> `registry.brainblast.tech` (and on-chain settlement that auto-mints grants) are
+> the remaining infra/spend steps (R4+); the server quotes price and accounts
+> usage — it does not move money.
+
 **Publicly-verifiable grants — ed25519 (R2 of the training-data roadmap).** The
 marketplace's access grants are now signed with **ed25519** by default: the
 distributor holds a private key and **publishes its public key** (a Solana-style

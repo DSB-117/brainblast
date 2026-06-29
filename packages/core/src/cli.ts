@@ -282,6 +282,11 @@ if (args[0] === "usage") {
   process.exit(0);
 }
 
+if (args[0] === "serve") {
+  await runServe(args.slice(1)); // resolves only on shutdown; keeps the process alive while serving
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -1449,6 +1454,49 @@ async function runRescue(argv: string[]): Promise<void> {
   process.exit(report.recoverableMissing > 0 || report.unbackedAtRisk > 0 ? 1 : 0);
 }
 
+// Client mode for `feed --remote <url>`: GET <url>/feed with our query + grant
+// header, stream the NDJSON response straight to stdout. The server enforces
+// entitlement; we just present the grant and print what we're given.
+async function feedFromRemote(remote: string, argv: string[], val: (f: string) => string | undefined): Promise<void> {
+  const base = remote.replace(/\/+$/, "");
+  const params = new URLSearchParams();
+  const map: Record<string, string> = {
+    "--sdk": "sdk",
+    "--class": "class",
+    "--severity": "severity",
+    "--min-corroboration": "min_corroboration",
+    "--since": "since",
+    "--limit": "limit",
+  };
+  for (const [flag, q] of Object.entries(map)) {
+    const v = val(flag);
+    if (v != null) params.set(q, v);
+  }
+  const headers: Record<string, string> = {};
+  const grantPath = val("--grant");
+  if (grantPath) {
+    if (!existsSync(grantPath)) {
+      console.error(`feed: grant not found: ${grantPath}`);
+      process.exit(1);
+    }
+    headers["x-brainblast-grant"] = Buffer.from(readFileSync(grantPath, "utf8")).toString("base64");
+  }
+  const url = `${base}/feed${params.toString() ? `?${params}` : ""}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { headers });
+  } catch (e: any) {
+    console.error(`feed: could not reach ${url}: ${e?.message ?? e}`);
+    process.exit(1);
+  }
+  const body = await res.text();
+  if (res.status !== 200) {
+    console.error(`feed: server returned ${res.status}: ${body.trim()}`);
+    process.exit(1);
+  }
+  process.stdout.write(body.endsWith("\n") ? body : body + "\n");
+}
+
 async function runFeed(argv: string[]): Promise<void> {
   const { selectFeed, tierForBrain, TIER_ENTITLEMENTS } = await import("./feed.ts");
   const { resolveLotPaths, readLots } = await import("./feedLots.ts");
@@ -1473,6 +1521,8 @@ async function runFeed(argv: string[]): Promise<void> {
     console.error("                         meters the pull to the ledger. ed25519 grants verify with");
     console.error("                         --pubkey/BRAINBLAST_MARKET_PUBKEY; legacy hmac needs the secret");
     console.error("  --pubkey ADDR           trusted distributor address for verifying an ed25519 --grant");
+    console.error("  --remote URL            pull from a hosted endpoint (brainblast serve) instead of local");
+    console.error("                         lots; sends --grant as a header, streams the entitled NDJSON");
     console.error("  --ledger FILE           usage-ledger path for --grant pulls (default datasets/usage-ledger.jsonl)");
     console.error("  --summary               print only the feed_meta line (no records)");
     console.error("");
@@ -1491,6 +1541,15 @@ async function runFeed(argv: string[]): Promise<void> {
     for (let i = 0; i < argv.length; i++) if (argv[i] === flag && argv[i + 1]) out.push(argv[i + 1]);
     return out;
   };
+
+  // --remote <url>: become a CLIENT of a hosted endpoint (R3). The lots live on
+  // the server; we send our grant and stream back only what it entitles. This is
+  // the "local CLI becomes a client" half of the honest client/server split.
+  const remote = val("--remote");
+  if (remote) {
+    await feedFromRemote(remote, argv, val);
+    process.exit(0);
+  }
 
   // Resolve lots: explicit --lot wins; else the repo's default lots if present.
   let lotPaths = resolveLotPaths(allVals("--lot"));
@@ -1892,6 +1951,122 @@ async function runUsage(argv: string[]): Promise<void> {
     );
   }
   process.exit(0);
+}
+
+// `serve` — the hosted distribution endpoint (R3). A zero-dep node:http server
+// that holds the full lots and enforces entitlement at distribution: public
+// catalog + anonymous sample feed, ed25519/hmac-grant-gated paid feed, with an
+// authoritative server-side hash-chained usage ledger. Returns a never-resolving
+// promise while listening (resolves on SIGINT/SIGTERM for a clean shutdown).
+async function runServe(argv: string[]): Promise<void> {
+  const http = await import("node:http");
+  const { handleRequest } = await import("./server.ts");
+  const { resolveLotPaths, readLots } = await import("./feedLots.ts");
+  const { appendUsage, verifyLedger } = await import("./marketplace.ts");
+
+  const val = (flag: string): string | undefined => {
+    const i = argv.indexOf(flag);
+    return i >= 0 ? argv[i + 1] : undefined;
+  };
+  const allVals = (flag: string): string[] => {
+    const out: string[] = [];
+    for (let i = 0; i < argv.length; i++) if (argv[i] === flag && argv[i + 1]) out.push(argv[i + 1]);
+    return out;
+  };
+
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.error("usage: brainblast serve [--port N] [--lot FILE]... [--pubkey ADDR] [--ledger FILE]");
+    console.error("  Host the distribution endpoint: the server holds the full lots and enforces");
+    console.error("  entitlement at distribution. Routes:");
+    console.error("    GET /healthz   liveness");
+    console.error("    GET /catalog   the storefront — PUBLIC + anonymous (no grant)");
+    console.error("    GET /feed      anonymous → sample tier; with a grant header → the entitled tier");
+    console.error("                   query: ?sdk=&class=&severity=&min_corroboration=&since=&limit=");
+    console.error("                   grant header: 'x-brainblast-grant: <base64 grant JSON>'");
+    console.error("  --port N        listen port (default 8787)");
+    console.error("  --lot FILE      a VTI lot to serve (repeatable). Default: datasets/seed + contrib.");
+    console.error("  --pubkey ADDR   trusted distributor ed25519 address (or BRAINBLAST_MARKET_PUBKEY)");
+    console.error("                  — verifies ed25519 grants with NO shared secret (R2).");
+    console.error("  --secret S      legacy hmac secret (or BRAINBLAST_MARKET_SECRET)");
+    console.error("  --ledger FILE   authoritative usage ledger (default datasets/usage-ledger.jsonl)");
+    process.exit(2);
+  }
+
+  const port = Number(val("--port") ?? 8787);
+  const lotPaths = resolveLotPaths(allVals("--lot"));
+  if (lotPaths.length === 0) {
+    console.error("serve: no VTI lots found. Pass --lot <file.jsonl>, or run from a repo with datasets/.");
+    process.exit(1);
+  }
+  // Load each lot separately so a grant's lot-scope can be enforced by name.
+  const lots: Array<{ name: string; vtis: any[] }> = [];
+  for (const p of lotPaths) {
+    const { vtis, errors } = readLots([p]);
+    for (const e of errors) console.error(`serve: ${e}`);
+    lots.push({ name: p.split("/").pop() ?? p, vtis });
+  }
+
+  const trustedDistributor = process.env.BRAINBLAST_MARKET_PUBKEY ?? val("--pubkey");
+  const hmacSecret = process.env.BRAINBLAST_MARKET_SECRET ?? val("--secret");
+  const ledgerPath = val("--ledger") ?? "datasets/usage-ledger.jsonl";
+
+  // The authoritative meter: append to the hash-chained ledger, fail-closed on a
+  // broken chain (the same integrity gate the local feed uses).
+  const meter = (rec: any): void => {
+    const prior = existsSync(ledgerPath)
+      ? readFileSync(ledgerPath, "utf8").split("\n").map((l) => l.trim()).filter(Boolean).map((l) => JSON.parse(l))
+      : [];
+    const chk = verifyLedger(prior);
+    if (!chk.valid) throw new Error(`ledger integrity broken (${chk.reason} at seq ${chk.brokenAt})`);
+    const entry = appendUsage(prior, rec);
+    mkdirSync(ledgerPath.split("/").slice(0, -1).join("/") || ".", { recursive: true });
+    writeFileSync(ledgerPath, [...prior, entry].map((e) => JSON.stringify(e)).join("\n") + "\n");
+  };
+
+  const totalVtis = lots.reduce((n, l) => n + l.vtis.length, 0);
+  const server = http.createServer((httpReq, httpRes) => {
+    const url = new URL(httpReq.url ?? "/", `http://localhost:${port}`);
+    const query: Record<string, string> = {};
+    for (const [k, v] of url.searchParams) query[k] = v;
+
+    // Grant header (base64 of the grant JSON) → parsed grant for the handler.
+    let grant: any;
+    const hdr = httpReq.headers["x-brainblast-grant"];
+    if (typeof hdr === "string" && hdr.length) {
+      try {
+        grant = JSON.parse(Buffer.from(hdr, "base64").toString("utf8"));
+      } catch {
+        httpRes.writeHead(400, { "content-type": "application/json" });
+        httpRes.end(JSON.stringify({ error: "malformed x-brainblast-grant header (expect base64 JSON)" }));
+        return;
+      }
+    }
+
+    let resp;
+    try {
+      resp = handleRequest({ method: httpReq.method ?? "GET", path: url.pathname, query, grant }, { lots, trustedDistributor, hmacSecret, meter });
+    } catch (e: any) {
+      resp = { status: 500, contentType: "application/json", body: JSON.stringify({ error: "internal", detail: e?.message ?? String(e) }) };
+    }
+    console.error(`serve: ${httpReq.method} ${url.pathname}${url.search} → ${resp.status}`);
+    httpRes.writeHead(resp.status, { "content-type": resp.contentType });
+    httpRes.end(resp.body);
+  });
+
+  return await new Promise<void>((resolve) => {
+    server.listen(port, () => {
+      console.error(`brainblast serve: listening on http://localhost:${port}`);
+      console.error(`  lots: ${lots.map((l) => `${l.name}(${l.vtis.length})`).join(", ")} · ${totalVtis} VTIs`);
+      console.error(`  trust: ${trustedDistributor ? `ed25519 ${trustedDistributor}` : hmacSecret ? "hmac (legacy)" : "NONE — only anonymous sample + catalog will work"}`);
+      console.error(`  ledger: ${ledgerPath}`);
+    });
+    const shutdown = () => {
+      console.error("\nserve: shutting down");
+      server.close(() => resolve());
+    };
+    process.on("SIGINT", shutdown);
+    process.on("SIGTERM", shutdown);
+  });
 }
 
 async function runWallet(argv: string[]): Promise<void> {
