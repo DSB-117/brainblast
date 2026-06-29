@@ -25,6 +25,11 @@ server, consistent with the codebase's single-CLI ethos.
   are in the CLI. 11 handler tests (public catalog, anonymous sample, gated
   unlock + metering, forged-tier 403, untrusted-distributor 403, no-meter-on-
   reject, lot-scope, query filters, routing). Suite **673 pass / 1 skip**.
+- **Library API.** The corpus/feed/marketplace/server pure functions
+  (`handleRequest`, `buildCatalog`, `selectFeed`, `verifyGrant`, …) are now
+  exported from the package root, so a host (the registry server,
+  `registry.brainblast.tech`) reuses the EXACT same handler the CLI runs — the
+  reference server is literally the deployable, not a re-implementation.
 
 > Honesty held: this is the reference server. Deploying it as
 > `registry.brainblast.tech` (and on-chain settlement that auto-mints grants) are
