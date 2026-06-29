@@ -41,7 +41,7 @@ This is the single source of truth for status. The detailed per-stage sections
 below are the *reference*; **this table and the ordered plan that follows are what
 we execute against.**
 
-### ✅ DONE (runs today — 662 tests green, 1 skipped)
+### ✅ DONE (runs today — 673 tests green, 1 skipped)
 
 | Capability | Surface | Stage |
 |---|---|---|
@@ -56,12 +56,13 @@ we execute against.**
 | **Marketplace surface (local-first):** storefront + signed-grant entitlement + metered usage ledger | `brainblast catalog` / `grant` / `usage`, `feed --grant`, `npm run catalog` | 4.2 |
 | **Automatic intake conveyor** + stake-free scout default (R1) | `npm run intake` (`gen:vti→pack:dataset→corpus→catalog`), scout Phase 5 opt-in | 1.1 / 3.1 |
 | **ed25519 grants** — publicly verifiable (R2) | `grant keygen`, `BRAINBLAST_MARKET_KEY`/`PUBKEY`, `src/base58.ts` (HMAC kept for back-compat) | 4.2→4.3 |
+| **Distribution endpoint — reference server (R3)** | `brainblast serve` (`src/server.ts`) + `feed --remote`; server holds lots, gates by grant, meters server-side | 4.2→4.3 |
 
 ### ☐ REMAINING (nothing below is half-built — these have not started)
 
 | Work | Why it's not done yet | Stage |
 |---|---|---|
-| **Hosted distribution endpoint** (public catalog + feed-over-HTTP gated by grant + server-side authoritative ledger) | needs infra/deploy | 4.2→4.3 |
+| **Deploy the endpoint** as `registry.brainblast.tech` (port `brainblast serve` into the registry web app + host it) | separate repo + hosting | 4.2→4.3 |
 | **On-chain settlement** (pay `$BRAIN`/USDC → auto-mint grant; USDC→buyback) | spends funds | 4.3 |
 | **Stake-and-slash on VTIs + data-dividend payout** | spends funds (repro gate is the slash trigger, already built) | 2.4–2.5 |
 | **Curation market** (stake to up-rank; reward accurate curators) | spends funds; needs on-chain rails | 3.4 |
@@ -111,15 +112,22 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   the public key; forged tier / swapped signer / untrusted distributor all fail;
   legacy + pre-R2 grants still verify; 662 pass / 1 skip.
 
-- ☐ **R3 — Hosted distribution endpoint. `[infra]`.**
-  The "public" in public market, and where "entitlement enforced at distribution"
-  becomes literally true. A small service (`registry.brainblast.tech`) that: (a)
-  serves the **catalog publicly and free** (North Star #1); (b) serves `feed` over
-  HTTP, gated by a presented ed25519 grant (verified server-side); (c) holds the
-  full lots and writes the **authoritative usage ledger server-side**. The local
-  CLI becomes a client: `brainblast feed --remote <url> --grant <file>`. **Exit:**
-  a third party with only a grant + the public URL can pull their entitled delta;
-  the server holds the payload, the client never sees more than its tier.
+- ◐ **R3 — Hosted distribution endpoint. `[infra]` — reference server DONE; deploy pending.**
+  The "public" in public market, where "entitlement enforced at distribution"
+  becomes literally true. **`brainblast serve`** (`src/server.ts` + the CLI
+  binding) is a zero-dep `node:http` server that: (a) serves the **catalog
+  publicly + anonymous** (North Star #1); (b) serves `/feed` — anonymous → sample
+  tier, or with an `x-brainblast-grant` header → the **entitled** tier, verified
+  with only the distributor's published ed25519 address (R2, no secret); (c) holds
+  the full lots and writes the **authoritative hash-chained usage ledger**
+  server-side (rejected pulls aren't metered; a broken ledger fail-closes). The
+  local CLI is now a client: **`brainblast feed --remote <url> --grant <file>`**.
+  11 handler tests; verified end-to-end (remote client streams the entitled delta;
+  forged-tier + untrusted-distributor → 403; server-side metering). **Remaining:**
+  *deploy* it as `registry.brainblast.tech` (a separate repo + hosting) — the
+  reference server is the source to port. **Exit (server) met:** a third party
+  with only a grant + the URL pulls its entitled delta; the server holds the
+  payload, the client never sees more than its tier.
 
 - ☐ **R4 — On-chain settlement + self-serve grants. `[spend]`.**
   Closes North Star #1's "self-serve" requirement. Pay `$BRAIN` (at the standing
@@ -179,7 +187,7 @@ flow is hardened for a public audience.
 
 ## What's shipped so far
 
-Everything below runs today (662 tests green, 1 skipped):
+Everything below runs today (673 tests green, 1 skipped):
 
 - **The data asset exists.** `npm run gen:vti` turns Brainblast's own proven packs
   into schema-valid [Verified Trap Instances](datasets/seed/README.md) — only when
@@ -688,14 +696,16 @@ more supply) documented end-to-end.
 **See [Remaining work — execute in THIS exact order](#-remaining-work--execute-in-this-exact-order)
 (R1–R10) — that is the authoritative plan.** Do not re-derive priorities here.
 
-**R1 (v0.9.5) and R2 are done.** The very next task is **R3 — hosted distribution
-endpoint `[infra]`**: a small service that serves the catalog publicly/free, serves
-`feed` over HTTP gated by a presented **ed25519** grant (now publicly verifiable
-thanks to R2), and writes the authoritative usage ledger server-side. This is the
-step that makes the market actually public + multi-party (the local CLI becomes a
-client). **R7 (scout fleet)** and **R8 (buyer outreach)** run in parallel — R1 made
-scout's data production no-spend, so growing the corpus past today's 9 traps is
-unblocked.
+**R1 (v0.9.5), R2, and R3's reference server are done.** Two tracks open next:
+- **Deploy R3** — port `brainblast serve` into the `registry.brainblast.tech` web
+  app (a separate repo) and host it. `[infra]`, no spend; makes the market
+  actually reachable by third parties.
+- **R4 — on-chain settlement `[spend]`**: pay `$BRAIN`/USDC → the treasury
+  auto-mints a grant signed by the R2 distributor identity; USDC→buyback. This is
+  the first item that **spends funds** — pull it deliberately.
+
+**R7 (scout fleet)** and **R8 (buyer outreach)** still run in parallel — growing
+the corpus past today's 9 traps is unblocked (R1 made production no-spend).
 
 When you finish any R-item: tick its checkbox, move its row in the
 [Done vs. Remaining ledger](#-done-vs-remaining--the-authoritative-ledger) from
