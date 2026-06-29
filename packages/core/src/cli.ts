@@ -267,6 +267,21 @@ if (args[0] === "feed") {
   process.exit(0);
 }
 
+if (args[0] === "catalog") {
+  await runCatalog(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "grant") {
+  await runGrant(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "usage") {
+  await runUsage(args.slice(1));
+  process.exit(0);
+}
+
 if (args[0] === "fix") {
   await runFix(args.slice(1));
   process.exit(0);
@@ -1454,6 +1469,9 @@ async function runFeed(argv: string[]): Promise<void> {
     console.error("  --limit N               cap records (further bounded by the tier)");
     console.error("  --tier T                sample | standard | firehose (explicit)");
     console.error("  --wallet-tier           compute the tier from the active wallet's $BRAIN  [network]");
+    console.error("  --grant FILE            serve the tier/lots from a SIGNED grant (enforced entitlement);");
+    console.error("                         needs BRAINBLAST_MARKET_SECRET; meters the pull to the ledger");
+    console.error("  --ledger FILE           usage-ledger path for --grant pulls (default datasets/usage-ledger.jsonl)");
     console.error("  --summary               print only the feed_meta line (no records)");
     console.error("");
     console.error("  Tiers gate the trainable payload + freshness: sample = metadata + receipt only");
@@ -1473,7 +1491,44 @@ async function runFeed(argv: string[]): Promise<void> {
   };
 
   // Resolve lots: explicit --lot wins; else the repo's default lots if present.
-  const lotPaths = resolveLotPaths(allVals("--lot"));
+  let lotPaths = resolveLotPaths(allVals("--lot"));
+
+  // --grant <file>: enforce a verified entitlement at distribution. When present
+  // the served tier (and lot scope) come from the SIGNED grant, not a self-
+  // asserted --tier — this is the honesty gap the feed comments flagged. Every
+  // grant-backed pull is metered to the usage ledger.
+  const grantPath = val("--grant");
+  let verifiedGrant: import("./marketplace.ts").Grant | undefined;
+  if (grantPath) {
+    const { verifyGrant } = await import("./marketplace.ts");
+    const secret = process.env.BRAINBLAST_MARKET_SECRET ?? val("--secret");
+    if (!secret) {
+      console.error("feed: --grant requires BRAINBLAST_MARKET_SECRET (or --secret) to verify the grant");
+      process.exit(2);
+    }
+    if (!existsSync(grantPath)) {
+      console.error(`feed: grant not found: ${grantPath}`);
+      process.exit(1);
+    }
+    let parsed: import("./marketplace.ts").Grant;
+    try {
+      parsed = JSON.parse(readFileSync(grantPath, "utf8"));
+    } catch {
+      console.error(`feed: malformed grant file: ${grantPath}`);
+      process.exit(2);
+    }
+    const v = verifyGrant(parsed, secret!, val("--now"));
+    if (!v.valid) {
+      console.error(`feed: grant rejected (${v.reason}) — not entitled`);
+      process.exit(1);
+    }
+    verifiedGrant = parsed;
+    // Lot scope: if the grant names lots, restrict the served lots to those.
+    if (Array.isArray(parsed.lots) && parsed.lots.length) {
+      lotPaths = lotPaths.filter((p) => parsed.lots.includes(p.split("/").pop() ?? p));
+    }
+  }
+
   if (lotPaths.length === 0) {
     console.error("feed: no VTI lots found. Pass --lot <file.jsonl> (a lot you received), or run from a repo with datasets/.");
     process.exit(1);
@@ -1493,10 +1548,13 @@ async function runFeed(argv: string[]): Promise<void> {
     process.exit(2);
   }
 
-  // Determine the tier: explicit override → wallet-derived → sample default.
+  // Determine the tier: a verified grant wins (entitlement) → explicit override
+  // → wallet-derived → sample default.
   let tier: FeedTier = "sample";
   const tierArg = val("--tier");
-  if (tierArg) {
+  if (verifiedGrant) {
+    tier = verifiedGrant.tier;
+  } else if (tierArg) {
     if (!["sample", "standard", "firehose"].includes(tierArg)) {
       console.error(`feed: --tier must be sample|standard|firehose`);
       process.exit(2);
@@ -1547,6 +1605,222 @@ async function runFeed(argv: string[]): Promise<void> {
     for (const rec of result.records) console.log(JSON.stringify({ type: "vti", ...rec }));
   }
   console.log(JSON.stringify({ type: "feed_complete", cursor: result.cursor, counts: result.counts }));
+
+  // Meter the pull: a grant-backed delivery is accounted to the usage ledger
+  // (hash-chained, tamper-evident). This is the per-buyer billing basis.
+  if (verifiedGrant) {
+    const { appendUsage, verifyLedger } = await import("./marketplace.ts");
+    const ledgerPath = val("--ledger") ?? "datasets/usage-ledger.jsonl";
+    const prior = existsSync(ledgerPath)
+      ? readFileSync(ledgerPath, "utf8")
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .map((l) => JSON.parse(l))
+      : [];
+    const chk = verifyLedger(prior);
+    if (!chk.valid) {
+      console.error(`feed: usage ledger integrity broken (${chk.reason} at seq ${chk.brokenAt}); refusing to append`);
+      process.exit(1);
+    }
+    const entry = appendUsage(prior, {
+      ts: val("--now") ?? new Date().toISOString(),
+      buyer: verifiedGrant.buyer,
+      tier,
+      lots: lotPaths.map((p) => p.split("/").pop() ?? p),
+      recordsServed: result.records.length,
+      cursor: result.cursor,
+      query: { sdk: query.sdk, class: query.class, minSeverity: query.minSeverity },
+    });
+    mkdirSync(ledgerPath.split("/").slice(0, -1).join("/") || ".", { recursive: true });
+    writeFileSync(ledgerPath, [...prior, entry].map((e) => JSON.stringify(e)).join("\n") + "\n");
+  }
+  process.exit(0);
+}
+
+// `catalog` — the storefront. Reads the lots you hold and emits a buyer-facing
+// catalog (JSON to stdout, plus datasets/CATALOG.md): coverage, freshness, the
+// tier/price ladder, and receipt-only teasers. This is what you hand a buyer.
+async function runCatalog(argv: string[]): Promise<void> {
+  const { buildCatalog, renderCatalogMd } = await import("./marketplace.ts");
+  const { resolveLotPaths, readLots } = await import("./feedLots.ts");
+
+  const val = (flag: string): string | undefined => {
+    const i = argv.indexOf(flag);
+    return i >= 0 ? argv[i + 1] : undefined;
+  };
+  const allVals = (flag: string): string[] => {
+    const out: string[] = [];
+    for (let i = 0; i < argv.length; i++) if (argv[i] === flag && argv[i + 1]) out.push(argv[i + 1]);
+    return out;
+  };
+
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.error("usage: brainblast catalog [--lot FILE]... [--json] [--out FILE]");
+    console.error("  Emit the buyer-facing catalog for the VTI lots you hold: coverage by SDK/class/");
+    console.error("  severity, quality, freshness, the tier/price ladder, and receipt-only teasers.");
+    console.error("  --lot FILE   a .jsonl VTI lot (repeatable). Default: datasets/seed + datasets/contrib.");
+    console.error("  --json       print the catalog JSON to stdout (default also writes CATALOG.md)");
+    console.error("  --out FILE   markdown output path (default datasets/CATALOG.md)");
+    process.exit(2);
+  }
+
+  const lotPaths = resolveLotPaths(allVals("--lot"));
+  if (lotPaths.length === 0) {
+    console.error("catalog: no VTI lots found. Pass --lot <file.jsonl>, or run from a repo with datasets/.");
+    process.exit(1);
+  }
+  const { vtis, errors } = readLots(lotPaths);
+  for (const e of errors) console.error(`catalog: ${e}`);
+
+  const catalog = buildCatalog(vtis, { now: val("--now") });
+  console.log(JSON.stringify(catalog, null, 2));
+
+  if (!argv.includes("--json")) {
+    const outPath = val("--out") ?? "datasets/CATALOG.md";
+    const md = renderCatalogMd(catalog, lotPaths);
+    mkdirSync(outPath.split("/").slice(0, -1).join("/") || ".", { recursive: true });
+    writeFileSync(outPath, md);
+    console.error(`catalog: wrote ${outPath}`);
+  }
+  process.exit(0);
+}
+
+// `grant` — issue / verify / list access grants. The local distribution gate:
+// the issuer signs a grant (HMAC over the canonical payload) and the feed
+// verifies it before serving the paid payload, so a buyer can't self-assert a
+// tier. NOTE: HMAC means issuer == verifier (a self-hosted distributor) — see
+// the honesty note in marketplace.ts.
+async function runGrant(argv: string[]): Promise<void> {
+  const { issueGrant, verifyGrant } = await import("./marketplace.ts");
+  const sub = argv[0];
+  const rest = argv.slice(1);
+  const val = (flag: string): string | undefined => {
+    const i = rest.indexOf(flag);
+    return i >= 0 ? rest[i + 1] : undefined;
+  };
+  const allVals = (flag: string): string[] => {
+    const out: string[] = [];
+    for (let i = 0; i < rest.length; i++) if (rest[i] === flag && rest[i + 1]) out.push(rest[i + 1]);
+    return out;
+  };
+  const secret = process.env.BRAINBLAST_MARKET_SECRET ?? val("--secret");
+
+  if (!sub || argv.includes("--help") || argv.includes("-h")) {
+    console.error("usage: brainblast grant <issue|verify> [opts]");
+    console.error("  issue  --buyer ID --tier T [--lot NAME]... [--ttl-days N] [--out FILE]");
+    console.error("         sign an access grant. Needs BRAINBLAST_MARKET_SECRET (or --secret).");
+    console.error("  verify --grant FILE");
+    console.error("         check a grant's signature + expiry. Needs the same secret.");
+    process.exit(2);
+  }
+
+  if (!secret) {
+    console.error("grant: needs BRAINBLAST_MARKET_SECRET (or --secret) — the distributor's signing key");
+    process.exit(2);
+  }
+
+  if (sub === "issue") {
+    const buyer = val("--buyer");
+    const tier = val("--tier") as FeedTier | undefined;
+    if (!buyer || !tier || !["sample", "standard", "firehose"].includes(tier)) {
+      console.error("grant issue: --buyer ID and --tier sample|standard|firehose are required");
+      process.exit(2);
+    }
+    const ttlRaw = val("--ttl-days");
+    const grant = issueGrant({
+      buyer,
+      tier,
+      lots: allVals("--lot"),
+      secret: secret!,
+      ttlDays: ttlRaw != null ? Number(ttlRaw) : null,
+      now: val("--now"),
+    });
+    const out = JSON.stringify(grant, null, 2);
+    const outPath = val("--out");
+    if (outPath) {
+      writeFileSync(outPath, out + "\n");
+      console.error(`grant: issued ${tier} grant for ${buyer} → ${outPath}`);
+    } else {
+      console.log(out);
+    }
+    process.exit(0);
+  }
+
+  if (sub === "verify") {
+    const gp = val("--grant");
+    if (!gp || !existsSync(gp)) {
+      console.error("grant verify: --grant FILE is required and must exist");
+      process.exit(2);
+    }
+    let parsed: import("./marketplace.ts").Grant;
+    try {
+      parsed = JSON.parse(readFileSync(gp, "utf8"));
+    } catch {
+      console.error("grant verify: malformed grant file");
+      process.exit(2);
+    }
+    const v = verifyGrant(parsed, secret!, val("--now"));
+    console.log(JSON.stringify(v, null, 2));
+    process.exit(v.valid ? 0 : 1);
+  }
+
+  console.error(`grant: unknown subcommand "${sub}"`);
+  process.exit(2);
+}
+
+// `usage` — read the metering ledger: verify its hash-chain integrity and print a
+// per-buyer summary (or the raw entries). The accounting basis for billing.
+async function runUsage(argv: string[]): Promise<void> {
+  const { verifyLedger, summarizeUsage } = await import("./marketplace.ts");
+  const val = (flag: string): string | undefined => {
+    const i = argv.indexOf(flag);
+    return i >= 0 ? argv[i + 1] : undefined;
+  };
+
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.error("usage: brainblast usage [--ledger FILE] [--json] [--verify]");
+    console.error("  Summarize per-buyer usage from the metering ledger and verify its hash-chain.");
+    console.error("  --ledger FILE   ledger path (default datasets/usage-ledger.jsonl)");
+    console.error("  --json          print the per-buyer summary as JSON");
+    console.error("  --verify        only check chain integrity; exit non-zero if broken");
+    process.exit(2);
+  }
+
+  const ledgerPath = val("--ledger") ?? "datasets/usage-ledger.jsonl";
+  if (!existsSync(ledgerPath)) {
+    console.error(`usage: no ledger at ${ledgerPath} (no grant-backed pulls recorded yet)`);
+    process.exit(argv.includes("--verify") ? 0 : 1);
+  }
+  const entries = readFileSync(ledgerPath, "utf8")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => JSON.parse(l));
+
+  const chk = verifyLedger(entries);
+  if (!chk.valid) {
+    console.error(`usage: LEDGER INTEGRITY BROKEN — ${chk.reason} at seq ${chk.brokenAt}`);
+    process.exit(1);
+  }
+  if (argv.includes("--verify")) {
+    console.error(`usage: ledger intact (${entries.length} entries, chain verified)`);
+    process.exit(0);
+  }
+
+  const summary = summarizeUsage(entries);
+  if (argv.includes("--json")) {
+    console.log(JSON.stringify({ entries: entries.length, integrity: "ok", buyers: summary }, null, 2));
+    process.exit(0);
+  }
+  console.log(`Usage ledger: ${entries.length} entries, hash-chain verified.\n`);
+  console.log("Buyer                          Pulls  Records  Tiers              Last seen");
+  console.log("-".repeat(80));
+  for (const u of summary) {
+    console.log(
+      `${u.buyer.padEnd(30).slice(0, 30)} ${String(u.pulls).padStart(5)}  ${String(u.recordsServed).padStart(7)}  ${u.tiers.join(",").padEnd(18).slice(0, 18)} ${u.lastSeen}`,
+    );
+  }
   process.exit(0);
 }
 

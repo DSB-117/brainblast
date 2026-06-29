@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+**The marketplace surface (Stage 4 Step 2 of the training-data roadmap).** The
+feed computes tier *eligibility* client-side; its own comments said five times
+that "real entitlement is enforced server-side at distribution." This release is
+that distribution layer — built local-first to match the codebase's honest
+client/server split — turning the verified-trap corpus from a dataset into a
+**marketplace**: a storefront, an enforced entitlement, and per-buyer accounting.
+Additive; the audit path is unchanged. (`src/marketplace.ts`, pure + fully
+unit-tested like `feed.ts`/`corpus.ts`.)
+- **`brainblast catalog` — the storefront.** Reads the VTI lots you hold and
+  emits a buyer-facing catalog (JSON + a committed `datasets/CATALOG.md`):
+  coverage by SDK/class/severity, quality, freshness, the three-tier price ladder
+  (`sample → standard → firehose`, USD with a 10% `$BRAIN` discount, kept
+  consistent with `datasets/v0.1.0/index.json`), and **receipt-only teasers** —
+  metadata + the RED→GREEN proof, never the trainable fixtures. Regenerate with
+  `npm run catalog`.
+- **`brainblast grant issue|verify` — the enforced entitlement.** The distributor
+  signs an access grant (buyer, tier, lot scope, expiry) and the feed verifies it
+  before unlocking the paid payload, so **a buyer can no longer self-assert
+  `--tier firehose`** — a forged tier fails the signature check. Signing key is
+  `BRAINBLAST_MARKET_SECRET`. (HMAC = issuer==verifier, correct for a self-hosted
+  distributor; the verify path is structured so production can swap in ed25519.)
+- **`brainblast feed --grant <file>` — entitlement at distribution + metering.**
+  The served tier and lot scope now come from the *verified grant*, and every
+  grant-backed pull is appended to an **append-only, hash-chained usage ledger**
+  (the SHA256SUMS tamper-evidence discipline, applied to accounting). A broken
+  chain refuses further appends.
+- **`brainblast usage` — per-buyer accounting.** Verifies the ledger's hash-chain
+  and prints a per-buyer summary (pulls, records served, tiers, last seen) — the
+  basis for usage billing. `--verify` gates CI on ledger integrity.
+- **Honesty held.** Settlement still spends funds and stays a deliberate,
+  out-of-band step — this surface only *quotes* the price and *accounts* the
+  usage; it never moves money. 14 new tests (catalog, grant forge/expiry/tamper,
+  ledger chain integrity, usage summary); suite at **652 pass / 1 skip**,
+  typecheck clean.
+
 ## v0.9.4 — 2026-06-28
 
 **The VTI feed (Stage 4 of the training-data roadmap).** `brainblast feed` turns

@@ -1,0 +1,189 @@
+{
+  "schemaVersion": "1.0",
+  "dataset": "brainblast-verified-traps",
+  "generatedAt": "2026-06-29T18:11:03.692Z",
+  "counts": {
+    "total": 8,
+    "proven": 8,
+    "sdks": 8,
+    "classes": 5
+  },
+  "severityDistribution": {
+    "high": 8
+  },
+  "classDistribution": {
+    "unconfirmed-state": 2,
+    "missing-slippage-guard": 3,
+    "silent-zero-revenue": 1,
+    "unchecked-staleness": 1,
+    "missing-verification": 1
+  },
+  "sdkDistribution": {
+    "Jito (block engine / bundles)": 1,
+    "Jupiter Aggregator API": 1,
+    "@metaplex-foundation/js": 1,
+    "@meteora-ag/dlmm": 1,
+    "Pyth Network price feeds": 1,
+    "@raydium-io/raydium-sdk-v2": 1,
+    "@solana/web3.js": 1,
+    "SPL Token": 1
+  },
+  "licenseDistribution": {
+    "synthetic-owned": 8
+  },
+  "quality": {
+    "mean": 48,
+    "min": 48,
+    "max": 48
+  },
+  "freshness": {
+    "oldest": "2026-06-23T18:59:28.069Z",
+    "newest": "2026-06-23T18:59:28.069Z"
+  },
+  "tiers": [
+    {
+      "tier": "sample",
+      "access": "open",
+      "priceUsd": null,
+      "brainDiscountPct": 0,
+      "priceBrainUsdEquivalent": null,
+      "minBrainHeld": 0,
+      "note": "Open teaser: metadata + the RED→GREEN receipt (the proof). No trainable fixtures."
+    },
+    {
+      "tier": "standard",
+      "access": "brain-gated",
+      "priceUsd": 2500,
+      "brainDiscountPct": 10,
+      "priceBrainUsdEquivalent": 2250,
+      "minBrainHeld": 1000,
+      "note": "Full fixtures + a 24h-delayed delta. Pay in $BRAIN at a 10% discount; USDC accepted → buyback."
+    },
+    {
+      "tier": "firehose",
+      "access": "brain-gated",
+      "priceUsd": 10000,
+      "brainDiscountPct": 10,
+      "priceBrainUsdEquivalent": 9000,
+      "minBrainHeld": 10000,
+      "note": "Unlimited records + the freshest delta (zero holdback). The freshness edge is the moat."
+    }
+  ],
+  "teasers": [
+    {
+      "trapId": "jito-bundle-zero-tip",
+      "title": "Jito bundle sent with a tip of 0 — bundle is deprioritized and will not land",
+      "sdk": {
+        "name": "Jito (block engine / bundles)",
+        "version": "unversioned"
+      },
+      "severity": "high",
+      "class": "unconfirmed-state",
+      "score": 48,
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "capturedAt": "2026-06-23T18:59:28.069Z",
+      "sourceUrls": [
+        "https://docs.jito.wtf/lowlatencytxnsend/"
+      ],
+      "receipt": {
+        "red": true,
+        "green": true,
+        "method": "static-checker",
+        "verifiedAt": "2026-06-23T18:59:28.069Z"
+      }
+    },
+    {
+      "trapId": "jupiter-quote-zero-slippage",
+      "title": "Jupiter quote/swap call hardcodes slippageBps to 0",
+      "sdk": {
+        "name": "Jupiter Aggregator API",
+        "version": "unversioned"
+      },
+      "severity": "high",
+      "class": "missing-slippage-guard",
+      "score": 48,
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "capturedAt": "2026-06-23T18:59:28.069Z",
+      "sourceUrls": [
+        "https://station.jup.ag/docs/apis/swap-api"
+      ],
+      "receipt": {
+        "red": true,
+        "green": true,
+        "method": "static-checker",
+        "verifiedAt": "2026-06-23T18:59:28.069Z"
+      }
+    },
+    {
+      "trapId": "metaplex-nft-royalty-zero",
+      "title": "NFT minted with sellerFeeBasisPoints: 0 — creators receive zero royalties on secondary sales",
+      "sdk": {
+        "name": "@metaplex-foundation/js",
+        "version": ">=0.18.0"
+      },
+      "severity": "high",
+      "class": "silent-zero-revenue",
+      "score": 48,
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "capturedAt": "2026-06-23T18:59:28.069Z",
+      "sourceUrls": [
+        "https://developers.metaplex.com/token-metadata/mint"
+      ],
+      "receipt": {
+        "red": true,
+        "green": true,
+        "method": "static-checker",
+        "verifiedAt": "2026-06-23T18:59:28.069Z"
+      }
+    },
+    {
+      "trapId": "meteora-dlmm-zero-min-out",
+      "title": "Meteora DLMM swap called with minOutAmount of 0 — no slippage floor",
+      "sdk": {
+        "name": "@meteora-ag/dlmm",
+        "version": "unversioned"
+      },
+      "severity": "high",
+      "class": "missing-slippage-guard",
+      "score": 48,
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "capturedAt": "2026-06-23T18:59:28.069Z",
+      "sourceUrls": [
+        "https://docs.meteora.ag/product-overview/meteora-liquidity-pools/dlmm-overview"
+      ],
+      "receipt": {
+        "red": true,
+        "green": true,
+        "method": "static-checker",
+        "verifiedAt": "2026-06-23T18:59:28.069Z"
+      }
+    },
+    {
+      "trapId": "pyth-price-unchecked-staleness",
+      "title": "Pyth price read with getPriceUnchecked() instead of getPriceNoOlderThan()",
+      "sdk": {
+        "name": "Pyth Network price feeds",
+        "version": "unversioned"
+      },
+      "severity": "high",
+      "class": "unchecked-staleness",
+      "score": 48,
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "capturedAt": "2026-06-23T18:59:28.069Z",
+      "sourceUrls": [
+        "https://docs.pyth.network/price-feeds/best-practices#price-availability"
+      ],
+      "receipt": {
+        "red": true,
+        "green": true,
+        "method": "static-checker",
+        "verifiedAt": "2026-06-23T18:59:28.069Z"
+      }
+    }
+  ]
+}

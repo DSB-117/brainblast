@@ -8,5 +8,8 @@
 # Research run outputs (large, project-specific)
 .agent-research/
 
+# Marketplace runtime: per-buyer usage metering (accounting data, not source)
+datasets/usage-ledger.jsonl
+
 # macOS
 .DS_Store
