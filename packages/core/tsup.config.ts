@@ -6,12 +6,12 @@ import { defineConfig } from "tsup";
 // The shebang in src/cli.ts is preserved on dist/cli.js.
 // The YAML rule pack is copied into dist/rules/ by scripts/postbuild.mjs.
 export default defineConfig({
-  entry: { cli: "src/cli.ts", index: "src/index.ts" },
+  entry: { cli: "src/cli.ts", index: "src/index.ts", distribution: "src/distribution.ts" },
   format: "esm",
   target: "node18",
   outDir: "dist",
   clean: true,
-  dts: { entry: { index: "src/index.ts" } },
+  dts: { entry: { index: "src/index.ts", distribution: "src/distribution.ts" } },
   external: ["ts-morph", "yaml", "@modelcontextprotocol/sdk"],
   onSuccess: "node scripts/postbuild.mjs",
 });
