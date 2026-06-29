@@ -18,7 +18,18 @@
 // does the reading/writing. Keeping this pure makes the access + integrity model
 // fully unit-testable, exactly like feed.ts and corpus.ts.
 
-import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import {
+  createHash,
+  createHmac,
+  randomBytes,
+  timingSafeEqual,
+  generateKeyPairSync,
+  createPrivateKey,
+  createPublicKey,
+  sign as cryptoSign,
+  verify as cryptoVerify,
+} from "node:crypto";
+import { base58Encode, base58Decode } from "./base58.ts";
 import { scoreVti, type CorpusVti } from "./corpus.ts";
 import { selectFeed, TIER_ENTITLEMENTS, type FeedTier, type FeedRecord } from "./feed.ts";
 import type { TrapClass } from "./vtiClass.ts";
@@ -236,17 +247,25 @@ export function renderCatalogMd(c: CatalogResult, lots: string[]): string {
 }
 
 // ---------------------------------------------------------------------------
-// Grant — the entitlement record. The local stand-in for server-side
-// distribution control. The issuer holds a secret and signs; the distributor
-// (who also holds the secret, because issuer == distributor in this model)
-// verifies before unlocking the paid payload. A buyer cannot forge a tier.
+// Grant — the entitlement record the feed checks before unlocking the paid
+// payload, so a buyer cannot self-assert a tier.
 //
-// NOTE (honesty): HMAC means issuer and verifier share a secret — correct for a
-// self-hosted distributor verifying grants it issued. Production multi-party
-// distribution would upgrade `sig` to an ed25519 signature over the same
-// canonical payload (the wallet already generates ed25519 keys); the verify path
-// is structured so only `signGrant`/`verifyGrant` change.
+// R2: grants are signed with **ed25519** by default — the distributor holds a
+// private key and PUBLISHES its public key (a Solana-style base58 address), so
+// ANYONE can verify a grant with only the public key. This is the foundation a
+// public, multi-party market (R3 hosted endpoint) stands on: the verifier no
+// longer needs the issuer's secret. The legacy shared-secret **hmac-sha256**
+// scheme is still verified (so v0.9.5 grants don't break), selected by the
+// grant's own `alg` field.
+//
+// What's signed is "the grant minus its `sig`" (canonical-JSON, stable key
+// order) — so `alg` and `signer` are themselves covered and cannot be swapped,
+// and an old HMAC grant (no `alg`/`signer`) reduces to exactly the original
+// signed body. ed25519 keys use node:crypto in the same seed(32)/pubkey(32)
+// shape as the agent wallet (src/wallet/agentWallet.ts).
 // ---------------------------------------------------------------------------
+
+export type GrantAlg = "ed25519" | "hmac-sha256";
 
 export interface GrantPayload {
   grantVersion: "1.0";
@@ -259,18 +278,61 @@ export interface GrantPayload {
 }
 
 export interface Grant extends GrantPayload {
-  sig: string; // hex HMAC-SHA256 over canonicalJson(payload)
+  alg?: GrantAlg; // absent ⇒ legacy hmac-sha256
+  signer?: string; // ed25519: the distributor's base58 address (who signed)
+  sig: string; // ed25519: base58 signature · hmac-sha256: hex
 }
 
-function signGrant(payload: GrantPayload, secret: string): string {
-  return createHmac("sha256", secret).update(canonicalJson(payload)).digest("hex");
+// How a grant is signed / verified — a discriminated union so the two schemes
+// share one code path and the caller picks per environment.
+export type GrantSigner = { alg: "ed25519"; secretKey: string } | { alg: "hmac-sha256"; secret: string };
+export type GrantVerifier = { alg: "ed25519"; publicKey: string } | { alg: "hmac-sha256"; secret: string };
+
+export interface DistributorKeypair {
+  address: string; // base58 ed25519 public key — publish this; verifiers need only it
+  secretKey: string; // base58 64-byte (seed‖pubkey) — keep secret (BRAINBLAST_MARKET_KEY)
+}
+
+// Standard DER wrappers so a raw 32-byte ed25519 seed / public key becomes a
+// node:crypto KeyObject without a JWK round-trip.
+const ED25519_PKCS8_PREFIX = Buffer.from("302e020100300506032b657004220420", "hex");
+const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
+
+function privFromSeed(seed: Buffer) {
+  return createPrivateKey({ key: Buffer.concat([ED25519_PKCS8_PREFIX, seed]), format: "der", type: "pkcs8" });
+}
+function pubFromBytes(pub: Buffer) {
+  return createPublicKey({ key: Buffer.concat([ED25519_SPKI_PREFIX, pub]), format: "der", type: "spki" });
+}
+
+// Generate a distributor identity: an ed25519 keypair whose base58 public key is
+// its address. Same construction the agent wallet uses.
+export function generateDistributorKeypair(): DistributorKeypair {
+  const { privateKey } = generateKeyPairSync("ed25519");
+  const jwk = privateKey.export({ format: "jwk" }) as { d: string; x: string };
+  const seed = Buffer.from(jwk.d, "base64url");
+  const pub = Buffer.from(jwk.x, "base64url");
+  return { address: base58Encode(pub), secretKey: base58Encode(Buffer.concat([seed, pub])) };
+}
+
+// The distributor address implied by a secret key (so `issue` can stamp `signer`
+// and `keygen` can echo it). Accepts a 64-byte (seed‖pub) or 32-byte (seed) key.
+export function addressFromSecretKey(secretKeyB58: string): string {
+  const secret = base58Decode(secretKeyB58);
+  const seed = secret.subarray(0, 32);
+  const pub = createPublicKey(privFromSeed(seed)).export({ format: "jwk" }) as { x: string };
+  return base58Encode(Buffer.from(pub.x, "base64url"));
+}
+
+function hmacHex(message: string, secret: string): string {
+  return createHmac("sha256", secret).update(message).digest("hex");
 }
 
 export interface IssueGrantArgs {
   buyer: string;
   tier: FeedTier;
   lots: string[];
-  secret: string;
+  signer: GrantSigner;
   now?: string;
   ttlDays?: number | null; // null = never expires
 }
@@ -288,32 +350,60 @@ export function issueGrant(args: IssueGrantArgs): Grant {
     expiresAt,
     nonce: randomBytes(12).toString("hex"),
   };
-  return { ...payload, sig: signGrant(payload, args.secret) };
+
+  if (args.signer.alg === "ed25519") {
+    const seed = base58Decode(args.signer.secretKey).subarray(0, 32);
+    const body = { ...payload, alg: "ed25519" as const, signer: addressFromSecretKey(args.signer.secretKey) };
+    const sig = base58Encode(cryptoSign(null, Buffer.from(canonicalJson(body)), privFromSeed(seed)));
+    return { ...body, sig };
+  }
+  const body = { ...payload, alg: "hmac-sha256" as const };
+  return { ...body, sig: hmacHex(canonicalJson(body), args.signer.secret) };
 }
 
 export interface GrantVerification {
   valid: boolean;
-  reason?: "bad-signature" | "expired" | "malformed";
+  reason?: "bad-signature" | "expired" | "malformed" | "wrong-verifier" | "untrusted-signer";
   tier?: FeedTier;
   buyer?: string;
   lots?: string[];
+  signer?: string;
 }
 
-export function verifyGrant(grant: Grant, secret: string, now?: string): GrantVerification {
+export function verifyGrant(grant: Grant, verifier: GrantVerifier, now?: string): GrantVerification {
   if (!grant || typeof grant !== "object" || typeof grant.sig !== "string" || !grant.buyer || !grant.tier) {
     return { valid: false, reason: "malformed" };
   }
-  const { sig, ...payload } = grant;
-  const expected = signGrant(payload as GrantPayload, secret);
-  // Constant-time compare; lengths must match for timingSafeEqual.
-  const a = Buffer.from(sig, "hex");
-  const b = Buffer.from(expected, "hex");
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return { valid: false, reason: "bad-signature" };
+  const alg: GrantAlg = grant.alg ?? "hmac-sha256";
+  if (verifier.alg !== alg) return { valid: false, reason: "wrong-verifier" };
+
+  const { sig, ...body } = grant;
+  const message = canonicalJson(body);
+
+  if (alg === "ed25519") {
+    if (verifier.alg !== "ed25519") return { valid: false, reason: "wrong-verifier" };
+    // The grant must be signed by the distributor we trust — not just any key.
+    if (!grant.signer || grant.signer !== verifier.publicKey) return { valid: false, reason: "untrusted-signer" };
+    let ok = false;
+    try {
+      ok = cryptoVerify(null, Buffer.from(message), pubFromBytes(base58Decode(verifier.publicKey)), base58Decode(sig));
+    } catch {
+      return { valid: false, reason: "bad-signature" };
+    }
+    if (!ok) return { valid: false, reason: "bad-signature" };
+  } else {
+    if (verifier.alg !== "hmac-sha256") return { valid: false, reason: "wrong-verifier" };
+    const expected = hmacHex(message, verifier.secret);
+    const a = Buffer.from(sig, "hex");
+    const b = Buffer.from(expected, "hex");
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return { valid: false, reason: "bad-signature" };
+  }
+
   if (grant.expiresAt != null) {
     const nowMs = Date.parse(now ?? new Date().toISOString());
     if (nowMs >= Date.parse(grant.expiresAt)) return { valid: false, reason: "expired" };
   }
-  return { valid: true, tier: grant.tier, buyer: grant.buyer, lots: grant.lots };
+  return { valid: true, tier: grant.tier, buyer: grant.buyer, lots: grant.lots, signer: grant.signer };
 }
 
 // ---------------------------------------------------------------------------

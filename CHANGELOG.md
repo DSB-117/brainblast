@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+**Publicly-verifiable grants — ed25519 (R2 of the training-data roadmap).** The
+marketplace's access grants are now signed with **ed25519** by default: the
+distributor holds a private key and **publishes its public key** (a Solana-style
+base58 address), so **anyone can verify a grant with only that address — no shared
+secret**. This is the foundation a public, multi-party market (R3 hosted endpoint)
+stands on: the verifier no longer needs the issuer's secret.
+- **`brainblast grant keygen`** generates a distributor identity (`{ address,
+  secretKey }`). Issue with `BRAINBLAST_MARKET_KEY=<secretKey>` (or `--key` /
+  `--key-file`); verifiers need only `BRAINBLAST_MARKET_PUBKEY=<address>` (or
+  `--pubkey`). `brainblast grant verify` and `feed --grant` resolve the scheme
+  from the grant's own `alg` field.
+- **Trust is explicit.** An ed25519 grant carries its `signer` address; verify
+  fails `untrusted-signer` unless that matches the address *you* trust (it never
+  defaults to the grant's own signer), and `bad-signature` if the body was
+  tampered (forged tier, swapped signer). The signature covers `alg` + `signer`
+  too, so neither can be swapped.
+- **Backward compatible.** The legacy shared-secret `hmac-sha256` scheme is still
+  verified (selected by the grant's `alg`, absent ⇒ hmac), so v0.9.5 grants keep
+  working. ed25519 keys use `node:crypto` in the same seed(32)/pubkey(32) shape as
+  the agent wallet; base58 is vendored (`src/base58.ts`, encode + decode).
+- 11 grant/base58 tests (ed25519 verify-with-pubkey, forged-tier, untrusted +
+  rewritten-signer, wrong-verifier, expiry, legacy-hmac + genuine pre-R2 grant,
+  base58 round-trip); suite **662 pass / 1 skip**, typecheck + build clean.
+
 ## v0.9.5 — 2026-06-29
 
 **Marketplace surface + automatic intake.** The two halves of the verified-trap

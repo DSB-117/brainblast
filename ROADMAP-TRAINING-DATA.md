@@ -41,7 +41,7 @@ This is the single source of truth for status. The detailed per-stage sections
 below are the *reference*; **this table and the ordered plan that follows are what
 we execute against.**
 
-### ✅ DONE (runs today — 655 tests green, 1 skipped)
+### ✅ DONE (runs today — 662 tests green, 1 skipped)
 
 | Capability | Surface | Stage |
 |---|---|---|
@@ -55,12 +55,12 @@ we execute against.**
 | Tiered access *eligibility* (`sample/standard/firehose`, wallet→tier) | `feed --tier` / `--wallet-tier` | 4.4 |
 | **Marketplace surface (local-first):** storefront + signed-grant entitlement + metered usage ledger | `brainblast catalog` / `grant` / `usage`, `feed --grant`, `npm run catalog` | 4.2 |
 | **Automatic intake conveyor** + stake-free scout default (R1) | `npm run intake` (`gen:vti→pack:dataset→corpus→catalog`), scout Phase 5 opt-in | 1.1 / 3.1 |
+| **ed25519 grants** — publicly verifiable (R2) | `grant keygen`, `BRAINBLAST_MARKET_KEY`/`PUBKEY`, `src/base58.ts` (HMAC kept for back-compat) | 4.2→4.3 |
 
 ### ☐ REMAINING (nothing below is half-built — these have not started)
 
 | Work | Why it's not done yet | Stage |
 |---|---|---|
-| **ed25519 grants** (replace shared-secret HMAC → publicly verifiable) | foundation for multi-party | 4.2→4.3 |
 | **Hosted distribution endpoint** (public catalog + feed-over-HTTP gated by grant + server-side authoritative ledger) | needs infra/deploy | 4.2→4.3 |
 | **On-chain settlement** (pay `$BRAIN`/USDC → auto-mint grant; USDC→buyback) | spends funds | 4.3 |
 | **Stake-and-slash on VTIs + data-dividend payout** | spends funds (repro gate is the slash trigger, already built) | 2.4–2.5 |
@@ -97,14 +97,19 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   end-to-end with no `$BRAIN` and no manual glue (8 → 9 VTIs, 5 → 6 classes,
   `npm run sla` green). 3 fail-closed-gate tests; suite 655 pass / 1 skip.
 
-- ☐ **R2 — ed25519 grants (replace HMAC). `[no-spend]`.**
-  Foundation for a multi-party market + North Star #1. Swap `signGrant` /
-  `verifyGrant` in `src/marketplace.ts` from shared-secret HMAC to **ed25519**:
-  the distributor holds a private key and **publishes its public key**, so anyone
-  can verify a grant without the secret. Reuse the wallet's ed25519 keypair
-  (`src/wallet/`) as the distributor identity. The verify path was deliberately
-  isolated so only these two functions change. **Exit:** `grant verify` works with
-  only the public key; a forged grant still fails; all tests green.
+- ✅ **R2 — ed25519 grants. `[no-spend]` — DONE.**
+  Foundation for a multi-party market + North Star #1. `issueGrant` / `verifyGrant`
+  in `src/marketplace.ts` now sign with **ed25519** by default (legacy HMAC still
+  verified, selected by the grant's `alg`). The distributor holds a private key and
+  **publishes its base58 address**; `verifyGrant` needs only that address — no
+  shared secret. `brainblast grant keygen` mints the identity (`node:crypto`
+  ed25519, same seed/pubkey shape as the wallet); `grant issue` reads
+  `BRAINBLAST_MARKET_KEY`; `grant verify` / `feed --grant` read
+  `BRAINBLAST_MARKET_PUBKEY` (or `--pubkey`). Trust is explicit — a grant from an
+  untrusted signer fails `untrusted-signer`, never defaulting to the grant's own
+  signer. base58 vendored (`src/base58.ts`). **Exit met:** verify works with only
+  the public key; forged tier / swapped signer / untrusted distributor all fail;
+  legacy + pre-R2 grants still verify; 662 pass / 1 skip.
 
 - ☐ **R3 — Hosted distribution endpoint. `[infra]`.**
   The "public" in public market, and where "entitlement enforced at distribution"
@@ -174,7 +179,7 @@ flow is hardened for a public audience.
 
 ## What's shipped so far
 
-Everything below runs today (655 tests green, 1 skipped):
+Everything below runs today (662 tests green, 1 skipped):
 
 - **The data asset exists.** `npm run gen:vti` turns Brainblast's own proven packs
   into schema-valid [Verified Trap Instances](datasets/seed/README.md) — only when
@@ -683,13 +688,14 @@ more supply) documented end-to-end.
 **See [Remaining work — execute in THIS exact order](#-remaining-work--execute-in-this-exact-order)
 (R1–R10) — that is the authoritative plan.** Do not re-derive priorities here.
 
-**R1 is done (v0.9.5).** The very next task is **R2 — ed25519 grants
-`[no-spend]`**: replace the shared-secret HMAC in `src/marketplace.ts` with
-publicly-verifiable ed25519 signatures (reuse the wallet's keypair as the
-distributor identity), the foundation for a multi-party market. Then **R3 (hosted
-endpoint)** makes the market public before any money is turned on. **R7 (scout
-fleet)** and **R8 (buyer outreach)** run in parallel from now — R1 made scout's
-data production no-spend, so growing the corpus past today's 9 traps is unblocked.
+**R1 (v0.9.5) and R2 are done.** The very next task is **R3 — hosted distribution
+endpoint `[infra]`**: a small service that serves the catalog publicly/free, serves
+`feed` over HTTP gated by a presented **ed25519** grant (now publicly verifiable
+thanks to R2), and writes the authoritative usage ledger server-side. This is the
+step that makes the market actually public + multi-party (the local CLI becomes a
+client). **R7 (scout fleet)** and **R8 (buyer outreach)** run in parallel — R1 made
+scout's data production no-spend, so growing the corpus past today's 9 traps is
+unblocked.
 
 When you finish any R-item: tick its checkbox, move its row in the
 [Done vs. Remaining ledger](#-done-vs-remaining--the-authoritative-ledger) from

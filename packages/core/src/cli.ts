@@ -1470,7 +1470,9 @@ async function runFeed(argv: string[]): Promise<void> {
     console.error("  --tier T                sample | standard | firehose (explicit)");
     console.error("  --wallet-tier           compute the tier from the active wallet's $BRAIN  [network]");
     console.error("  --grant FILE            serve the tier/lots from a SIGNED grant (enforced entitlement);");
-    console.error("                         needs BRAINBLAST_MARKET_SECRET; meters the pull to the ledger");
+    console.error("                         meters the pull to the ledger. ed25519 grants verify with");
+    console.error("                         --pubkey/BRAINBLAST_MARKET_PUBKEY; legacy hmac needs the secret");
+    console.error("  --pubkey ADDR           trusted distributor address for verifying an ed25519 --grant");
     console.error("  --ledger FILE           usage-ledger path for --grant pulls (default datasets/usage-ledger.jsonl)");
     console.error("  --summary               print only the feed_meta line (no records)");
     console.error("");
@@ -1501,11 +1503,6 @@ async function runFeed(argv: string[]): Promise<void> {
   let verifiedGrant: import("./marketplace.ts").Grant | undefined;
   if (grantPath) {
     const { verifyGrant } = await import("./marketplace.ts");
-    const secret = process.env.BRAINBLAST_MARKET_SECRET ?? val("--secret");
-    if (!secret) {
-      console.error("feed: --grant requires BRAINBLAST_MARKET_SECRET (or --secret) to verify the grant");
-      process.exit(2);
-    }
     if (!existsSync(grantPath)) {
       console.error(`feed: grant not found: ${grantPath}`);
       process.exit(1);
@@ -1517,7 +1514,11 @@ async function runFeed(argv: string[]): Promise<void> {
       console.error(`feed: malformed grant file: ${grantPath}`);
       process.exit(2);
     }
-    const v = verifyGrant(parsed, secret!, val("--now"));
+    // ed25519 grants verify with only the trusted distributor pubkey (no secret);
+    // legacy hmac grants need the shared secret. Mirrors `grant verify`.
+    const verifier = resolveGrantVerifier(parsed, val("--pubkey"), val("--secret"));
+    if (!verifier) process.exit(2);
+    const v = verifyGrant(parsed, verifier, val("--now"));
     if (!v.valid) {
       console.error(`feed: grant rejected (${v.reason}) — not entitled`);
       process.exit(1);
@@ -1691,8 +1692,22 @@ async function runCatalog(argv: string[]): Promise<void> {
 // verifies it before serving the paid payload, so a buyer can't self-assert a
 // tier. NOTE: HMAC means issuer == verifier (a self-hosted distributor) — see
 // the honesty note in marketplace.ts.
+// Read a distributor secret key from a file: accepts either the JSON keygen
+// output ({ secretKey }) or a bare base58 secret on its own line.
+function readDistributorSecret(file: string): string | undefined {
+  if (!existsSync(file)) return undefined;
+  const raw = readFileSync(file, "utf8").trim();
+  try {
+    const j = JSON.parse(raw);
+    if (j && typeof j.secretKey === "string") return j.secretKey;
+  } catch {
+    /* not JSON — treat as a bare key */
+  }
+  return raw || undefined;
+}
+
 async function runGrant(argv: string[]): Promise<void> {
-  const { issueGrant, verifyGrant } = await import("./marketplace.ts");
+  const mp = await import("./marketplace.ts");
   const sub = argv[0];
   const rest = argv.slice(1);
   const val = (flag: string): string | undefined => {
@@ -1704,20 +1719,34 @@ async function runGrant(argv: string[]): Promise<void> {
     for (let i = 0; i < rest.length; i++) if (rest[i] === flag && rest[i + 1]) out.push(rest[i + 1]);
     return out;
   };
-  const secret = process.env.BRAINBLAST_MARKET_SECRET ?? val("--secret");
 
   if (!sub || argv.includes("--help") || argv.includes("-h")) {
-    console.error("usage: brainblast grant <issue|verify> [opts]");
+    console.error("usage: brainblast grant <keygen|issue|verify> [opts]");
+    console.error("  keygen [--out FILE]");
+    console.error("         generate a distributor identity (ed25519). Publish the address; keep secretKey.");
     console.error("  issue  --buyer ID --tier T [--lot NAME]... [--ttl-days N] [--out FILE]");
-    console.error("         sign an access grant. Needs BRAINBLAST_MARKET_SECRET (or --secret).");
-    console.error("  verify --grant FILE");
-    console.error("         check a grant's signature + expiry. Needs the same secret.");
+    console.error("         sign an access grant. ed25519 (recommended): BRAINBLAST_MARKET_KEY=<secretKey>");
+    console.error("         (or --key / --key-file). Legacy hmac: BRAINBLAST_MARKET_SECRET (or --secret).");
+    console.error("  verify --grant FILE [--pubkey ADDR]");
+    console.error("         ed25519 grants verify with ONLY the distributor address (BRAINBLAST_MARKET_PUBKEY");
+    console.error("         or --pubkey) — no secret needed. Legacy hmac grants need the shared secret.");
     process.exit(2);
   }
 
-  if (!secret) {
-    console.error("grant: needs BRAINBLAST_MARKET_SECRET (or --secret) — the distributor's signing key");
-    process.exit(2);
+  if (sub === "keygen") {
+    const kp = mp.generateDistributorKeypair();
+    const outPath = val("--out");
+    if (outPath) {
+      writeFileSync(outPath, JSON.stringify(kp, null, 2) + "\n");
+      console.error(`grant: distributor keypair written to ${outPath} (contains the SECRET — protect it)`);
+      console.log(JSON.stringify({ address: kp.address }, null, 2));
+    } else {
+      // No file: print the secret to stdout so it isn't lost, with a warning.
+      console.log(JSON.stringify(kp, null, 2));
+    }
+    console.error(`grant: distributor address ${kp.address}`);
+    console.error("grant: issue with  BRAINBLAST_MARKET_KEY=<secretKey>  ·  verifiers need only  BRAINBLAST_MARKET_PUBKEY=<address>");
+    process.exit(0);
   }
 
   if (sub === "issue") {
@@ -1727,15 +1756,26 @@ async function runGrant(argv: string[]): Promise<void> {
       console.error("grant issue: --buyer ID and --tier sample|standard|firehose are required");
       process.exit(2);
     }
+    const keyFile = val("--key-file");
+    const edKey = process.env.BRAINBLAST_MARKET_KEY ?? val("--key") ?? (keyFile ? readDistributorSecret(keyFile) : undefined);
+    const secret = process.env.BRAINBLAST_MARKET_SECRET ?? val("--secret");
+    let signer: import("./marketplace.ts").GrantSigner;
+    if (edKey) {
+      signer = { alg: "ed25519", secretKey: edKey };
+    } else if (secret) {
+      signer = { alg: "hmac-sha256", secret };
+    } else {
+      console.error("grant issue: needs a signing key — BRAINBLAST_MARKET_KEY (ed25519, recommended; run `brainblast grant keygen`) or BRAINBLAST_MARKET_SECRET (legacy hmac)");
+      process.exit(2);
+    }
     const ttlRaw = val("--ttl-days");
-    const grant = issueGrant({
-      buyer,
-      tier,
-      lots: allVals("--lot"),
-      secret: secret!,
-      ttlDays: ttlRaw != null ? Number(ttlRaw) : null,
-      now: val("--now"),
-    });
+    let grant: import("./marketplace.ts").Grant;
+    try {
+      grant = mp.issueGrant({ buyer, tier, lots: allVals("--lot"), signer, ttlDays: ttlRaw != null ? Number(ttlRaw) : null, now: val("--now") });
+    } catch (e: any) {
+      console.error(`grant issue: bad signing key (${e?.message ?? e})`);
+      process.exit(2);
+    }
     const out = JSON.stringify(grant, null, 2);
     const outPath = val("--out");
     if (outPath) {
@@ -1744,6 +1784,7 @@ async function runGrant(argv: string[]): Promise<void> {
     } else {
       console.log(out);
     }
+    if (grant.alg === "ed25519") console.error(`grant: verify with  --pubkey ${grant.signer}  (or BRAINBLAST_MARKET_PUBKEY)`);
     process.exit(0);
   }
 
@@ -1760,13 +1801,42 @@ async function runGrant(argv: string[]): Promise<void> {
       console.error("grant verify: malformed grant file");
       process.exit(2);
     }
-    const v = verifyGrant(parsed, secret!, val("--now"));
+    const verifier = resolveGrantVerifier(parsed, val("--pubkey"), val("--secret"));
+    if (!verifier) process.exit(2);
+    const v = mp.verifyGrant(parsed, verifier, val("--now"));
     console.log(JSON.stringify(v, null, 2));
     process.exit(v.valid ? 0 : 1);
   }
 
   console.error(`grant: unknown subcommand "${sub}"`);
   process.exit(2);
+}
+
+// Build the verifier for a grant from its own `alg`, drawing the trust root from
+// flags/env. ed25519 needs ONLY the trusted distributor address (never defaults
+// to the grant's own `signer` — that would let any self-signed grant pass);
+// legacy hmac needs the shared secret. Prints the precise error and returns
+// undefined when the needed material is missing.
+function resolveGrantVerifier(
+  grant: import("./marketplace.ts").Grant,
+  pubkeyFlag: string | undefined,
+  secretFlag: string | undefined,
+): import("./marketplace.ts").GrantVerifier | undefined {
+  const alg = grant.alg ?? "hmac-sha256";
+  if (alg === "ed25519") {
+    const pub = process.env.BRAINBLAST_MARKET_PUBKEY ?? pubkeyFlag;
+    if (!pub) {
+      console.error("grant: ed25519 grant needs the TRUSTED distributor address — --pubkey ADDR or BRAINBLAST_MARKET_PUBKEY");
+      return undefined;
+    }
+    return { alg: "ed25519", publicKey: pub };
+  }
+  const secret = process.env.BRAINBLAST_MARKET_SECRET ?? secretFlag;
+  if (!secret) {
+    console.error("grant: legacy hmac grant needs the shared secret — BRAINBLAST_MARKET_SECRET or --secret");
+    return undefined;
+  }
+  return { alg: "hmac-sha256", secret };
 }
 
 // `usage` — read the metering ledger: verify its hash-chain integrity and print a
