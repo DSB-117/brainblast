@@ -35,6 +35,50 @@ one is wrong, however much else it ships.
 
 ---
 
+## Architecture — the two repos (engine vs. storefront)
+
+The marketplace is **two repos with distinct jobs**, not duplicates. `brainblast`
+is the **engine, factory & rulebook**; `brainblast-registry` is the **public
+storefront** (`registry.brainblast.tech`). The registry contains *no original
+market logic* — it **vendors** brainblast's `distribution` modules and serves them
+over HTTP. One brain, two front-ends: a CLI and a website.
+
+| Capability | Repo | Form |
+|---|---|---|
+| Produce the data (scout → intake → corpus → SLA → packaged lots) | `brainblast` | CLI/scripts + committed `datasets/` |
+| The data itself (the VTI lots) | `brainblast` | `datasets/v0.1.0/…` |
+| Market **logic** (catalog, grant sign/verify, feed tiering, metering chain, the request handler) | `brainblast` | `src/{marketplace,feed,server}.ts` — pure, tested |
+| Operator CLI (`catalog`/`grant`/`usage`/`feed`/`serve`) + the lean `brainblast/distribution` export | `brainblast` | the npm package |
+| Public hosted endpoint (`/api/catalog`, `/api/feed`, `/api/healthz`) | `brainblast-registry` | Next.js routes (vendor brainblast's logic) |
+| Live per-buyer usage ledger | `brainblast-registry` | Supabase table |
+
+```
+brainblast (engine)                              brainblast-registry (storefront)
+───────────────────                              ────────────────────────────────
+scout/intake → gen:vti → datasets/ ─(GitHub raw)─▶ lib/vti.ts fetches the lot
+src/{marketplace,feed,server}.ts                            │
+   └ exported as brainblast/distribution ─(vendored)─▶ lib/brainblast/ + adapter
+                                                            ▼
+                                           GET /api/catalog (public)
+grant keygen/issue (offline) ─ ed25519 grant ─▶ GET /api/feed (gated) ─▶ Supabase ledger
+```
+
+- **Supply flows one way:** produced in `brainblast`, published as files, *pulled*
+  by the registry.
+- **Logic is shared, not duplicated:** the registry vendors the lean subpath so a
+  Vercel build never drags in brainblast's native `tree-sitter` deps.
+- **Grants are the bridge:** mint a distributor identity offline with the
+  brainblast CLI; the registry holds only the *public* address to verify grants.
+
+> Not the marketplace: `brainblast-pack-registry` (a GitHub index of *rule packs*)
+> and the registry's older jobs (pack mirror, telemetry, `$BRAIN` staking). The
+> distribution endpoint is a new section of `brainblast-registry`.
+
+**One line:** `brainblast` is the engine/factory/rulebook; `brainblast-registry`
+is the storefront a buyer touches. Neither is "the marketplace" alone.
+
+---
+
 ## ⭐ Done vs. Remaining — the authoritative ledger
 
 This is the single source of truth for status. The detailed per-stage sections
