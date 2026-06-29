@@ -25,11 +25,14 @@ server, consistent with the codebase's single-CLI ethos.
   are in the CLI. 11 handler tests (public catalog, anonymous sample, gated
   unlock + metering, forged-tier 403, untrusted-distributor 403, no-meter-on-
   reject, lot-scope, query filters, routing). Suite **673 pass / 1 skip**.
-- **Library API.** The corpus/feed/marketplace/server pure functions
-  (`handleRequest`, `buildCatalog`, `selectFeed`, `verifyGrant`, …) are now
-  exported from the package root, so a host (the registry server,
-  `registry.brainblast.tech`) reuses the EXACT same handler the CLI runs — the
-  reference server is literally the deployable, not a re-implementation.
+- **Library API + lean subpath.** The corpus/feed/marketplace/server pure
+  functions (`handleRequest`, `buildCatalog`, `selectFeed`, `verifyGrant`, …) are
+  exported from the package root, and from a dedicated **`brainblast/distribution`**
+  subpath that carries ONLY those modules (node:crypto only — no tree-sitter/
+  ts-morph/web3). A web host reuses the EXACT handler the CLI runs without dragging
+  the auditor's native deps into its bundle — the reference server is literally the
+  deployable. **Deployed** into `registry.brainblast.tech` as `/api/catalog`,
+  `/api/feed`, `/api/healthz` (see brainblast-registry#14).
 
 > Honesty held: this is the reference server. Deploying it as
 > `registry.brainblast.tech` (and on-chain settlement that auto-mints grants) are
