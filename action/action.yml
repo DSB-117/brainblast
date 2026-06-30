@@ -6,7 +6,7 @@ description: >
   command-injection sinks, committed secrets) and cross-checks every pinned
   dependency against OSV.dev advisories.
 
-  Reference as: uses: DSB-117/brainblast/action@v0.9.5
+  Reference as: uses: DSB-117/brainblast/action@v0.9.6
 
 inputs:
   github-token:

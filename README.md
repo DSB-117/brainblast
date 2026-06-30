@@ -58,7 +58,7 @@ Everything Brainblast does today, at a glance.
 - **Gates CI.** A `--ci` mode runs non-interactively (no prompts, documented defaults), and a dependency-free gate script turns `report.json` into an exit code — fail the build if any CRITICAL risk remains (`--fail-on=critical|high|…`) or the verdict is `blocked`.
 
 **Deterministic auditor — `npx brainblast`**
-- Published to npm as [`brainblast@0.9.5`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
+- Published to npm as [`brainblast@0.9.6`](https://www.npmjs.com/package/brainblast) with [SLSA provenance](https://slsa.dev/) attestation — `npx brainblast .` runs it with no install, and you can verify the build came from this repo's CI, not a laptop.
 - **v0.9.0–0.9.1 — The Generalized Oracle.** Verification is a **pluggable interface**: the same RED→GREEN verdict can be established by the static checker (default, offline), by a **compiler** (`--oracle=compiler` — type-checks against the *pinned* SDK to catch hallucinated/moved APIs, the #1 agent error, with **zero code execution**), and — as of v0.9.1 — by an **executed test** or a **differential** (`--oracle=executed|differential`, opt-in) that run candidate code in a **context-scaled sandbox**: a light isolate for your own code locally, a hardened `--network=none` container that *refuses rather than falls back* for contributor code on ingest. `brainblast verify <pack-dir>` re-proves a pack's records and prints a reproduction scorecard; `auditWithOracle(dir, rule, { oracle })` is the inline export. The default `npx brainblast` is byte-for-byte as offline as before — execution is opt-in and isolated by context.
 - A Node/TypeScript static auditor in [`packages/core`](packages/core/) that scans code *offline* (no network, no LLM) for **eighteen built-in integration traps**: Stripe webhook raw-body signature verification, Privy/JWT signature + `aud` + `iss` verification, Bags/Solana fee-share creator-inclusion, Token-2022 program-ID pinning, Metaplex metadata immutability, Anchor `init_if_needed` guards, committed `.env*` secrets, **graph-based, project-wide cross-file taint tracking** for secret leaks (`env-secret-leaked-to-sink`), command injection (`request-input-command-injection`), SQL injection via Prisma raw queries (`prisma-raw-injection`), open-redirect via tainted `res.redirect()` calls (`open-redirect`), JWT algorithm confusion (`jsonwebtoken-algorithm-pinned`), **Solana mint impersonation** (`solana-token-impersonation`), four **Anchor program-security checks** — missing `Signer` constraint on authority accounts (`anchor-signer-constraint-missing`), `UncheckedAccount` usage (`anchor-unchecked-account-type`), `find_program_address` in handler bodies (`anchor-pda-find-program-address`), and **unverified CPI target program** (`cpi-target-program-unverified`, the Wormhole pattern), and **silent zero-revenue fee configs** (`metaplex-seller-fee-zero` — royalties omitted/zeroed).
 - **`brainblast rico <CA>`** — token identity + quality check: verifies a contract address against the canonical mint registry (offline) and Jupiter (live), detects impersonators, and runs a Rico Maps forensic scan (risk score, snipers, cabal, bundle clusters, deployer flags).
@@ -98,6 +98,7 @@ Everything Brainblast does today, at a glance.
 - **The data factory (v0.9.2)** — each RED→GREEN fix, proven through the generalized oracle, becomes a schema-valid **Verified Trap Instance** (`error→fix→test→proof`, pinned to an SDK version). `gen:vti` / `pack:dataset` / `ingest:vti` (consent-gated, secret-scanned, physically-separated contributor lot) / `corpus` / `sla` manage and self-verify the corpus.
 - **The VTI feed (v0.9.4)** — `brainblast feed` streams the corpus as a **subscription to the delta** (cursor-resumable NDJSON, `$BRAIN`-tiered access, reproducibility receipts). **`brainblast_recall`** exposes it in-tool over MCP so an agent pulls the verified traps for an SDK *before* writing the integration.
 - **The marketplace + automatic intake (v0.9.5)** — `brainblast catalog` (the storefront), `brainblast grant` (a signed access entitlement enforced at distribution), and `brainblast usage` (a hash-chained metering ledger) turn the corpus into a market; `npm run intake` is the one-command conveyor (`gen:vti → pack:dataset → corpus → catalog`) so a freshly-proven pack becomes sellable with no manual glue.
+- **The distribution endpoint + self-serve access (v0.9.6)** — grants are now **ed25519**-signed (publicly verifiable with only the distributor's address, no shared secret); **`brainblast serve`** hosts the catalog + grant-gated feed (the server holds the lots, meters server-side) and **`brainblast feed --remote`** makes the CLI a client — deployed at `registry.brainblast.tech`; and **`brainblast grant quote`** sizes a buyer's tier from the `$BRAIN` they hold (self-serve eligibility).
 
 **Safety**
 - **Prompt-injection resistant by design.** Browsed docs are treated as untrusted data; imperative content ("ignore previous instructions", "run this") is quoted and flagged, never propagated as fact or action.
@@ -217,14 +218,14 @@ Install gstack: run git clone --single-branch --depth 1 https://github.com/garry
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.9.5/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.9.6/install.sh | sh
 ```
 
 The installer pins to a tagged release, verifies SHA-256 checksums before writing any file, and auto-detects Claude Code, OpenClaw, and Codex. If gstack is missing, it warns you with the exact command to fix it. (It installs the Brainblast skill, but it does **not** install gstack for you — that is a one-time prerequisite above.)
 
 **Or tell your agent:**
 
-> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.9.5/install.sh | sh`
+> Install Brainblast by running: `curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/v0.9.6/install.sh | sh`
 
 For the bleeding edge instead of a pinned release, prefix with `BRAINBLAST_REF=main`.
 
@@ -380,7 +381,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: DSB-117/brainblast/action@v0.9.5
+      - uses: DSB-117/brainblast/action@v0.9.6
         with:
           fail-on: critical   # critical | high | medium | low | never
 ```
@@ -463,7 +464,7 @@ curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh 
 
 **Specific version:**
 ```sh
-curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.9.5 sh
+curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.9.6 sh
 ```
 
 The installer is idempotent: the Claude Code skill is overwritten in place, and the Codex adapter block is replaced (not duplicated) via its `<!-- BRAINBLAST:START/END -->` markers.
@@ -496,15 +497,15 @@ Two roadmaps:
 - [ROADMAP.md](ROADMAP.md) — the core thesis: turning documentation into *enforcement* along a **Predict → Enforce → Watch → Compound** ladder.
 - [ROADMAP-TRAINING-DATA.md](ROADMAP-TRAINING-DATA.md) — the evolution into a verified-trap **AI training-data platform** (where every proven fix becomes a sellable, reproducible asset).
 
-**Shipped through v0.9.5** (latest release on [npm](https://www.npmjs.com/package/brainblast), with SLSA provenance):
+**Shipped through v0.9.6** (latest release on [npm](https://www.npmjs.com/package/brainblast), with SLSA provenance):
 
 - **Predict & Enforce** — the `/brainblast` research loop, `report.json` + `--ci` exit-code gate, incremental cached runs, and the deterministic offline auditor covering **eighteen built-in traps** + **8 opt-in protocol packs** (`--packs`), with diff-aware scanning (`--since`), watch mode, auto-fix (`fix [--apply]`), pluggable rule packs + graduation telemetry, OSV advisory cross-check, lockfile auto-seeding, upgrade risk diff, a **GitHub Action**, and an **MCP server**.
 - **Solana power tools (v0.7)** — `firewall`, `idl-rules`, `score`, `watch-chain`, `pump-check`, `batch`, `deploy-plan`, `exploits`, `oracle`, `fee-configs`, `trust-graph`, `rico`.
 - **Key & fund custody (v0.8–0.9.3)** — Keyguard, Signguard, Wallet Guard, and the **Agent Wallet**.
 - **The Generalized Oracle (v0.9.0–0.9.1)** — pluggable RED→GREEN verification (static → compiler → executed/differential) behind a context-scaled sandbox.
-- **The training-data platform (v0.9.2–0.9.5)** — the VTI data factory (generate → package → consent-gated ingest → corpus → SLA), the **VTI feed** (`brainblast feed`, a `$BRAIN`-tiered subscription to the delta) + **`brainblast_recall`** over MCP, and the **marketplace surface** (`catalog` / `grant` / `usage`) with a one-command **automatic intake** conveyor (`npm run intake`).
+- **The training-data platform (v0.9.2–0.9.6)** — the VTI data factory (generate → package → consent-gated ingest → corpus → SLA), the **VTI feed** (`brainblast feed`, a `$BRAIN`-tiered subscription to the delta) + **`brainblast_recall`** over MCP, the **marketplace surface** (`catalog` / `grant` / `usage`) with one-command **automatic intake** (`npm run intake`), and the **hosted distribution endpoint** (ed25519 grants, `brainblast serve` + `feed --remote`, self-serve `grant quote`) deployed at `registry.brainblast.tech`.
 
-Next: ed25519 grants + a hosted distribution endpoint, then on-chain `$BRAIN` settlement (Stage 4 server side), supply at scale, and the public eval/benchmark (Stage 5).
+Next: on-chain `$BRAIN` settlement (pay/hold → grant issued automatically, USDC→buyback), supply at scale, and the public eval/benchmark (Stage 5).
 
 ## License
 
