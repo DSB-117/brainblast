@@ -18,3 +18,8 @@ datasets/usage-ledger.jsonl
 fleet/REPORT.md
 fleet/worklist.json
 fleet/ledger-cache.json
+
+# Local secrets — NEVER commit (Supabase service-role key, market keys, etc.)
+.env
+.env.*
+!.env.example
