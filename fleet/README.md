@@ -1,7 +1,30 @@
 # The scout fleet
 
-The engine that sources Verified Trap Instances (VTIs) **continuously** and
-expands by simply adding files. One command:
+The engine that sources Verified Trap Instances (VTIs) **continuously**.
+
+## Autonomous mode (run the `brainblast-fleet` skill)
+
+You don't have to hand-author candidates. Run the **`brainblast-fleet`** skill and
+your agent drives the whole loop — discover → scout → prove → promote → submit →
+log:
+
+```
+discover   npm run fleet:discover -- --sdk <pkg>   # GitHub+npm → popular dependent repos, ledger-filtered
+scout      (the skill fans out a SUBAGENT per repo to find footguns → fleet/candidates/)
+prove      npm run fleet                            # RED→GREEN gate → packs/ (only real traps land)
+log        npm run fleet:ledger -- --record fleet/worklist.json   # shared Supabase ledger; siblings skip these repos
+```
+
+The reasoning model is **whatever agent runs Brainblast** (no API key asked); the
+deterministic gate (`proveFinding`) guarantees only reproducing traps land; the
+shared ledger (`fleet_ledger` in the registry's Supabase, with a local-cache
+fallback) prevents two fleets scouting the same repo. See the
+`brainblast-fleet` skill for the orchestration.
+
+## Manual mode (drop a candidate)
+
+The fleet also runs over hand-written candidates — useful for a specific trap you
+already know. One command:
 
 ```bash
 cd packages/core
