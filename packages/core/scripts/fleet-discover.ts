@@ -30,7 +30,7 @@ const minStars = Number(arg("min-stars", "0"));
 const lang = arg("lang"); // optional language filter for code search
 
 if (!sdk) {
-  console.error("usage: npm run fleet:discover -- --sdk <npm-package> [--limit N] [--min-stars N] [--lang L]");
+  console.error("usage: npm run fleet:discover -- --sdk <npm-package> [--limit N] [--min-stars N] [--lang L] [--max-age-days N]");
   process.exit(2);
 }
 const target: string = sdk;
@@ -64,13 +64,23 @@ async function npmInfo(pkg: string): Promise<{ downloads: number | null; repo: s
 // Already-investigated repos (shared ledger). Reads the registry's OPEN
 // /api/fleet-ledger — no token, no key — defaulting to registry.brainblast.tech
 // (override with FLEET_REGISTRY_URL). Falls back to a local cache if unreachable.
-async function investigatedSet(): Promise<Set<string>> {
+//
+// Freshness TTL (4th griefing defense): only skip a repo investigated within
+// `maxAgeDays` (default 30). Anything older is re-scoutable — so a false
+// "investigated" row can suppress a repo for at most the TTL, and genuinely stale
+// repos get re-scouted (freshness is the moat). Tune with --max-age-days.
+async function investigatedSet(maxAgeDays: number): Promise<Set<string>> {
   const url = (process.env.FLEET_REGISTRY_URL ?? "https://registry.brainblast.tech").replace(/\/+$/, "");
+  const cutoff = Date.now() - maxAgeDays * 86_400_000;
   try {
     const res = await fetch(`${url}/api/fleet-ledger`);
     if (res.ok) {
       const j = await res.json();
-      return new Set<string>((j.repos ?? []).map((r: any) => r.repo ?? r));
+      const fresh = (j.repos ?? []).filter((r: any) => {
+        const t = r.investigated_at ? Date.parse(r.investigated_at) : 0;
+        return !Number.isFinite(t) || t >= cutoff; // keep recent; drop stale (re-scoutable)
+      });
+      return new Set<string>(fresh.map((r: any) => r.repo ?? r));
     }
     console.error(`  fleet-ledger: registry read ${res.status}; using local cache`);
   } catch (e: any) {
@@ -116,8 +126,8 @@ async function main() {
     }
   }
 
-  // Unique repos, excluding the SDK's own repo and already-investigated ones.
-  const skip = await investigatedSet();
+  // Unique repos, excluding the SDK's own repo and recently-investigated ones.
+  const skip = await investigatedSet(Number(arg("max-age-days", "30")));
   const ownRepo = npm.repo?.replace(/^https?:\/\/github\.com\//, "") ?? "";
   const byName = new Map<string, any>();
   for (const it of items) {

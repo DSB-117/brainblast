@@ -22,9 +22,12 @@ shared ledger prevents two fleets scouting the same repo. See the
 
 **Sharing the ledger across fleets.** Zero setup: the fleet reads/writes the
 **open** shared ledger at `registry.brainblast.tech/api/fleet-ledger` — **no token,
-no key**. You just push what you scouted and the **server validates** it
-(well-formed `owner/repo`, trap-id shape, capped size). The Supabase key lives
-only on the registry server. Point at a different registry with
+no key**. You just push what you scouted; the **server keeps it honest** without
+gating anyone: per-IP rate limit, GitHub repo verification (a new repo must exist
++ clear a stars bar), non-destructive trap merge (a submission can't erase another
+fleet's finds), and a freshness TTL (`--max-age-days`, default 30) so a bad row
+suppresses a repo for at most the window and stale repos get re-scouted. The
+Supabase key lives only on the registry server. Override the registry with
 `FLEET_REGISTRY_URL`; if it's unreachable the fleet uses a local cache.
 
 ## Manual mode (drop a candidate)
