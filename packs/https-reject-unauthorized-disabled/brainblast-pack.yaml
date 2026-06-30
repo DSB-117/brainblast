@@ -1,0 +1,5 @@
+id: https-reject-unauthorized-disabled
+name: "Https Reject Unauthorized Disabled"
+version: 0.1.0
+author: brainblast-fleet
+description: "https.request with rejectUnauthorized: false — TLS certificate validation disabled (MITM)"

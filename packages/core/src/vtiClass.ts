@@ -39,6 +39,11 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "raydium-compute-zero-slippage": "missing-slippage-guard",
   "solana-sendtx-unconfirmed": "unconfirmed-state",
   "spl-transfer-not-checked-in-payout": "missing-verification",
+  // Fleet-sourced (R7) — explicit so the keyword heuristic can't mis-bucket them
+  // (e.g. "expiration" would otherwise read as unchecked-staleness).
+  "jwt-verify-ignore-expiration": "auth-bypass",
+  "cors-wildcard-origin": "auth-bypass",
+  "https-reject-unauthorized-disabled": "auth-bypass",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

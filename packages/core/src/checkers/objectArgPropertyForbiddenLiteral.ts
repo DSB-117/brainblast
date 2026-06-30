@@ -91,9 +91,16 @@ export const objectArgPropertyForbiddenLiteral: Checker = (c, p) => {
   const text = init.getText();
   const forbidden = JSON.stringify(p.forbiddenValue);
 
+  // Boolean flags are the canonical shape of insecure-default footguns
+  // (`rejectUnauthorized: false`, `ignoreExpiration: true`, `secure: false`).
+  // ts-morph models `true`/`false` as keyword nodes, not Numeric/StringLiteral,
+  // so they need their own branch.
+  const isBool = kind === SyntaxKind.TrueKeyword || kind === SyntaxKind.FalseKeyword;
+  const isStringOrNumber = kind === SyntaxKind.NumericLiteral || kind === SyntaxKind.StringLiteral;
+
   const isLiteralForbidden =
-    (kind === SyntaxKind.NumericLiteral || kind === SyntaxKind.StringLiteral) &&
-    (text === forbidden || text === String(p.forbiddenValue));
+    (isStringOrNumber && (text === forbidden || text === String(p.forbiddenValue))) ||
+    (isBool && typeof p.forbiddenValue === "boolean" && text === String(p.forbiddenValue));
 
   // `new BN(0)` / `BN("0")` count as the forbidden zero (idiomatic Solana amounts).
   const isForbidden = isLiteralForbidden || (p.forbiddenValue === 0 && isBnWrappedZero(init));
@@ -105,7 +112,7 @@ export const objectArgPropertyForbiddenLiteral: Checker = (c, p) => {
     };
   }
 
-  if (kind === SyntaxKind.NumericLiteral || kind === SyntaxKind.StringLiteral) {
+  if (isStringOrNumber || isBool) {
     return {
       result: "pass",
       detail: (p.passDetail as string) ?? `${p.propName} is ${text}`,

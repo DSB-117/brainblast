@@ -1,15 +1,16 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-06-29T18:58:48.156Z",
+  "generatedAt": "2026-06-30T02:29:45.771Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 9,
-    "sdks": 9,
-    "packsScanned": 10
+    "records": 12,
+    "sdks": 12,
+    "packsScanned": 13
   },
   "classDistribution": {
+    "auth-bypass": 3,
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
     "silent-zero-revenue": 1,
@@ -18,6 +19,20 @@
     "other": 1
   },
   "proof": [
+    {
+      "pack": "cors-wildcard-origin",
+      "rule": "cors-wildcard-origin",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "https-reject-unauthorized-disabled",
+      "rule": "https-reject-unauthorized-disabled",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
     {
       "pack": "jito-bundle-zero-tip",
       "rule": "jito-bundle-zero-tip",
@@ -28,6 +43,13 @@
     {
       "pack": "jupiter-quote-zero-slippage",
       "rule": "jupiter-quote-zero-slippage",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "jwt-verify-ignore-expiration",
+      "rule": "jwt-verify-ignore-expiration",
       "red": true,
       "green": true,
       "emitted": true

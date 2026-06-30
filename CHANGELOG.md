@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+**The scout fleet (R7 of the training-data roadmap) — continuous VTI sourcing.**
+A powerful, expandable, run-it-yourself loop that turns "author a trap by hand"
+into "drop a candidate, run one command." `npm run fleet`
+(`packages/core/scripts/fleet.ts`): discovers candidate Findings in
+`fleet/candidates/`, **proves each RED→GREEN** (the same gate the corpus SLA
+enforces — extracted to `proveFinding` and shared with `synth-prove`), **auto-
+promotes** the proven ones into `packs/` (no more manual `cp`), runs the intake
+conveyor, and prints a **scoreboard** — what landed, what drafted and why, the
+corpus delta, and the class×SDK **work-orders** to scout next (`fleet/REPORT.md`).
+`--dry-run` proves without promoting; `--candidate <file>` runs one.
+- **Expandable:** add a `fleet/candidates/<id>.json` and re-run (`fleet/README.md`
+  documents the template). The `brainblast-scout` skill is now fleet-aware — it
+  targets the scoreboard's work-orders and drops candidates the fleet proves.
+- **Checker reach:** `object-arg-property-forbidden-literal` now matches **boolean**
+  flag literals (`rejectUnauthorized: false`, `ignoreExpiration: true`), not just
+  strings/numbers — the shape of most insecure-default footguns.
+- **It immediately produced supply:** seeded with three real **auth-bypass** traps
+  (`jwt-verify-ignore-expiration`, `cors-wildcard-origin`,
+  `https-reject-unauthorized-disabled`), proven + promoted + ingested — corpus
+  **9 → 12 VTIs**, covering the previously-empty **auth-bypass** class. `npm run
+  sla` green (12/12 reproduce). 3 gate tests; suite **688 pass / 1 skip**.
+
 ## v0.9.6 — 2026-06-29
 
 **The public, multi-party marketplace.** v0.9.5 made the corpus a marketplace

@@ -66,6 +66,7 @@
     "corpus": "tsx scripts/corpus-report.ts",
     "catalog": "tsx scripts/catalog.ts",
     "intake": "tsx scripts/intake.ts",
+    "fleet": "tsx scripts/fleet.ts",
     "sla": "tsx scripts/corpus-sla.ts",
     "bench": "tsx scripts/bench.ts",
     "synth": "tsx scripts/synth-prove.ts",

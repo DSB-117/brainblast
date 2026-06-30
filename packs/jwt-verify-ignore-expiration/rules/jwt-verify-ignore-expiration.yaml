@@ -1,0 +1,38 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: jwt-verify-ignore-expiration
+severity: high
+title: "jwt.verify called with ignoreExpiration: true — expired tokens are
+  accepted as valid"
+component:
+  name: jsonwebtoken
+  type: Auth
+  version: ">=9.0.0"
+  sourceUrl: https://github.com/auth0/node-jsonwebtoken#jwtverifytoken-secretorpublickey-options-callback
+detect:
+  modules:
+    - jsonwebtoken
+  nameRegex: verif|auth|token|jwt|session|login
+  triggerCalls:
+    - verify
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: verify
+    argIndex: 2
+    propName: ignoreExpiration
+    forbiddenValue: true
+    passDetail: jwt.verify sets ignoreExpiration to a value other than true — the
+      `exp` claim is enforced and expired tokens are rejected.
+    failDetail: "jwt.verify is called with ignoreExpiration: true, which disables
+      the `exp` (expiry) check entirely. A leaked or stolen token is then valid
+      forever — a session/credential that should have expired is silently
+      accepted. Remove ignoreExpiration (it defaults to false) or set it to
+      false."
+    absentCallDetail: Handler is in an auth/verify scope but does not call
+      jwt.verify(); this rule does not apply here.
+    absentArgDetail: jwt.verify does not pass an ignoreExpiration option literal;
+      the default (false) enforces expiry. No action needed unless it is set
+      elsewhere.
+test:
+  kind: none

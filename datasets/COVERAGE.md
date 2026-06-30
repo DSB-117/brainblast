@@ -1,27 +1,31 @@
 # Corpus coverage — Brainblast Verified Traps
 
-_Generated 2026-06-29T18:58:49.430Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
+_Generated 2026-06-30T02:29:47.325Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
 
 ## Summary
-- **9** VTIs (9 unique, 0 duplicate) across **9** SDKs and **6** trap classes.
-- **Quality** (0–100): mean 48, median 48, range 48–48.
-  Buckets — high (≥70): 0, medium (40–69): 9, low (<40): 0.
-- **Lots:** synthetic-owned (9).
+- **12** VTIs (12 unique, 0 duplicate) across **12** SDKs and **7** trap classes.
+- **Quality** (0–100): mean 49, median 48, range 48–60.
+  Buckets — high (≥70): 0, medium (40–69): 12, low (<40): 0.
+- **Lots:** synthetic-owned (12).
 
 ## Coverage heatmap (class × SDK, unique records)
-| class \ sdk | @metaplex-foundation/js | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Stripe Node SDK |
-|---|---|---|---|---|---|---|---|---|---|
-| missing-slippage-guard | · | 1 | 1 | · | · | 1 | · | · | · |
-| missing-verification | · | · | · | · | · | · | · | 1 | · |
-| other | · | · | · | · | · | · | · | · | 1 |
-| silent-zero-revenue | 1 | · | · | · | · | · | · | · | · |
-| unchecked-staleness | · | · | · | · | · | · | 1 | · | · |
-| unconfirmed-state | · | · | · | 1 | 1 | · | · | · | · |
+| class \ sdk | @metaplex-foundation/js | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Stripe Node SDK | cors | jsonwebtoken | node:https |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| auth-bypass | · | · | · | · | · | · | · | · | · | 1 | 1 | 1 |
+| missing-slippage-guard | · | 1 | 1 | · | · | 1 | · | · | · | · | · | · |
+| missing-verification | · | · | · | · | · | · | · | 1 | · | · | · | · |
+| other | · | · | · | · | · | · | · | · | 1 | · | · | · |
+| silent-zero-revenue | 1 | · | · | · | · | · | · | · | · | · | · | · |
+| unchecked-staleness | · | · | · | · | · | · | 1 | · | · | · | · | · |
+| unconfirmed-state | · | · | · | 1 | 1 | · | · | · | · | · | · | · |
 
 (`·` = no coverage yet.)
 
 ## Scout work-orders (where to dig next)
 **Thin cells** (only one instance — corroborate or broaden):
+- auth-bypass · cors
+- auth-bypass · node:https
+- auth-bypass · jsonwebtoken
 - unconfirmed-state · Jito (block engine / bundles)
 - unconfirmed-state · @solana/web3.js
 - missing-slippage-guard · Jupiter Aggregator API
@@ -34,7 +38,6 @@ _Generated 2026-06-29T18:58:49.430Z by corpus-report@0.1.0. Source of truth: `da
 
 **Uncovered trap classes** (no instance yet):
 - immutable-after-deploy
-- auth-bypass
 - wrong-constant
 
 ## $BRAIN curation
