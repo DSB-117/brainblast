@@ -1,25 +1,27 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-06-29T18:58:49.430Z",
+  "generatedAt": "2026-06-30T02:29:47.325Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 9
+      "count": 12
     }
   ],
   "counts": {
-    "vtis": 9,
-    "unique": 9,
+    "vtis": 12,
+    "unique": 12,
     "duplicates": 0,
-    "sdks": 9,
-    "classes": 6
+    "sdks": 12,
+    "classes": 7
   },
   "severityDistribution": {
-    "high": 9
+    "high": 11,
+    "critical": 1
   },
   "classDistribution": {
+    "auth-bypass": 3,
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
     "silent-zero-revenue": 1,
@@ -28,8 +30,11 @@
     "other": 1
   },
   "sdkDistribution": {
+    "cors": 1,
+    "node:https": 1,
     "Jito (block engine / bundles)": 1,
     "Jupiter Aggregator API": 1,
+    "jsonwebtoken": 1,
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "Pyth Network price feeds": 1,
@@ -39,21 +44,26 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 9
+    "synthetic-owned": 12
   },
   "quality": {
-    "mean": 48,
+    "mean": 49,
     "median": 48,
     "min": 48,
-    "max": 48,
+    "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 9,
+      "medium": 12,
       "low": 0
     }
   },
   "coverage": {
     "matrix": {
+      "auth-bypass": {
+        "cors": 1,
+        "node:https": 1,
+        "jsonwebtoken": 1
+      },
       "unconfirmed-state": {
         "Jito (block engine / bundles)": 1,
         "@solana/web3.js": 1
@@ -77,6 +87,18 @@
       }
     },
     "thinCells": [
+      {
+        "class": "auth-bypass",
+        "sdk": "cors"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "node:https"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "jsonwebtoken"
+      },
       {
         "class": "unconfirmed-state",
         "sdk": "Jito (block engine / bundles)"
@@ -116,11 +138,28 @@
     ],
     "missingClasses": [
       "immutable-after-deploy",
-      "auth-bypass",
       "wrong-constant"
     ]
   },
   "scored": [
+    {
+      "trapId": "cors-wildcard-origin",
+      "sdk": "cors",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "https-reject-unauthorized-disabled",
+      "sdk": "node:https",
+      "class": "auth-bypass",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
     {
       "trapId": "jito-bundle-zero-tip",
       "sdk": "Jito (block engine / bundles)",
@@ -134,6 +173,15 @@
       "trapId": "jupiter-quote-zero-slippage",
       "sdk": "Jupiter Aggregator API",
       "class": "missing-slippage-guard",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "jwt-verify-ignore-expiration",
+      "sdk": "jsonwebtoken",
+      "class": "auth-bypass",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",

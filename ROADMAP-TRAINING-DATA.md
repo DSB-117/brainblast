@@ -86,7 +86,7 @@ This is the single source of truth for status. The detailed per-stage sections
 below are the *reference*; **this table and the ordered plan that follows are what
 we execute against.**
 
-### ✅ DONE (runs today — 673 tests green, 1 skipped)
+### ✅ DONE (runs today — 688 tests green, 1 skipped)
 
 | Capability | Surface | Stage |
 |---|---|---|
@@ -102,6 +102,8 @@ we execute against.**
 | **Automatic intake conveyor** + stake-free scout default (R1) | `npm run intake` (`gen:vti→pack:dataset→corpus→catalog`), scout Phase 5 opt-in | 1.1 / 3.1 |
 | **ed25519 grants** — publicly verifiable (R2) | `grant keygen`, `BRAINBLAST_MARKET_KEY`/`PUBKEY`, `src/base58.ts` (HMAC kept for back-compat) | 4.2→4.3 |
 | **Distribution endpoint (R3)** — reference server + deployed into the registry | `brainblast serve` + `feed --remote`; `brainblast/distribution` subpath; `registry.brainblast.tech` `/api/catalog` + `/api/feed` + `/api/healthz` (brainblast-registry#14) | 4.2→4.3 |
+| **Self-serve access sizing (R4 core)** — `$BRAIN` held → tier | `accessQuote`, `grant quote` / `grant issue --for-brain\|--wallet` | 4.3 |
+| **Scout fleet engine (R7)** — prove → auto-promote → intake → scoreboard | `npm run fleet`, `fleet/candidates/`, `proveFinding`; seeded the auth-bypass class (corpus 9→12) | 3.1 |
 
 ### ☐ REMAINING (nothing below is half-built — these have not started)
 
@@ -111,7 +113,7 @@ we execute against.**
 | **On-chain settlement** (pay `$BRAIN`/USDC → auto-issue grant; USDC→buyback) | spends funds | 4.3 |
 | **Stake-and-slash on VTIs + data-dividend payout** | spends funds (repro gate is the slash trigger, already built) | 2.4–2.5 |
 | **Curation market** (stake to up-rank; reward accurate curators) | spends funds; needs on-chain rails | 3.4 |
-| **Scout fleet at scale** (N≥50 SDKs, scheduled, freshness-first) | data-production is now no-spend; automation + run is the lever | 3.1 |
+| **Run the scout fleet at scale** (N≥50 SDKs, freshness-first) | engine DONE (`npm run fleet`); running it broadly is the lever, not code | 3.1 |
 | **Buyer pilots** (≥1 paid pilot / LOI) | outreach | 1.4–1.5 |
 | **Public benchmark + private eval product** | depends on a corpus worth citing | 5.1–5.2 |
 | **Governance + mature dividend/burn + documented compounding loop** | end-state; depends on all above | 5.3–5.5 |
@@ -203,15 +205,19 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   curators earn, the rest lose. Built on the existing `score`/coverage/SLA surface.
   **Exit:** curation stake measurably reweights what scout produces next.
 
-- ☐ **R7 — Scout fleet at scale. `[spend: stake optional]` — run in parallel after R1.**
-  (Stage 3.1) Data *production* is no-spend after R1; this item is the
-  **automation + the deliberate runs**: parallelize scout across the top N≥50
-  SDKs/protocols on a schedule, **freshness-first** (newly-shipped APIs, where
-  models are most stale). The coverage map names the gaps (today: 3 uncovered
-  classes — immutable-after-deploy, auth-bypass, wrong-constant — and 8 thin
-  cells). **Exit:** continuous VTI production across N≥50 SDKs; corpus grows from
-  today's 9 to a sellable size. *(Per R1, data production is no-spend — `npm run
-  intake` lands each pack; staking each pack is optional.)*
+- ◐ **R7 — Scout fleet. `[no-spend engine done; scaling is the lever]`**
+  (Stage 3.1) **Engine DONE:** `npm run fleet` (`scripts/fleet.ts`) discovers
+  candidate Findings in `fleet/candidates/`, **proves each RED→GREEN** (shared
+  `proveFinding` gate), **auto-promotes** the proven into `packs/`, runs intake,
+  and prints a **scoreboard** (landed / drafted / corpus delta / next work-orders →
+  `fleet/REPORT.md`). Expandable (drop a candidate, re-run; `fleet/README.md`) and
+  the `brainblast-scout` skill is fleet-aware. The `object-arg-property-forbidden-
+  literal` checker now matches boolean flags too (insecure-default footguns).
+  **Seeded with 3 real auth-bypass traps → corpus 9 → 12, the auth-bypass class
+  now covered; SLA 12/12 green.** **Remaining (the lever, not code):** *run it at
+  scale* — scout the work-orders the scoreboard names (still uncovered:
+  immutable-after-deploy, wrong-constant; plus thin cells), freshness-first, toward
+  a sellable N. *(No-spend; staking each pack stays optional per R1.)*
 
 - ☐ **R8 — Buyer pilots. `[outreach]` — run in parallel from now.**
   (Stage 1.4–1.5) Take `datasets/CATALOG.md` + `datasets/v0.1.0/sample/` + a
@@ -241,7 +247,7 @@ flow is hardened for a public audience.
 
 ## What's shipped so far
 
-Everything below runs today (673 tests green, 1 skipped):
+Everything below runs today (688 tests green, 1 skipped):
 
 - **The data asset exists.** `npm run gen:vti` turns Brainblast's own proven packs
   into schema-valid [Verified Trap Instances](datasets/seed/README.md) — only when
@@ -759,7 +765,7 @@ more supply) documented end-to-end.
   the first item that **spends funds** — pull it deliberately.
 
 **R7 (scout fleet)** and **R8 (buyer outreach)** still run in parallel — growing
-the corpus past today's 9 traps is unblocked (R1 made production no-spend).
+the corpus past today's 12 traps (the fleet engine landed the first 3) is unblocked (R1 made production no-spend).
 
 When you finish any R-item: tick its checkbox, move its row in the
 [Done vs. Remaining ledger](#-done-vs-remaining--the-authoritative-ledger) from

@@ -1,0 +1,44 @@
+{
+  "id": "cors-wildcard-origin",
+  "severity": "high",
+  "title": "cors() configured with origin: \"*\" — any website can call the API with the user's session",
+  "class": "auth-bypass",
+  "component": {
+    "name": "cors",
+    "type": "Auth",
+    "version": ">=2.8.0",
+    "sourceUrl": "https://github.com/expressjs/cors#configuration-options"
+  },
+  "detect": {
+    "modules": ["cors"],
+    "nameRegex": "cors|app|server|middleware|index",
+    "triggerCalls": ["cors"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "cors",
+        "argIndex": 0,
+        "propName": "origin",
+        "forbiddenValue": "*",
+        "passDetail": "cors() sets an explicit allow-list origin (not \"*\") — cross-origin access is restricted to trusted sites.",
+        "failDetail": "cors() is called with origin: \"*\", allowing ANY website to make cross-origin requests to this API. Combined with credentials, this lets a malicious page act as the logged-in user. Set origin to an explicit allow-list (a string, array, or function), not \"*\".",
+        "absentCallDetail": "No cors() call in this scope; this rule does not apply here.",
+        "absentArgDetail": "cors() does not pass an origin literal; verify the resolved origin is a trusted allow-list, not \"*\"."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "server.ts",
+    "vulnerable": "import express from \"express\";\nimport cors from \"cors\";\n\nexport function makeApp() {\n  const app = express();\n  // VULNERABLE: any origin may call the API — combined with credentials this is a CSRF/session-theft vector.\n  app.use(cors({ origin: \"*\", credentials: true }));\n  return app;\n}\n",
+    "fixed": "import express from \"express\";\nimport cors from \"cors\";\n\nexport function makeApp() {\n  const app = express();\n  // FIXED: only the trusted front-end origin may make cross-origin requests.\n  app.use(cors({ origin: \"https://app.example.com\", credentials: true }));\n  return app;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/expressjs/cors#configuration-options",
+    "note": "origin: \"*\" is the most common cors misconfiguration; with credentials it enables any site to ride a user's authenticated session. AI generators often emit it to 'fix' CORS errors during development."
+  }
+}

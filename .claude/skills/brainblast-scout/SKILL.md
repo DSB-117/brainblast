@@ -38,6 +38,30 @@ surface a draft for human review rather than forcing it through.
 > explicitly asked to stake AND the ops-wallet env (`AGENT_OPS_WALLET_SECRET` +
 > caps) is configured. Producing the data does not require it.
 
+## Fleet mode (the fast path — prefer this)
+
+The **fleet** (`fleet/`, `npm run fleet`) automates prove → promote → intake →
+score, so a scout run is just: **pick a work-order, drop a candidate, run the
+fleet.**
+
+1. **Target a work-order.** Run `npm run fleet -- --dry-run` (or read
+   `datasets/COVERAGE.md`) and pick an **uncovered class** or **thin cell** from
+   the scoreboard — that's where a new trap is worth most.
+2. **Write a candidate** `fleet/candidates/<id>.json` (a Finding — see
+   `fleet/README.md` for the template). Prefer the vetted
+   `object-arg-property-forbidden-literal` checker (flags an options-object
+   property set to a forbidden string/number/**boolean** literal — the shape of
+   most insecure-default footguns); no new checker code needed.
+3. **Run the fleet.** `npm run fleet` proves every candidate RED→GREEN,
+   auto-promotes the proven ones to `packs/`, regenerates the corpus + storefront,
+   and prints what landed + the next work-orders. A candidate that doesn't
+   reproduce is reported DRAFT and never lands.
+
+That's the whole no-spend loop. The detailed Phases below are the reference for
+*how* a Finding is shaped and what the gate checks; **for routine sourcing, use
+fleet mode.** (Phases 2b/3 — manual synth + `cp` into `packs/` — are what the
+fleet now does for you.)
+
 ## Phase 1 — Scout
 
 Research one external SDK/protocol (Solana programs, payment SDKs, etc.) for

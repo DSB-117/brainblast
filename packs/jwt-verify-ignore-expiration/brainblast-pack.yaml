@@ -1,0 +1,5 @@
+id: jwt-verify-ignore-expiration
+name: "Jwt Verify Ignore Expiration"
+version: 0.1.0
+author: brainblast-fleet
+description: "jwt.verify called with ignoreExpiration: true — expired tokens are accepted as valid"

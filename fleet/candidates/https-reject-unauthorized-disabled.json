@@ -1,0 +1,44 @@
+{
+  "id": "https-reject-unauthorized-disabled",
+  "severity": "critical",
+  "title": "https.request with rejectUnauthorized: false — TLS certificate validation disabled (MITM)",
+  "class": "auth-bypass",
+  "component": {
+    "name": "node:https",
+    "type": "Networking",
+    "version": ">=18.0.0",
+    "sourceUrl": "https://nodejs.org/api/https.html#httpsrequestoptions-callback"
+  },
+  "detect": {
+    "modules": ["https", "node:https"],
+    "nameRegex": "request|fetch|http|client|call|api",
+    "triggerCalls": ["request"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "request",
+        "argIndex": 0,
+        "propName": "rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "https.request keeps certificate validation on (rejectUnauthorized is not false) — the server's TLS identity is verified.",
+        "failDetail": "https.request is called with rejectUnauthorized: false, which turns OFF TLS certificate validation. Any machine on the network path can present a self-signed certificate and silently man-in-the-middle the connection — credentials and data are exposed. Remove rejectUnauthorized: false; if a private CA is needed, pass `ca` instead.",
+        "absentCallDetail": "No https.request call in this scope; this rule does not apply here.",
+        "absentArgDetail": "https.request does not set rejectUnauthorized; the secure default (true) applies. No action needed."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "client.ts",
+    "vulnerable": "import https from \"node:https\";\n\nexport function fetchSecret(host: string) {\n  // VULNERABLE: TLS cert validation is OFF — the connection can be silently MITM'd.\n  return https.request({ hostname: host, path: \"/secret\", rejectUnauthorized: false });\n}\n",
+    "fixed": "import https from \"node:https\";\n\nexport function fetchSecret(host: string) {\n  // FIXED: certificate validation enforced (the secure default, here explicit).\n  return https.request({ hostname: host, path: \"/secret\", rejectUnauthorized: true });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://nodejs.org/api/https.html#httpsrequestoptions-callback",
+    "note": "rejectUnauthorized: false is a notorious 'make the TLS error go away' fix that ships to production and silently disables MITM protection. Documented under the TLS options https.request accepts."
+  }
+}
