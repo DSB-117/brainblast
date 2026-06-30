@@ -2,6 +2,41 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.9.6 — 2026-06-29
+
+**The public, multi-party marketplace.** Takes the local marketplace public with
+verifiable grants, hosted distribution, a remote feed client, and self-serve
+access sizing. All additions are default-off; the audit path is unchanged.
+
+- Ed25519-signed grants can be verified with the distributor's public address;
+  legacy v0.9.5 HMAC grants remain supported.
+- New `brainblast serve` HTTP surface for a public catalog and grant-gated feed,
+  with authoritative hash-chained usage metering.
+- `brainblast feed --remote <url>` consumes the hosted NDJSON feed with a grant.
+- New `brainblast/distribution` subpath exports the lean marketplace/feed/server
+  core without auditor-native dependencies.
+- `brainblast grant quote --brain N|--wallet` and grant issuance from `$BRAIN`
+  holdings add the no-spend core of self-serve tier sizing.
+- Full suite at 679 pass / 1 skip; typecheck and build clean.
+
+## 0.9.5 — 2026-06-29
+
+**Marketplace surface + automatic intake.** Adds the gated demand side and the
+one-command supply conveyor for the verified-trap corpus. Both are additive;
+the audit path is unchanged.
+
+- `brainblast catalog` builds a buyer-facing storefront with coverage, quality,
+  freshness, pricing, and receipt-only teasers.
+- `brainblast grant issue|verify` signs and validates buyer/tier/lot/expiry
+  entitlement; `brainblast feed --grant` enforces it.
+- `brainblast usage` verifies the append-only hash-chained usage ledger and
+  reports per-buyer consumption.
+- `npm run intake` runs generate -> package -> corpus -> catalog, with a
+  fail-closed RED-to-GREEN pack gate.
+- Scout staking is explicitly optional; producing and packaging data never
+  blocks on spend.
+- Full suite at 655 pass / 1 skip; typecheck and build clean.
+
 ## 0.9.4 — 2026-06-28
 
 **The VTI feed.** Adds a cursor-resumable NDJSON subscription surface for
