@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v0.9.6 — 2026-06-29
+
+**The public, multi-party marketplace.** v0.9.5 made the corpus a marketplace
+locally; v0.9.6 takes it public. Grants become **publicly verifiable** (ed25519,
+no shared secret), a **hosted endpoint** serves the catalog + grant-gated feed
+(deployed at `registry.brainblast.tech`), the local CLI becomes a **client** of
+it, and access is **self-serve** (your `$BRAIN` sizes your tier). All additive;
+the audit path is unchanged. (A "grant" is a signed access credential — nothing
+is token-minted; on-chain `$BRAIN` settlement is the next milestone.)
+
 **Self-serve access sizing (R4 of the training-data roadmap, no-spend core).**
 North Star #1 is "paid access is self-serve — prove `$BRAIN`, get the grant, no
 human issuer." This lands the no-spend core of that: `accessQuote(brainHeld)`
@@ -15,7 +25,7 @@ much more `$BRAIN` it takes).
 - Pure + tested (6 `accessQuote` cases incl. thresholds, upgrade hints, junk-input
   clamping); the issuing key stays local (operator-run), no funds move. Suite
   **679 pass / 1 skip**. *(The fund-spending parts of R4 — server-side
-  auto-minting, pay→treasury→grant, USDC→buyback — remain deliberately deferred.)*
+  auto-issuance, pay→treasury→grant, USDC→buyback — remain deliberately deferred.)*
 
 **The hosted distribution endpoint — `brainblast serve` (R3 of the training-data
 roadmap).** Where "real entitlement is enforced at distribution" stops being a
@@ -50,7 +60,7 @@ server, consistent with the codebase's single-CLI ethos.
   `/api/feed`, `/api/healthz` (see brainblast-registry#14).
 
 > Honesty held: this is the reference server. Deploying it as
-> `registry.brainblast.tech` (and on-chain settlement that auto-mints grants) are
+> `registry.brainblast.tech` (and on-chain settlement that auto-issues grants) are
 > the remaining infra/spend steps (R4+); the server quotes price and accounts
 > usage — it does not move money.
 

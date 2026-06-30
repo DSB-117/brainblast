@@ -23,9 +23,10 @@ one is wrong, however much else it ships.
 1. **The marketplace is free-flowing & easily accessible.** The catalog and the
    `sample` tier are **always public and anonymous — no signup, no key, no
    payment** to browse and inspect. All *paid* access is **self-serve** (prove a
-   wallet's `$BRAIN`/payment → a grant is minted automatically); a human issuer
-   is never in the critical path. Friction exists only at the trainable-payload
-   boundary, never at discovery.
+   wallet's `$BRAIN`/payment → a grant is **issued** automatically — a grant is a
+   signed access credential, nothing is token-minted); a human issuer is never in
+   the critical path. Friction exists only at the trainable-payload boundary,
+   never at discovery.
 2. **Data/VTI intake is streamlined & automatic.** Producing a new verified trap
    must **never block on spend**. Scout Phases 1–4 (research → prove → package →
    submit) are no-spend and are the default; staking is an *optional bond* layered
@@ -67,7 +68,7 @@ grant keygen/issue (offline) ─ ed25519 grant ─▶ GET /api/feed (gated) ─�
   by the registry.
 - **Logic is shared, not duplicated:** the registry vendors the lean subpath so a
   Vercel build never drags in brainblast's native `tree-sitter` deps.
-- **Grants are the bridge:** mint a distributor identity offline with the
+- **Grants are the bridge:** generate a distributor identity offline with the
   brainblast CLI; the registry holds only the *public* address to verify grants.
 
 > Not the marketplace: `brainblast-pack-registry` (a GitHub index of *rule packs*)
@@ -107,7 +108,7 @@ we execute against.**
 | Work | Why it's not done yet | Stage |
 |---|---|---|
 | **Prod deploy of the endpoint** (apply the `usage_ledger` migration, set `BRAINBLAST_MARKET_PUBKEY` in Vercel, ship) | operational: prod secrets + infra (code is merged & verified) | 4.2→4.3 |
-| **On-chain settlement** (pay `$BRAIN`/USDC → auto-mint grant; USDC→buyback) | spends funds | 4.3 |
+| **On-chain settlement** (pay `$BRAIN`/USDC → auto-issue grant; USDC→buyback) | spends funds | 4.3 |
 | **Stake-and-slash on VTIs + data-dividend payout** | spends funds (repro gate is the slash trigger, already built) | 2.4–2.5 |
 | **Curation market** (stake to up-rank; reward accurate curators) | spends funds; needs on-chain rails | 3.4 |
 | **Scout fleet at scale** (N≥50 SDKs, scheduled, freshness-first) | data-production is now no-spend; automation + run is the lever | 3.1 |
@@ -147,7 +148,7 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   in `src/marketplace.ts` now sign with **ed25519** by default (legacy HMAC still
   verified, selected by the grant's `alg`). The distributor holds a private key and
   **publishes its base58 address**; `verifyGrant` needs only that address — no
-  shared secret. `brainblast grant keygen` mints the identity (`node:crypto`
+  shared secret. `brainblast grant keygen` generates the identity (`node:crypto`
   ed25519, same seed/pubkey shape as the wallet); `grant issue` reads
   `BRAINBLAST_MARKET_KEY`; `grant verify` / `feed --grant` read
   `BRAINBLAST_MARKET_PUBKEY` (or `--pubkey`). Trust is explicit — a grant from an
@@ -183,8 +184,8 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   `brainblast grant quote --brain N|--wallet` shows eligibility (no key), and
   `grant issue --for-brain N|--wallet` SIZES the tier from `$BRAIN` held instead of
   a hardcoded `--tier`. The issuing key stays local; no funds move. **Remaining
-  (spend/secret — your call):** *server-side* auto-minting (the registry holding
-  the issuing key so grants mint without a human), the pay → treasury → grant flow,
+  (spend/secret — your call):** *server-side* auto-issuance (the registry holding
+  the issuing key so grants issue without a human), the pay → treasury → grant flow,
   and USDC → **buyback-and-distribute** to the contributor/burn pool (generalizing
   the wallet's capped spend-gate into the buyer-side path). **Exit:** a buyer
   self-serves a *paid* grant end-to-end with no human issuer; one USDC sale
@@ -754,7 +755,7 @@ more supply) documented end-to-end.
   app (a separate repo) and host it. `[infra]`, no spend; makes the market
   actually reachable by third parties.
 - **R4 — on-chain settlement `[spend]`**: pay `$BRAIN`/USDC → the treasury
-  auto-mints a grant signed by the R2 distributor identity; USDC→buyback. This is
+  auto-issues a grant signed by the R2 distributor identity; USDC→buyback. This is
   the first item that **spends funds** — pull it deliberately.
 
 **R7 (scout fleet)** and **R8 (buyer outreach)** still run in parallel — growing
