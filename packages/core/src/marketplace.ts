@@ -31,7 +31,7 @@ import {
 } from "node:crypto";
 import { base58Encode, base58Decode } from "./base58.ts";
 import { scoreVti, type CorpusVti } from "./corpus.ts";
-import { selectFeed, TIER_ENTITLEMENTS, type FeedTier, type FeedRecord } from "./feed.ts";
+import { selectFeed, tierForBrain, TIER_ENTITLEMENTS, type FeedTier, type FeedRecord } from "./feed.ts";
 import type { TrapClass } from "./vtiClass.ts";
 
 // ---------------------------------------------------------------------------
@@ -106,6 +106,50 @@ export const TIER_PRICING: Record<FeedTier, TierPricing> = {
     note: "Unlimited records + the freshest delta (zero holdback). The freshness edge is the moat.",
   },
 };
+
+// ---------------------------------------------------------------------------
+// Access quote (R4 self-serve) — "given the $BRAIN you hold, here's your tier,
+// its price, and how much more buys the next tier." Pure: maps a balance through
+// tierForBrain + TIER_PRICING. The no-spend core of self-serve access (North
+// Star #1) — a buyer/agent computes eligibility locally; the operator (or, later,
+// the server) mints the matching grant. Reading a real on-chain balance and
+// actually minting/paying are the spend/secret steps layered on top.
+// ---------------------------------------------------------------------------
+
+const TIER_LADDER: FeedTier[] = ["sample", "standard", "firehose"];
+
+export interface AccessQuote {
+  brainHeld: number;
+  tier: FeedTier;
+  access: "open" | "brain-gated";
+  priceUsd: number | null;
+  priceBrain: number | null; // USD-equivalent at the standing discount
+  minBrainForTier: number;
+  // The next tier up + how much more $BRAIN it takes — the upsell hint. null at firehose.
+  upgrade: { tier: FeedTier; minBrain: number; brainShort: number } | null;
+}
+
+export function accessQuote(brainHeld: number): AccessQuote {
+  const held = Math.max(0, Number.isFinite(brainHeld) ? brainHeld : 0);
+  const tier = tierForBrain(held);
+  const p = TIER_PRICING[tier];
+  const idx = TIER_LADDER.indexOf(tier);
+  let upgrade: AccessQuote["upgrade"] = null;
+  if (idx >= 0 && idx < TIER_LADDER.length - 1) {
+    const next = TIER_LADDER[idx + 1];
+    const minBrain = TIER_PRICING[next].minBrainHeld;
+    upgrade = { tier: next, minBrain, brainShort: Math.max(0, minBrain - held) };
+  }
+  return {
+    brainHeld: held,
+    tier,
+    access: p.access,
+    priceUsd: p.priceUsd,
+    priceBrain: p.priceBrainUsdEquivalent,
+    minBrainForTier: p.minBrainHeld,
+    upgrade,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Catalog — the storefront. Built from the lots the seller holds.

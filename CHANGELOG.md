@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+**Self-serve access sizing (R4 of the training-data roadmap, no-spend core).**
+North Star #1 is "paid access is self-serve — prove `$BRAIN`, get the grant, no
+human issuer." This lands the no-spend core of that: `accessQuote(brainHeld)`
+(`src/marketplace.ts`) maps a balance through `tierForBrain` + the price ladder →
+`{ tier, priceUsd, priceBrain, minBrainForTier, upgrade }` (the next tier + how
+much more `$BRAIN` it takes).
+- **`brainblast grant quote --brain N` / `--wallet`** — self-serve eligibility:
+  the tier/price your `$BRAIN` qualifies for. No signing key needed.
+- **`brainblast grant issue` can now SIZE the tier from `$BRAIN`** — `--for-brain N`
+  (pure) or `--wallet` (reads the active wallet) instead of a hardcoded `--tier`.
+- Pure + tested (6 `accessQuote` cases incl. thresholds, upgrade hints, junk-input
+  clamping); the issuing key stays local (operator-run), no funds move. Suite
+  **679 pass / 1 skip**. *(The fund-spending parts of R4 — server-side
+  auto-minting, pay→treasury→grant, USDC→buyback — remain deliberately deferred.)*
+
 **The hosted distribution endpoint — `brainblast serve` (R3 of the training-data
 roadmap).** Where "real entitlement is enforced at distribution" stops being a
 comment and becomes literally true: the **server holds the full lots**, and a

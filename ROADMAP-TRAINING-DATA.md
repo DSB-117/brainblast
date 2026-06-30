@@ -177,13 +177,18 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   its tier. **Your step:** apply the `usage_ledger` migration, set
   `BRAINBLAST_MARKET_PUBKEY` in Vercel (from an offline `grant keygen`), deploy.
 
-- ☐ **R4 — On-chain settlement + self-serve grants. `[spend]`.**
-  Closes North Star #1's "self-serve" requirement. Pay `$BRAIN` (at the standing
-  10% discount) or USDC → treasury → **grant auto-minted**; *holding* `$BRAIN`
-  maps to a standing tier via `tierForBrain` (no per-pull invoice). USDC triggers
-  **buyback-and-distribute** to the contributor/burn pool. Generalize the wallet's
-  capped spend-gate into the buyer-side payment path. **Exit:** a buyer self-serves
-  a paid grant end-to-end with no human issuer; one USDC sale triggers a buyback.
+- ◐ **R4 — On-chain settlement + self-serve grants. `[spend]` — no-spend core DONE.**
+  Closes North Star #1's "self-serve" requirement. **Done (no-spend):**
+  `accessQuote(brainHeld)` maps a balance → tier + price + upgrade hint;
+  `brainblast grant quote --brain N|--wallet` shows eligibility (no key), and
+  `grant issue --for-brain N|--wallet` SIZES the tier from `$BRAIN` held instead of
+  a hardcoded `--tier`. The issuing key stays local; no funds move. **Remaining
+  (spend/secret — your call):** *server-side* auto-minting (the registry holding
+  the issuing key so grants mint without a human), the pay → treasury → grant flow,
+  and USDC → **buyback-and-distribute** to the contributor/burn pool (generalizing
+  the wallet's capped spend-gate into the buyer-side path). **Exit:** a buyer
+  self-serves a *paid* grant end-to-end with no human issuer; one USDC sale
+  triggers a buyback.
 
 - ☐ **R5 — Stake-and-slash on VTIs + data dividend. `[spend]`.** (Stage 2.4–2.5)
   Extend `scripts/agent-stake` (and the in-core `wallet stake`) from "stake on a
