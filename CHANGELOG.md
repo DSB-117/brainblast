@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.9.7 — 2026-06-30
+
+**The autonomous scout fleet (R7).** The data factory now sources its own supply:
+`npm run fleet` proves candidate traps RED→GREEN, auto-promotes the real ones into
+the corpus, and scores the gaps to scout next; `fleet:discover` finds popular
+SDK-dependent repos; the `brainblast-fleet` skill fans out a subfleet of subagents
+to scout them — with a shared, open, **griefing-defended** ledger so fleets don't
+redo each other's work (per-IP rate limit, GitHub repo verification,
+non-destructive trap merge, freshness TTL). Additive; the audit path is unchanged.
+Seeded the previously-empty **auth-bypass** trap class (corpus 9 → 12).
+
 **The fleet goes autonomous (R7) — discover → scout → prove → log, no
 hand-authored candidates.** The fleet now sources its own targets and scouts them
 with a fleet of subagents, instead of waiting for a JSON file dropped in
