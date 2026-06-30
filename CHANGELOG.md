@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+## v0.9.7 — 2026-06-30
+
+**The autonomous scout fleet (R7).** The data factory now sources its own supply:
+`npm run fleet` proves candidate traps RED→GREEN, auto-promotes the real ones into
+the corpus, and scores the gaps to scout next; `fleet:discover` finds popular
+SDK-dependent repos; the `brainblast-fleet` skill fans out a subfleet of subagents
+to scout them — with a shared, open, **griefing-defended** ledger so fleets don't
+redo each other's work (per-IP rate limit, GitHub repo verification,
+non-destructive trap merge, freshness TTL). Additive; the audit path is unchanged.
+Seeded the previously-empty **auth-bypass** trap class (corpus 9 → 12).
+
+**The fleet goes autonomous (R7) — discover → scout → prove → log, no
+hand-authored candidates.** The fleet now sources its own targets and scouts them
+with a fleet of subagents, instead of waiting for a JSON file dropped in
+`fleet/candidates/`.
+- **`npm run fleet:discover -- --sdk <pkg>`** (`scripts/fleet-discover.ts`) —
+  scours npm + GitHub for the **popular repositories that depend on** a target
+  SDK, ranks them by stars, filters out anything the shared ledger already
+  recorded, and writes a work list. (Demonstrated: 99 real `jsonwebtoken`
+  dependents → top-10 by stars.)
+- **The `brainblast-fleet` skill** — your agent runs it and it **fans out a
+  subagent per repo** (the `Agent` tool) to scout each one for footguns, writing
+  candidate Findings; then the deterministic engine proves + promotes them. The
+  reasoning model is **whatever agent runs Brainblast — no API key requested**.
+  The proof gate stays absolute: subagents propose, `proveFinding` disposes.
+- **`npm run fleet:ledger`** (`scripts/fleet-ledger.ts`) — the **shared
+  "already-investigated" ledger** so sibling fleets don't re-scout the same repo.
+  Writes the registry's Supabase `fleet_ledger` table (PostgREST, no new dep) when
+  `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` are set; otherwise a local cache
+  that discovery reads. (Demonstrated: recording 9 repos made the next discovery
+  skip them.)
+- Submission is gated: the skill commits + pushes only after `sla` + typecheck are
+  green; direct-to-`main` is opt-in (`BRAINBLAST_FLEET_PUSH=main`), else a PR.
+  Registry schema adds `fleet_ledger`.
+
 **The scout fleet (R7 of the training-data roadmap) — continuous VTI sourcing.**
 A powerful, expandable, run-it-yourself loop that turns "author a trap by hand"
 into "drop a candidate, run one command." `npm run fleet`

@@ -1,7 +1,39 @@
 # The scout fleet
 
-The engine that sources Verified Trap Instances (VTIs) **continuously** and
-expands by simply adding files. One command:
+The engine that sources Verified Trap Instances (VTIs) **continuously**.
+
+## Autonomous mode (run the `brainblast-fleet` skill)
+
+You don't have to hand-author candidates. Run the **`brainblast-fleet`** skill and
+your agent drives the whole loop — discover → scout → prove → promote → submit →
+log:
+
+```
+discover   npm run fleet:discover -- --sdk <pkg>   # GitHub+npm → popular dependent repos, ledger-filtered
+scout      (the skill fans out a SUBAGENT per repo to find footguns → fleet/candidates/)
+prove      npm run fleet                            # RED→GREEN gate → packs/ (only real traps land)
+log        npm run fleet:ledger -- --record fleet/worklist.json   # shared Supabase ledger; siblings skip these repos
+```
+
+The reasoning model is **whatever agent runs Brainblast** (no API key asked); the
+deterministic gate (`proveFinding`) guarantees only reproducing traps land; the
+shared ledger prevents two fleets scouting the same repo. See the
+`brainblast-fleet` skill for the orchestration.
+
+**Sharing the ledger across fleets.** Zero setup: the fleet reads/writes the
+**open** shared ledger at `registry.brainblast.tech/api/fleet-ledger` — **no token,
+no key**. You just push what you scouted; the **server keeps it honest** without
+gating anyone: per-IP rate limit, GitHub repo verification (a new repo must exist
++ clear a stars bar), non-destructive trap merge (a submission can't erase another
+fleet's finds), and a freshness TTL (`--max-age-days`, default 30) so a bad row
+suppresses a repo for at most the window and stale repos get re-scouted. The
+Supabase key lives only on the registry server. Override the registry with
+`FLEET_REGISTRY_URL`; if it's unreachable the fleet uses a local cache.
+
+## Manual mode (drop a candidate)
+
+The fleet also runs over hand-written candidates — useful for a specific trap you
+already know. One command:
 
 ```bash
 cd packages/core

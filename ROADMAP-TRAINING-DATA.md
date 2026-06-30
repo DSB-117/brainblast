@@ -103,7 +103,7 @@ we execute against.**
 | **ed25519 grants** — publicly verifiable (R2) | `grant keygen`, `BRAINBLAST_MARKET_KEY`/`PUBKEY`, `src/base58.ts` (HMAC kept for back-compat) | 4.2→4.3 |
 | **Distribution endpoint (R3)** — reference server + deployed into the registry | `brainblast serve` + `feed --remote`; `brainblast/distribution` subpath; `registry.brainblast.tech` `/api/catalog` + `/api/feed` + `/api/healthz` (brainblast-registry#14) | 4.2→4.3 |
 | **Self-serve access sizing (R4 core)** — `$BRAIN` held → tier | `accessQuote`, `grant quote` / `grant issue --for-brain\|--wallet` | 4.3 |
-| **Scout fleet engine (R7)** — prove → auto-promote → intake → scoreboard | `npm run fleet`, `fleet/candidates/`, `proveFinding`; seeded the auth-bypass class (corpus 9→12) | 3.1 |
+| **Scout fleet (R7)** — autonomous: discover → subagent-scout → prove → promote → ledger | `npm run fleet[:discover\|:ledger]`, `brainblast-fleet` skill, `proveFinding`, Supabase `fleet_ledger`; seeded auth-bypass (corpus 9→12) | 3.1 |
 
 ### ☐ REMAINING (nothing below is half-built — these have not started)
 
@@ -214,10 +214,21 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   the `brainblast-scout` skill is fleet-aware. The `object-arg-property-forbidden-
   literal` checker now matches boolean flags too (insecure-default footguns).
   **Seeded with 3 real auth-bypass traps → corpus 9 → 12, the auth-bypass class
-  now covered; SLA 12/12 green.** **Remaining (the lever, not code):** *run it at
-  scale* — scout the work-orders the scoreboard names (still uncovered:
-  immutable-after-deploy, wrong-constant; plus thin cells), freshness-first, toward
-  a sellable N. *(No-spend; staking each pack stays optional per R1.)*
+  now covered; SLA 12/12 green.**
+  **Autonomy layer DONE:** the fleet now sources its own targets instead of waiting
+  for hand-dropped candidates. `npm run fleet:discover -- --sdk <pkg>` scours
+  npm + GitHub for popular dependent repos (ranked by stars, ledger-filtered); the
+  **`brainblast-fleet` skill** fans out a **subagent per repo** to scout each one
+  (the agent already running Brainblast is the model — no API key); proven
+  candidates promote via the gate; `npm run fleet:ledger` records investigated
+  repos to a **shared Supabase `fleet_ledger`** (local-cache fallback) so sibling
+  fleets skip them. Submission is gated on `sla` + typecheck; direct-to-main is
+  opt-in. Demonstrated: 99 real `jsonwebtoken` dependents discovered, recorded,
+  and skipped on re-run.
+  **Remaining (the lever, not code):** *run it at scale* — point the fleet at the
+  work-orders the scoreboard names (still uncovered: immutable-after-deploy,
+  wrong-constant; plus thin cells), freshness-first, toward a sellable N.
+  *(No-spend; staking each pack stays optional per R1.)*
 
 - ☐ **R8 — Buyer pilots. `[outreach]` — run in parallel from now.**
   (Stage 1.4–1.5) Take `datasets/CATALOG.md` + `datasets/v0.1.0/sample/` + a
