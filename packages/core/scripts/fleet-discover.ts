@@ -61,9 +61,21 @@ async function npmInfo(pkg: string): Promise<{ downloads: number | null; repo: s
   return { downloads, repo };
 }
 
-// Already-investigated repos (shared ledger). Falls back to a local cache when
-// Supabase isn't configured — see fleet-ledger.ts. Here we only READ the skip set.
-function investigatedSet(): Set<string> {
+// Already-investigated repos (shared ledger). Reads the registry's OPEN
+// /api/fleet-ledger — no token, no key — defaulting to registry.brainblast.tech
+// (override with FLEET_REGISTRY_URL). Falls back to a local cache if unreachable.
+async function investigatedSet(): Promise<Set<string>> {
+  const url = (process.env.FLEET_REGISTRY_URL ?? "https://registry.brainblast.tech").replace(/\/+$/, "");
+  try {
+    const res = await fetch(`${url}/api/fleet-ledger`);
+    if (res.ok) {
+      const j = await res.json();
+      return new Set<string>((j.repos ?? []).map((r: any) => r.repo ?? r));
+    }
+    console.error(`  fleet-ledger: registry read ${res.status}; using local cache`);
+  } catch (e: any) {
+    console.error(`  fleet-ledger: registry unreachable (${e?.message ?? e}); using local cache`);
+  }
   const local = join(fleetDir, "ledger-cache.json");
   if (existsSync(local)) {
     try {
@@ -105,7 +117,7 @@ async function main() {
   }
 
   // Unique repos, excluding the SDK's own repo and already-investigated ones.
-  const skip = investigatedSet();
+  const skip = await investigatedSet();
   const ownRepo = npm.repo?.replace(/^https?:\/\/github\.com\//, "") ?? "";
   const byName = new Map<string, any>();
   for (const it of items) {

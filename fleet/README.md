@@ -17,9 +17,15 @@ log        npm run fleet:ledger -- --record fleet/worklist.json   # shared Supab
 
 The reasoning model is **whatever agent runs Brainblast** (no API key asked); the
 deterministic gate (`proveFinding`) guarantees only reproducing traps land; the
-shared ledger (`fleet_ledger` in the registry's Supabase, with a local-cache
-fallback) prevents two fleets scouting the same repo. See the
+shared ledger prevents two fleets scouting the same repo. See the
 `brainblast-fleet` skill for the orchestration.
+
+**Sharing the ledger across fleets.** Zero setup: the fleet reads/writes the
+**open** shared ledger at `registry.brainblast.tech/api/fleet-ledger` — **no token,
+no key**. You just push what you scouted and the **server validates** it
+(well-formed `owner/repo`, trap-id shape, capped size). The Supabase key lives
+only on the registry server. Point at a different registry with
+`FLEET_REGISTRY_URL`; if it's unreachable the fleet uses a local cache.
 
 ## Manual mode (drop a candidate)
 

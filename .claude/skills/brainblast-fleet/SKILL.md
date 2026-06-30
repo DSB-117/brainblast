@@ -112,9 +112,10 @@ still does.
 npm run fleet:ledger -- --record fleet/worklist.json
 ```
 
-Writes the Supabase `fleet_ledger` when `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`
-are set; otherwise updates the local `fleet/ledger-cache.json` that discovery
-reads. Record every scouted repo — clean ones too, so they're not re-scouted.
+Writes the registry's **open** `/api/fleet-ledger` (default
+`registry.brainblast.tech` — no token, no key; the server validates the payload),
+falling back to the local `fleet/ledger-cache.json` that discovery reads. Record
+every scouted repo — clean ones too, so they're not re-scouted.
 
 ## Phase 5 — Report
 

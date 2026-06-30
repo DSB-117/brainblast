@@ -23,3 +23,7 @@ fleet/ledger-cache.json
 .env
 .env.*
 !.env.example
+
+# Oracle sandbox temp dirs (differential / executed-test runs)
+packages/core/.brainblast-oracle-*/
+packages/core/.oracle-diff-*/
