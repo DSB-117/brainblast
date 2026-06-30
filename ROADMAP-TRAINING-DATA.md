@@ -35,6 +35,50 @@ one is wrong, however much else it ships.
 
 ---
 
+## Architecture — the two repos (engine vs. storefront)
+
+The marketplace is **two repos with distinct jobs**, not duplicates. `brainblast`
+is the **engine, factory & rulebook**; `brainblast-registry` is the **public
+storefront** (`registry.brainblast.tech`). The registry contains *no original
+market logic* — it **vendors** brainblast's `distribution` modules and serves them
+over HTTP. One brain, two front-ends: a CLI and a website.
+
+| Capability | Repo | Form |
+|---|---|---|
+| Produce the data (scout → intake → corpus → SLA → packaged lots) | `brainblast` | CLI/scripts + committed `datasets/` |
+| The data itself (the VTI lots) | `brainblast` | `datasets/v0.1.0/…` |
+| Market **logic** (catalog, grant sign/verify, feed tiering, metering chain, the request handler) | `brainblast` | `src/{marketplace,feed,server}.ts` — pure, tested |
+| Operator CLI (`catalog`/`grant`/`usage`/`feed`/`serve`) + the lean `brainblast/distribution` export | `brainblast` | the npm package |
+| Public hosted endpoint (`/api/catalog`, `/api/feed`, `/api/healthz`) | `brainblast-registry` | Next.js routes (vendor brainblast's logic) |
+| Live per-buyer usage ledger | `brainblast-registry` | Supabase table |
+
+```
+brainblast (engine)                              brainblast-registry (storefront)
+───────────────────                              ────────────────────────────────
+scout/intake → gen:vti → datasets/ ─(GitHub raw)─▶ lib/vti.ts fetches the lot
+src/{marketplace,feed,server}.ts                            │
+   └ exported as brainblast/distribution ─(vendored)─▶ lib/brainblast/ + adapter
+                                                            ▼
+                                           GET /api/catalog (public)
+grant keygen/issue (offline) ─ ed25519 grant ─▶ GET /api/feed (gated) ─▶ Supabase ledger
+```
+
+- **Supply flows one way:** produced in `brainblast`, published as files, *pulled*
+  by the registry.
+- **Logic is shared, not duplicated:** the registry vendors the lean subpath so a
+  Vercel build never drags in brainblast's native `tree-sitter` deps.
+- **Grants are the bridge:** mint a distributor identity offline with the
+  brainblast CLI; the registry holds only the *public* address to verify grants.
+
+> Not the marketplace: `brainblast-pack-registry` (a GitHub index of *rule packs*)
+> and the registry's older jobs (pack mirror, telemetry, `$BRAIN` staking). The
+> distribution endpoint is a new section of `brainblast-registry`.
+
+**One line:** `brainblast` is the engine/factory/rulebook; `brainblast-registry`
+is the storefront a buyer touches. Neither is "the marketplace" alone.
+
+---
+
 ## ⭐ Done vs. Remaining — the authoritative ledger
 
 This is the single source of truth for status. The detailed per-stage sections
@@ -56,13 +100,13 @@ we execute against.**
 | **Marketplace surface (local-first):** storefront + signed-grant entitlement + metered usage ledger | `brainblast catalog` / `grant` / `usage`, `feed --grant`, `npm run catalog` | 4.2 |
 | **Automatic intake conveyor** + stake-free scout default (R1) | `npm run intake` (`gen:vti→pack:dataset→corpus→catalog`), scout Phase 5 opt-in | 1.1 / 3.1 |
 | **ed25519 grants** — publicly verifiable (R2) | `grant keygen`, `BRAINBLAST_MARKET_KEY`/`PUBKEY`, `src/base58.ts` (HMAC kept for back-compat) | 4.2→4.3 |
-| **Distribution endpoint — reference server (R3)** | `brainblast serve` (`src/server.ts`) + `feed --remote`; server holds lots, gates by grant, meters server-side | 4.2→4.3 |
+| **Distribution endpoint (R3)** — reference server + deployed into the registry | `brainblast serve` + `feed --remote`; `brainblast/distribution` subpath; `registry.brainblast.tech` `/api/catalog` + `/api/feed` + `/api/healthz` (brainblast-registry#14) | 4.2→4.3 |
 
 ### ☐ REMAINING (nothing below is half-built — these have not started)
 
 | Work | Why it's not done yet | Stage |
 |---|---|---|
-| **Deploy the endpoint** as `registry.brainblast.tech` (port `brainblast serve` into the registry web app + host it) | separate repo + hosting | 4.2→4.3 |
+| **Prod deploy of the endpoint** (apply the `usage_ledger` migration, set `BRAINBLAST_MARKET_PUBKEY` in Vercel, ship) | operational: prod secrets + infra (code is merged & verified) | 4.2→4.3 |
 | **On-chain settlement** (pay `$BRAIN`/USDC → auto-mint grant; USDC→buyback) | spends funds | 4.3 |
 | **Stake-and-slash on VTIs + data-dividend payout** | spends funds (repro gate is the slash trigger, already built) | 2.4–2.5 |
 | **Curation market** (stake to up-rank; reward accurate curators) | spends funds; needs on-chain rails | 3.4 |
@@ -112,7 +156,7 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   the public key; forged tier / swapped signer / untrusted distributor all fail;
   legacy + pre-R2 grants still verify; 662 pass / 1 skip.
 
-- ◐ **R3 — Hosted distribution endpoint. `[infra]` — reference server DONE; deploy pending.**
+- ✅ **R3 — Hosted distribution endpoint. `[infra]` — DONE (server + deploy code; awaiting your prod deploy).**
   The "public" in public market, where "entitlement enforced at distribution"
   becomes literally true. **`brainblast serve`** (`src/server.ts` + the CLI
   binding) is a zero-dep `node:http` server that: (a) serves the **catalog
@@ -123,11 +167,15 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   server-side (rejected pulls aren't metered; a broken ledger fail-closes). The
   local CLI is now a client: **`brainblast feed --remote <url> --grant <file>`**.
   11 handler tests; verified end-to-end (remote client streams the entitled delta;
-  forged-tier + untrusted-distributor → 403; server-side metering). **Remaining:**
-  *deploy* it as `registry.brainblast.tech` (a separate repo + hosting) — the
-  reference server is the source to port. **Exit (server) met:** a third party
-  with only a grant + the URL pulls its entitled delta; the server holds the
-  payload, the client never sees more than its tier.
+  forged-tier + untrusted-distributor → 403; server-side metering). **Deployed**
+  into `registry.brainblast.tech` (Next.js + Supabase): `/api/catalog`, `/api/feed`,
+  `/api/healthz` (brainblast-registry#14), reusing the EXACT handler via the lean
+  **`brainblast/distribution`** subpath (vendored there so Vercel never pulls the
+  auditor's native deps); the usage ledger is a hash-chained Supabase table. Live
+  smoke test green. **Exit met:** a third party with only a grant + the URL pulls
+  its entitled delta; the server holds the payload, the client never sees more than
+  its tier. **Your step:** apply the `usage_ledger` migration, set
+  `BRAINBLAST_MARKET_PUBKEY` in Vercel (from an offline `grant keygen`), deploy.
 
 - ☐ **R4 — On-chain settlement + self-serve grants. `[spend]`.**
   Closes North Star #1's "self-serve" requirement. Pay `$BRAIN` (at the standing

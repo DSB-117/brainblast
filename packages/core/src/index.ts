@@ -256,6 +256,61 @@ export {
   type ExploitPattern,
 } from "./exploitPatterns.ts";
 
+// ── Training-data corpus, feed & marketplace (v0.9.2–) ────────────────────────
+// The pure logic behind the data factory and the distribution endpoint, exported
+// so a host (e.g. the registry server, registry.brainblast.tech) can reuse the
+// EXACT same handler/grant/feed code the CLI runs — no re-implementation.
+export { scoreVti, dedupKey, buildCorpusIndex, type CorpusVti, type ScoredVti, type CorpusIndex } from "./corpus.ts";
+export { TRAP_CLASSES, classifyTrap, CLASS_BY_RULE, type TrapClass } from "./vtiClass.ts";
+export {
+  selectFeed,
+  tierForBrain,
+  TIER_ENTITLEMENTS,
+  TIER_BRAIN_THRESHOLDS,
+  type FeedTier,
+  type FeedQuery,
+  type FeedResult,
+  type FeedRecord,
+  type FeedReceipt,
+  type TierEntitlement,
+} from "./feed.ts";
+export { resolveLotPaths, readLots, recallFeed, DEFAULT_LOT_PATHS, type RecallResult } from "./feedLots.ts";
+export {
+  buildCatalog,
+  renderCatalogMd,
+  issueGrant,
+  verifyGrant,
+  generateDistributorKeypair,
+  addressFromSecretKey,
+  appendUsage,
+  verifyLedger,
+  summarizeUsage,
+  canonicalJson,
+  TIER_PRICING,
+  LEDGER_GENESIS,
+  type CatalogResult,
+  type CatalogOptions,
+  type TierPricing,
+  type Grant,
+  type GrantPayload,
+  type GrantAlg,
+  type GrantSigner,
+  type GrantVerifier,
+  type GrantVerification,
+  type DistributorKeypair,
+  type IssueGrantArgs,
+  type UsageRecord,
+  type UsageEntry,
+  type BuyerUsage,
+} from "./marketplace.ts";
+export {
+  handleRequest,
+  type ServerRequest,
+  type ServerResponse,
+  type ServerDeps,
+  type ServerLot,
+} from "./server.ts";
+
 // ── Core types ────────────────────────────────────────────────────────────────
 export type {
   Rule,
