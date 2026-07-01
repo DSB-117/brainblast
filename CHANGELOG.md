@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v0.9.8 — 2026-07-01
+
+**The maximally-capable fleet.** Three moves remove the scout fleet's proving
+ceilings while keeping the RED→GREEN gate absolute: (1) the gate now runs the
+**generalized oracle** — static → compiler → executed → differential — so it
+proves compiler-detectable (hallucinated/moved APIs) and **behavioral** footguns,
+not only static shapes; (2) **self-extending checkers** let the fleet propose a
+new AST checker, vetted by a soundness meta-gate (purity, proves its trap, zero
+false positives on a known-good corpus, determinism) then human-ratified; and
+(3) **multi-language** behavioral proving adds **Python** (a `LangRunner` — more
+languages are one each). The fleet can now prove static shapes, compiler-checkable
+APIs, semantic behavior, novel shapes it authors itself, and footguns outside
+TS/Rust — the full reachable envelope short of intent-judgment. Corpus grew to 15
+(incl. a JWT `alg:none` and a Python fee-truncation trap the older checkers
+couldn't catch). All additive; the audit path is unchanged.
+
 **Multi-language behavioral proving (Move 3) — the fleet is no longer limited to
 TypeScript + Rust.** The differential oracle (golden-I/O: run a function on
 recorded inputs, RED if outputs diverge) is language-agnostic in concept; it was
