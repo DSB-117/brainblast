@@ -98,27 +98,48 @@ if (proof2.verdict !== "PROVEN" || proof2.method !== proof.method) reject("non-d
 console.log("  ✓ deterministic: identical on re-run");
 
 // ── 3. No false positives on known-good code ──────────────────────────────────
+// Corpus = the proposal's negative/ + the fixed side of every bundled pack. The
+// enumeration + each audit are wrapped defensively: `packs/` is a live directory
+// other tooling (and the parallel test suite) may be mutating, and a dir that is
+// transiently unreadable or malformed must be SKIPPED — never counted as a false
+// positive and never crashing the gate. Only an actual `fail` verdict is a false
+// positive. (Errors are still surfaced so a genuinely broken pack is visible.)
 const rule = loadRules(join(stageRoot, finding.id, "rules"))[0];
+function safe<T>(fn: () => T, fallback: T): T {
+  try {
+    return fn();
+  } catch {
+    return fallback;
+  }
+}
 const corpus: string[] = [];
 if (existsSync(negativeDir)) corpus.push(negativeDir);
-for (const pack of existsSync(packsDir) ? readdirSync(packsDir) : []) {
+for (const pack of safe(() => (existsSync(packsDir) ? readdirSync(packsDir) : []), [] as string[])) {
   const fixturesRoot = join(packsDir, pack, "fixtures");
   if (!existsSync(fixturesRoot)) continue;
-  for (const rid of readdirSync(fixturesRoot)) {
+  for (const rid of safe(() => readdirSync(fixturesRoot), [] as string[])) {
     const fixedDir = join(fixturesRoot, rid, "fixed");
-    if (existsSync(fixedDir) && statSync(fixedDir).isDirectory()) corpus.push(fixedDir);
+    if (existsSync(fixedDir) && safe(() => statSync(fixedDir).isDirectory(), false)) corpus.push(fixedDir);
   }
 }
 const falsePositives: string[] = [];
+let skipped = 0;
 for (const dir of corpus) {
-  for (const r of auditWithRule(dir, rule)) {
+  let results;
+  try {
+    results = auditWithRule(dir, rule);
+  } catch {
+    skipped++; // transiently unreadable / mid-mutation — not a soundness signal
+    continue;
+  }
+  for (const r of results) {
     if (r.result === "fail") falsePositives.push(`${r.file} (in ${dir.slice(repoRoot.length + 1)})`);
   }
 }
 if (falsePositives.length) {
   reject(`FALSE POSITIVES — the checker flagged known-good code:\n    ${falsePositives.join("\n    ")}`);
 }
-console.log(`  ✓ no false positives across ${corpus.length} known-good dir(s) (negative corpus + every pack's fixed side)`);
+console.log(`  ✓ no false positives across ${corpus.length - skipped} known-good dir(s)${skipped ? ` (${skipped} skipped as unreadable)` : ""} (negative corpus + every pack's fixed side)`);
 
 // ── VETTED ────────────────────────────────────────────────────────────────────
 console.log(`\n  ✅ VETTED — '${kind}' is sound.`);

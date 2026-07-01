@@ -13,12 +13,16 @@ const here = dirname(fileURLToPath(import.meta.url));
 const core = resolve(here, "..");
 const GATE = join(core, "scripts", "fleet-checker-gate.ts");
 
-function runGate(proposalDir: string, wire = false): number {
+function runGate(proposalDir: string, wire = false): { code: number; out: string } {
   try {
-    execFileSync("npx", ["tsx", GATE, "--proposal", proposalDir, ...(wire ? ["--wire"] : [])], { cwd: core, stdio: "pipe" });
-    return 0;
+    const out = execFileSync("npx", ["tsx", GATE, "--proposal", proposalDir, ...(wire ? ["--wire"] : [])], {
+      cwd: core,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    return { code: 0, out };
   } catch (e: any) {
-    return typeof e?.status === "number" ? e.status : -1;
+    return { code: typeof e?.status === "number" ? e.status : -1, out: `${e?.stdout ?? ""}${e?.stderr ?? ""}` };
   }
 }
 
@@ -26,7 +30,8 @@ describe("fleet checker meta-gate", () => {
   it("VETS a sound proposal (proves its trap + zero false positives across the corpus)", () => {
     // The committed worked example: array-valued forbidden literal (jwt alg:none).
     const proposal = resolve(core, "..", "..", "fleet", "checker-proposals", "array-property-contains-forbidden-literal");
-    expect(runGate(proposal)).toBe(0); // exercises purity + prove + FP-scan + determinism end-to-end
+    const r = runGate(proposal); // exercises purity + prove + FP-scan + determinism end-to-end
+    expect(r.code, `gate did not VET — output:\n${r.out}`).toBe(0);
   }, 60_000);
 
   it("REJECTS an impure checker (side-effecting import) before it can run", () => {
@@ -34,6 +39,6 @@ describe("fleet checker meta-gate", () => {
     // A checker that reaches for the filesystem — must be refused at the purity gate.
     writeFileSync(join(dir, "checker.ts"), `import { readFileSync } from "node:fs";\nexport const checker = () => { readFileSync("/etc/passwd"); return { result: "pass" }; };\n`);
     writeFileSync(join(dir, "candidate.json"), JSON.stringify({ id: "x", binding: { check: { kind: basename(dir), params: {} }, test: { kind: "none" } } }));
-    expect(runGate(dir)).toBe(1);
+    expect(runGate(dir).code).toBe(1);
   }, 30_000);
 });
