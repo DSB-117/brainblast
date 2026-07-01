@@ -44,6 +44,7 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "jwt-verify-ignore-expiration": "auth-bypass",
   "cors-wildcard-origin": "auth-bypass",
   "https-reject-unauthorized-disabled": "auth-bypass",
+  "jwt-verify-algorithm-none": "auth-bypass",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

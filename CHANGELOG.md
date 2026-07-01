@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+**Self-extending checkers — the fleet can grow its own checker set (Move 2).**
+The remaining ceiling was that a footgun needing a brand-new *static shape* (not
+just a new value) had no checker and could never land. Now a proposal
+(`fleet/checker-proposals/<kind>/`: `checker.ts` + `candidate.json` + a
+`negative/` corpus) is vetted by **`npm run fleet:checker-gate`** — the soundness
+proof that makes an agent-written analyzer trustworthy:
+1. **purity** — the checker imports only `ts-morph`; no fs/net/exec/eval/dynamic-
+   import (it analyzes ASTs, it can't act);
+2. **trap** — it proves its own Finding RED→GREEN through the same `proveFinding`
+   gate;
+3. **no false positives** — it never returns `fail` across a large known-good
+   corpus (the proposal's `negative/` set + the fixed side of every bundled pack);
+4. **determinism** — proving twice is identical.
+Only if all pass is it VETTED; `--wire` then installs it into `src/checkers/` and
+prints the diff for a **human to review + commit** (the ratification seam — the
+fleet proves soundness, a person ratifies analysis code that runs on real repos).
+A runtime overlay (`registerChecker`) lets the gate prove a proposed checker
+exactly as it will run in production; production never calls it.
+- **Demonstrated end-to-end:** a proposed shape no existing checker covered —
+  `array-property-contains-forbidden-literal` (an options-object property whose
+  ARRAY value contains a forbidden literal) — was proven sound, self-wired into the
+  registry, and then **landed the trap that needed it**: `jwt-verify-algorithm-none`
+  (the `alg: none` JWT auth bypass). Corpus **12 → 13**, SLA green. 2 meta-gate
+  tests (VET a sound proposal; reject an impure checker); suite 692 pass / 1 skip.
+
 **The fleet's proof gate is now the generalized oracle (raises the autonomy
 ceiling).** `proveFinding` — the single RED→GREEN gate shared by `npm run fleet`
 and `synth-prove` — no longer runs only the static checker; it runs

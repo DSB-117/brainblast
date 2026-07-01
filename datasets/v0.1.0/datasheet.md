@@ -1,6 +1,6 @@
 # Datasheet — Brainblast Verified Traps v0.1.0
 
-_Generated 2026-06-30T02:29:47.317Z by pack-dataset@0.1.0. Records conform to [`schema/vti.schema.json`](../../schema/vti.schema.json)._
+_Generated 2026-07-01T20:06:15.761Z by pack-dataset@0.1.0. Records conform to [`schema/vti.schema.json`](../../schema/vti.schema.json)._
 
 ## Motivation
 A corpus of **machine-verified `error → fix → proof` records** for real SDK
@@ -9,10 +9,10 @@ checker fails (RED) on the vulnerable code and passes (GREEN) on the fix. This i
 the property scraped bug data lacks. See [`ROADMAP-TRAINING-DATA.md`](../../ROADMAP-TRAINING-DATA.md).
 
 ## Composition
-- **Records:** 12 (full lot), 3 (open sample).
+- **Records:** 13 (full lot), 3 (open sample).
 - **SDKs covered (12):** @metaplex-foundation/js, @meteora-ag/dlmm, @raydium-io/raydium-sdk-v2, @solana/web3.js, Jito (block engine / bundles), Jupiter Aggregator API, Pyth Network price feeds, SPL Token, Stripe Node SDK, cors, jsonwebtoken, node:https.
-- **Class distribution:** auth-bypass=3, unconfirmed-state=2, missing-slippage-guard=3, silent-zero-revenue=1, unchecked-staleness=1, missing-verification=1, other=1.
-- **Severity distribution:** high=11, critical=1.
+- **Class distribution:** auth-bypass=4, unconfirmed-state=2, missing-slippage-guard=3, silent-zero-revenue=1, unchecked-staleness=1, missing-verification=1, other=1.
+- **Severity distribution:** high=11, critical=2.
 - Each record carries: vulnerable + fixed snippet, checker fail/pass detail,
   RED→GREEN proof, source-doc URL, producing pack, severity, and trap class.
 

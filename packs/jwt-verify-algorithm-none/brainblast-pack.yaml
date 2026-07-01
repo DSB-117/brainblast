@@ -1,0 +1,5 @@
+id: jwt-verify-algorithm-none
+name: "Jwt Verify Algorithm None"
+version: 0.1.0
+author: brainblast-fleet
+description: "jwt.verify accepts the \"none\" algorithm — signature verification can be bypassed"
