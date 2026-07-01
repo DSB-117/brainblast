@@ -1,23 +1,24 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-01T20:06:15.792Z",
+  "generatedAt": "2026-07-01T20:56:57.153Z",
   "counts": {
-    "total": 13,
-    "proven": 13,
-    "sdks": 12,
-    "classes": 7
+    "total": 15,
+    "proven": 15,
+    "sdks": 14,
+    "classes": 8
   },
   "severityDistribution": {
-    "high": 11,
+    "high": 13,
     "critical": 2
   },
   "classDistribution": {
     "auth-bypass": 4,
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
-    "silent-zero-revenue": 1,
+    "silent-zero-revenue": 2,
     "unchecked-staleness": 1,
+    "wrong-constant": 1,
     "missing-verification": 1,
     "other": 1
   },
@@ -30,13 +31,15 @@
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "Pyth Network price feeds": 1,
+    "python": 1,
     "@raydium-io/raydium-sdk-v2": 1,
+    "Solana lamports arithmetic": 1,
     "@solana/web3.js": 1,
     "SPL Token": 1,
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 13
+    "synthetic-owned": 15
   },
   "quality": {
     "mean": 50,
@@ -44,8 +47,8 @@
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-07-01T20:06:14.169Z",
-    "newest": "2026-07-01T20:06:14.169Z"
+    "oldest": "2026-07-01T20:56:54.928Z",
+    "newest": "2026-07-01T20:56:54.928Z"
   },
   "tiers": [
     {
@@ -89,7 +92,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:06:14.169Z",
+      "capturedAt": "2026-07-01T20:56:54.928Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -97,7 +100,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:06:14.169Z"
+        "verifiedAt": "2026-07-01T20:56:54.928Z"
       }
     },
     {
@@ -112,7 +115,7 @@
       "score": 60,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:06:14.169Z",
+      "capturedAt": "2026-07-01T20:56:54.928Z",
       "sourceUrls": [
         "https://nodejs.org/api/https.html#httpsrequestoptions-callback"
       ],
@@ -120,7 +123,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:06:14.169Z"
+        "verifiedAt": "2026-07-01T20:56:54.928Z"
       }
     },
     {
@@ -135,7 +138,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:06:14.169Z",
+      "capturedAt": "2026-07-01T20:56:54.928Z",
       "sourceUrls": [
         "https://docs.jito.wtf/lowlatencytxnsend/"
       ],
@@ -143,7 +146,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:06:14.169Z"
+        "verifiedAt": "2026-07-01T20:56:54.928Z"
       }
     },
     {
@@ -158,7 +161,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:06:14.169Z",
+      "capturedAt": "2026-07-01T20:56:54.928Z",
       "sourceUrls": [
         "https://station.jup.ag/docs/apis/swap-api"
       ],
@@ -166,7 +169,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:06:14.169Z"
+        "verifiedAt": "2026-07-01T20:56:54.928Z"
       }
     },
     {
@@ -181,7 +184,7 @@
       "score": 60,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:06:14.169Z",
+      "capturedAt": "2026-07-01T20:56:54.928Z",
       "sourceUrls": [
         "https://github.com/auth0/node-jsonwebtoken#jwtverifytoken-secretorpublickey-options-callback"
       ],
@@ -189,7 +192,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:06:14.169Z"
+        "verifiedAt": "2026-07-01T20:56:54.928Z"
       }
     }
   ]

@@ -1,0 +1,5 @@
+id: python-fee-truncation-order
+name: "Python Fee Truncation Order"
+version: 0.1.0
+author: brainblast-fleet
+description: "Python fee calc divides before multiplying — integer truncation zeroes the fee"

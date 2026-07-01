@@ -1,31 +1,32 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-01T20:06:15.775Z",
+  "generatedAt": "2026-07-01T20:56:57.143Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 13
+      "count": 15
     }
   ],
   "counts": {
-    "vtis": 13,
-    "unique": 13,
+    "vtis": 15,
+    "unique": 15,
     "duplicates": 0,
-    "sdks": 12,
-    "classes": 7
+    "sdks": 14,
+    "classes": 8
   },
   "severityDistribution": {
-    "high": 11,
+    "high": 13,
     "critical": 2
   },
   "classDistribution": {
     "auth-bypass": 4,
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
-    "silent-zero-revenue": 1,
+    "silent-zero-revenue": 2,
     "unchecked-staleness": 1,
+    "wrong-constant": 1,
     "missing-verification": 1,
     "other": 1
   },
@@ -38,13 +39,15 @@
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "Pyth Network price feeds": 1,
+    "python": 1,
     "@raydium-io/raydium-sdk-v2": 1,
+    "Solana lamports arithmetic": 1,
     "@solana/web3.js": 1,
     "SPL Token": 1,
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 13
+    "synthetic-owned": 15
   },
   "quality": {
     "mean": 50,
@@ -53,7 +56,7 @@
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 13,
+      "medium": 15,
       "low": 0
     }
   },
@@ -74,10 +77,14 @@
         "@raydium-io/raydium-sdk-v2": 1
       },
       "silent-zero-revenue": {
-        "@metaplex-foundation/js": 1
+        "@metaplex-foundation/js": 1,
+        "python": 1
       },
       "unchecked-staleness": {
         "Pyth Network price feeds": 1
+      },
+      "wrong-constant": {
+        "Solana lamports arithmetic": 1
       },
       "missing-verification": {
         "SPL Token": 1
@@ -120,8 +127,16 @@
         "sdk": "@metaplex-foundation/js"
       },
       {
+        "class": "silent-zero-revenue",
+        "sdk": "python"
+      },
+      {
         "class": "unchecked-staleness",
         "sdk": "Pyth Network price feeds"
+      },
+      {
+        "class": "wrong-constant",
+        "sdk": "Solana lamports arithmetic"
       },
       {
         "class": "missing-verification",
@@ -133,8 +148,7 @@
       }
     ],
     "missingClasses": [
-      "immutable-after-deploy",
-      "wrong-constant"
+      "immutable-after-deploy"
     ]
   },
   "scored": [
@@ -220,9 +234,27 @@
       "score": 48
     },
     {
+      "trapId": "python-fee-truncation-order",
+      "sdk": "python",
+      "class": "silent-zero-revenue",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "raydium-compute-zero-slippage",
       "sdk": "@raydium-io/raydium-sdk-v2",
       "class": "missing-slippage-guard",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "solana-lamports-scaling-wrong-constant",
+      "sdk": "Solana lamports arithmetic",
+      "class": "wrong-constant",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",

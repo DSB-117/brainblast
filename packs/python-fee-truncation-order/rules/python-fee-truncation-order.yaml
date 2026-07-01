@@ -1,0 +1,39 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: python-fee-truncation-order
+severity: high
+title: Python fee calc divides before multiplying — integer truncation zeroes the fee
+component:
+  name: python
+  type: Language
+  version: ">=3.8"
+  sourceUrl: https://docs.python.org/3/reference/expressions.html#binary-arithmetic-operations
+detect:
+  modules: []
+  nameRegex: fee|payout|amount|price|charge
+  triggerCalls: []
+check:
+  kind: differential-io
+  params:
+    lang: python
+    entryFile: fee.py
+    export: platform_fee
+    cases:
+      - input:
+          - 5000
+          - 250
+        output: 125
+      - input:
+          - 9999
+          - 250
+        output: 249
+      - input:
+          - 123
+          - 500
+        output: 6
+      - input:
+          - 250000
+          - 300
+        output: 7500
+test:
+  kind: none

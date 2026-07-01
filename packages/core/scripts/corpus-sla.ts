@@ -24,7 +24,16 @@ import { loadPack } from "../src/packs.ts";
 import { resolveRules } from "../src/resolveRules.ts";
 import { reproducePair } from "../src/contrib/ingest.ts";
 import { dedupKey, type CorpusVti } from "../src/corpus.ts";
+import { ALL_BACKENDS, tier2Enabled } from "../src/oracle/index.ts";
 import type { Rule } from "../src/types.ts";
+
+// A rule needs code EXECUTION to verify if a Tier-2 backend (executed-test /
+// differential) binds it — the lower tiers only abstain on those kinds. The
+// offline SLA can't re-run them without BRAINBLAST_ORACLE_EXEC, so they're counted
+// UNVERIFIABLE (not a regression) — same posture as a missing pinned SDK.
+function needsExecToVerify(rule: Rule): boolean {
+  return ALL_BACKENDS.some((b) => b.tier >= 2 && b.supports(rule));
+}
 
 const GENERATOR = "corpus-sla@0.1.0";
 const repoRoot = join(fileURLToPath(new URL(".", import.meta.url)), "..", "..", "..");
@@ -107,6 +116,12 @@ for (const lot of LOTS) {
 
     const rule = ruleById.get(v.trapId);
     if (!rule) { unverifiable++; continue; }
+
+    // Behavioral / non-TS-Rust records (Tier-2) can't be re-proven offline; only a
+    // run with BRAINBLAST_ORACLE_EXEC executes them. Count as unverifiable, not a
+    // regression, so a Python/differential VTI in the corpus never falsely fails
+    // the integrity gate.
+    if (needsExecToVerify(rule) && !tier2Enabled()) { unverifiable++; continue; }
 
     const fname = (v.vulnerable as any)?.path ?? "candidate.ts";
     // Owned corpus, our machine → context "local". Re-proves through the

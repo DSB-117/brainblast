@@ -106,11 +106,14 @@ Rules of the road:
   - `compiles-against-sdk` — proves the trap by **type-checking against the pinned
     SDK** (catches a hallucinated / moved API — no shape needed, no code run).
   - `differential-io` — proves it by **behavior**: the vulnerable fixture produces
-    the wrong output and the fixed one the right output, executed in the sandbox
-    (semantic; also the path to other languages).
+    the wrong output and the fixed one the right output on a golden-I/O table,
+    executed in the sandbox. Semantic, and **multi-language (Move 3)**: set
+    `params.lang: "python"` (alongside the default `typescript`) and ship `.py`
+    fixtures — the oracle runs `python3` locally / `python:3.12-alpine` hardened.
+    Adding another language is one `LangRunner` in `src/oracle/backends/differential.ts`.
   The gate (`proveWithBest`) auto-routes by kind and records the winning `method`
   (plus any corroborating backends) on the scoreboard. Use these when a footgun
-  can't be expressed as a static shape.
+  can't be expressed as a static shape — or isn't in TypeScript/Rust at all.
 - A trap needing a **brand-new static checker shape** (not just a new value)?
   Propose a checker (Move 2). Add `fleet/checker-proposals/<kind>/` with
   `checker.ts` (exports `const checker`, imports only `ts-morph`), `candidate.json`
