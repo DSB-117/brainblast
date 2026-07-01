@@ -22,7 +22,8 @@
 // A proposal dir contains: checker.ts (exports `const checker`), candidate.json (a
 // Finding whose check.kind === the dir name), and negative/*.ts (safe code).
 
-import { existsSync, readFileSync, readdirSync, statSync, cpSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync, cpSync, writeFileSync, mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, resolve, basename } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { proveFinding } from "../src/synth/index.ts";
@@ -35,7 +36,10 @@ const coreRoot = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const repoRoot = join(coreRoot, "..", "..");
 const packsDir = join(repoRoot, "packs");
 const checkersDir = join(coreRoot, "src", "checkers");
-const stageRoot = join(coreRoot, ".synth");
+// Stage into a private temp dir, not the shared packages/core/.synth — otherwise a
+// concurrent proof (e.g. in the parallel test suite) can clobber our staged rule
+// mid-audit and flip a sound proposal to REJECTED.
+const stageRoot = mkdtempSync(join(tmpdir(), "checker-gate-stage-"));
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
