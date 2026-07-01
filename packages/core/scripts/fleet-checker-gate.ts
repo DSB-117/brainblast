@@ -22,7 +22,7 @@
 // A proposal dir contains: checker.ts (exports `const checker`), candidate.json (a
 // Finding whose check.kind === the dir name), and negative/*.ts (safe code).
 
-import { existsSync, readFileSync, readdirSync, statSync, cpSync, writeFileSync, mkdtempSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync, cpSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve, basename } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -80,7 +80,20 @@ for (const [re, why] of FORBIDDEN) if (re.test(src)) reject(`checker.ts is impur
 console.log("  ✓ purity: no fs/net/exec/eval — analyzes ASTs only");
 
 // ── load + register the proposed checker ──────────────────────────────────────
-const mod = await import(pathToFileURL(checkerPath).href);
+// Import from a temp copy INSIDE packages/core so the checker's bare `ts-morph`
+// import resolves against packages/core/node_modules. The proposal lives at
+// repo-root fleet/, where ts-morph isn't installed — importing it in place fails
+// in a clean checkout (CI). Cleaned up immediately after loading.
+const loadDir = mkdtempSync(join(coreRoot, ".checker-gate-load-"));
+cpSync(checkerPath, join(loadDir, "checker.ts"));
+let mod: any;
+try {
+  mod = await import(pathToFileURL(join(loadDir, "checker.ts")).href);
+} catch (e: any) {
+  rmSync(loadDir, { recursive: true, force: true });
+  reject(`checker.ts failed to load (it must import ONLY ts-morph): ${e?.message ?? e}`);
+}
+rmSync(loadDir, { recursive: true, force: true });
 const fn = mod.checker ?? mod.default;
 if (typeof fn !== "function") reject("checker.ts must `export const checker = (candidate, params) => ({ result, detail })`");
 registerChecker(kind, fn);
