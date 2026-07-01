@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-06-30T02:29:45.771Z",
+  "generatedAt": "2026-07-01T20:06:14.169Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 12,
+    "records": 13,
     "sdks": 12,
-    "packsScanned": 13
+    "packsScanned": 14
   },
   "classDistribution": {
-    "auth-bypass": 3,
+    "auth-bypass": 4,
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
     "silent-zero-revenue": 1,
@@ -43,6 +43,13 @@
     {
       "pack": "jupiter-quote-zero-slippage",
       "rule": "jupiter-quote-zero-slippage",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "jwt-verify-algorithm-none",
+      "rule": "jwt-verify-algorithm-none",
       "red": true,
       "green": true,
       "emitted": true

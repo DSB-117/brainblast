@@ -1,3 +1,4 @@
+import { checker as arrayPropertyContainsForbiddenLiteral } from "./arrayPropertyContainsForbiddenLiteral.ts";
 import { positionalArgIdentity } from "./positionalArgIdentity.ts";
 import { requiredCallWithOptions } from "./requiredCallWithOptions.ts";
 import { feeAllocationShape } from "./feeAllocationShape.ts";
@@ -46,10 +47,24 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker> = {
   "compiles-against-sdk": compilesAgainstSdk,
   // v0.9.1 — bound to the Tier-2 differential oracle; static abstains (cant_tell).
   "differential-io": differentialIo,
+  "array-property-contains-forbidden-literal": arrayPropertyContainsForbiddenLiteral as Checker,
 };
 
+// Move 2 — self-extending checkers. The meta-gate (scripts/fleet-checker-gate.ts)
+// registers a PROPOSED checker here so it can be proven exactly as it will run in
+// production, BEFORE it's committed to the static registry above. Production never
+// calls registerChecker — the overlay is empty in a normal audit. A registered
+// kind is only trusted after the meta-gate proves it sound AND a human ratifies
+// it into the static registry.
+const overlay: Record<string, Checker | RustChecker | ConfigChecker> = {};
+
+export function registerChecker(kind: string, fn: Checker | RustChecker | ConfigChecker): void {
+  overlay[kind] = fn;
+  if (!checkerKinds.includes(kind)) checkerKinds.push(kind);
+}
+
 export function runChecker(kind: string, c: Candidate | RustCandidate | ConfigCandidate, params: any): CheckOutcome {
-  const fn = registry[kind];
+  const fn = overlay[kind] ?? registry[kind];
   if (!fn) return { result: "cant_tell", detail: `Unknown checker kind '${kind}'.` };
   return (fn as (c: any, p: any) => CheckOutcome)(c, params);
 }

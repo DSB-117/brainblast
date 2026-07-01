@@ -1,27 +1,27 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-06-30T02:29:47.325Z",
+  "generatedAt": "2026-07-01T20:06:15.775Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 12
+      "count": 13
     }
   ],
   "counts": {
-    "vtis": 12,
-    "unique": 12,
+    "vtis": 13,
+    "unique": 13,
     "duplicates": 0,
     "sdks": 12,
     "classes": 7
   },
   "severityDistribution": {
     "high": 11,
-    "critical": 1
+    "critical": 2
   },
   "classDistribution": {
-    "auth-bypass": 3,
+    "auth-bypass": 4,
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
     "silent-zero-revenue": 1,
@@ -34,7 +34,7 @@
     "node:https": 1,
     "Jito (block engine / bundles)": 1,
     "Jupiter Aggregator API": 1,
-    "jsonwebtoken": 1,
+    "jsonwebtoken": 2,
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "Pyth Network price feeds": 1,
@@ -44,16 +44,16 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 12
+    "synthetic-owned": 13
   },
   "quality": {
-    "mean": 49,
+    "mean": 50,
     "median": 48,
     "min": 48,
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 12,
+      "medium": 13,
       "low": 0
     }
   },
@@ -62,7 +62,7 @@
       "auth-bypass": {
         "cors": 1,
         "node:https": 1,
-        "jsonwebtoken": 1
+        "jsonwebtoken": 2
       },
       "unconfirmed-state": {
         "Jito (block engine / bundles)": 1,
@@ -94,10 +94,6 @@
       {
         "class": "auth-bypass",
         "sdk": "node:https"
-      },
-      {
-        "class": "auth-bypass",
-        "sdk": "jsonwebtoken"
       },
       {
         "class": "unconfirmed-state",
@@ -177,6 +173,15 @@
       "corroborationCount": 0,
       "license": "synthetic-owned",
       "score": 48
+    },
+    {
+      "trapId": "jwt-verify-algorithm-none",
+      "sdk": "jsonwebtoken",
+      "class": "auth-bypass",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
     },
     {
       "trapId": "jwt-verify-ignore-expiration",

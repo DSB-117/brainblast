@@ -1,0 +1,42 @@
+{
+  "id": "jwt-verify-algorithm-none",
+  "severity": "critical",
+  "title": "jwt.verify accepts the \"none\" algorithm — signature verification can be bypassed",
+  "class": "auth-bypass",
+  "component": {
+    "name": "jsonwebtoken",
+    "type": "Auth",
+    "version": ">=9.0.0",
+    "sourceUrl": "https://github.com/auth0/node-jsonwebtoken#jwtverifytoken-secretorpublickey-options-callback"
+  },
+  "detect": {
+    "modules": ["jsonwebtoken"],
+    "nameRegex": "verif|auth|token|jwt|session|login",
+    "triggerCalls": ["verify"]
+  },
+  "binding": {
+    "check": {
+      "kind": "array-property-contains-forbidden-literal",
+      "params": {
+        "call": "verify",
+        "argIndex": 2,
+        "propName": "algorithms",
+        "forbiddenValue": "none",
+        "passDetail": "jwt.verify's algorithms allow-list does not include \"none\" — unsigned tokens are rejected.",
+        "failDetail": "jwt.verify is called with \"none\" in its algorithms allow-list. An attacker can forge a token with alg: none and no signature, and it will be accepted — full authentication bypass. Remove \"none\" from algorithms; pin to the real signing algorithm(s) (e.g. [\"RS256\"]).",
+        "absentCallDetail": "No jwt.verify call in this scope; this rule does not apply here.",
+        "absentArgDetail": "jwt.verify does not pass an algorithms allow-list literal; verify the resolved list excludes \"none\"."
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "auth.ts",
+    "vulnerable": "import jwt from \"jsonwebtoken\";\n\nexport function verifyToken(token: string, key: string) {\n  // VULNERABLE: \"none\" in the allow-list accepts unsigned, forged tokens.\n  return jwt.verify(token, key, { algorithms: [\"none\", \"HS256\"] });\n}\n",
+    "fixed": "import jwt from \"jsonwebtoken\";\n\nexport function verifyToken(token: string, key: string) {\n  // FIXED: only real signing algorithms are accepted.\n  return jwt.verify(token, key, { algorithms: [\"HS256\"] });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/auth0/node-jsonwebtoken#algorithms-supported",
+    "note": "The alg:none / algorithm-confusion bypass is a canonical JWT footgun. Detecting it needs an ARRAY-aware checker — the shape this proposal adds."
+  }
+}

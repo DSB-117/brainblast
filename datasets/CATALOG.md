@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-06-30T02:29:47.333Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-01T20:06:15.792Z from 1 lot(s): seed-vti.jsonl._
 
-**12 verified trap instances** across **12 SDKs** and **7 trap classes**. Quality score mean 49/100 (range 48–60). Freshness: 2026-06-30T02:29:45.771Z → 2026-06-30T02:29:45.771Z.
+**13 verified trap instances** across **12 SDKs** and **7 trap classes**. Quality score mean 50/100 (range 48–60). Freshness: 2026-07-01T20:06:14.169Z → 2026-07-01T20:06:14.169Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,7 +20,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-| auth-bypass | 3 |
+| auth-bypass | 4 |
 | missing-slippage-guard | 3 |
 | unconfirmed-state | 2 |
 | silent-zero-revenue | 1 |
@@ -32,11 +32,11 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | SDK | Count |
 |---|---|
+| jsonwebtoken | 2 |
 | cors | 1 |
 | node:https | 1 |
 | Jito (block engine / bundles) | 1 |
 | Jupiter Aggregator API | 1 |
-| jsonwebtoken | 1 |
 | @metaplex-foundation/js | 1 |
 | @meteora-ag/dlmm | 1 |
 | Pyth Network price feeds | 1 |
@@ -55,7 +55,7 @@ The open sample tier shows metadata + the RED→GREEN receipt (proof we have it)
 | https-reject-unauthorized-disabled | node:https | auth-bypass | critical | 60 | 0 | ✓/✓ |
 | jito-bundle-zero-tip | Jito (block engine / bundles) | unconfirmed-state | high | 48 | 0 | ✓/✓ |
 | jupiter-quote-zero-slippage | Jupiter Aggregator API | missing-slippage-guard | high | 48 | 0 | ✓/✓ |
-| jwt-verify-ignore-expiration | jsonwebtoken | auth-bypass | high | 48 | 0 | ✓/✓ |
+| jwt-verify-algorithm-none | jsonwebtoken | auth-bypass | critical | 60 | 0 | ✓/✓ |
 
 ---
 
