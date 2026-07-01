@@ -1,19 +1,19 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-06-30T02:29:47.333Z",
+  "generatedAt": "2026-07-01T20:06:15.792Z",
   "counts": {
-    "total": 12,
-    "proven": 12,
+    "total": 13,
+    "proven": 13,
     "sdks": 12,
     "classes": 7
   },
   "severityDistribution": {
     "high": 11,
-    "critical": 1
+    "critical": 2
   },
   "classDistribution": {
-    "auth-bypass": 3,
+    "auth-bypass": 4,
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
     "silent-zero-revenue": 1,
@@ -26,7 +26,7 @@
     "node:https": 1,
     "Jito (block engine / bundles)": 1,
     "Jupiter Aggregator API": 1,
-    "jsonwebtoken": 1,
+    "jsonwebtoken": 2,
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "Pyth Network price feeds": 1,
@@ -36,16 +36,16 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 12
+    "synthetic-owned": 13
   },
   "quality": {
-    "mean": 49,
+    "mean": 50,
     "min": 48,
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-06-30T02:29:45.771Z",
-    "newest": "2026-06-30T02:29:45.771Z"
+    "oldest": "2026-07-01T20:06:14.169Z",
+    "newest": "2026-07-01T20:06:14.169Z"
   },
   "tiers": [
     {
@@ -89,7 +89,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-06-30T02:29:45.771Z",
+      "capturedAt": "2026-07-01T20:06:14.169Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -97,7 +97,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-06-30T02:29:45.771Z"
+        "verifiedAt": "2026-07-01T20:06:14.169Z"
       }
     },
     {
@@ -112,7 +112,7 @@
       "score": 60,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-06-30T02:29:45.771Z",
+      "capturedAt": "2026-07-01T20:06:14.169Z",
       "sourceUrls": [
         "https://nodejs.org/api/https.html#httpsrequestoptions-callback"
       ],
@@ -120,7 +120,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-06-30T02:29:45.771Z"
+        "verifiedAt": "2026-07-01T20:06:14.169Z"
       }
     },
     {
@@ -135,7 +135,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-06-30T02:29:45.771Z",
+      "capturedAt": "2026-07-01T20:06:14.169Z",
       "sourceUrls": [
         "https://docs.jito.wtf/lowlatencytxnsend/"
       ],
@@ -143,7 +143,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-06-30T02:29:45.771Z"
+        "verifiedAt": "2026-07-01T20:06:14.169Z"
       }
     },
     {
@@ -158,7 +158,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-06-30T02:29:45.771Z",
+      "capturedAt": "2026-07-01T20:06:14.169Z",
       "sourceUrls": [
         "https://station.jup.ag/docs/apis/swap-api"
       ],
@@ -166,22 +166,22 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-06-30T02:29:45.771Z"
+        "verifiedAt": "2026-07-01T20:06:14.169Z"
       }
     },
     {
-      "trapId": "jwt-verify-ignore-expiration",
-      "title": "jwt.verify called with ignoreExpiration: true — expired tokens are accepted as valid",
+      "trapId": "jwt-verify-algorithm-none",
+      "title": "jwt.verify accepts the \"none\" algorithm — signature verification can be bypassed",
       "sdk": {
         "name": "jsonwebtoken",
         "version": ">=9.0.0"
       },
-      "severity": "high",
+      "severity": "critical",
       "class": "auth-bypass",
-      "score": 48,
+      "score": 60,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-06-30T02:29:45.771Z",
+      "capturedAt": "2026-07-01T20:06:14.169Z",
       "sourceUrls": [
         "https://github.com/auth0/node-jsonwebtoken#jwtverifytoken-secretorpublickey-options-callback"
       ],
@@ -189,7 +189,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-06-30T02:29:45.771Z"
+        "verifiedAt": "2026-07-01T20:06:14.169Z"
       }
     }
   ]

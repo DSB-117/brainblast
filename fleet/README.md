@@ -111,9 +111,16 @@ Rules of the road:
   The gate (`proveWithBest`) auto-routes by kind and records the winning `method`
   (plus any corroborating backends) on the scoreboard. Use these when a footgun
   can't be expressed as a static shape.
-- A trap needing a **brand-new static checker shape** (not just a new value) is
-  still a larger task (add + register + test a checker in `src/checkers/`) — that's
-  Move 2 (self-extending checkers), not a one-file candidate.
+- A trap needing a **brand-new static checker shape** (not just a new value)?
+  Propose a checker (Move 2). Add `fleet/checker-proposals/<kind>/` with
+  `checker.ts` (exports `const checker`, imports only `ts-morph`), `candidate.json`
+  (a Finding with `check.kind = <kind>`), and `negative/*.ts` (safe code it must
+  NOT flag). Then `npm run fleet:checker-gate -- --proposal fleet/checker-proposals/<kind>`
+  vets it — purity, proves the trap RED→GREEN, **zero false positives across the
+  known-good corpus**, determinism. `--wire` installs it into `src/checkers/`; a
+  human reviews the diff and commits to ratify. See
+  `fleet/checker-proposals/array-property-contains-forbidden-literal/` for a worked
+  example.
 
 ## Autonomy
 

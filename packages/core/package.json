@@ -69,6 +69,7 @@
     "fleet": "tsx scripts/fleet.ts",
     "fleet:discover": "tsx scripts/fleet-discover.ts",
     "fleet:ledger": "tsx scripts/fleet-ledger.ts",
+    "fleet:checker-gate": "tsx scripts/fleet-checker-gate.ts",
     "sla": "tsx scripts/corpus-sla.ts",
     "bench": "tsx scripts/bench.ts",
     "synth": "tsx scripts/synth-prove.ts",
