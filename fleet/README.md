@@ -101,8 +101,19 @@ Rules of the road:
   `missing-slippage-guard`, `missing-verification`, `other`. If the keyword
   heuristic would mis-bucket it (the scoreboard prints a ⚠ class-drift warning),
   add `<id>: <class>` to `CLASS_BY_RULE` in `packages/core/src/vtiClass.ts`.
-- A trap needing a **new checker shape** is a larger task (add a checker in
-  `src/checkers/`, register it, test it) — out of scope for a one-file candidate.
+- **Beyond static shapes — the gate runs the generalized oracle.** A candidate
+  isn't limited to shape-matching. Its `check.kind` can bind:
+  - `compiles-against-sdk` — proves the trap by **type-checking against the pinned
+    SDK** (catches a hallucinated / moved API — no shape needed, no code run).
+  - `differential-io` — proves it by **behavior**: the vulnerable fixture produces
+    the wrong output and the fixed one the right output, executed in the sandbox
+    (semantic; also the path to other languages).
+  The gate (`proveWithBest`) auto-routes by kind and records the winning `method`
+  (plus any corroborating backends) on the scoreboard. Use these when a footgun
+  can't be expressed as a static shape.
+- A trap needing a **brand-new static checker shape** (not just a new value) is
+  still a larger task (add + register + test a checker in `src/checkers/`) — that's
+  Move 2 (self-extending checkers), not a one-file candidate.
 
 ## Autonomy
 

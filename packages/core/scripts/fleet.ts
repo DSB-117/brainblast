@@ -43,6 +43,7 @@ interface FleetRow {
   sdk?: string;
   reason?: string;
   classWarning?: boolean;
+  method?: string;
 }
 
 function discover(): string[] {
@@ -55,7 +56,7 @@ function discover(): string[] {
 }
 
 // Promote a PROVEN candidate's staged rule + fixtures into a standalone pack.
-function promote(f: Finding, staged: NonNullable<ReturnType<typeof proveFinding>["staged"]>): void {
+function promote(f: Finding, staged: NonNullable<Awaited<ReturnType<typeof proveFinding>>["staged"]>): void {
   const dir = join(packsDir, f.id);
   mkdirSync(join(dir, "rules"), { recursive: true });
   mkdirSync(join(dir, "fixtures", f.id, "vulnerable"), { recursive: true });
@@ -85,7 +86,7 @@ for (const file of files) {
     rows.push({ id: basename(file), verdict: "DRAFT", reason: `malformed JSON: ${e?.message ?? e}` });
     continue;
   }
-  const outcome = proveFinding(f, stageRoot);
+  const outcome = await proveFinding(f, stageRoot);
   const sdk = f.component?.name;
   if (outcome.verdict !== "PROVEN" || !outcome.staged) {
     console.log(`  ✗ ${f.id.padEnd(40)} DRAFT — ${outcome.reason}`);
@@ -97,14 +98,15 @@ for (const file of files) {
   const declared = f.class;
   const effective = CLASS_BY_RULE[f.id] ?? classifyTrap({ id: f.id, title: f.title } as any);
   const classWarning = declared != null && declared !== effective;
+  const via = outcome.method ? ` via ${outcome.method}` : "";
   if (!exists && !dryRun) {
     promote(f, outcome.staged);
-    console.log(`  ✓ ${f.id.padEnd(40)} PROVEN → promoted (class ${effective}${classWarning ? ` ⚠ declared ${declared}` : ""})`);
-    rows.push({ id: f.id, verdict: "PROMOTED", class: effective, sdk, classWarning });
+    console.log(`  ✓ ${f.id.padEnd(40)} PROVEN${via} → promoted (class ${effective}${classWarning ? ` ⚠ declared ${declared}` : ""})`);
+    rows.push({ id: f.id, verdict: "PROMOTED", class: effective, sdk, classWarning, method: outcome.method ?? undefined });
   } else {
     const tag = dryRun ? "PROVEN (dry-run)" : "PROVEN — already in packs/";
-    console.log(`  ✓ ${f.id.padEnd(40)} ${tag} (class ${effective}${classWarning ? ` ⚠ declared ${declared}` : ""})`);
-    rows.push({ id: f.id, verdict: exists ? "ALREADY" : "PROMOTED", class: effective, sdk, classWarning });
+    console.log(`  ✓ ${f.id.padEnd(40)} ${tag}${via} (class ${effective}${classWarning ? ` ⚠ declared ${declared}` : ""})`);
+    rows.push({ id: f.id, verdict: exists ? "ALREADY" : "PROMOTED", class: effective, sdk, classWarning, method: outcome.method ?? undefined });
   }
 }
 
