@@ -17,6 +17,7 @@ import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync, existsSy
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { auditWithRule } from "../src/audit.ts";
+import { ALL_BACKENDS, proveWithBest, proofMethod } from "../src/oracle/index.ts";
 import { listBundledPacks } from "../src/bundledPacks.ts";
 import { loadPack } from "../src/packs.ts";
 import { validatePack } from "../src/pack.ts";
@@ -84,22 +85,40 @@ for (const bundled of listBundledPacks()) {
 
   for (const rule of rules) {
     const vr = statusOf.get(rule.id);
-    if (!vr || vr.status !== "ok") {
+    const base = join(bundled.dir, "fixtures", rule.id);
+    const vulnDir = join(base, "vulnerable");
+    const fixedDir = join(base, "fixed");
+
+    let method: string = (vr?.method as string) ?? "static-checker";
+    let proven = vr?.status === "ok";
+
+    // Tier-2 (executed / differential) rules ABSTAIN in the offline validate gate
+    // ("unverifiable" — they execute the candidate). These are OUR OWN bundled
+    // packs, so prove them with the oracle in the local light isolate — the same
+    // gate the fleet uses — rather than dropping every behavioral (and every
+    // non-TS/Rust) VTI from the corpus.
+    if (!proven && vr?.status === "unverifiable") {
+      const result = await proveWithBest(ALL_BACKENDS, vulnDir, fixedDir, rule, "local");
+      if (result.proven) {
+        proven = true;
+        method = (proofMethod(result) as string) ?? method;
+      }
+    }
+
+    if (!proven) {
       proofLog.push({
         pack: manifest.id, rule: rule.id,
         red: vr?.status !== "red-failed" && vr?.status !== "missing-fixtures",
-        green: vr?.status === "ok",
+        green: false,
         emitted: false,
         note: vr ? `${vr.status}: ${vr.detail}` : "rule not validated",
       });
       continue;
     }
 
-    const base = join(bundled.dir, "fixtures", rule.id);
-    const vulnDir = join(base, "vulnerable");
-    const fixedDir = join(base, "fixed");
-
-    const lang = (rule.detect.lang ?? "typescript") as "typescript" | "rust" | "config";
+    // Language of the trap: differential-io carries it in params.lang (Move 3);
+    // otherwise the rule's detect.lang; default typescript.
+    const lang = ((rule.check?.params as any)?.lang ?? rule.detect.lang ?? "typescript") as string;
     const vulnTarget = firstFail(vulnDir, rule);
     const fixedTarget = anyCheck(fixedDir, rule);
     const vuln = snippetFor(vulnTarget, vulnDir);
@@ -126,7 +145,7 @@ for (const bundled of listBundledPacks()) {
       redGreenProof: {
         red: true,
         green: true,
-        method: vr.method ?? "static-checker",
+        method,
         checkKind: rule.check?.kind ?? null,
         verifiedAt: now,
       },

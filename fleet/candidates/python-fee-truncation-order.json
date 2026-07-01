@@ -1,0 +1,43 @@
+{
+  "id": "python-fee-truncation-order",
+  "severity": "high",
+  "title": "Python fee calc divides before multiplying — integer truncation zeroes the fee",
+  "class": "silent-zero-revenue",
+  "component": {
+    "name": "python",
+    "type": "Language",
+    "version": ">=3.8",
+    "sourceUrl": "https://docs.python.org/3/reference/expressions.html#binary-arithmetic-operations"
+  },
+  "detect": {
+    "modules": [],
+    "nameRegex": "fee|payout|amount|price|charge",
+    "triggerCalls": []
+  },
+  "binding": {
+    "check": {
+      "kind": "differential-io",
+      "params": {
+        "lang": "python",
+        "entryFile": "fee.py",
+        "export": "platform_fee",
+        "cases": [
+          { "input": [5000, 250], "output": 125 },
+          { "input": [9999, 250], "output": 249 },
+          { "input": [123, 500], "output": 6 },
+          { "input": [250000, 300], "output": 7500 }
+        ]
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "fee.py",
+    "vulnerable": "def platform_fee(amount_cents, bps):\n    # VULNERABLE: integer-divides FIRST, so any amount < 10000 cents truncates to\n    # 0 and the fee is silently zero. Looks plausible; loses revenue on every small\n    # charge.\n    return amount_cents // 10000 * bps\n",
+    "fixed": "def platform_fee(amount_cents, bps):\n    # FIXED: multiply before the integer divide — the fee is correct.\n    return amount_cents * bps // 10000\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://docs.python.org/3/reference/expressions.html#binary-arithmetic-operations",
+    "note": "Operation-order integer truncation is a classic 'looks right, computes wrong' footgun with no static shape — it can only be proven by behavior (golden I/O), which is exactly what the multi-language differential oracle does."
+  }
+}

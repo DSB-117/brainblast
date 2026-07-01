@@ -3,26 +3,27 @@
   "dataset": "brainblast-verified-traps",
   "version": "0.1.0",
   "generator": "pack-dataset@0.1.0",
-  "generatedAt": "2026-07-01T20:06:15.761Z",
+  "generatedAt": "2026-07-01T20:56:57.136Z",
   "recordSchema": "schema/vti.schema.json",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "full": 13,
+    "full": 15,
     "sample": 3,
-    "sdks": 12
+    "sdks": 14
   },
   "classDistribution": {
     "auth-bypass": 4,
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
-    "silent-zero-revenue": 1,
+    "silent-zero-revenue": 2,
     "unchecked-staleness": 1,
+    "wrong-constant": 1,
     "missing-verification": 1,
     "other": 1
   },
   "severityDistribution": {
-    "high": 11,
+    "high": 13,
     "critical": 2
   },
   "sdks": [
@@ -34,10 +35,12 @@
     "Jupiter Aggregator API",
     "Pyth Network price feeds",
     "SPL Token",
+    "Solana lamports arithmetic",
     "Stripe Node SDK",
     "cors",
     "jsonwebtoken",
-    "node:https"
+    "node:https",
+    "python"
   ],
   "lots": {
     "sample": {

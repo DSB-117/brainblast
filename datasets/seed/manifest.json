@@ -1,20 +1,21 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-01T20:06:14.169Z",
+  "generatedAt": "2026-07-01T20:56:54.928Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 13,
-    "sdks": 12,
-    "packsScanned": 14
+    "records": 15,
+    "sdks": 14,
+    "packsScanned": 15
   },
   "classDistribution": {
     "auth-bypass": 4,
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
-    "silent-zero-revenue": 1,
+    "silent-zero-revenue": 2,
     "unchecked-staleness": 1,
+    "wrong-constant": 1,
     "missing-verification": 1,
     "other": 1
   },
@@ -83,6 +84,13 @@
       "emitted": true
     },
     {
+      "pack": "python-fee-truncation-order",
+      "rule": "python-fee-truncation-order",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "raydium-compute-zero-slippage",
       "rule": "raydium-compute-zero-slippage",
       "red": true,
@@ -93,9 +101,8 @@
       "pack": "solana-lamports-scaling-wrong-constant",
       "rule": "solana-lamports-scaling-wrong-constant",
       "red": true,
-      "green": false,
-      "emitted": false,
-      "note": "unverifiable: Tier-2 differential rule — executes the candidate, so it is not run by the default offline gate. Prove it with: brainblast verify <pack> --oracle=differential"
+      "green": true,
+      "emitted": true
     },
     {
       "pack": "solana-sendtx-unconfirmed",

@@ -27,6 +27,7 @@ fleet/ledger-cache.json
 # Oracle sandbox temp dirs (differential / executed-test runs)
 packages/core/.brainblast-oracle-*/
 packages/core/.oracle-diff-*/
+packages/core/.oracle-sbx-*/
 
 # checker meta-gate: temp dir for loading a proposed checker
 packages/core/.checker-gate-load-*/

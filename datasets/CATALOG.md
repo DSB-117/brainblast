@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-01T20:06:15.792Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-01T20:56:57.153Z from 1 lot(s): seed-vti.jsonl._
 
-**13 verified trap instances** across **12 SDKs** and **7 trap classes**. Quality score mean 50/100 (range 48–60). Freshness: 2026-07-01T20:06:14.169Z → 2026-07-01T20:06:14.169Z.
+**15 verified trap instances** across **14 SDKs** and **8 trap classes**. Quality score mean 50/100 (range 48–60). Freshness: 2026-07-01T20:56:54.928Z → 2026-07-01T20:56:54.928Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -23,8 +23,9 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | auth-bypass | 4 |
 | missing-slippage-guard | 3 |
 | unconfirmed-state | 2 |
-| silent-zero-revenue | 1 |
+| silent-zero-revenue | 2 |
 | unchecked-staleness | 1 |
+| wrong-constant | 1 |
 | missing-verification | 1 |
 | other | 1 |
 
@@ -40,7 +41,9 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | @metaplex-foundation/js | 1 |
 | @meteora-ag/dlmm | 1 |
 | Pyth Network price feeds | 1 |
+| python | 1 |
 | @raydium-io/raydium-sdk-v2 | 1 |
+| Solana lamports arithmetic | 1 |
 | @solana/web3.js | 1 |
 | SPL Token | 1 |
 | Stripe Node SDK | 1 |

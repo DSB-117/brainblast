@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+**Multi-language behavioral proving (Move 3) — the fleet is no longer limited to
+TypeScript + Rust.** The differential oracle (golden-I/O: run a function on
+recorded inputs, RED if outputs diverge) is language-agnostic in concept; it was
+just hardwired to a Node harness. It's now a per-language `LangRunner`, with
+**Python** added alongside TS/JS. A `differential-io` Finding can set
+`params.lang: "python"` and ship `.py` fixtures + a golden table; the oracle runs
+them in the sandbox (`python3` locally / `python:3.12-alpine` hardened) with the
+IDENTICAL exit-code contract (0 GREEN / 1 RED / 2 UNKNOWN), so both isolation
+tiers and the whole path are locally testable. Adding Go/Ruby later is one more
+`LangRunner`.
+- **Proven end-to-end:** a real Python footgun with *no static shape* —
+  operation-order integer truncation that silently zeroes a fee
+  (`amount // 10000 * bps`) — proves RED→GREEN through the fleet gate and **lands
+  in the corpus** (`lang: "python"`, `method: "differential"`, class
+  `silent-zero-revenue`).
+- **Pipeline made behavioral-aware.** `gen:vti` now proves Tier-2 (executed /
+  differential) rules on OUR OWN bundled packs via the oracle (local light
+  isolate) instead of dropping them — so behavioral *and* non-TS/Rust VTIs finally
+  reach the corpus. This also recovered the previously-skipped
+  `solana-lamports-scaling-wrong-constant` differential VTI (corpus 13 → 15). The
+  SLA counts a Tier-2 record it can't re-run offline as **unverifiable** (not a
+  regression); `BRAINBLAST_ORACLE_EXEC=1` re-proves all 15.
+- 3 Python differential tests (RED / GREEN / UNKNOWN-on-harness-error); suite
+  **697 pass / 1 skip**, typecheck + build clean.
+
 **Self-extending checkers — the fleet can grow its own checker set (Move 2).**
 The remaining ceiling was that a footgun needing a brand-new *static shape* (not
 just a new value) had no checker and could never land. Now a proposal

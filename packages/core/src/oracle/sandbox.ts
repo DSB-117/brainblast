@@ -74,16 +74,22 @@ export function makeSandboxDir(prefix = ".oracle-sbx-"): string {
   return mkdtempSync(join(packageRoot(), prefix));
 }
 
-// Copy the candidate's TypeScript sources into the sandbox, preserving structure.
-// Skips node_modules, dotfiles, and .d.ts. Returns the copied file paths.
-export function copyCandidate(srcDir: string, destDir: string): string[] {
+// Copy the candidate's sources into the sandbox, preserving structure. Skips
+// node_modules, dotfiles, and .d.ts. `ext` selects which files to copy — default
+// is the TS/JS set; a language backend (e.g. Python) passes its own. Returns the
+// copied file paths.
+export function copyCandidate(
+  srcDir: string,
+  destDir: string,
+  ext: RegExp = /\.(ts|tsx|mts|cts|js|mjs|cjs)$/,
+): string[] {
   const copied: string[] = [];
   const walk = (cur: string) => {
     for (const entry of readdirSync(cur, { withFileTypes: true })) {
       if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
       const abs = join(cur, entry.name);
       if (entry.isDirectory()) walk(abs);
-      else if (/\.(ts|tsx|mts|cts|js|mjs|cjs)$/.test(entry.name) && !entry.name.endsWith(".d.ts")) {
+      else if (ext.test(entry.name) && !entry.name.endsWith(".d.ts")) {
         const dest = join(destDir, relative(srcDir, abs));
         mkdirSync(dirname(dest), { recursive: true });
         copyFileSync(abs, dest);
