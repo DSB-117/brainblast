@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+**The fleet's proof gate is now the generalized oracle (raises the autonomy
+ceiling).** `proveFinding` — the single RED→GREEN gate shared by `npm run fleet`
+and `synth-prove` — no longer runs only the static checker; it runs
+`proveWithBest(static → compiler → executed → differential)`. Whichever backend a
+Finding's `check.kind` selects proves it:
+- **static** — shape checks (unchanged; no code execution, the default).
+- **compiler** (`compiles-against-sdk`) — proves a trap by type-checking against
+  the *pinned* SDK. Catches hallucinated / moved APIs with **no syntactic shape**.
+- **executed / differential** — proves a trap by **behavior** (vulnerable →
+  wrong output, fixed → right output) in the sandbox — semantic, and the
+  multi-language path. Multiple backends that agree are recorded as
+  **corroboration** (raises confidence/price).
+This means the fleet can now autonomously land footguns that don't fit any static
+shape, using the already-shipped v0.9.0–0.9.1 oracle. `synth-prove` was folded
+onto the shared gate (one gate, no drift); the proof `method` is surfaced in the
+fleet scoreboard. Static-shape candidates are byte-for-byte unchanged (still
+proven by `static-checker`, no code run). Suite 688 pass / 1 skip; the three seed
+auth-bypass traps still prove via `static-checker`, and `synth:bags` now proves
+via `static-checker + executed-test`.
+
 ## v0.9.7 — 2026-06-30
 
 **The autonomous scout fleet (R7).** The data factory now sources its own supply:

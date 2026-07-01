@@ -33,39 +33,40 @@ function booleanFlagFinding(over: Partial<Finding> = {}): Finding {
   } as Finding;
 }
 
-function withStage<T>(fn: (stageRoot: string) => T): T {
+async function withStage(fn: (stageRoot: string) => Promise<void>): Promise<void> {
   const dir = mkdtempSync(join(tmpdir(), "fleet-"));
   try {
-    return fn(dir);
+    await fn(dir);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 }
 
 describe("fleet gate — proveFinding", () => {
-  it("PROVEN on a boolean insecure-flag trap (exercises boolean-literal support)", () => {
-    withStage((stage) => {
-      const out = proveFinding(booleanFlagFinding(), stage);
+  it("PROVEN on a boolean insecure-flag trap (exercises boolean-literal support), via the static backend", async () => {
+    await withStage(async (stage) => {
+      const out = await proveFinding(booleanFlagFinding(), stage);
       expect(out.verdict).toBe("PROVEN");
       expect(out.redOk).toBe(true);
       expect(out.greenOk).toBe(true);
+      expect(out.method).toBe("static-checker"); // shape check → proven by static, no code run
       expect(out.staged?.ruleFile).toBeDefined();
     });
   });
 
-  it("DRAFTs (never proves) when check.kind is not a vetted checker", () => {
-    withStage((stage) => {
+  it("DRAFTs (never proves) when check.kind is not a vetted checker", async () => {
+    await withStage(async (stage) => {
       const f = booleanFlagFinding({
         binding: { check: { kind: "totally-made-up-checker", params: {} }, test: { kind: "none" } },
       } as any);
-      const out = proveFinding(f, stage);
+      const out = await proveFinding(f, stage);
       expect(out.verdict).toBe("DRAFT");
       expect(out.reason).toMatch(/not a vetted checker/);
     });
   });
 
-  it("DRAFTs when the fixed fixture still trips the rule (wrong colors)", () => {
-    withStage((stage) => {
+  it("DRAFTs when the fixed fixture still trips the rule (wrong colors)", async () => {
+    await withStage(async (stage) => {
       // Fixed fixture ALSO sets the forbidden value → GREEN gate fails.
       const f = booleanFlagFinding({
         fixtures: {
@@ -74,7 +75,7 @@ describe("fleet gate — proveFinding", () => {
           fixed: "import https from \"node:https\";\nexport function f(h: string) {\n  return https.request({ hostname: h, rejectUnauthorized: false });\n}\n",
         },
       });
-      const out = proveFinding(f, stage);
+      const out = await proveFinding(f, stage);
       expect(out.verdict).toBe("DRAFT");
       expect(out.greenOk).toBe(false);
     });

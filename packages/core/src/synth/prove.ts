@@ -2,16 +2,25 @@
 // `synth-prove` CLI and the `fleet` orchestrator run the EXACT same RED→GREEN
 // check — there is one gate, no second implementation to drift.
 //
-// No taste, no LLM: stage the Finding's rule + fixtures, run the existing engine,
-// and let the audit's own colors decide. PROVEN only when the rule fails on the
-// vulnerable fixture and passes on the fixed one, with exactly one check each.
+// No taste, no LLM: stage the Finding's rule + fixtures and let the engine's own
+// colors decide. PROVEN only when the rule goes RED on the vulnerable fixture and
+// GREEN on the fixed one.
+//
+// The proof is run through the GENERALIZED ORACLE (`proveWithBest`), not just the
+// static checker: whichever backend the rule's `check.kind` selects proves it —
+// `static` for shape checks, `compiler` for compiles-against-sdk (hallucinated/
+// moved APIs, no shape needed), `executed`/`differential` for behavioral golden-
+// I/O (semantic, and the multi-language path via the sandbox). Each backend
+// self-gates on `supports(rule)`, so a static-shape finding still proves purely
+// statically — no code execution unless the finding deliberately binds a
+// behavioral kind.
 
 import { join } from "node:path";
 import { rmSync } from "node:fs";
-import { audit } from "../audit.ts";
 import { loadRules } from "../loadRules.ts";
 import { checkerKinds } from "../checkers/index.ts";
 import { testKinds } from "../testTemplates/index.ts";
+import { ALL_BACKENDS, proveWithBest, proofMethod } from "../oracle/index.ts";
 import { stageFinding } from "./synthesize.ts";
 import type { Finding } from "./types.ts";
 
@@ -22,10 +31,19 @@ export interface ProveOutcome {
   reason?: string; // why it DRAFTed (vetted-kind miss, load failure, wrong colors)
   redOk: boolean;
   greenOk: boolean;
+  method?: string | null; // the strongest proof method (static-checker | compiler | executed | differential | compound)
+  corroborations?: string[]; // other backends that also proved it (confidence/price signal)
   staged?: { ruleFile: string; vulnerableDir: string; fixedDir: string };
 }
 
-export function proveFinding(f: Finding, stageRoot: string): ProveOutcome {
+// `context` mirrors the oracle's isolation model: "local" (light isolate for our
+// own authored fixtures) vs "ingest" (hardened container that refuses to fall
+// back). The fleet/synth run authored fixtures locally.
+export async function proveFinding(
+  f: Finding,
+  stageRoot: string,
+  context: "local" | "ingest" = "local",
+): Promise<ProveOutcome> {
   // Gate 1 — vetted kinds (cheapest; before staging anything).
   const unknownCheck = !checkerKinds.includes(f.binding.check.kind);
   const unknownTest = !testKinds.includes(f.binding.test.kind);
@@ -50,22 +68,39 @@ export function proveFinding(f: Finding, stageRoot: string): ProveOutcome {
   } catch (e: any) {
     return { verdict: "DRAFT", reason: `staged rule failed loadRules: ${e?.message ?? e}`, redOk: false, greenOk: false, staged };
   }
+  const rule = rules.find((r) => r.id === f.id) ?? rules[0];
+  if (!rule) {
+    return { verdict: "DRAFT", reason: "no rule loaded from the staged Finding", redOk: false, greenOk: false, staged };
+  }
 
-  // Gate 3 — RED on vulnerable: exactly one check, this rule, fail.
-  const vuln = audit(staged.vulnerableDir, rules);
-  const redOk = vuln.checks.length === 1 && vuln.checks[0].ruleId === f.id && vuln.checks[0].result === "fail";
+  // Gate 3+4 — RED→GREEN via the generalized oracle. The eligible backend is
+  // chosen by the rule (static → compiler → executed → differential); the first
+  // that proves RED→GREEN wins, others corroborate.
+  const result = await proveWithBest(ALL_BACKENDS, staged.vulnerableDir, staged.fixedDir, rule, context);
 
-  // Gate 4 — GREEN on fixed: exactly one check, this rule, pass.
-  const fixed = audit(staged.fixedDir, rules);
-  const greenOk = fixed.checks.length === 1 && fixed.checks[0].ruleId === f.id && fixed.checks[0].result === "pass";
+  if (result.proven) {
+    return {
+      verdict: "PROVEN",
+      redOk: true,
+      greenOk: true,
+      method: proofMethod(result) as string,
+      corroborations: result.corroborations,
+      staged,
+    };
+  }
 
-  if (redOk && greenOk) return { verdict: "PROVEN", redOk, greenOk, staged };
-
+  // DRAFT — surface how far each attempted backend got (for the scoreboard).
+  const first = result.attempts[0];
+  const redOk = result.attempts.some((a) => a.red);
+  const greenOk = result.attempts.some((a) => a.green);
+  const tried = result.attempts.length
+    ? result.attempts.map((a) => `${a.method}(red=${a.red},green=${a.green})`).join(", ")
+    : "no eligible backend for this check.kind";
   return {
     verdict: "DRAFT",
-    reason: `proof failed: vulnerable=${redOk ? "RED" : "wrong"}, fixed=${greenOk ? "GREEN" : "wrong"} — binding (check='${f.binding.check.kind}') is structurally unfit for this Finding`,
-    redOk,
-    greenOk,
+    reason: `proof failed [${tried}] — the binding (check='${f.binding.check.kind}') is unfit for this Finding, or its oracle (compiler SDK / sandbox) was unavailable`,
+    redOk: first ? redOk : false,
+    greenOk: first ? greenOk : false,
     staged,
   };
 }
