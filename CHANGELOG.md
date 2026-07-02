@@ -2,6 +2,40 @@
 
 ## Unreleased
 
+Found by a systematic clean-slate functional pass over every shipped surface
+(core auditor, protocol packs, data factory, bench, marketplace, fleet, MCP).
+
+**Fix (critical): `brainblast mcp` exited almost immediately after starting,
+before it could ever handle a request** — broke the entire MCP integration
+(`brainblast_audit`/`_diff`/`_osv_check`/`_verify`/`_recall`) for any real
+client (Claude Code, Cursor, ...) that spawns the process and expects a live
+stdio connection. `server.connect(transport)` resolves as soon as the stdio
+transport's stdin listener is attached, not when the client disconnects;
+`process.exit(0)` right after killed the server before the first request
+could arrive. Fixed by blocking forever (the same idiom `watch` already uses)
+instead of exiting. 1 regression test (`test/mcp.stdio.test.ts`) confirms the
+server responds with a clean, single-line JSON-RPC `tools/list` result.
+
+**Fix: `brainblast --packs <name> <dir>` silently scanned the wrong directory
+and always reported a false "ready" verdict.** The top-level target-dir
+resolver excluded the value following `--since`/`--oracle` from candidate
+target dirs, but not `--packs` — so `--packs jupiter <dir>` (and the README's
+own documented `--packs jupiter,pyth .`) picked the pack-list value itself
+("jupiter") as the scan target instead of the real directory, silently
+creating a stray `jupiter/` dir and never actually running the pack's rule
+against the intended code. 1 regression test.
+
+**Fix: `npm run bench -- --self-test` silently passed traps it wasn't actually
+checking.** Grading used the static checker only (`auditWithRule`), but the
+eval set admits any trap the oracle-aware `validatePack` proves — including
+compiler/behavioral-only traps with no static shape by design (e.g.
+`stripe-paymentintents-moved`). A static-only grade always scored those as
+falsely "avoided" regardless of the candidate. Fixed by grading through
+`auditWithOracle` (best backend), the same prover the rest of the pipeline
+(gen-vti, corpus-sla, fleet) already routes through. 1 regression test. Also
+fixed two cosmetic log lines (`--emit-tasks`/`--submissions`) that always
+printed the *default* output path instead of the actual resolved one.
+
 ## v0.9.9 — 2026-07-01
 
 **Fix: `npx brainblast .` crashed with an uncaught EPERM/EACCES when the scanned

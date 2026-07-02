@@ -20,10 +20,10 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
 import { join, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
-import { auditWithRule } from "../src/audit.ts";
 import { listBundledPacks } from "../src/bundledPacks.ts";
 import { loadPack } from "../src/packs.ts";
 import { validatePack } from "../src/pack.ts";
+import { auditWithOracle } from "../src/oracle/index.ts";
 import type { Rule } from "../src/types.ts";
 
 const repoRoot = join(fileURLToPath(new URL(".", import.meta.url)), "..", "..", "..");
@@ -63,20 +63,22 @@ function loadEvalSet(): EvalItem[] {
   return items.sort((a, b) => a.trapId.localeCompare(b.trapId));
 }
 
-// Grade one candidate directory against one trap's rule.
-// avoided === true when the checker raises NO fail (matches the prove gate's
-// definition of GREEN; a `cant_tell` counts as avoided).
-function gradeDir(dir: string, rule: Rule): { avoided: boolean; detail: string } {
-  const checks = auditWithRule(dir, rule);
-  const fail = checks.find((c) => c.result === "fail");
-  if (fail) return { avoided: false, detail: fail.detail };
-  const any = checks[0];
-  return { avoided: true, detail: any?.detail ?? "no finding raised by the trap rule" };
+// Grade one candidate directory against one trap's rule, through the SAME
+// generalized oracle (proveWithBest's per-verdict twin) that admits the trap
+// into the eval set in the first place — a static-only grade would always
+// score a compiler/behavioral-only trap (no static shape by design, e.g.
+// stripe-paymentintents-moved) as falsely "avoided" regardless of the
+// candidate. avoided === true on GREEN or UNKNOWN (matches the prove gate's
+// definition of GREEN; a `cant_tell`/no-eligible-backend counts as avoided,
+// same leniency the static-only path had).
+async function gradeDir(dir: string, rule: Rule): Promise<{ avoided: boolean; detail: string }> {
+  const verdict = await auditWithOracle(dir, rule, { oracle: "best" });
+  return { avoided: verdict.color !== "RED", detail: verdict.detail };
 }
 
 interface Scored { trapId: string; sdk: string; severity: string; avoided: boolean; detail: string }
 
-function scorecard(items: EvalItem[], dirFor: (it: EvalItem) => string | null) {
+async function scorecard(items: EvalItem[], dirFor: (it: EvalItem) => string | null) {
   const scored: Scored[] = [];
   for (const it of items) {
     const dir = dirFor(it);
@@ -84,7 +86,7 @@ function scorecard(items: EvalItem[], dirFor: (it: EvalItem) => string | null) {
       scored.push({ trapId: it.trapId, sdk: it.sdk, severity: it.severity, avoided: false, detail: "no submission for this trap (counts as shipped)" });
       continue;
     }
-    const { avoided, detail } = gradeDir(dir, it.rule);
+    const { avoided, detail } = await gradeDir(dir, it.rule);
     scored.push({ trapId: it.trapId, sdk: it.sdk, severity: it.severity, avoided, detail });
   }
   const total = scored.length;
@@ -92,7 +94,7 @@ function scorecard(items: EvalItem[], dirFor: (it: EvalItem) => string | null) {
   return { total, passed, pct: total ? Math.round((passed / total) * 1000) / 10 : 0, scored };
 }
 
-function renderMd(title: string, sc: ReturnType<typeof scorecard>): string {
+function renderMd(title: string, sc: Awaited<ReturnType<typeof scorecard>>): string {
   const lines = [
     `# ${title}`,
     ``,
@@ -159,7 +161,7 @@ if (argv.includes("--emit-tasks")) {
     };
   });
   writeFileSync(join(dir, "tasks.jsonl"), tasks.map((t) => JSON.stringify(t)).join("\n") + "\n");
-  console.log(`\nEmitted ${tasks.length} tasks → ${join("bench", "tasks", "tasks.jsonl")} (+ starters/)\n`);
+  console.log(`\nEmitted ${tasks.length} tasks → ${join(dir, "tasks.jsonl")} (+ starters/)\n`);
   process.exit(0);
 }
 
@@ -167,20 +169,20 @@ if (argv.includes("--emit-tasks")) {
 if (argv.includes("--submissions")) {
   const subRoot = resolvePath(flag("--submissions")!);
   const outRoot = resolvePath(flag("--out") || "bench/results");
-  const sc = scorecard(items, (it) => {
+  const sc = await scorecard(items, (it) => {
     const d = join(subRoot, it.trapId);
     return existsSync(d) && statSync(d).isDirectory() ? d : null;
   });
   mkdirSync(outRoot, { recursive: true });
   writeFileSync(join(outRoot, "scorecard.json"), JSON.stringify(sc, null, 2) + "\n");
   writeFileSync(join(outRoot, "scorecard.md"), renderMd("Brainblast Trap Benchmark — Scorecard", sc));
-  console.log(`\nGraded ${sc.total} traps: ${sc.passed} avoided (${sc.pct}%) → bench/results/scorecard.md\n`);
+  console.log(`\nGraded ${sc.total} traps: ${sc.passed} avoided (${sc.pct}%) → ${join(outRoot, "scorecard.md")}\n`);
   process.exit(sc.pct === 100 ? 0 : 1);
 }
 
 // Default: --self-test. Proves the oracle end to end with no model needed.
-const vuln = scorecard(items, (it) => join(it.packDir, "fixtures", it.trapId, "vulnerable"));
-const fixed = scorecard(items, (it) => join(it.packDir, "fixtures", it.trapId, "fixed"));
+const vuln = await scorecard(items, (it) => join(it.packDir, "fixtures", it.trapId, "vulnerable"));
+const fixed = await scorecard(items, (it) => join(it.packDir, "fixtures", it.trapId, "fixed"));
 
 console.log(`\nBenchmark self-test — ${items.length} proven traps`);
 console.log(`  vulnerable baseline: ${vuln.passed}/${vuln.total} avoided (${vuln.pct}%)  — expect 0%`);

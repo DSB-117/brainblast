@@ -119,7 +119,16 @@ if (args[0] === "drift") {
 if (args[0] === "mcp") {
   const { startMcpServer } = await import("./mcp.ts");
   await startMcpServer();
-  process.exit(0);
+  // connect() resolves as soon as the stdio transport's listeners are
+  // attached, not when the client disconnects — process.exit() here used to
+  // kill the server before it could ever handle a request. Block forever
+  // (same idiom as `watch` below) so the rest of this script never falls
+  // through into the default audit path and pollutes the JSON-RPC stdout
+  // stream; the open stdin listener + this pending promise keep the process
+  // alive until the client closes the pipe or sends a signal.
+  process.on("SIGINT", () => process.exit(0));
+  process.on("SIGTERM", () => process.exit(0));
+  await new Promise(() => {});
 }
 
 if (args[0] === "trust-graph") {
@@ -306,7 +315,9 @@ function flagValue(argv: string[], name: string): string | undefined {
 }
 const oracleArg = flagValue(args, "oracle");
 const targetDir =
-  args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--since" && args[i - 1] !== "--oracle") ?? process.cwd();
+  args.find(
+    (a, i) => !a.startsWith("--") && args[i - 1] !== "--since" && args[i - 1] !== "--oracle" && args[i - 1] !== "--packs",
+  ) ?? process.cwd();
 
 if (sinceIdx >= 0 && !since) {
   console.error("error: --since requires a <ref> argument, e.g. --since origin/main");
