@@ -1,11 +1,14 @@
 # Brainblast → AI Training-Data Platform: Roadmap
 
-**Last updated:** 2026-06-29 · anchored at **v0.9.4** (+ unreleased v0.9.5: marketplace surface + automatic intake)
+**Last updated:** 2026-07-01 · anchored at **v0.9.8** ("the maximally-capable fleet")
 **Current state:** Stage 0 shipped · Stages 1–4 engineering substantially landed —
 **every no-spend core now exists**, including the Stage 4 marketplace surface
-(catalog + signed-grant entitlement + metered usage ledger). What remains is what
-*spends*: on-chain `$BRAIN` settlement (Stages 2–4), scout supply at scale
-(Stage 3), and go-to-market (buyer pilots).
+(catalog + signed-grant entitlement + metered usage ledger) and, as of v0.9.8, a
+scout fleet whose proof gate is no longer capped at static TS/Rust shapes (R7 —
+oracle-backed gate, self-extending checkers, multi-language proving). Corpus at
+**15 VTIs**. What remains is what *spends*: on-chain `$BRAIN` settlement
+(Stages 2–4), scout supply *at scale* (Stage 3 — the engine is now maximally
+capable; running it wide is the lever), and go-to-market (buyer pilots).
 **Companion to:** [`ROADMAP.md`](ROADMAP.md) (the core *Predict → Enforce → Watch → Compound* ladder)
 **On-chain substrate:** [`WALLET-PLAN.md`](WALLET-PLAN.md) — the Agent Wallet (capped, Vault-recoverable ops wallet) is the rail the deferred `$BRAIN` stake/dividend flows in Stages 2 & 4 settle on.
 
@@ -86,7 +89,7 @@ This is the single source of truth for status. The detailed per-stage sections
 below are the *reference*; **this table and the ordered plan that follows are what
 we execute against.**
 
-### ✅ DONE (runs today — 688 tests green, 1 skipped)
+### ✅ DONE (runs today — 697 tests green, 1 skipped)
 
 | Capability | Surface | Stage |
 |---|---|---|
@@ -103,7 +106,7 @@ we execute against.**
 | **ed25519 grants** — publicly verifiable (R2) | `grant keygen`, `BRAINBLAST_MARKET_KEY`/`PUBKEY`, `src/base58.ts` (HMAC kept for back-compat) | 4.2→4.3 |
 | **Distribution endpoint (R3)** — reference server + deployed into the registry | `brainblast serve` + `feed --remote`; `brainblast/distribution` subpath; `registry.brainblast.tech` `/api/catalog` + `/api/feed` + `/api/healthz` (brainblast-registry#14) | 4.2→4.3 |
 | **Self-serve access sizing (R4 core)** — `$BRAIN` held → tier | `accessQuote`, `grant quote` / `grant issue --for-brain\|--wallet` | 4.3 |
-| **Scout fleet (R7)** — autonomous: discover → subagent-scout → prove → promote → ledger | `npm run fleet[:discover\|:ledger]`, `brainblast-fleet` skill, `proveFinding`, Supabase `fleet_ledger`; seeded auth-bypass (corpus 9→12) | 3.1 |
+| **Scout fleet (R7)** — autonomous: discover → subagent-scout → prove → promote → ledger; proof gate is the **generalized oracle** (static/compiler/executed/differential), the fleet can **propose its own checkers** (soundness meta-gate + human ratification), and proves **multi-language** (Python) behavioral traps | `npm run fleet[:discover\|:ledger\|:checker-gate]`, `brainblast-fleet` skill, `proveFinding`→`proveWithBest`, Supabase `fleet_ledger`; corpus 9→12→**15** | 3.1 |
 
 ### ☐ REMAINING (nothing below is half-built — these have not started)
 
@@ -205,7 +208,7 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   curators earn, the rest lose. Built on the existing `score`/coverage/SLA surface.
   **Exit:** curation stake measurably reweights what scout produces next.
 
-- ◐ **R7 — Scout fleet. `[no-spend engine done; scaling is the lever]`**
+- ◐ **R7 — Scout fleet. `[no-spend engine maximally capable; scaling is the lever]`**
   (Stage 3.1) **Engine DONE:** `npm run fleet` (`scripts/fleet.ts`) discovers
   candidate Findings in `fleet/candidates/`, **proves each RED→GREEN** (shared
   `proveFinding` gate), **auto-promotes** the proven into `packs/`, runs intake,
@@ -221,14 +224,28 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   **`brainblast-fleet` skill** fans out a **subagent per repo** to scout each one
   (the agent already running Brainblast is the model — no API key); proven
   candidates promote via the gate; `npm run fleet:ledger` records investigated
-  repos to a **shared Supabase `fleet_ledger`** (local-cache fallback) so sibling
-  fleets skip them. Submission is gated on `sla` + typecheck; direct-to-main is
-  opt-in. Demonstrated: 99 real `jsonwebtoken` dependents discovered, recorded,
-  and skipped on re-run.
+  repos to a **shared Supabase `fleet_ledger`** (local-cache fallback, griefing-
+  defended server-side: rate limit, GitHub repo verification, non-destructive
+  merge, freshness TTL) so sibling fleets skip them. Submission is gated on `sla` +
+  typecheck; direct-to-main is opt-in. Demonstrated: 99 real `jsonwebtoken`
+  dependents discovered, recorded, and skipped on re-run.
+  **Capability ceiling raised — 3 Moves (v0.9.8), engine DONE:** the fleet's proof
+  gate was structurally capped at *static AST shapes in TS/Rust*. Three moves
+  removed that: **(1)** the gate (`proveFinding`) now routes through the
+  **generalized oracle** (`proveWithBest`: static → compiler → executed →
+  differential), proving compiler-detectable (hallucinated/moved APIs) and
+  **behavioral** footguns, not just shapes; **(2) self-extending checkers** — a
+  proposal (`fleet/checker-proposals/<kind>/`) is vetted by
+  **`npm run fleet:checker-gate`** (purity, proves its own trap, zero false
+  positives on the known-good corpus, determinism), then `--wire` installs it for
+  **human ratification**; **(3) multi-language behavioral proving** — a
+  `LangRunner` abstraction (`src/oracle/backends/differential.ts`) adds **Python**;
+  each further language is one runner. Landed a novel-shape JWT `alg:none` trap
+  (needed a new checker) and a Python fee-truncation trap (needed a differential
+  proof, no static shape) neither the old gate could reach. **Corpus 12 → 15.**
   **Remaining (the lever, not code):** *run it at scale* — point the fleet at the
-  work-orders the scoreboard names (still uncovered: immutable-after-deploy,
-  wrong-constant; plus thin cells), freshness-first, toward a sellable N.
-  *(No-spend; staking each pack stays optional per R1.)*
+  work-orders the scoreboard names, freshness-first, toward a sellable N across
+  N≥50 SDKs. *(No-spend; staking each pack stays optional per R1.)*
 
 - ☐ **R8 — Buyer pilots. `[outreach]` — run in parallel from now.**
   (Stage 1.4–1.5) Take `datasets/CATALOG.md` + `datasets/v0.1.0/sample/` + a
@@ -258,7 +275,7 @@ flow is hardened for a public audience.
 
 ## What's shipped so far
 
-Everything below runs today (688 tests green, 1 skipped):
+Everything below runs today (697 tests green, 1 skipped):
 
 - **The data asset exists.** `npm run gen:vti` turns Brainblast's own proven packs
   into schema-valid [Verified Trap Instances](datasets/seed/README.md) — only when
@@ -578,10 +595,12 @@ makes `$BRAIN`-priced access worth a premium.
   heatmap** whose thin cells and uncovered classes are scout's work-orders. The
   per-record `score` is the field pricing and the `$BRAIN` curation market key
   off.
-- ☐ **Step 1 (scout fleet)** is the supply lever — spends `$BRAIN` + browses, so
-  pulled deliberately. The coverage map now tells it exactly where to dig
-  (today: 3 uncovered classes — immutable-after-deploy, auth-bypass,
-  wrong-constant — and 8 thin cells).
+- ◐ **Step 1 (scout fleet)** is the supply lever — no-spend, engine now
+  maximally capable (R7 Moves 1–3: oracle-backed gate, self-extending checkers,
+  multi-language proving). The coverage map tells it exactly where to dig next
+  (today: **1 uncovered class** — immutable-after-deploy — and 13 thin cells,
+  down from 3 uncovered classes as auth-bypass and wrong-constant got covered).
+  Running it wider across N≥50 SDKs is what remains, not capability.
 - ✅ **Step 5 — quality SLA / integrity monitor shipped.** `npm run sla`
   (`scripts/corpus-sla.ts`) re-proves every VTI in every lot still goes
   RED→GREEN (the **reproduction-rate SLA** — the freshness/decay signal), and
@@ -767,16 +786,23 @@ more supply) documented end-to-end.
 **See [Remaining work — execute in THIS exact order](#-remaining-work--execute-in-this-exact-order)
 (R1–R10) — that is the authoritative plan.** Do not re-derive priorities here.
 
-**R1 (v0.9.5), R2, and R3's reference server are done.** Two tracks open next:
-- **Deploy R3** — port `brainblast serve` into the `registry.brainblast.tech` web
-  app (a separate repo) and host it. `[infra]`, no spend; makes the market
-  actually reachable by third parties.
+**R1, R2, and R3 (server + deploy code) are done. R7's engine is now maximally
+capable (v0.9.8 — oracle gate, self-extending checkers, multi-language proving).**
+What's open:
+- **Confirm R3's prod step** — the `usage_ledger` migration, `BRAINBLAST_MARKET_PUBKEY`
+  in Vercel, and the live deploy were the operator's step as of the R3 land; verify
+  `registry.brainblast.tech/api/healthz` + a real grant pull before calling this
+  fully closed. `[infra]`, no spend.
 - **R4 — on-chain settlement `[spend]`**: pay `$BRAIN`/USDC → the treasury
   auto-issues a grant signed by the R2 distributor identity; USDC→buyback. This is
   the first item that **spends funds** — pull it deliberately.
+- **Run R7 at scale** — the engine no longer needs new capability, only breadth:
+  point it at the scoreboard's work-orders across N≥50 SDKs, freshness-first.
 
-**R7 (scout fleet)** and **R8 (buyer outreach)** still run in parallel — growing
-the corpus past today's 12 traps (the fleet engine landed the first 3) is unblocked (R1 made production no-spend).
+**R8 (buyer outreach)** still runs in parallel — the corpus (now 15 VTIs across
+static, compiler-checked, behavioral, self-authored-shape, and multi-language
+traps) plus `datasets/CATALOG.md` and the bench scorecard are the artifacts to
+take to buyers.
 
 When you finish any R-item: tick its checkbox, move its row in the
 [Done vs. Remaining ledger](#-done-vs-remaining--the-authoritative-ledger) from
