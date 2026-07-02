@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.9.9 — 2026-07-01
+
 **Fix: `npx brainblast .` crashed with an uncaught EPERM/EACCES when the scanned
 tree contained a permission-denied directory** (e.g. `~/.Trash`, `.Spotlight-V100`
 — hit in practice running from `$HOME`, or any parent dir containing one, in a
