@@ -1,6 +1,6 @@
 # Brainblast → AI Training-Data Platform: Roadmap
 
-**Last updated:** 2026-07-02 · anchored at **v0.9.9** (patch fix on top of v0.9.8, "the maximally-capable fleet")
+**Last updated:** 2026-07-02 · anchored at **v0.9.10** (pre-launch fixes on top of v0.9.8, "the maximally-capable fleet")
 **Current state:** Stage 0 shipped · Stages 1–4 engineering substantially landed —
 **every no-spend core now exists**, including the Stage 4 marketplace surface
 (catalog + signed-grant entitlement + metered usage ledger) and, as of v0.9.8, a
@@ -89,7 +89,7 @@ This is the single source of truth for status. The detailed per-stage sections
 below are the *reference*; **this table and the ordered plan that follows are what
 we execute against.**
 
-### ✅ DONE (runs today — 699 tests green, 1 skipped)
+### ✅ DONE (runs today — 702 tests green, 1 skipped)
 
 | Capability | Surface | Stage |
 |---|---|---|
@@ -112,7 +112,7 @@ we execute against.**
 
 | Work | Why it's not done yet | Stage |
 |---|---|---|
-| **Prod deploy of the endpoint** (apply the `usage_ledger` migration, set `BRAINBLAST_MARKET_PUBKEY` in Vercel, ship) | operational: prod secrets + infra (code is merged & verified) | 4.2→4.3 |
+| **Apply the `fleet_ledger`/`fleet_ledger_audit` migration to prod Supabase** (`brainblast-registry/supabase/schema.sql`) | `/api/fleet-ledger` on the LIVE registry 500s — "Could not find the table 'public.fleet_ledger'". Confirmed 2026-07-02: `/api/healthz`, `/api/catalog`, `/api/feed` are all live and correct (R3 core IS fully deployed); this one newer table (added after the base schema was applied) was never pushed. The fleet degrades gracefully to a local-only cache in the meantime (no crash), it just loses cross-fleet dedup until this is applied — needs Supabase dashboard/CLI access | 3.1 |
 | **On-chain settlement** (pay `$BRAIN`/USDC → auto-issue grant; USDC→buyback) | spends funds | 4.3 |
 | **Stake-and-slash on VTIs + data-dividend payout** | spends funds (repro gate is the slash trigger, already built) | 2.4–2.5 |
 | **Curation market** (stake to up-rank; reward accurate curators) | spends funds; needs on-chain rails | 3.4 |
@@ -162,7 +162,7 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   the public key; forged tier / swapped signer / untrusted distributor all fail;
   legacy + pre-R2 grants still verify; 662 pass / 1 skip.
 
-- ✅ **R3 — Hosted distribution endpoint. `[infra]` — DONE (server + deploy code; awaiting your prod deploy).**
+- ✅ **R3 — Hosted distribution endpoint. `[infra]` — DONE, confirmed LIVE 2026-07-02.**
   The "public" in public market, where "entitlement enforced at distribution"
   becomes literally true. **`brainblast serve`** (`src/server.ts` + the CLI
   binding) is a zero-dep `node:http` server that: (a) serves the **catalog
@@ -180,8 +180,12 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   auditor's native deps); the usage ledger is a hash-chained Supabase table. Live
   smoke test green. **Exit met:** a third party with only a grant + the URL pulls
   its entitled delta; the server holds the payload, the client never sees more than
-  its tier. **Your step:** apply the `usage_ledger` migration, set
-  `BRAINBLAST_MARKET_PUBKEY` in Vercel (from an offline `grant keygen`), deploy.
+  its tier. **Exit met, and directly re-verified against production:**
+  `curl https://registry.brainblast.tech/api/healthz` → `{"status":"ok","lots":1,
+  "vtis":15}`; `/api/catalog` and `/api/feed` (anonymous sample tier) both return
+  200 with correct data. The `usage_ledger` migration and `BRAINBLAST_MARKET_PUBKEY`
+  are evidently already set — R3 has nothing outstanding. (One newer, unrelated
+  table gap found in the same check: `fleet_ledger` — see R7 below.)
 
 - ◐ **R4 — On-chain settlement + self-serve grants. `[spend]` — no-spend core DONE.**
   Closes North Star #1's "self-serve" requirement. **Done (no-spend):**
@@ -246,6 +250,30 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   **Remaining (the lever, not code):** *run it at scale* — point the fleet at the
   work-orders the scoreboard names, freshness-first, toward a sellable N across
   N≥50 SDKs. *(No-spend; staking each pack stays optional per R1.)*
+  **Real-world run, 2026-07-02:** discovered + scouted 10 real repos (7 for
+  `@metaplex-foundation/mpl-token-metadata`, targeting the uncovered
+  immutable-after-deploy class; 3 for `jsonwebtoken`, targeting auth-bypass
+  corroboration) with 10 parallel subagents. All 10 reported honestly clean —
+  no candidate fit the vetted checker shapes in these specific repos, and
+  correctly none were fabricated to force a landing (the discipline held under
+  real load, not just synthetic tests). One subagent surfaced a genuinely
+  common, real footgun with no existing checker — a hardcoded fallback secret
+  (`process.env.JWT_SECRET || 'somethingsecret'`) — but it doesn't fit the
+  current function-scoped candidate-detection architecture
+  (`src/finder.ts::findCandidates`, which only considers code inside a
+  function matching `detect.nameRegex`/`triggerCalls`) without synthesizing an
+  artificial function wrapper around module-scope config code, which would be
+  forcing the fit — left undone rather than compromising the "never fabricate"
+  invariant. **Good next-run candidate:** a Move-2 checker for
+  "`process.env.<SECRET-shaped-name>` with a hardcoded string fallback" is a
+  real, common, valuable trap — needs either (a) a genuine in-function example
+  from further scouting, or (b) extending the candidate-finder to also
+  consider module-scope object-literal assignments, not just function bodies.
+  **Also found:** the shared `fleet_ledger` table is missing on prod Supabase
+  (see the REMAINING ledger above) — the fleet degraded gracefully to its
+  documented local-cache fallback rather than crashing, confirming that
+  resilience path works for real, but cross-fleet dedup isn't actually live
+  yet.
 
 - ☐ **R8 — Buyer pilots. `[outreach]` — run in parallel from now.**
   (Stage 1.4–1.5) Take `datasets/CATALOG.md` + `datasets/v0.1.0/sample/` + a
@@ -275,7 +303,7 @@ flow is hardened for a public audience.
 
 ## What's shipped so far
 
-Everything below runs today (699 tests green, 1 skipped):
+Everything below runs today (702 tests green, 1 skipped):
 
 - **The data asset exists.** `npm run gen:vti` turns Brainblast's own proven packs
   into schema-valid [Verified Trap Instances](datasets/seed/README.md) — only when
@@ -786,13 +814,16 @@ more supply) documented end-to-end.
 **See [Remaining work — execute in THIS exact order](#-remaining-work--execute-in-this-exact-order)
 (R1–R10) — that is the authoritative plan.** Do not re-derive priorities here.
 
-**R1, R2, and R3 (server + deploy code) are done. R7's engine is now maximally
-capable (v0.9.8 — oracle gate, self-extending checkers, multi-language proving).**
-What's open:
-- **Confirm R3's prod step** — the `usage_ledger` migration, `BRAINBLAST_MARKET_PUBKEY`
-  in Vercel, and the live deploy were the operator's step as of the R3 land; verify
-  `registry.brainblast.tech/api/healthz` + a real grant pull before calling this
-  fully closed. `[infra]`, no spend.
+**R1, R2, and R3 are DONE and confirmed live** (2026-07-02: `registry.brainblast.tech`
+`/api/healthz`, `/api/catalog`, `/api/feed` all verified 200 with correct data —
+no operator step outstanding). **R7's engine is maximally capable** (v0.9.8 —
+oracle gate, self-extending checkers, multi-language proving) and was run for
+real today (10 repos scouted, honest — see R7 above). What's open:
+- **Apply the `fleet_ledger` migration to prod Supabase `[infra]`, no spend** —
+  the one gap found today: `brainblast-registry/supabase/schema.sql` has the
+  `create table` statements, they were just never pushed. Needs Supabase
+  dashboard/CLI access — the fleet works without it (local-cache fallback),
+  it just can't share dedup across fleets yet.
 - **R4 — on-chain settlement `[spend]`**: pay `$BRAIN`/USDC → the treasury
   auto-issues a grant signed by the R2 distributor identity; USDC→buyback. This is
   the first item that **spends funds** — pull it deliberately.
