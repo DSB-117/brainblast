@@ -2,12 +2,28 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import type { Rule, RustCandidate, RustAccountField } from "./types.ts";
 
+// Directories a normal scan has no business entering, and that macOS/Linux
+// commonly refuse read access to even for the owning user (e.g. a sandboxed
+// process) — walking into one throws EPERM/EACCES uncaught otherwise.
+const SKIP_DIRS = new Set(["node_modules", ".git", "target", ".Trash", ".Trashes", ".Spotlight-V100", ".fseventsd", ".DocumentRevisions-V100", ".TemporaryItems"]);
+
 /** Walk .rs files only — parallel to walk.ts but for Rust source. */
 function walkRust(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    if (entry === "node_modules" || entry === ".git" || entry === "target") continue;
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return out;
+  }
+  for (const entry of entries) {
+    if (SKIP_DIRS.has(entry)) continue;
     const p = join(dir, entry);
-    const st = statSync(p);
+    let st;
+    try {
+      st = statSync(p);
+    } catch {
+      continue;
+    }
     if (st.isDirectory()) walkRust(p, out);
     else if (p.endsWith(".rs")) out.push(p);
   }

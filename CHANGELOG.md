@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+**Fix: `npx brainblast .` crashed with an uncaught EPERM/EACCES when the scanned
+tree contained a permission-denied directory** (e.g. `~/.Trash`, `.Spotlight-V100`
+— hit in practice running from `$HOME`, or any parent dir containing one, in a
+sandboxed process). `walk()`/`walkAllFiles()` (`src/walk.ts`) and `walkRust()`
+(`src/rustFinder.ts`) called `readdirSync`/`statSync` with no error handling; they
+now skip an unreadable entry instead of throwing, and both also skip macOS's
+system-reserved dirs by name. 2 regression tests (`test/walk.eperm.test.ts`,
+skipped when running as root, since root bypasses Unix permission bits).
+
+**Fix: `mcp.ts`'s `VERSION` constant was hardcoded and had drifted** (stuck at
+`"0.9.4"` through three releases). Now reads from `package.json` at runtime via
+`createRequire`, so it can't drift again.
+
 ## v0.9.8 — 2026-07-01
 
 **The maximally-capable fleet.** Three moves remove the scout fleet's proving

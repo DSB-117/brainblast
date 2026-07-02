@@ -27,12 +27,15 @@ import {
   ListToolsRequestSchema,
   type Tool,
 } from "@modelcontextprotocol/sdk/types.js";
+import { createRequire } from "node:module";
 import { audit } from "./audit.ts";
 import { resolveRules } from "./resolveRules.ts";
 import { queryOsv } from "./osv.ts";
 import { diffVersions } from "./diff.ts";
 
-const VERSION = "0.9.4";
+// Read from package.json rather than hardcoding, so this can't drift from the
+// published version the way a literal did (stuck at "0.9.4" through 0.9.5-0.9.7).
+const VERSION = (createRequire(import.meta.url)("../package.json") as { version: string }).version;
 
 const TOOLS: Tool[] = [
   {
