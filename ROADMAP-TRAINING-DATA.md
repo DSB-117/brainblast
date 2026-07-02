@@ -1,6 +1,6 @@
 # Brainblast → AI Training-Data Platform: Roadmap
 
-**Last updated:** 2026-07-01 · anchored at **v0.9.8** ("the maximally-capable fleet")
+**Last updated:** 2026-07-02 · anchored at **v0.9.9** (patch fix on top of v0.9.8, "the maximally-capable fleet")
 **Current state:** Stage 0 shipped · Stages 1–4 engineering substantially landed —
 **every no-spend core now exists**, including the Stage 4 marketplace surface
 (catalog + signed-grant entitlement + metered usage ledger) and, as of v0.9.8, a
@@ -89,7 +89,7 @@ This is the single source of truth for status. The detailed per-stage sections
 below are the *reference*; **this table and the ordered plan that follows are what
 we execute against.**
 
-### ✅ DONE (runs today — 697 tests green, 1 skipped)
+### ✅ DONE (runs today — 699 tests green, 1 skipped)
 
 | Capability | Surface | Stage |
 |---|---|---|
@@ -275,7 +275,7 @@ flow is hardened for a public audience.
 
 ## What's shipped so far
 
-Everything below runs today (697 tests green, 1 skipped):
+Everything below runs today (699 tests green, 1 skipped):
 
 - **The data asset exists.** `npm run gen:vti` turns Brainblast's own proven packs
   into schema-valid [Verified Trap Instances](datasets/seed/README.md) — only when
