@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Run brainblast
-        uses: DSB-117/brainblast/action@v0.9.9
+        uses: DSB-117/brainblast/action@v0.9.10
         with:
           # github-token defaults to ${{ github.token }} — no change needed
           # for public repos. For private repos, supply a PAT with repo scope.
@@ -39,5 +39,5 @@ jobs:
           fail-on: "critical"
 
           # brainblast npm package version to run (default: latest published release).
-          # Pin an exact version (e.g. "0.9.9") for fully reproducible CI.
-          brainblast-version: "0.9.9"
+          # Pin an exact version (e.g. "0.9.10") for fully reproducible CI.
+          brainblast-version: "0.9.10"

@@ -6,7 +6,7 @@ description: >
   command-injection sinks, committed secrets) and cross-checks every pinned
   dependency against OSV.dev advisories.
 
-  Reference as: uses: DSB-117/brainblast/action@v0.9.9
+  Reference as: uses: DSB-117/brainblast/action@v0.9.10
 
 inputs:
   github-token:
@@ -23,7 +23,7 @@ inputs:
     default: "."
 
   brainblast-version:
-    description: "brainblast npm package version to run. Defaults to the newest published release; pin an exact version (e.g. \"0.9.9\") for reproducible CI."
+    description: "brainblast npm package version to run. Defaults to the newest published release; pin an exact version (e.g. \"0.9.10\") for reproducible CI."
     required: false
     default: "latest"
 

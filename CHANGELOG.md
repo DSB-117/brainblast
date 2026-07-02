@@ -2,8 +2,20 @@
 
 ## Unreleased
 
+## v0.9.10 — 2026-07-02
+
 Found by a systematic clean-slate functional pass over every shipped surface
 (core auditor, protocol packs, data factory, bench, marketplace, fleet, MCP).
+
+**Fix: the GitHub Action defaulted to installing `brainblast@0.6`** — five
+minor versions stale, from when the action was first authored; the default
+was never part of the per-release version-bump checklist and silently
+drifted while the product moved through 0.7-0.9.9. Anyone using the action
+with default settings got a build missing the Solana power tools, the
+training-data platform, and every fix since. Fixed by defaulting to
+`"latest"` so it self-tracks the newest publish and can't drift again; also
+fixed the same stale pin in the committed example workflow
+(`examples/ci/brainblast-audit.yml`).
 
 **Fix (critical): `brainblast mcp` exited almost immediately after starting,
 before it could ever handle a request** — broke the entire MCP integration

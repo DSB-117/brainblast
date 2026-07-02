@@ -2,13 +2,13 @@
 # Brainblast installer / updater
 # Install:  curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | sh
 # Update:   curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=latest sh
-# Specific: curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.9.9 sh
+# Specific: curl -fsSL https://raw.githubusercontent.com/DSB-117/brainblast/main/install.sh | BRAINBLAST_REF=v0.9.10 sh
 #
 # Pins to a tagged release and verifies SHA-256 checksums before writing any file.
 set -e
 
 REPO="DSB-117/brainblast"
-REF="${BRAINBLAST_REF:-v0.9.9}"
+REF="${BRAINBLAST_REF:-v0.9.10}"
 
 # Resolve "latest" to the actual newest release tag via GitHub API
 if [ "$REF" = "latest" ]; then
