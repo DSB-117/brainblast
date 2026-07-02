@@ -38,5 +38,6 @@ jobs:
           # Options: critical | high | medium | low | never
           fail-on: "critical"
 
-          # brainblast npm package version to pin (default: 0.6).
-          brainblast-version: "0.6"
+          # brainblast npm package version to run (default: latest published release).
+          # Pin an exact version (e.g. "0.9.9") for fully reproducible CI.
+          brainblast-version: "0.9.9"

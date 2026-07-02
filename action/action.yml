@@ -23,9 +23,9 @@ inputs:
     default: "."
 
   brainblast-version:
-    description: "brainblast npm package version to run (default: latest 0.6.x)."
+    description: "brainblast npm package version to run. Defaults to the newest published release; pin an exact version (e.g. \"0.9.9\") for reproducible CI."
     required: false
-    default: "0.6"
+    default: "latest"
 
   fail-on:
     description: >
