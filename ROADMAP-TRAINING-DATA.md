@@ -274,6 +274,42 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   documented local-cache fallback rather than crashing, confirming that
   resilience path works for real, but cross-fleet dedup isn't actually live
   yet.
+  **Second real-world run, same day:** 8 more repos scouted (5 for
+  `@raydium-io/raydium-sdk-v2` targeting `missing-slippage-guard`
+  corroboration, 3 for `@pythnetwork/*` targeting `unchecked-staleness`
+  corroboration) plus 1 targeted follow-up on a lead a scout surfaced.
+  **Corpus unchanged at 15** — `npm run fleet` confirms zero promotions this
+  round — but the run surfaced two more precisely-scoped future checker
+  targets, on top of the hardcoded-secret one above, all left undone rather
+  than forced:
+  - **A nested-call-argument shape.** `sendaifun/solana-agent-kit` has a real
+    `@orca-so/whirlpools-sdk` zero-slippage-tolerance call —
+    `slippageTolerance: Percentage.fromFraction(0, 100)` inside an options
+    object — but the value is a *nested CallExpression*, not a plain literal.
+    `object-arg-property-forbidden-literal` only recognizes
+    string/number/boolean literals (plus one special-cased `new BN(0)` gate);
+    it can't evaluate a nested call's own arguments. A Move-2 checker
+    proposal here (something like "options-object property whose value is a
+    call, inspect THAT call's arguments") would unlock this instance and
+    likely others across the ecosystem — `Percentage.fromFraction`,
+    `BN.from`, and similar wrapper-constructor patterns are common.
+  - **Solidity has zero language support today.** `pyth-network/pyth-crosschain`
+    yielded a strong, well-documented finding: Pyth's own official
+    `PythAggregatorV3.sol` Chainlink-compatibility shim (meant to be deployed
+    directly by integrators) calls `getPriceUnsafe()` with no staleness
+    check, in `latestAnswer()`/`latestTimestamp()`/`getRoundData()`/
+    `latestRoundData()`. `npm run fleet` correctly drafted this — the static
+    engine only walks `.ts`/`.rs` (`src/walk.ts`/`src/rustFinder.ts`), there
+    is no Solidity parser anywhere in the codebase, so RED never triggers.
+    The finding is real and valuable (a widely-forkable Chainlink-shim
+    pattern with a genuine copy-paste-outward risk); the gap is capability,
+    not data. Adding Solidity is a bigger lift than the TS-language-runner
+    pattern from Move 3 (needs an AST library, e.g. `solidity-parser-antlr`
+    or similar, not just a new `LangRunner` on the existing oracle) but is
+    now a concretely evidenced, high-value next language.
+  All 18 repos scouted today (10 + 8) stayed disciplined — zero fabricated
+  findings, several correctly identified as using a different oracle/SDK/API
+  shape than expected rather than forcing a match.
 
 - ☐ **R8 — Buyer pilots. `[outreach]` — run in parallel from now.**
   (Stage 1.4–1.5) Take `datasets/CATALOG.md` + `datasets/v0.1.0/sample/` + a
