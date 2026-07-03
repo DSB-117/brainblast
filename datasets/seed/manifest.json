@@ -1,17 +1,17 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-03T23:17:47.049Z",
+  "generatedAt": "2026-07-03T23:31:09.486Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 20,
+    "records": 22,
     "sdks": 17,
-    "packsScanned": 20
+    "packsScanned": 22
   },
   "classDistribution": {
     "auth-bypass": 4,
-    "unconfirmed-state": 3,
+    "unconfirmed-state": 5,
     "missing-slippage-guard": 3,
     "missing-verification": 4,
     "other": 2,
@@ -112,6 +112,13 @@
       "emitted": true
     },
     {
+      "pack": "solana-backpack-sendrawtransaction-skippreflight",
+      "rule": "solana-backpack-sendrawtransaction-skippreflight",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "solana-hive-sendtransaction-skippreflight",
       "rule": "solana-hive-sendtransaction-skippreflight",
       "red": true,
@@ -121,6 +128,13 @@
     {
       "pack": "solana-lamports-scaling-wrong-constant",
       "rule": "solana-lamports-scaling-wrong-constant",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "solana-quiknode-sendandconfirm-skippreflight",
+      "rule": "solana-quiknode-sendandconfirm-skippreflight",
       "red": true,
       "green": true,
       "emitted": true

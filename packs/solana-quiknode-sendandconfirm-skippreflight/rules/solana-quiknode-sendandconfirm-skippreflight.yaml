@@ -1,0 +1,36 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: solana-quiknode-sendandconfirm-skippreflight
+severity: high
+title: "sendAndConfirmTransaction (kit factory) called with skipPreflight: true
+  skips simulation on a transfer"
+component:
+  name: "@solana/web3.js"
+  type: Blockchain
+  version: ">=1.0.0"
+  sourceUrl: https://solana.com/docs/rpc/http/sendtransaction
+detect:
+  modules:
+    - "@solana/web3.js"
+  nameRegex: send|confirm|swap|transfer|execute
+  triggerCalls:
+    - sendAndConfirmTransaction
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: sendAndConfirmTransaction
+    argIndex: 1
+    propName: skipPreflight
+    forbiddenValue: true
+    passDetail: sendAndConfirmTransaction runs preflight simulation (skipPreflight
+      not set to true), so a transfer that would fail on-chain is rejected
+      client-side before submission.
+    failDetail: "sendAndConfirmTransaction is called with skipPreflight: true,
+      disabling preflight simulation. A failing transfer is submitted anyway;
+      the happy path returns without error but the tx can fail on-chain with no
+      client-side signal."
+    absentCallDetail: No sendAndConfirmTransaction call found in this file.
+    absentArgDetail: sendAndConfirmTransaction is called without an options object,
+      so skipPreflight defaults to false (preflight runs). Safe.
+test:
+  kind: none

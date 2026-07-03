@@ -1,29 +1,29 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-03T23:17:48.813Z",
+  "generatedAt": "2026-07-03T23:31:11.297Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 20
+      "count": 22
     }
   ],
   "counts": {
-    "vtis": 20,
-    "unique": 20,
+    "vtis": 22,
+    "unique": 22,
     "duplicates": 0,
     "sdks": 17,
     "classes": 8
   },
   "severityDistribution": {
-    "high": 17,
+    "high": 19,
     "critical": 2,
     "medium": 1
   },
   "classDistribution": {
     "auth-bypass": 4,
-    "unconfirmed-state": 3,
+    "unconfirmed-state": 5,
     "missing-slippage-guard": 3,
     "missing-verification": 4,
     "other": 2,
@@ -44,14 +44,14 @@
     "Pyth Network price feeds": 1,
     "python": 1,
     "@raydium-io/raydium-sdk-v2": 1,
-    "@solana/web3.js": 2,
+    "@solana/web3.js": 4,
     "Solana lamports arithmetic": 1,
     "SPL Token": 1,
     "better-auth": 2,
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 20
+    "synthetic-owned": 22
   },
   "quality": {
     "mean": 48,
@@ -60,7 +60,7 @@
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 19,
+      "medium": 21,
       "low": 1
     }
   },
@@ -73,7 +73,7 @@
       },
       "unconfirmed-state": {
         "Jito (block engine / bundles)": 1,
-        "@solana/web3.js": 2
+        "@solana/web3.js": 4
       },
       "missing-slippage-guard": {
         "Jupiter Aggregator API": 1,
@@ -281,6 +281,15 @@
       "score": 48
     },
     {
+      "trapId": "solana-backpack-sendrawtransaction-skippreflight",
+      "sdk": "@solana/web3.js",
+      "class": "unconfirmed-state",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "solana-hive-sendtransaction-skippreflight",
       "sdk": "@solana/web3.js",
       "class": "unconfirmed-state",
@@ -293,6 +302,15 @@
       "trapId": "solana-lamports-scaling-wrong-constant",
       "sdk": "Solana lamports arithmetic",
       "class": "wrong-constant",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "solana-quiknode-sendandconfirm-skippreflight",
+      "sdk": "@solana/web3.js",
+      "class": "unconfirmed-state",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",

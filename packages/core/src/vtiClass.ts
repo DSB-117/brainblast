@@ -53,6 +53,8 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "stripe-betterauth-oidc-allow-plain-pkce": "missing-verification",
   "jwt-node-react-ecom-mongoose-dropdups": "other",
   "solana-hive-sendtransaction-skippreflight": "unconfirmed-state",
+  "solana-backpack-sendrawtransaction-skippreflight": "unconfirmed-state",
+  "solana-quiknode-sendandconfirm-skippreflight": "unconfirmed-state",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

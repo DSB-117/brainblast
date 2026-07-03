@@ -1,0 +1,5 @@
+id: solana-backpack-sendrawtransaction-skippreflight
+name: "Solana Backpack Sendrawtransaction Skippreflight"
+version: 0.1.0
+author: brainblast-fleet
+description: "connection.sendRawTransaction called with skipPreflight: true skips simulation and silently lands failing transfers"
