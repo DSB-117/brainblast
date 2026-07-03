@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-07-03T23:09:10.959Z",
+  "sdk": "@solana/spl-token",
+  "npmDownloadsLastMonth": 4847296,
+  "discovered": 49,
+  "skippedAlreadyInvestigated": 0,
+  "worklist": [
+    {
+      "repo": "NeurProjects/neur-app",
+      "stars": 446,
+      "url": "https://github.com/NeurProjects/neur-app"
+    },
+    {
+      "repo": "ask-the-hive/the-hive",
+      "stars": 202,
+      "url": "https://github.com/ask-the-hive/the-hive"
+    }
+  ]
+}

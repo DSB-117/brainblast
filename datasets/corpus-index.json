@@ -1,63 +1,67 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-01T20:56:57.143Z",
+  "generatedAt": "2026-07-03T23:17:48.813Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 15
+      "count": 20
     }
   ],
   "counts": {
-    "vtis": 15,
-    "unique": 15,
+    "vtis": 20,
+    "unique": 20,
     "duplicates": 0,
-    "sdks": 14,
+    "sdks": 17,
     "classes": 8
   },
   "severityDistribution": {
-    "high": 13,
-    "critical": 2
+    "high": 17,
+    "critical": 2,
+    "medium": 1
   },
   "classDistribution": {
     "auth-bypass": 4,
-    "unconfirmed-state": 2,
+    "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
+    "missing-verification": 4,
+    "other": 2,
     "silent-zero-revenue": 2,
     "unchecked-staleness": 1,
-    "wrong-constant": 1,
-    "missing-verification": 1,
-    "other": 1
+    "wrong-constant": 1
   },
   "sdkDistribution": {
     "cors": 1,
     "node:https": 1,
     "Jito (block engine / bundles)": 1,
     "Jupiter Aggregator API": 1,
+    "express-jwt": 1,
+    "mongoose": 1,
     "jsonwebtoken": 2,
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "Pyth Network price feeds": 1,
     "python": 1,
     "@raydium-io/raydium-sdk-v2": 1,
+    "@solana/web3.js": 2,
     "Solana lamports arithmetic": 1,
-    "@solana/web3.js": 1,
     "SPL Token": 1,
+    "better-auth": 2,
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 15
+    "synthetic-owned": 20
   },
   "quality": {
-    "mean": 50,
+    "mean": 48,
     "median": 48,
-    "min": 48,
+    "min": 30,
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 15,
-      "low": 0
+      "medium": 19,
+      "low": 1
     }
   },
   "coverage": {
@@ -69,12 +73,21 @@
       },
       "unconfirmed-state": {
         "Jito (block engine / bundles)": 1,
-        "@solana/web3.js": 1
+        "@solana/web3.js": 2
       },
       "missing-slippage-guard": {
         "Jupiter Aggregator API": 1,
         "@meteora-ag/dlmm": 1,
         "@raydium-io/raydium-sdk-v2": 1
+      },
+      "missing-verification": {
+        "express-jwt": 1,
+        "SPL Token": 1,
+        "better-auth": 2
+      },
+      "other": {
+        "mongoose": 1,
+        "Stripe Node SDK": 1
       },
       "silent-zero-revenue": {
         "@metaplex-foundation/js": 1,
@@ -85,12 +98,6 @@
       },
       "wrong-constant": {
         "Solana lamports arithmetic": 1
-      },
-      "missing-verification": {
-        "SPL Token": 1
-      },
-      "other": {
-        "Stripe Node SDK": 1
       }
     },
     "thinCells": [
@@ -107,10 +114,6 @@
         "sdk": "Jito (block engine / bundles)"
       },
       {
-        "class": "unconfirmed-state",
-        "sdk": "@solana/web3.js"
-      },
-      {
         "class": "missing-slippage-guard",
         "sdk": "Jupiter Aggregator API"
       },
@@ -121,6 +124,22 @@
       {
         "class": "missing-slippage-guard",
         "sdk": "@raydium-io/raydium-sdk-v2"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "express-jwt"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "SPL Token"
+      },
+      {
+        "class": "other",
+        "sdk": "mongoose"
+      },
+      {
+        "class": "other",
+        "sdk": "Stripe Node SDK"
       },
       {
         "class": "silent-zero-revenue",
@@ -137,14 +156,6 @@
       {
         "class": "wrong-constant",
         "sdk": "Solana lamports arithmetic"
-      },
-      {
-        "class": "missing-verification",
-        "sdk": "SPL Token"
-      },
-      {
-        "class": "other",
-        "sdk": "Stripe Node SDK"
       }
     ],
     "missingClasses": [
@@ -183,6 +194,24 @@
       "trapId": "jupiter-quote-zero-slippage",
       "sdk": "Jupiter Aggregator API",
       "class": "missing-slippage-guard",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "jwt-expressjwt-ignore-notbefore",
+      "sdk": "express-jwt",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "jwt-node-react-ecom-mongoose-dropdups",
+      "sdk": "mongoose",
+      "class": "other",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",
@@ -252,6 +281,15 @@
       "score": 48
     },
     {
+      "trapId": "solana-hive-sendtransaction-skippreflight",
+      "sdk": "@solana/web3.js",
+      "class": "unconfirmed-state",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "solana-lamports-scaling-wrong-constant",
       "sdk": "Solana lamports arithmetic",
       "class": "wrong-constant",
@@ -272,6 +310,24 @@
     {
       "trapId": "spl-transfer-not-checked-in-payout",
       "sdk": "SPL Token",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "stripe-betterauth-oidc-allow-plain-pkce",
+      "sdk": "better-auth",
+      "class": "missing-verification",
+      "severity": "medium",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 30
+    },
+    {
+      "trapId": "stripe-betterauth-oidc-require-pkce-false",
+      "sdk": "better-auth",
       "class": "missing-verification",
       "severity": "high",
       "corroborationCount": 0,

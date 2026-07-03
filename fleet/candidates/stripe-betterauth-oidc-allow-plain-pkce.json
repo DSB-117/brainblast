@@ -1,0 +1,49 @@
+{
+  "id": "stripe-betterauth-oidc-allow-plain-pkce",
+  "severity": "medium",
+  "title": "oidcProvider({ allowPlainCodeChallengeMethod: true }) — accepts 'plain' PKCE, which provides no protection against code interception",
+  "class": "missing-verification",
+  "component": {
+    "name": "better-auth",
+    "type": "Auth",
+    "version": ">=1.0.0",
+    "sourceUrl": "https://www.better-auth.com/docs/plugins/oidc-provider"
+  },
+  "detect": {
+    "modules": [
+      "better-auth/plugins",
+      "better-auth"
+    ],
+    "nameRegex": "oidc|auth|provider|config",
+    "triggerCalls": [
+      "oidcProvider"
+    ]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "oidcProvider",
+        "argIndex": 0,
+        "propName": "allowPlainCodeChallengeMethod",
+        "forbiddenValue": true,
+        "passDetail": "allowPlainCodeChallengeMethod is false, so only the S256 code_challenge_method is accepted. S256 sends only a SHA-256 hash of the verifier in the authorization request, so intercepting the request does not reveal the verifier.",
+        "failDetail": "allowPlainCodeChallengeMethod: true lets clients use code_challenge_method='plain', where the code_challenge equals the raw code_verifier. An attacker who can read the authorization request (the exact threat PKCE exists to defeat) sees the plain verifier and can redeem an intercepted authorization code — plain PKCE gives zero protection. RFC 7636 recommends S256; OAuth 2.1 disallows plain. Fix: remove this option or set allowPlainCodeChallengeMethod: false.",
+        "absentCallDetail": "No oidcProvider() call in this scope; rule N/A here.",
+        "absentArgDetail": "oidcProvider() is called but allowPlainCodeChallengeMethod is not set; verify the resolved default and prefer S256-only."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "auth.ts",
+    "vulnerable": "import { betterAuth } from \"better-auth\";\nimport { oidcProvider } from \"better-auth/plugins\";\n\n// Auth builder — the audited scope.\nexport function buildAuth() {\n  return betterAuth({\n    plugins: [\n      // VULNERABLE: 'plain' code_challenge_method accepted — the verifier travels\n      // in the clear, defeating PKCE.\n      oidcProvider({\n        loginPage: \"/sign-in\",\n        requirePKCE: true,\n        allowPlainCodeChallengeMethod: true,\n      }),\n    ],\n  });\n}\n",
+    "fixed": "import { betterAuth } from \"better-auth\";\nimport { oidcProvider } from \"better-auth/plugins\";\n\n// Auth builder — the audited scope.\nexport function buildAuth() {\n  return betterAuth({\n    plugins: [\n      // FIXED: only S256 accepted — the authorization request carries a hash, not the verifier.\n      oidcProvider({\n        loginPage: \"/sign-in\",\n        requirePKCE: true,\n        allowPlainCodeChallengeMethod: false,\n      }),\n    ],\n  });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://www.better-auth.com/docs/plugins/oidc-provider",
+    "note": "In authorize.ts the allowed methods are `options.allowPlainCodeChallengeMethod ? ['s256','plain'] : ['s256']`, and a missing method even defaults to 'plain' when this flag is on. RFC 7636 §4.2 says S256 MUST be used if the client can; 'plain' is a downgrade. AI agents enable this to make a non-conforming client work, silently neutering PKCE."
+  }
+}

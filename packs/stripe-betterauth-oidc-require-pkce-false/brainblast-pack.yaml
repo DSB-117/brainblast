@@ -1,0 +1,5 @@
+id: stripe-betterauth-oidc-require-pkce-false
+name: "Stripe Betterauth Oidc Require Pkce False"
+version: 0.1.0
+author: brainblast-fleet
+description: "oidcProvider({ requirePKCE: false }) — OIDC provider issues authorization codes without PKCE, enabling code-interception attacks"

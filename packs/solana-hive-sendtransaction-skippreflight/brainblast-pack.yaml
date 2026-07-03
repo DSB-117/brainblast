@@ -1,0 +1,5 @@
+id: solana-hive-sendtransaction-skippreflight
+name: "Solana Hive Sendtransaction Skippreflight"
+version: 0.1.0
+author: brainblast-fleet
+description: "wallet.sendTransaction called with skipPreflight: true skips simulation and silently lands failing/wrong txs"

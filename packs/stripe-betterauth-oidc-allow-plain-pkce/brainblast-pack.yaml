@@ -1,0 +1,5 @@
+id: stripe-betterauth-oidc-allow-plain-pkce
+name: "Stripe Betterauth Oidc Allow Plain Pkce"
+version: 0.1.0
+author: brainblast-fleet
+description: "oidcProvider({ allowPlainCodeChallengeMethod: true }) — accepts 'plain' PKCE, which provides no protection against code interception"

@@ -1,54 +1,58 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-03T17:45:41.411Z",
+  "generatedAt": "2026-07-03T23:17:48.832Z",
   "counts": {
-    "total": 15,
-    "proven": 15,
-    "sdks": 14,
+    "total": 20,
+    "proven": 20,
+    "sdks": 17,
     "classes": 8
   },
   "severityDistribution": {
-    "high": 13,
-    "critical": 2
+    "high": 17,
+    "critical": 2,
+    "medium": 1
   },
   "classDistribution": {
     "auth-bypass": 4,
-    "unconfirmed-state": 2,
+    "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
+    "missing-verification": 4,
+    "other": 2,
     "silent-zero-revenue": 2,
     "unchecked-staleness": 1,
-    "wrong-constant": 1,
-    "missing-verification": 1,
-    "other": 1
+    "wrong-constant": 1
   },
   "sdkDistribution": {
     "cors": 1,
     "node:https": 1,
     "Jito (block engine / bundles)": 1,
     "Jupiter Aggregator API": 1,
+    "express-jwt": 1,
+    "mongoose": 1,
     "jsonwebtoken": 2,
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "Pyth Network price feeds": 1,
     "python": 1,
     "@raydium-io/raydium-sdk-v2": 1,
+    "@solana/web3.js": 2,
     "Solana lamports arithmetic": 1,
-    "@solana/web3.js": 1,
     "SPL Token": 1,
+    "better-auth": 2,
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 15
+    "synthetic-owned": 20
   },
   "quality": {
-    "mean": 50,
-    "min": 48,
+    "mean": 48,
+    "min": 30,
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-07-01T20:56:54.928Z",
-    "newest": "2026-07-01T20:56:54.928Z"
+    "oldest": "2026-07-03T23:17:47.049Z",
+    "newest": "2026-07-03T23:17:47.049Z"
   },
   "tiers": [
     {
@@ -92,7 +96,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:56:54.928Z",
+      "capturedAt": "2026-07-03T23:17:47.049Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -100,7 +104,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:56:54.928Z"
+        "verifiedAt": "2026-07-03T23:17:47.049Z"
       }
     },
     {
@@ -115,7 +119,7 @@
       "score": 60,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:56:54.928Z",
+      "capturedAt": "2026-07-03T23:17:47.049Z",
       "sourceUrls": [
         "https://nodejs.org/api/https.html#httpsrequestoptions-callback"
       ],
@@ -123,7 +127,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:56:54.928Z"
+        "verifiedAt": "2026-07-03T23:17:47.049Z"
       }
     },
     {
@@ -138,7 +142,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:56:54.928Z",
+      "capturedAt": "2026-07-03T23:17:47.049Z",
       "sourceUrls": [
         "https://docs.jito.wtf/lowlatencytxnsend/"
       ],
@@ -146,7 +150,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:56:54.928Z"
+        "verifiedAt": "2026-07-03T23:17:47.049Z"
       }
     },
     {
@@ -161,7 +165,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:56:54.928Z",
+      "capturedAt": "2026-07-03T23:17:47.049Z",
       "sourceUrls": [
         "https://station.jup.ag/docs/apis/swap-api"
       ],
@@ -169,30 +173,30 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:56:54.928Z"
+        "verifiedAt": "2026-07-03T23:17:47.049Z"
       }
     },
     {
-      "trapId": "jwt-verify-algorithm-none",
-      "title": "jwt.verify accepts the \"none\" algorithm — signature verification can be bypassed",
+      "trapId": "jwt-expressjwt-ignore-notbefore",
+      "title": "express-jwt passes ignoreNotBefore:true through to jwt.verify, silently accepting not-yet-valid tokens",
       "sdk": {
-        "name": "jsonwebtoken",
-        "version": ">=9.0.0"
+        "name": "express-jwt",
+        "version": ">=1.0.0"
       },
-      "severity": "critical",
-      "class": "auth-bypass",
-      "score": 60,
+      "severity": "high",
+      "class": "missing-verification",
+      "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:56:54.928Z",
+      "capturedAt": "2026-07-03T23:17:47.049Z",
       "sourceUrls": [
-        "https://github.com/auth0/node-jsonwebtoken#jwtverifytoken-secretorpublickey-options-callback"
+        "https://github.com/auth0/express-jwt/blob/master/src/index.ts"
       ],
       "receipt": {
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:56:54.928Z"
+        "verifiedAt": "2026-07-03T23:17:47.049Z"
       }
     }
   ]
