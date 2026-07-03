@@ -1,6 +1,6 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-01T20:56:57.153Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-03T17:45:41.411Z from 1 lot(s): seed-vti.jsonl._
 
 **15 verified trap instances** across **14 SDKs** and **8 trap classes**. Quality score mean 50/100 (range 48–60). Freshness: 2026-07-01T20:56:54.928Z → 2026-07-01T20:56:54.928Z.
 
@@ -11,8 +11,8 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | Tier | Access | Price (USD) | In $BRAIN (10% off) | Min $BRAIN held | What you get |
 |---|---|---|---|---|---|
 | sample | open | free | — | 0 | Open teaser: metadata + the RED→GREEN receipt (the proof). No trainable fixtures. |
-| standard | brain-gated | $2,500 | $2,250 | 1,000 | Full fixtures + a 24h-delayed delta. Pay in $BRAIN at a 10% discount; USDC accepted → buyback. |
-| firehose | brain-gated | $10,000 | $9,000 | 10,000 | Unlimited records + the freshest delta (zero holdback). The freshness edge is the moat. |
+| standard | brain-gated | $2,500 | $2,250 | 100,000 | Full fixtures + a 24h-delayed delta. Pay in $BRAIN at a 10% discount; USDC accepted → buyback. |
+| firehose | brain-gated | $10,000 | $9,000 | 1,000,000 | Unlimited records + the freshest delta (zero holdback). The freshness edge is the moat. |
 
 > USD is the on-ramp; $BRAIN is the unit of access at a standing discount. USDC accepted at full price → programmatic buyback into the contributor/burn pool. Settlement is a deliberate, out-of-band step — this catalog only quotes the price.
 

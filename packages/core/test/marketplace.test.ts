@@ -86,31 +86,31 @@ describe("accessQuote — self-serve eligibility from $BRAIN held (R4)", () => {
     expect(q.tier).toBe("sample");
     expect(q.access).toBe("open");
     expect(q.priceUsd).toBeNull();
-    expect(q.upgrade).toEqual({ tier: "standard", minBrain: 1000, brainShort: 1000 });
+    expect(q.upgrade).toEqual({ tier: "standard", minBrain: 100_000, brainShort: 100_000 });
   });
 
   it("partial holding reports how much more buys the next tier", () => {
-    const q = accessQuote(600);
+    const q = accessQuote(60_000);
     expect(q.tier).toBe("sample");
-    expect(q.upgrade?.brainShort).toBe(400); // 1000 - 600
+    expect(q.upgrade?.brainShort).toBe(40_000); // 100_000 - 60_000
   });
 
   it("crossing a threshold lands the tier", () => {
-    expect(accessQuote(1000).tier).toBe("standard");
-    expect(accessQuote(9999).tier).toBe("standard");
-    expect(accessQuote(10_000).tier).toBe("firehose");
+    expect(accessQuote(100_000).tier).toBe("standard");
+    expect(accessQuote(999_999).tier).toBe("standard");
+    expect(accessQuote(1_000_000).tier).toBe("firehose");
   });
 
   it("standard quotes its price + the firehose upgrade", () => {
-    const q = accessQuote(1500);
+    const q = accessQuote(150_000);
     expect(q.tier).toBe("standard");
     expect(q.priceUsd).toBe(TIER_PRICING.standard.priceUsd);
     expect(q.priceBrain).toBe(TIER_PRICING.standard.priceBrainUsdEquivalent);
-    expect(q.upgrade).toEqual({ tier: "firehose", minBrain: 10_000, brainShort: 8500 });
+    expect(q.upgrade).toEqual({ tier: "firehose", minBrain: 1_000_000, brainShort: 850_000 });
   });
 
   it("firehose is the top — no upgrade", () => {
-    const q = accessQuote(50_000);
+    const q = accessQuote(5_000_000);
     expect(q.tier).toBe("firehose");
     expect(q.upgrade).toBeNull();
   });

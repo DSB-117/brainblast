@@ -38,8 +38,8 @@ export const TIER_ENTITLEMENTS: Record<FeedTier, TierEntitlement> = {
 // real entitlement (which lots a buyer receives) is enforced server-side at
 // distribution. See the honesty note in WALLET-PLAN.md / the feed docs.
 export const TIER_BRAIN_THRESHOLDS: { tier: FeedTier; minBrain: number }[] = [
-  { tier: "firehose", minBrain: 10_000 },
-  { tier: "standard", minBrain: 1_000 },
+  { tier: "firehose", minBrain: 1_000_000 },
+  { tier: "standard", minBrain: 100_000 },
   { tier: "sample", minBrain: 0 },
 ];
 

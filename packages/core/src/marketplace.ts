@@ -93,7 +93,7 @@ export const TIER_PRICING: Record<FeedTier, TierPricing> = {
     priceUsd: 2500,
     brainDiscountPct: 10,
     priceBrainUsdEquivalent: 2250,
-    minBrainHeld: 1_000,
+    minBrainHeld: 100_000,
     note: "Full fixtures + a 24h-delayed delta. Pay in $BRAIN at a 10% discount; USDC accepted → buyback.",
   },
   firehose: {
@@ -102,7 +102,7 @@ export const TIER_PRICING: Record<FeedTier, TierPricing> = {
     priceUsd: 10_000,
     brainDiscountPct: 10,
     priceBrainUsdEquivalent: 9_000,
-    minBrainHeld: 10_000,
+    minBrainHeld: 1_000_000,
     note: "Unlimited records + the freshest delta (zero holdback). The freshness edge is the moat.",
   },
 };

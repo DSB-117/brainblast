@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-01T20:56:57.153Z",
+  "generatedAt": "2026-07-03T17:45:41.411Z",
   "counts": {
     "total": 15,
     "proven": 15,
@@ -66,7 +66,7 @@
       "priceUsd": 2500,
       "brainDiscountPct": 10,
       "priceBrainUsdEquivalent": 2250,
-      "minBrainHeld": 1000,
+      "minBrainHeld": 100000,
       "note": "Full fixtures + a 24h-delayed delta. Pay in $BRAIN at a 10% discount; USDC accepted → buyback."
     },
     {
@@ -75,7 +75,7 @@
       "priceUsd": 10000,
       "brainDiscountPct": 10,
       "priceBrainUsdEquivalent": 9000,
-      "minBrainHeld": 10000,
+      "minBrainHeld": 1000000,
       "note": "Unlimited records + the freshest delta (zero holdback). The freshness edge is the moat."
     }
   ],
