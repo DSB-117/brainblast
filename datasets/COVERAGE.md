@@ -1,12 +1,12 @@
 # Corpus coverage — Brainblast Verified Traps
 
-_Generated 2026-07-04T07:14:02.152Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
+_Generated 2026-07-04T07:16:01.989Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
 
 ## Summary
-- **21** VTIs (21 unique, 0 duplicate) across **18** SDKs and **9** trap classes.
+- **22** VTIs (22 unique, 0 duplicate) across **18** SDKs and **9** trap classes.
 - **Quality** (0–100): mean 50, median 48, range 48–60.
-  Buckets — high (≥70): 0, medium (40–69): 21, low (<40): 0.
-- **Lots:** synthetic-owned (21).
+  Buckets — high (≥70): 0, medium (40–69): 22, low (<40): 0.
+- **Lots:** synthetic-owned (22).
 
 ## Coverage heatmap (class × SDK, unique records)
 | class \ sdk | @metaplex-foundation/js | @metaplex-foundation/mpl-token-metadata | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Solana lamports arithmetic | Stripe Node SDK | cookie-session | cors | express-session | jsonwebtoken | mongoose | node:https | python |
@@ -18,7 +18,7 @@ _Generated 2026-07-04T07:14:02.152Z by corpus-report@0.1.0. Source of truth: `da
 | other | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · |
 | silent-zero-revenue | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 |
 | unchecked-staleness | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · |
-| unconfirmed-state | · | · | · | · | 1 | 1 | · | · | · | · | · | · | · | · | · | · | · | · |
+| unconfirmed-state | · | · | · | · | 2 | 1 | · | · | · | · | · | · | · | · | · | · | · | · |
 | wrong-constant | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · |
 
 (`·` = no coverage yet.)
@@ -29,7 +29,6 @@ _Generated 2026-07-04T07:14:02.152Z by corpus-report@0.1.0. Source of truth: `da
 - auth-bypass · express-session
 - auth-bypass · node:https
 - unconfirmed-state · Jito (block engine / bundles)
-- unconfirmed-state · @solana/web3.js
 - missing-slippage-guard · Jupiter Aggregator API
 - missing-slippage-guard · @meteora-ag/dlmm
 - missing-slippage-guard · @raydium-io/raydium-sdk-v2

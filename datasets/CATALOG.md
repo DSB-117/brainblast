@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T07:14:02.167Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:16:02.001Z from 1 lot(s): seed-vti.jsonl._
 
-**21 verified trap instances** across **18 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 48–60). Freshness: 2026-07-04T07:13:59.809Z → 2026-07-04T07:13:59.809Z.
+**22 verified trap instances** across **18 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 48–60). Freshness: 2026-07-04T07:15:59.425Z → 2026-07-04T07:15:59.425Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -21,8 +21,8 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | Class | Count |
 |---|---|
 | auth-bypass | 8 |
+| unconfirmed-state | 3 |
 | missing-slippage-guard | 3 |
-| unconfirmed-state | 2 |
 | silent-zero-revenue | 2 |
 | missing-verification | 2 |
 | immutable-after-deploy | 1 |
@@ -36,6 +36,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 |---|---|
 | jsonwebtoken | 3 |
 | cors | 2 |
+| @solana/web3.js | 2 |
 | cookie-session | 1 |
 | express-session | 1 |
 | node:https | 1 |
@@ -49,7 +50,6 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | python | 1 |
 | @raydium-io/raydium-sdk-v2 | 1 |
 | Solana lamports arithmetic | 1 |
-| @solana/web3.js | 1 |
 | SPL Token | 1 |
 | Stripe Node SDK | 1 |
 

@@ -1,17 +1,17 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:13:59.809Z",
+  "generatedAt": "2026-07-04T07:15:59.425Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 21,
+    "records": 22,
     "sdks": 18,
-    "packsScanned": 21
+    "packsScanned": 22
   },
   "classDistribution": {
     "auth-bypass": 8,
-    "unconfirmed-state": 2,
+    "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 2,
@@ -143,6 +143,13 @@
     {
       "pack": "solana-lamports-scaling-wrong-constant",
       "rule": "solana-lamports-scaling-wrong-constant",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "solana-send-skip-preflight-true",
+      "rule": "solana-send-skip-preflight-true",
       "red": true,
       "green": true,
       "emitted": true

@@ -1,28 +1,28 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-04T07:14:02.152Z",
+  "generatedAt": "2026-07-04T07:16:01.989Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 21
+      "count": 22
     }
   ],
   "counts": {
-    "vtis": 21,
-    "unique": 21,
+    "vtis": 22,
+    "unique": 22,
     "duplicates": 0,
     "sdks": 18,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 17,
+    "high": 18,
     "critical": 4
   },
   "classDistribution": {
     "auth-bypass": 8,
-    "unconfirmed-state": 2,
+    "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 2,
@@ -47,12 +47,12 @@
     "python": 1,
     "@raydium-io/raydium-sdk-v2": 1,
     "Solana lamports arithmetic": 1,
-    "@solana/web3.js": 1,
+    "@solana/web3.js": 2,
     "SPL Token": 1,
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 21
+    "synthetic-owned": 22
   },
   "quality": {
     "mean": 50,
@@ -61,7 +61,7 @@
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 21,
+      "medium": 22,
       "low": 0
     }
   },
@@ -76,7 +76,7 @@
       },
       "unconfirmed-state": {
         "Jito (block engine / bundles)": 1,
-        "@solana/web3.js": 1
+        "@solana/web3.js": 2
       },
       "missing-slippage-guard": {
         "Jupiter Aggregator API": 1,
@@ -120,10 +120,6 @@
       {
         "class": "unconfirmed-state",
         "sdk": "Jito (block engine / bundles)"
-      },
-      {
-        "class": "unconfirmed-state",
-        "sdk": "@solana/web3.js"
       },
       {
         "class": "missing-slippage-guard",
@@ -330,6 +326,15 @@
       "trapId": "solana-lamports-scaling-wrong-constant",
       "sdk": "Solana lamports arithmetic",
       "class": "wrong-constant",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "solana-send-skip-preflight-true",
+      "sdk": "@solana/web3.js",
+      "class": "unconfirmed-state",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",

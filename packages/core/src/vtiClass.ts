@@ -51,6 +51,7 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "cors-credentials-reflect-origin-true": "auth-bypass",
   "cookie-session-secure-false": "auth-bypass",
   "mongoose-tls-allow-invalid-certificates": "missing-verification",
+  "solana-send-skip-preflight-true": "unconfirmed-state",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {
