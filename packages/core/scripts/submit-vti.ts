@@ -76,7 +76,15 @@ async function main() {
 
   const out: any = await res.json().catch(() => ({}));
   if (res.status === 201 && out.accepted) {
-    console.error(`  ✓ LANDED ${out.trapId} — server proved RED→GREEN via ${out.method}. Now in the corpus, no PR.`);
+    // The reference server proves RED→GREEN in-process (returns `method`); the
+    // hosted registry verifies provenance + secret + shape at the edge and
+    // re-proves RED→GREEN asynchronously (returns `provenanceUrl`).
+    const how = out.method
+      ? `server proved RED→GREEN via ${out.method}`
+      : out.provenanceUrl
+        ? `provenance verified against ${out.provenanceUrl} (RED→GREEN re-proof pending)`
+        : "accepted by the registry";
+    console.error(`  ✓ LANDED ${out.trapId} — ${how}. Now in the corpus, no PR.`);
   } else if (res.status === 200 && out.duplicate) {
     console.error(`  = already present: ${out.trapId} (idempotent — the trap is already in the corpus)`);
   } else {

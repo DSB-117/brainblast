@@ -364,11 +364,21 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   tests + a live round-trip that landed a real trap
   (`solana-hive-sendtransaction-skippreflight`, provenance confirmed against a
   real `ask-the-hive/the-hive` commit) and REJECTED a fabricated variant (evidence
-  not at the commit) with 422; 429 rate-limiting confirmed. **Remaining (infra):**
-  deploy the route on the registry host that holds the Supabase key — it just
-  imports `ingestSubmission` + `SupabaseVtiStore` and serves `route()`. **Exit:**
-  a contributor lands a proven, provenance-verified VTI in the live corpus via one
-  POST, no fork/PR.
+  not at the commit) with 422; 429 rate-limiting confirmed.
+  **Registry endpoint BUILT + PR'd (brainblast-registry#21).** Discovery: the
+  registry is a deliberately lean data layer (no `ts-morph`, vendors only pure
+  slices), so the deployed `POST /api/vti` runs the gates that fit the edge —
+  **shape + secret-scan + provenance** (all pure, un-fakeable server-side) — and
+  the heavy RED→GREEN reproduction stays where ts-morph already lives (client
+  `submit:vti` + an async brainblast-side re-proof that flips `proof_verified`;
+  paid tiers gate on that flag, matching the registry's existing cron pattern).
+  Added: `app/api/vti/route.ts` (open + per-IP hourly cap, idempotent upsert),
+  `lib/vtiIngest.ts`, vendored `lib/brainblast/{detect,provenance}.ts`, and the
+  `vtis` + `vti_ingest_audit` migration. `tsc` clean; gate verified against real
+  GitHub. **Remaining (repo-owner creds only):** apply
+  `supabase/migrations/0001_vtis.sql` to prod Supabase, then merge #21 → Vercel
+  auto-deploys (no new env). **Exit:** a contributor lands a provenance-verified
+  VTI in the live corpus via one POST, no fork/PR.
 
 **Legal gate (applies before R3 opens anything to the public):** open the
 **owned synthetic corpus** publicly first (zero consent obligation). Contributed
