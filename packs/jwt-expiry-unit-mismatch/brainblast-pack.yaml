@@ -1,0 +1,5 @@
+id: jwt-expiry-unit-mismatch
+name: "Jwt Expiry Unit Mismatch"
+version: 0.1.0
+author: brainblast-fleet
+description: "isExpired multiplies a seconds-based exp by 1000 — expired tokens are treated as valid forever"

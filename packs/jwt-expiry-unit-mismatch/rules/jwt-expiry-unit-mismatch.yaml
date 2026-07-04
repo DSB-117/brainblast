@@ -1,0 +1,40 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: jwt-expiry-unit-mismatch
+severity: critical
+title: isExpired multiplies a seconds-based exp by 1000 — expired tokens are
+  treated as valid forever
+component:
+  name: typescript
+  type: Language
+  version: ">=4.0"
+  sourceUrl: https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4
+detect:
+  modules: []
+  nameRegex: expir|expiry|isexpired|token|ttl|valid
+  triggerCalls: []
+check:
+  kind: differential-io
+  params:
+    lang: typescript
+    entryFile: expiry.ts
+    export: isExpired
+    cases:
+      - input:
+          - 1700000100
+          - 1700000000
+        output: true
+      - input:
+          - 1700000000
+          - 1700000100
+        output: false
+      - input:
+          - 2000000000
+          - 1700000000
+        output: true
+      - input:
+          - 1700000000
+          - 1700000000
+        output: true
+test:
+  kind: none

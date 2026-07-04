@@ -1,0 +1,43 @@
+{
+  "id": "pagination-offset-off-by-one",
+  "severity": "medium",
+  "title": "offsetFor multiplies a 1-indexed page directly by page size — the first page of records is skipped",
+  "class": "other",
+  "component": {
+    "name": "typescript",
+    "type": "Language",
+    "version": ">=4.0",
+    "sourceUrl": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Multiplication"
+  },
+  "detect": {
+    "modules": [],
+    "nameRegex": "offset|page|paginat|skip|limit|cursor",
+    "triggerCalls": []
+  },
+  "binding": {
+    "check": {
+      "kind": "differential-io",
+      "params": {
+        "lang": "typescript",
+        "entryFile": "paginate.ts",
+        "export": "offsetFor",
+        "cases": [
+          { "input": [1, 20], "output": 0 },
+          { "input": [2, 20], "output": 20 },
+          { "input": [5, 10], "output": 40 },
+          { "input": [3, 25], "output": 50 }
+        ]
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "paginate.ts",
+    "vulnerable": "export function offsetFor(page: number, pageSize: number): number {\n  // VULNERABLE: pages are 1-indexed, so page 1 should map to offset 0. Multiplying\n  // page * pageSize skips the entire first page — every listing silently omits its\n  // first `pageSize` records (and shifts all boundaries by one page).\n  return page * pageSize;\n}\n",
+    "fixed": "export function offsetFor(page: number, pageSize: number): number {\n  // FIXED: 1-indexed page → zero-based offset.\n  return (page - 1) * pageSize;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Multiplication",
+    "note": "The 1-indexed-page off-by-one has no static shape and returns plausible offsets. Golden I/O shows page 1 maps to a non-zero offset, so the first records of every list are never returned — data silently missing."
+  }
+}

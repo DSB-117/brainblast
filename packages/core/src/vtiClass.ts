@@ -120,6 +120,10 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "token-decimals-off-by-one-scale": "wrong-constant",
   "bigint-lamports-precision-loss": "other",
   "payout-split-drops-remainder": "other",
+  "jwt-expiry-unit-mismatch": "auth-bypass",
+  "discount-stacking-over-applied": "silent-zero-revenue",
+  "pagination-offset-off-by-one": "other",
+  "modulo-negative-wrap": "other",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

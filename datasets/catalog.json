@@ -1,26 +1,26 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-04T16:33:27.256Z",
+  "generatedAt": "2026-07-04T16:41:52.196Z",
   "counts": {
-    "total": 85,
-    "proven": 85,
+    "total": 89,
+    "proven": 89,
     "sdks": 62,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 57,
-    "critical": 22,
-    "medium": 6
+    "high": 58,
+    "critical": 23,
+    "medium": 8
   },
   "classDistribution": {
     "missing-verification": 27,
-    "auth-bypass": 34,
-    "other": 6,
+    "auth-bypass": 35,
+    "other": 8,
+    "silent-zero-revenue": 4,
     "unconfirmed-state": 7,
     "missing-slippage-guard": 4,
     "immutable-after-deploy": 1,
-    "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
     "wrong-constant": 2
   },
@@ -29,7 +29,7 @@
     "@apollo/server": 1,
     "aws-sdk": 1,
     "@aws-sdk/client-s3": 1,
-    "typescript": 4,
+    "typescript": 8,
     "cassandra-driver": 1,
     "cookie": 1,
     "cookie-session": 2,
@@ -89,16 +89,16 @@
     "ws": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 85
+    "synthetic-owned": 89
   },
   "quality": {
-    "mean": 50,
+    "mean": 49,
     "min": 30,
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-07-04T16:33:21.829Z",
-    "newest": "2026-07-04T16:33:21.829Z"
+    "oldest": "2026-07-04T16:41:42.902Z",
+    "newest": "2026-07-04T16:41:42.902Z"
   },
   "tiers": [
     {
@@ -142,7 +142,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T16:33:21.829Z",
+      "capturedAt": "2026-07-04T16:41:42.902Z",
       "sourceUrls": [
         "https://amqp-node.github.io/amqplib/channel_api.html#connect"
       ],
@@ -150,7 +150,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T16:33:21.829Z"
+        "verifiedAt": "2026-07-04T16:41:42.902Z"
       }
     },
     {
@@ -165,7 +165,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T16:33:21.829Z",
+      "capturedAt": "2026-07-04T16:41:42.902Z",
       "sourceUrls": [
         "https://www.apollographql.com/docs/apollo-server/security/cors/#preventing-cross-site-request-forgery-csrf"
       ],
@@ -173,7 +173,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T16:33:21.829Z"
+        "verifiedAt": "2026-07-04T16:41:42.902Z"
       }
     },
     {
@@ -188,7 +188,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T16:33:21.829Z",
+      "capturedAt": "2026-07-04T16:41:42.902Z",
       "sourceUrls": [
         "https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html#canned-acl"
       ],
@@ -196,7 +196,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T16:33:21.829Z"
+        "verifiedAt": "2026-07-04T16:41:42.902Z"
       }
     },
     {
@@ -211,7 +211,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T16:33:21.829Z",
+      "capturedAt": "2026-07-04T16:41:42.902Z",
       "sourceUrls": [
         "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-s3/Interface/PutObjectCommandInput/"
       ],
@@ -219,7 +219,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T16:33:21.829Z"
+        "verifiedAt": "2026-07-04T16:41:42.902Z"
       }
     },
     {
@@ -234,7 +234,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T16:33:21.829Z",
+      "capturedAt": "2026-07-04T16:41:42.902Z",
       "sourceUrls": [
         "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER"
       ],
@@ -242,7 +242,7 @@
         "red": true,
         "green": true,
         "method": "differential",
-        "verifiedAt": "2026-07-04T16:33:21.829Z"
+        "verifiedAt": "2026-07-04T16:41:42.902Z"
       }
     }
   ]

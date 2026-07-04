@@ -1,0 +1,40 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: modulo-negative-wrap
+severity: medium
+title: wrapIndex uses raw % which returns a negative for negative inputs —
+  out-of-bounds ring/array index
+component:
+  name: typescript
+  type: Language
+  version: ">=4.0"
+  sourceUrl: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Remainder
+detect:
+  modules: []
+  nameRegex: wrap|index|modulo|mod|ring|rotate|circular
+  triggerCalls: []
+check:
+  kind: differential-io
+  params:
+    lang: typescript
+    entryFile: wrap.ts
+    export: wrapIndex
+    cases:
+      - input:
+          - -1
+          - 5
+        output: 4
+      - input:
+          - 7
+          - 5
+        output: 2
+      - input:
+          - -7
+          - 5
+        output: 3
+      - input:
+          - 10
+          - 3
+        output: 1
+test:
+  kind: none

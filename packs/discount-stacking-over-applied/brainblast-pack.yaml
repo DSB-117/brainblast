@@ -1,0 +1,5 @@
+id: discount-stacking-over-applied
+name: "Discount Stacking Over Applied"
+version: 0.1.0
+author: brainblast-fleet
+description: "applyDiscounts adds two percentages instead of compounding them — orders are massively over-discounted"

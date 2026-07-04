@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T16:33:27.256Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T16:41:52.196Z from 1 lot(s): seed-vti.jsonl._
 
-**85 verified trap instances** across **62 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 30–60). Freshness: 2026-07-04T16:33:21.829Z → 2026-07-04T16:33:21.829Z.
+**89 verified trap instances** across **62 SDKs** and **9 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T16:41:42.902Z → 2026-07-04T16:41:42.902Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,12 +20,12 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-| auth-bypass | 34 |
+| auth-bypass | 35 |
 | missing-verification | 27 |
+| other | 8 |
 | unconfirmed-state | 7 |
-| other | 6 |
+| silent-zero-revenue | 4 |
 | missing-slippage-guard | 4 |
-| silent-zero-revenue | 3 |
 | wrong-constant | 2 |
 | immutable-after-deploy | 1 |
 | unchecked-staleness | 1 |
@@ -34,9 +34,9 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | SDK | Count |
 |---|---|
+| typescript | 8 |
 | @solana/web3.js | 6 |
 | helmet | 5 |
-| typescript | 4 |
 | jsonwebtoken | 4 |
 | express-session | 3 |
 | cookie-session | 2 |

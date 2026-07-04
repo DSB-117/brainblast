@@ -1,0 +1,40 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: pagination-offset-off-by-one
+severity: medium
+title: offsetFor multiplies a 1-indexed page directly by page size — the first
+  page of records is skipped
+component:
+  name: typescript
+  type: Language
+  version: ">=4.0"
+  sourceUrl: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Multiplication
+detect:
+  modules: []
+  nameRegex: offset|page|paginat|skip|limit|cursor
+  triggerCalls: []
+check:
+  kind: differential-io
+  params:
+    lang: typescript
+    entryFile: paginate.ts
+    export: offsetFor
+    cases:
+      - input:
+          - 1
+          - 20
+        output: 0
+      - input:
+          - 2
+          - 20
+        output: 20
+      - input:
+          - 5
+          - 10
+        output: 40
+      - input:
+          - 3
+          - 25
+        output: 50
+test:
+  kind: none

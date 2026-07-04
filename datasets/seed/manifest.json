@@ -1,22 +1,22 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T16:33:21.829Z",
+  "generatedAt": "2026-07-04T16:41:42.902Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 85,
+    "records": 89,
     "sdks": 62,
-    "packsScanned": 85
+    "packsScanned": 89
   },
   "classDistribution": {
     "missing-verification": 27,
-    "auth-bypass": 34,
-    "other": 6,
+    "auth-bypass": 35,
+    "other": 8,
+    "silent-zero-revenue": 4,
     "unconfirmed-state": 7,
     "missing-slippage-guard": 4,
     "immutable-after-deploy": 1,
-    "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
     "wrong-constant": 2
   },
@@ -94,6 +94,13 @@
     {
       "pack": "cors-wildcard-origin",
       "rule": "cors-wildcard-origin",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "discount-stacking-over-applied",
+      "rule": "discount-stacking-over-applied",
       "red": true,
       "green": true,
       "emitted": true
@@ -253,6 +260,13 @@
       "emitted": true
     },
     {
+      "pack": "jwt-expiry-unit-mismatch",
+      "rule": "jwt-expiry-unit-mismatch",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "jwt-expressjwt-ignore-notbefore",
       "rule": "jwt-expressjwt-ignore-notbefore",
       "red": true,
@@ -351,6 +365,13 @@
       "emitted": true
     },
     {
+      "pack": "modulo-negative-wrap",
+      "rule": "modulo-negative-wrap",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "mongodb-client-tls-allow-invalid-certificates",
       "rule": "mongodb-client-tls-allow-invalid-certificates",
       "red": true,
@@ -395,6 +416,13 @@
     {
       "pack": "nodemailer-tls-reject-unauthorized-false",
       "rule": "nodemailer-tls-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "pagination-offset-off-by-one",
+      "rule": "pagination-offset-off-by-one",
       "red": true,
       "green": true,
       "emitted": true

@@ -1,0 +1,5 @@
+id: modulo-negative-wrap
+name: "Modulo Negative Wrap"
+version: 0.1.0
+author: brainblast-fleet
+description: "wrapIndex uses raw % which returns a negative for negative inputs — out-of-bounds ring/array index"

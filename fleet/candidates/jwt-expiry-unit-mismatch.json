@@ -1,0 +1,43 @@
+{
+  "id": "jwt-expiry-unit-mismatch",
+  "severity": "critical",
+  "title": "isExpired multiplies a seconds-based exp by 1000 — expired tokens are treated as valid forever",
+  "class": "auth-bypass",
+  "component": {
+    "name": "typescript",
+    "type": "Language",
+    "version": ">=4.0",
+    "sourceUrl": "https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4"
+  },
+  "detect": {
+    "modules": [],
+    "nameRegex": "expir|expiry|isexpired|token|ttl|valid",
+    "triggerCalls": []
+  },
+  "binding": {
+    "check": {
+      "kind": "differential-io",
+      "params": {
+        "lang": "typescript",
+        "entryFile": "expiry.ts",
+        "export": "isExpired",
+        "cases": [
+          { "input": [1700000100, 1700000000], "output": true },
+          { "input": [1700000000, 1700000100], "output": false },
+          { "input": [2000000000, 1700000000], "output": true },
+          { "input": [1700000000, 1700000000], "output": true }
+        ]
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "expiry.ts",
+    "vulnerable": "export function isExpired(nowSeconds: number, expSeconds: number): boolean {\n  // VULNERABLE: exp is a JWT `exp` claim in SECONDS, but this multiplies it by 1000\n  // (as if comparing against Date.now() in ms) while `now` is already in seconds.\n  // exp is pushed ~1000x into the future, so a token NEVER reads as expired — every\n  // expired/stale token is accepted. Full auth bypass.\n  return nowSeconds >= expSeconds * 1000;\n}\n",
+    "fixed": "export function isExpired(nowSeconds: number, expSeconds: number): boolean {\n  // FIXED: compare like units — both in seconds.\n  return nowSeconds >= expSeconds;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4",
+    "note": "Seconds-vs-milliseconds unit mismatch in an expiry check has no static shape — it compiles and works for not-yet-expired tokens (so tests pass). Golden I/O with a past exp reveals the token is still accepted: expired credentials never expire."
+  }
+}
