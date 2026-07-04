@@ -1,14 +1,8 @@
 # brainblast-verified-traps — catalog
 
-<<<<<<< Updated upstream
-_Generated 2026-07-03T23:31:11.308Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T03:07:33.179Z from 1 lot(s): seed-vti.jsonl._
 
-**22 verified trap instances** across **17 SDKs** and **8 trap classes**. Quality score mean 48/100 (range 30–60). Freshness: 2026-07-03T23:31:09.486Z → 2026-07-03T23:31:09.486Z.
-=======
-_Generated 2026-07-04T02:21:20.977Z from 1 lot(s): seed-vti.jsonl._
-
-**26 verified trap instances** across **19 SDKs** and **8 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T02:21:19.295Z → 2026-07-04T02:21:19.295Z.
->>>>>>> Stashed changes
+**24 verified trap instances** across **19 SDKs** and **8 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T03:07:29.439Z → 2026-07-04T03:07:29.439Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -26,13 +20,8 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-<<<<<<< Updated upstream
-| unconfirmed-state | 5 |
-| auth-bypass | 4 |
-=======
-| unconfirmed-state | 7 |
 | auth-bypass | 6 |
->>>>>>> Stashed changes
+| unconfirmed-state | 5 |
 | missing-verification | 4 |
 | missing-slippage-guard | 3 |
 | other | 2 |

@@ -1,10 +1,6 @@
 # Datasheet — Brainblast Verified Traps v0.1.0
 
-<<<<<<< Updated upstream
-_Generated 2026-07-03T23:31:11.287Z by pack-dataset@0.1.0. Records conform to [`schema/vti.schema.json`](../../schema/vti.schema.json)._
-=======
-_Generated 2026-07-04T02:21:20.959Z by pack-dataset@0.1.0. Records conform to [`schema/vti.schema.json`](../../schema/vti.schema.json)._
->>>>>>> Stashed changes
+_Generated 2026-07-04T03:07:32.134Z by pack-dataset@0.1.0. Records conform to [`schema/vti.schema.json`](../../schema/vti.schema.json)._
 
 ## Motivation
 A corpus of **machine-verified `error → fix → proof` records** for real SDK
@@ -13,17 +9,10 @@ checker fails (RED) on the vulnerable code and passes (GREEN) on the fix. This i
 the property scraped bug data lacks. See [`ROADMAP-TRAINING-DATA.md`](../../ROADMAP-TRAINING-DATA.md).
 
 ## Composition
-<<<<<<< Updated upstream
-- **Records:** 22 (full lot), 3 (open sample).
-- **SDKs covered (17):** @metaplex-foundation/js, @meteora-ag/dlmm, @raydium-io/raydium-sdk-v2, @solana/web3.js, Jito (block engine / bundles), Jupiter Aggregator API, Pyth Network price feeds, SPL Token, Solana lamports arithmetic, Stripe Node SDK, better-auth, cors, express-jwt, jsonwebtoken, mongoose, node:https, python.
-- **Class distribution:** auth-bypass=4, unconfirmed-state=5, missing-slippage-guard=3, missing-verification=4, other=2, silent-zero-revenue=2, unchecked-staleness=1, wrong-constant=1.
-- **Severity distribution:** high=19, critical=2, medium=1.
-=======
-- **Records:** 26 (full lot), 3 (open sample).
+- **Records:** 24 (full lot), 3 (open sample).
 - **SDKs covered (19):** @metaplex-foundation/js, @meteora-ag/dlmm, @raydium-io/raydium-sdk-v2, @solana/web3.js, Jito (block engine / bundles), Jupiter Aggregator API, Pyth Network price feeds, SPL Token, Solana lamports arithmetic, Stripe Node SDK, better-auth, cors, crypto/tls, express-jwt, jsonwebtoken, mongoose, node:https, python, solidity.
-- **Class distribution:** auth-bypass=6, unconfirmed-state=7, missing-slippage-guard=3, missing-verification=4, other=2, silent-zero-revenue=2, unchecked-staleness=1, wrong-constant=1.
-- **Severity distribution:** high=22, critical=3, medium=1.
->>>>>>> Stashed changes
+- **Class distribution:** auth-bypass=6, unconfirmed-state=5, missing-slippage-guard=3, missing-verification=4, other=2, silent-zero-revenue=2, unchecked-staleness=1, wrong-constant=1.
+- **Severity distribution:** high=20, critical=3, medium=1.
 - Each record carries: vulnerable + fixed snippet, checker fail/pass detail,
   RED→GREEN proof, source-doc URL, producing pack, severity, and trap class.
 

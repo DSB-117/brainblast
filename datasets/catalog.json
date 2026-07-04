@@ -1,39 +1,21 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-<<<<<<< Updated upstream
-  "generatedAt": "2026-07-03T23:31:11.308Z",
+  "generatedAt": "2026-07-04T03:07:33.179Z",
   "counts": {
-    "total": 22,
-    "proven": 22,
-    "sdks": 17,
-    "classes": 8
-  },
-  "severityDistribution": {
-    "high": 19,
-    "critical": 2,
-    "medium": 1
-  },
-  "classDistribution": {
-    "auth-bypass": 4,
-    "unconfirmed-state": 5,
-=======
-  "generatedAt": "2026-07-04T02:21:20.977Z",
-  "counts": {
-    "total": 26,
-    "proven": 26,
+    "total": 24,
+    "proven": 24,
     "sdks": 19,
     "classes": 8
   },
   "severityDistribution": {
-    "high": 22,
+    "high": 20,
     "critical": 3,
     "medium": 1
   },
   "classDistribution": {
     "auth-bypass": 6,
-    "unconfirmed-state": 7,
->>>>>>> Stashed changes
+    "unconfirmed-state": 5,
     "missing-slippage-guard": 3,
     "missing-verification": 4,
     "other": 2,
@@ -63,11 +45,7 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-<<<<<<< Updated upstream
-    "synthetic-owned": 22
-=======
-    "synthetic-owned": 26
->>>>>>> Stashed changes
+    "synthetic-owned": 24
   },
   "quality": {
     "mean": 49,
@@ -75,13 +53,8 @@
     "max": 60
   },
   "freshness": {
-<<<<<<< Updated upstream
-    "oldest": "2026-07-03T23:31:09.486Z",
-    "newest": "2026-07-03T23:31:09.486Z"
-=======
-    "oldest": "2026-07-04T02:21:19.295Z",
-    "newest": "2026-07-04T02:21:19.295Z"
->>>>>>> Stashed changes
+    "oldest": "2026-07-04T03:07:29.439Z",
+    "newest": "2026-07-04T03:07:29.439Z"
   },
   "tiers": [
     {
@@ -125,11 +98,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-<<<<<<< Updated upstream
-      "capturedAt": "2026-07-03T23:31:09.486Z",
-=======
-      "capturedAt": "2026-07-04T02:21:19.295Z",
->>>>>>> Stashed changes
+      "capturedAt": "2026-07-04T03:07:29.439Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -137,10 +106,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-<<<<<<< Updated upstream
-        "verifiedAt": "2026-07-03T23:31:09.486Z"
-=======
-        "verifiedAt": "2026-07-04T02:21:19.295Z"
+        "verifiedAt": "2026-07-04T03:07:29.439Z"
       }
     },
     {
@@ -155,7 +121,7 @@
       "score": 60,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T02:21:19.295Z",
+      "capturedAt": "2026-07-04T03:07:29.439Z",
       "sourceUrls": [
         "https://pkg.go.dev/crypto/tls#Config"
       ],
@@ -163,8 +129,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T02:21:19.295Z"
->>>>>>> Stashed changes
+        "verifiedAt": "2026-07-04T03:07:29.439Z"
       }
     },
     {
@@ -179,11 +144,7 @@
       "score": 60,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-<<<<<<< Updated upstream
-      "capturedAt": "2026-07-03T23:31:09.486Z",
-=======
-      "capturedAt": "2026-07-04T02:21:19.295Z",
->>>>>>> Stashed changes
+      "capturedAt": "2026-07-04T03:07:29.439Z",
       "sourceUrls": [
         "https://nodejs.org/api/https.html#httpsrequestoptions-callback"
       ],
@@ -191,11 +152,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-<<<<<<< Updated upstream
-        "verifiedAt": "2026-07-03T23:31:09.486Z"
-=======
-        "verifiedAt": "2026-07-04T02:21:19.295Z"
->>>>>>> Stashed changes
+        "verifiedAt": "2026-07-04T03:07:29.439Z"
       }
     },
     {
@@ -210,11 +167,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-<<<<<<< Updated upstream
-      "capturedAt": "2026-07-03T23:31:09.486Z",
-=======
-      "capturedAt": "2026-07-04T02:21:19.295Z",
->>>>>>> Stashed changes
+      "capturedAt": "2026-07-04T03:07:29.439Z",
       "sourceUrls": [
         "https://docs.jito.wtf/lowlatencytxnsend/"
       ],
@@ -222,11 +175,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-<<<<<<< Updated upstream
-        "verifiedAt": "2026-07-03T23:31:09.486Z"
-=======
-        "verifiedAt": "2026-07-04T02:21:19.295Z"
->>>>>>> Stashed changes
+        "verifiedAt": "2026-07-04T03:07:29.439Z"
       }
     },
     {
@@ -241,11 +190,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-<<<<<<< Updated upstream
-      "capturedAt": "2026-07-03T23:31:09.486Z",
-=======
-      "capturedAt": "2026-07-04T02:21:19.295Z",
->>>>>>> Stashed changes
+      "capturedAt": "2026-07-04T03:07:29.439Z",
       "sourceUrls": [
         "https://station.jup.ag/docs/apis/swap-api"
       ],
@@ -253,34 +198,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-<<<<<<< Updated upstream
-        "verifiedAt": "2026-07-03T23:31:09.486Z"
-      }
-    },
-    {
-      "trapId": "jwt-expressjwt-ignore-notbefore",
-      "title": "express-jwt passes ignoreNotBefore:true through to jwt.verify, silently accepting not-yet-valid tokens",
-      "sdk": {
-        "name": "express-jwt",
-        "version": ">=1.0.0"
-      },
-      "severity": "high",
-      "class": "missing-verification",
-      "score": 48,
-      "corroborationCount": 0,
-      "license": "synthetic-owned",
-      "capturedAt": "2026-07-03T23:31:09.486Z",
-      "sourceUrls": [
-        "https://github.com/auth0/express-jwt/blob/master/src/index.ts"
-      ],
-      "receipt": {
-        "red": true,
-        "green": true,
-        "method": "static-checker",
-        "verifiedAt": "2026-07-03T23:31:09.486Z"
-=======
-        "verifiedAt": "2026-07-04T02:21:19.295Z"
->>>>>>> Stashed changes
+        "verifiedAt": "2026-07-04T03:07:29.439Z"
       }
     }
   ]

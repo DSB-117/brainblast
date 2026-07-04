@@ -3,31 +3,18 @@
   "dataset": "brainblast-verified-traps",
   "version": "0.1.0",
   "generator": "pack-dataset@0.1.0",
-<<<<<<< Updated upstream
-  "generatedAt": "2026-07-03T23:31:11.287Z",
-=======
-  "generatedAt": "2026-07-04T02:21:20.959Z",
->>>>>>> Stashed changes
+  "generatedAt": "2026-07-04T03:07:32.134Z",
   "recordSchema": "schema/vti.schema.json",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-<<<<<<< Updated upstream
-    "full": 22,
-=======
-    "full": 26,
->>>>>>> Stashed changes
+    "full": 24,
     "sample": 3,
     "sdks": 19
   },
   "classDistribution": {
-<<<<<<< Updated upstream
-    "auth-bypass": 4,
-    "unconfirmed-state": 5,
-=======
     "auth-bypass": 6,
-    "unconfirmed-state": 7,
->>>>>>> Stashed changes
+    "unconfirmed-state": 5,
     "missing-slippage-guard": 3,
     "missing-verification": 4,
     "other": 2,
@@ -36,13 +23,8 @@
     "wrong-constant": 1
   },
   "severityDistribution": {
-<<<<<<< Updated upstream
-    "high": 19,
-    "critical": 2,
-=======
-    "high": 22,
+    "high": 20,
     "critical": 3,
->>>>>>> Stashed changes
     "medium": 1
   },
   "sdks": [

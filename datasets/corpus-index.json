@@ -1,52 +1,29 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-<<<<<<< Updated upstream
-  "generatedAt": "2026-07-03T23:31:11.297Z",
-=======
-  "generatedAt": "2026-07-04T02:21:20.967Z",
->>>>>>> Stashed changes
+  "generatedAt": "2026-07-04T03:07:32.609Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-<<<<<<< Updated upstream
-      "count": 22
+      "count": 24
     }
   ],
   "counts": {
-    "vtis": 22,
-    "unique": 22,
-=======
-      "count": 26
-    }
-  ],
-  "counts": {
-    "vtis": 26,
-    "unique": 26,
->>>>>>> Stashed changes
+    "vtis": 24,
+    "unique": 24,
     "duplicates": 0,
     "sdks": 19,
     "classes": 8
   },
   "severityDistribution": {
-<<<<<<< Updated upstream
-    "high": 19,
-    "critical": 2,
-    "medium": 1
-  },
-  "classDistribution": {
-    "auth-bypass": 4,
-    "unconfirmed-state": 5,
-=======
-    "high": 22,
+    "high": 20,
     "critical": 3,
     "medium": 1
   },
   "classDistribution": {
     "auth-bypass": 6,
-    "unconfirmed-state": 7,
->>>>>>> Stashed changes
+    "unconfirmed-state": 5,
     "missing-slippage-guard": 3,
     "missing-verification": 4,
     "other": 2,
@@ -76,11 +53,7 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-<<<<<<< Updated upstream
-    "synthetic-owned": 22
-=======
-    "synthetic-owned": 26
->>>>>>> Stashed changes
+    "synthetic-owned": 24
   },
   "quality": {
     "mean": 49,
@@ -89,11 +62,7 @@
     "max": 60,
     "buckets": {
       "high": 0,
-<<<<<<< Updated upstream
-      "medium": 21,
-=======
-      "medium": 25,
->>>>>>> Stashed changes
+      "medium": 23,
       "low": 1
     }
   },
