@@ -1,20 +1,20 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-04T07:23:25.113Z",
+  "generatedAt": "2026-07-04T07:25:36.795Z",
   "counts": {
-    "total": 30,
-    "proven": 30,
-    "sdks": 24,
+    "total": 31,
+    "proven": 31,
+    "sdks": 25,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 24,
+    "high": 25,
     "critical": 5,
     "medium": 1
   },
   "classDistribution": {
-    "auth-bypass": 13,
+    "auth-bypass": 14,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
@@ -25,6 +25,7 @@
     "other": 1
   },
   "sdkDistribution": {
+    "aws-sdk": 1,
     "cookie-session": 2,
     "cors": 2,
     "express-jwt": 1,
@@ -51,7 +52,7 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 30
+    "synthetic-owned": 31
   },
   "quality": {
     "mean": 49,
@@ -59,8 +60,8 @@
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-07-04T07:23:22.688Z",
-    "newest": "2026-07-04T07:23:22.688Z"
+    "oldest": "2026-07-04T07:25:33.733Z",
+    "newest": "2026-07-04T07:25:33.733Z"
   },
   "tiers": [
     {
@@ -93,6 +94,29 @@
   ],
   "teasers": [
     {
+      "trapId": "aws-s3-public-read-acl",
+      "title": "S3 putObject with ACL: \"public-read\" — every uploaded object is world-readable",
+      "sdk": {
+        "name": "aws-sdk",
+        "version": ">=2.0.0"
+      },
+      "severity": "high",
+      "class": "auth-bypass",
+      "score": 48,
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "capturedAt": "2026-07-04T07:25:33.733Z",
+      "sourceUrls": [
+        "https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html#canned-acl"
+      ],
+      "receipt": {
+        "red": true,
+        "green": true,
+        "method": "static-checker",
+        "verifiedAt": "2026-07-04T07:25:33.733Z"
+      }
+    },
+    {
       "trapId": "cookie-session-httponly-false",
       "title": "cookie-session with httpOnly: false — the session cookie is readable from JavaScript (XSS session theft)",
       "sdk": {
@@ -104,7 +128,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:23:22.688Z",
+      "capturedAt": "2026-07-04T07:25:33.733Z",
       "sourceUrls": [
         "https://github.com/expressjs/cookie-session#cookie-options"
       ],
@@ -112,7 +136,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:23:22.688Z"
+        "verifiedAt": "2026-07-04T07:25:33.733Z"
       }
     },
     {
@@ -127,7 +151,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:23:22.688Z",
+      "capturedAt": "2026-07-04T07:25:33.733Z",
       "sourceUrls": [
         "https://github.com/expressjs/cookie-session#cookie-options"
       ],
@@ -135,7 +159,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:23:22.688Z"
+        "verifiedAt": "2026-07-04T07:25:33.733Z"
       }
     },
     {
@@ -150,7 +174,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:23:22.688Z",
+      "capturedAt": "2026-07-04T07:25:33.733Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -158,7 +182,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:23:22.688Z"
+        "verifiedAt": "2026-07-04T07:25:33.733Z"
       }
     },
     {
@@ -173,7 +197,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:23:22.688Z",
+      "capturedAt": "2026-07-04T07:25:33.733Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -181,30 +205,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:23:22.688Z"
-      }
-    },
-    {
-      "trapId": "express-jwt-credentials-not-required",
-      "title": "express-jwt with credentialsRequired: false — routes that look protected accept requests with NO token",
-      "sdk": {
-        "name": "express-jwt",
-        "version": ">=7.0.0"
-      },
-      "severity": "critical",
-      "class": "auth-bypass",
-      "score": 60,
-      "corroborationCount": 0,
-      "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:23:22.688Z",
-      "sourceUrls": [
-        "https://github.com/auth0/express-jwt#usage"
-      ],
-      "receipt": {
-        "red": true,
-        "green": true,
-        "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:23:22.688Z"
+        "verifiedAt": "2026-07-04T07:25:33.733Z"
       }
     }
   ]

@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T07:23:25.113Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:25:36.795Z from 1 lot(s): seed-vti.jsonl._
 
-**30 verified trap instances** across **24 SDKs** and **9 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T07:23:22.688Z → 2026-07-04T07:23:22.688Z.
+**31 verified trap instances** across **25 SDKs** and **9 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T07:25:33.733Z → 2026-07-04T07:25:33.733Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,7 +20,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-| auth-bypass | 13 |
+| auth-bypass | 14 |
 | missing-verification | 4 |
 | unconfirmed-state | 3 |
 | missing-slippage-guard | 3 |
@@ -38,6 +38,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | cookie-session | 2 |
 | cors | 2 |
 | @solana/web3.js | 2 |
+| aws-sdk | 1 |
 | express-jwt | 1 |
 | express-session | 1 |
 | helmet | 1 |
@@ -65,11 +66,11 @@ The open sample tier shows metadata + the RED→GREEN receipt (proof we have it)
 
 | Trap | SDK | Class | Severity | Score | Corroboration | RED→GREEN |
 |---|---|---|---|---|---|---|
+| aws-s3-public-read-acl | aws-sdk | auth-bypass | high | 48 | 0 | ✓/✓ |
 | cookie-session-httponly-false | cookie-session | auth-bypass | high | 48 | 0 | ✓/✓ |
 | cookie-session-secure-false | cookie-session | auth-bypass | high | 48 | 0 | ✓/✓ |
 | cors-credentials-reflect-origin-true | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
 | cors-wildcard-origin | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
-| express-jwt-credentials-not-required | express-jwt | auth-bypass | critical | 60 | 0 | ✓/✓ |
 
 ---
 

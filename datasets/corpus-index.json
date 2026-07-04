@@ -1,28 +1,28 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-04T07:23:25.104Z",
+  "generatedAt": "2026-07-04T07:25:36.785Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 30
+      "count": 31
     }
   ],
   "counts": {
-    "vtis": 30,
-    "unique": 30,
+    "vtis": 31,
+    "unique": 31,
     "duplicates": 0,
-    "sdks": 24,
+    "sdks": 25,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 24,
+    "high": 25,
     "critical": 5,
     "medium": 1
   },
   "classDistribution": {
-    "auth-bypass": 13,
+    "auth-bypass": 14,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
@@ -33,6 +33,7 @@
     "other": 1
   },
   "sdkDistribution": {
+    "aws-sdk": 1,
     "cookie-session": 2,
     "cors": 2,
     "express-jwt": 1,
@@ -59,7 +60,7 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 30
+    "synthetic-owned": 31
   },
   "quality": {
     "mean": 49,
@@ -68,13 +69,14 @@
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 29,
+      "medium": 30,
       "low": 1
     }
   },
   "coverage": {
     "matrix": {
       "auth-bypass": {
+        "aws-sdk": 1,
         "cookie-session": 2,
         "cors": 2,
         "express-jwt": 1,
@@ -118,6 +120,10 @@
       }
     },
     "thinCells": [
+      {
+        "class": "auth-bypass",
+        "sdk": "aws-sdk"
+      },
       {
         "class": "auth-bypass",
         "sdk": "express-jwt"
@@ -202,6 +208,15 @@
     "missingClasses": []
   },
   "scored": [
+    {
+      "trapId": "aws-s3-public-read-acl",
+      "sdk": "aws-sdk",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
     {
       "trapId": "cookie-session-httponly-false",
       "sdk": "cookie-session",

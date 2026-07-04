@@ -1,0 +1,44 @@
+{
+  "id": "aws-s3-public-read-acl",
+  "severity": "high",
+  "title": "S3 putObject with ACL: \"public-read\" — every uploaded object is world-readable",
+  "class": "auth-bypass",
+  "component": {
+    "name": "aws-sdk",
+    "type": "Storage",
+    "version": ">=2.0.0",
+    "sourceUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html#canned-acl"
+  },
+  "detect": {
+    "modules": ["aws-sdk", "@aws-sdk/client-s3"],
+    "nameRegex": "upload|put|s3|store|save|object|file",
+    "triggerCalls": ["putObject", "upload"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "putObject",
+        "argIndex": 0,
+        "propName": "ACL",
+        "forbiddenValue": "public-read",
+        "passDetail": "The S3 put uses a non-public ACL (not \"public-read\") — the object is not world-readable.",
+        "failDetail": "putObject is called with ACL: \"public-read\", which makes the uploaded object readable by ANYONE on the internet who knows or guesses the URL. If user uploads (documents, avatars, exports) flow through here, they are silently exposed publicly. Uploads succeed and the app works, so it ships. Use ACL: \"private\" (the default) and serve objects through pre-signed URLs.",
+        "absentCallDetail": "No putObject call in this scope; this rule does not apply here.",
+        "absentArgDetail": "putObject does not set ACL; the bucket default applies — verify it is not public."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "upload.ts",
+    "vulnerable": "import AWS from \"aws-sdk\";\n\nexport function uploadUserFile(s3: AWS.S3, key: string, body: Buffer) {\n  // VULNERABLE: public-read makes every uploaded object readable by anyone on the internet.\n  return s3.putObject({ Bucket: \"user-uploads\", Key: key, Body: body, ACL: \"public-read\" }).promise();\n}\n",
+    "fixed": "import AWS from \"aws-sdk\";\n\nexport function uploadUserFile(s3: AWS.S3, key: string, body: Buffer) {\n  // FIXED: objects are private; serve them via pre-signed URLs when needed.\n  return s3.putObject({ Bucket: \"user-uploads\", Key: key, Body: body, ACL: \"private\" }).promise();\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html#canned-acl",
+    "note": "ACL: \"public-read\" is copied from a 'host a public image' tutorial and reused for private user uploads. Nothing errors, so it ships — the classic silent S3 data-exposure footgun behind countless breaches."
+  }
+}

@@ -60,6 +60,7 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "playwright-ignore-https-errors-true": "missing-verification",
   "stripe-connect-zero-application-fee": "silent-zero-revenue",
   "cookie-session-httponly-false": "auth-bypass",
+  "aws-s3-public-read-acl": "auth-bypass",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

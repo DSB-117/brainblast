@@ -1,30 +1,31 @@
 # Corpus coverage — Brainblast Verified Traps
 
-_Generated 2026-07-04T07:23:25.104Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
+_Generated 2026-07-04T07:25:36.785Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
 
 ## Summary
-- **30** VTIs (30 unique, 0 duplicate) across **24** SDKs and **9** trap classes.
+- **31** VTIs (31 unique, 0 duplicate) across **25** SDKs and **9** trap classes.
 - **Quality** (0–100): mean 49, median 48, range 30–60.
-  Buckets — high (≥70): 0, medium (40–69): 29, low (<40): 1.
-- **Lots:** synthetic-owned (30).
+  Buckets — high (≥70): 0, medium (40–69): 30, low (<40): 1.
+- **Lots:** synthetic-owned (31).
 
 ## Coverage heatmap (class × SDK, unique records)
-| class \ sdk | @metaplex-foundation/js | @metaplex-foundation/mpl-token-metadata | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Solana lamports arithmetic | Stripe Node SDK | cookie-session | cors | express | express-jwt | express-session | helmet | jsonwebtoken | mongoose | node:https | playwright | puppeteer | python | stripe |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| auth-bypass | · | · | · | · | · | · | · | · | · | · | · | 2 | 2 | 1 | 1 | 1 | 1 | 4 | · | 1 | · | · | · | · |
-| immutable-after-deploy | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| missing-slippage-guard | · | · | 1 | 1 | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| missing-verification | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | 1 | · | 1 | 1 | · | · |
-| other | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| silent-zero-revenue | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | 1 |
-| unchecked-staleness | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| unconfirmed-state | · | · | · | · | 2 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| wrong-constant | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| class \ sdk | @metaplex-foundation/js | @metaplex-foundation/mpl-token-metadata | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Solana lamports arithmetic | Stripe Node SDK | aws-sdk | cookie-session | cors | express | express-jwt | express-session | helmet | jsonwebtoken | mongoose | node:https | playwright | puppeteer | python | stripe |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| auth-bypass | · | · | · | · | · | · | · | · | · | · | · | 1 | 2 | 2 | 1 | 1 | 1 | 1 | 4 | · | 1 | · | · | · | · |
+| immutable-after-deploy | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| missing-slippage-guard | · | · | 1 | 1 | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| missing-verification | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | 1 | · | 1 | 1 | · | · |
+| other | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| silent-zero-revenue | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | 1 |
+| unchecked-staleness | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| unconfirmed-state | · | · | · | · | 2 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| wrong-constant | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
 
 (`·` = no coverage yet.)
 
 ## Scout work-orders (where to dig next)
 **Thin cells** (only one instance — corroborate or broaden):
+- auth-bypass · aws-sdk
 - auth-bypass · express-jwt
 - auth-bypass · express-session
 - auth-bypass · helmet

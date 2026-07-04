@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:23:22.688Z",
+  "generatedAt": "2026-07-04T07:25:33.733Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 30,
-    "sdks": 24,
-    "packsScanned": 30
+    "records": 31,
+    "sdks": 25,
+    "packsScanned": 31
   },
   "classDistribution": {
-    "auth-bypass": 13,
+    "auth-bypass": 14,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
@@ -21,6 +21,13 @@
     "other": 1
   },
   "proof": [
+    {
+      "pack": "aws-s3-public-read-acl",
+      "rule": "aws-s3-public-read-acl",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
     {
       "pack": "cookie-session-httponly-false",
       "rule": "cookie-session-httponly-false",
