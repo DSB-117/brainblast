@@ -2,18 +2,45 @@ import { SyntaxKind } from "ts-morph";
 import type { Expression, ObjectLiteralExpression, PropertyAssignment } from "ts-morph";
 import type { Checker } from "../types.ts";
 
-// Solana amounts are almost always BN-wrapped: `minOutAmount: new BN(0)`,
-// `tipLamports: new anchor.BN(0)`, `slippage: BN("0")`. Treat such a zero-wrapped
-// literal as the underlying zero so amount/slippage rules catch idiomatic code,
-// not just bare `0`. Only meaningful when the forbidden value is 0.
-function isBnWrappedZero(init: Expression): boolean {
+// Amounts, percentages and slippage are rarely bare literals in real SDK code —
+// they are wrapped in a numeric/percentage constructor or factory:
+//   minOutAmount: new BN(0)            tipLamports: new anchor.BN(0)
+//   slippage: Percentage.fromFraction(0, 100)   (Orca / Cetus)
+//   sellerFeeBasisPoints: percentAmount(0)      (Metaplex umi)
+//   fee: new Decimal(0)
+// The bare-literal check misses all of these, so a real zeroed-slippage / zeroed-
+// royalty footgun slips through. Recognize the well-known numeric wrappers so a
+// value that provably evaluates to zero counts as the forbidden 0. Only meaningful
+// when the forbidden value is 0.
+//
+// Two constructor shapes:
+//   NUMERIC_WRAPPER  — `new BN(0)`, `percentAmount(0)`, `new Decimal(0)` etc.:
+//                      the FIRST arg is the numeric value.
+//   FRACTION_FACTORY — `Percentage.fromFraction(0, 100)`, `.fromDecimal(0)` etc.:
+//                      a zero NUMERATOR (first arg) is a zero fraction.
+const NUMERIC_WRAPPER = /(^|\.)(bn|bignum|bignumber|decimal|percentamount|percentage)$/i;
+const FRACTION_FACTORY = /\.(fromfraction|fromdecimal|fromnumber|fromratio|frompercent|frompercentage)$/i;
+
+function calleeOf(init: Expression): string {
   const isNewOrCall = init.getKind() === SyntaxKind.NewExpression || init.getKind() === SyntaxKind.CallExpression;
-  if (!isNewOrCall) return false;
-  const calleeText = (init as any).getExpression?.()?.getText?.() ?? "";
-  // `BN`, `bn`, `anchor.BN`, `web3.BN`, `new BN`, etc.
-  if (!/(^|\.)bn$/i.test(calleeText)) return false;
+  if (!isNewOrCall) return "";
+  return (init as any).getExpression?.()?.getText?.() ?? "";
+}
+
+// A call to one of the recognized numeric/percentage wrappers, regardless of args.
+// Used to treat a fixed fixture's non-zero wrapper (e.g. `Percentage.fromFraction(500, 10000)`)
+// as a determinable safe value → PASS.
+function isKnownNumericWrapperCall(init: Expression): boolean {
+  const c = calleeOf(init);
+  return c !== "" && (NUMERIC_WRAPPER.test(c) || FRACTION_FACTORY.test(c));
+}
+
+// A recognized numeric/percentage wrapper whose numeric value provably evaluates
+// to zero (first arg is a literal 0 / "0"). Generalizes the old BN-zero handling.
+function isZeroValuedNumericCall(init: Expression): boolean {
+  if (!isKnownNumericWrapperCall(init)) return false;
   const args = (init as any).getArguments?.() ?? [];
-  if (args.length !== 1) return false;
+  if (args.length === 0) return false;
   const a = args[0];
   const k = a.getKind();
   if (k === SyntaxKind.NumericLiteral) return Number(a.getLiteralValue()) === 0;
@@ -129,8 +156,10 @@ export const objectArgPropertyForbiddenLiteral: Checker = (c, p) => {
     (isStringOrNumber && (text === forbidden || text === String(p.forbiddenValue))) ||
     (isBool && typeof p.forbiddenValue === "boolean" && text === String(p.forbiddenValue));
 
-  // `new BN(0)` / `BN("0")` count as the forbidden zero (idiomatic Solana amounts).
-  const isForbidden = isLiteralForbidden || (p.forbiddenValue === 0 && isBnWrappedZero(init));
+  // A numeric/percentage wrapper that evaluates to zero — `new BN(0)`,
+  // `Percentage.fromFraction(0, 100)`, `percentAmount(0)` — counts as the forbidden
+  // zero (idiomatic amount/slippage/royalty code the bare-literal check misses).
+  const isForbidden = isLiteralForbidden || (p.forbiddenValue === 0 && isZeroValuedNumericCall(init));
 
   if (isForbidden) {
     return {
@@ -143,6 +172,15 @@ export const objectArgPropertyForbiddenLiteral: Checker = (c, p) => {
     return {
       result: "pass",
       detail: (p.passDetail as string) ?? `${p.propName} is ${text}`,
+    };
+  }
+
+  // A recognized numeric/percentage wrapper with a non-zero value (e.g. the fixed
+  // fixture's `Percentage.fromFraction(500, 10000)`) is a determinable safe value.
+  if (p.forbiddenValue === 0 && isKnownNumericWrapperCall(init)) {
+    return {
+      result: "pass",
+      detail: (p.passDetail as string) ?? `${p.propName} is a non-zero ${text}`,
     };
   }
 
