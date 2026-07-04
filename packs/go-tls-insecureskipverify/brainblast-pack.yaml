@@ -1,0 +1,5 @@
+id: go-tls-insecureskipverify
+name: "Go Tls Insecureskipverify"
+version: 0.1.0
+author: brainblast-fleet
+description: "tls.Config{InsecureSkipVerify: true} disables TLS certificate verification (MITM)"

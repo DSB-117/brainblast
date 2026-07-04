@@ -1,0 +1,49 @@
+{
+  "generatedAt": "2026-07-03T23:08:49.265Z",
+  "sdk": "cors",
+  "npmDownloadsLastMonth": 264314135,
+  "discovered": 90,
+  "skippedAlreadyInvestigated": 0,
+  "worklist": [
+    {
+      "repo": "Rob--W/cors-anywhere",
+      "stars": 9383,
+      "url": "https://github.com/Rob--W/cors-anywhere"
+    },
+    {
+      "repo": "everywall/ladder",
+      "stars": 8563,
+      "url": "https://github.com/everywall/ladder"
+    },
+    {
+      "repo": "fruitcake/laravel-cors",
+      "stars": 6241,
+      "url": "https://github.com/fruitcake/laravel-cors"
+    },
+    {
+      "repo": "xinliangnote/go-gin-api",
+      "stars": 5970,
+      "url": "https://github.com/xinliangnote/go-gin-api"
+    },
+    {
+      "repo": "adamchainz/django-cors-headers",
+      "stars": 5587,
+      "url": "https://github.com/adamchainz/django-cors-headers"
+    },
+    {
+      "repo": "anjoy8/Blog.Core",
+      "stars": 5288,
+      "url": "https://github.com/anjoy8/Blog.Core"
+    },
+    {
+      "repo": "CorsixTH/CorsixTH",
+      "stars": 4464,
+      "url": "https://github.com/CorsixTH/CorsixTH"
+    },
+    {
+      "repo": "corsairdev/corsair",
+      "stars": 3926,
+      "url": "https://github.com/corsairdev/corsair"
+    }
+  ]
+}

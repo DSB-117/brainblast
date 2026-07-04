@@ -1,0 +1,36 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: solana-hive-sendtransaction-skippreflight
+severity: high
+title: "wallet.sendTransaction called with skipPreflight: true skips simulation
+  and silently lands failing/wrong txs"
+component:
+  name: "@solana/web3.js"
+  type: Blockchain
+  version: ">=1.0.0"
+  sourceUrl: https://solana.com/docs/rpc/http/sendtransaction
+detect:
+  modules:
+    - "@solana/web3.js"
+  nameRegex: send|confirm|swap|transfer
+  triggerCalls:
+    - sendTransaction
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: sendTransaction
+    argIndex: 2
+    propName: skipPreflight
+    forbiddenValue: true
+    passDetail: sendTransaction runs preflight simulation (skipPreflight not set to
+      true), so a transaction that would fail on-chain is rejected client-side
+      before submission.
+    failDetail: "sendTransaction is called with skipPreflight: true, disabling the
+      preflight simulation. A malformed or failing transaction is submitted
+      anyway; the happy path returns a signature but the transaction can fail or
+      do the wrong thing on-chain with no client-side error."
+    absentCallDetail: No sendTransaction call found in this file.
+    absentArgDetail: sendTransaction is called without an options object, so
+      skipPreflight defaults to false (preflight runs). Safe.
+test:
+  kind: none

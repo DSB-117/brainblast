@@ -1,0 +1,41 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: stripe-betterauth-oidc-allow-plain-pkce
+severity: medium
+title: "oidcProvider({ allowPlainCodeChallengeMethod: true }) — accepts 'plain'
+  PKCE, which provides no protection against code interception"
+component:
+  name: better-auth
+  type: Auth
+  version: ">=1.0.0"
+  sourceUrl: https://www.better-auth.com/docs/plugins/oidc-provider
+detect:
+  modules:
+    - better-auth/plugins
+    - better-auth
+  nameRegex: oidc|auth|provider|config
+  triggerCalls:
+    - oidcProvider
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: oidcProvider
+    argIndex: 0
+    propName: allowPlainCodeChallengeMethod
+    forbiddenValue: true
+    passDetail: allowPlainCodeChallengeMethod is false, so only the S256
+      code_challenge_method is accepted. S256 sends only a SHA-256 hash of the
+      verifier in the authorization request, so intercepting the request does
+      not reveal the verifier.
+    failDetail: "allowPlainCodeChallengeMethod: true lets clients use
+      code_challenge_method='plain', where the code_challenge equals the raw
+      code_verifier. An attacker who can read the authorization request (the
+      exact threat PKCE exists to defeat) sees the plain verifier and can redeem
+      an intercepted authorization code — plain PKCE gives zero protection. RFC
+      7636 recommends S256; OAuth 2.1 disallows plain. Fix: remove this option
+      or set allowPlainCodeChallengeMethod: false."
+    absentCallDetail: No oidcProvider() call in this scope; rule N/A here.
+    absentArgDetail: oidcProvider() is called but allowPlainCodeChallengeMethod is
+      not set; verify the resolved default and prefer S256-only.
+test:
+  kind: none

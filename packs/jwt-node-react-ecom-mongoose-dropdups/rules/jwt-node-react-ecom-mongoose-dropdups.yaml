@@ -1,0 +1,35 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: jwt-node-react-ecom-mongoose-dropdups
+severity: high
+title: Mongoose index option dropDups:true is silently ignored, so duplicate
+  uniques are never dropped
+component:
+  name: mongoose
+  type: Auth
+  version: ">=3.0.0"
+  sourceUrl: https://mongoosejs.com/docs/guide.html#indexes
+detect:
+  modules:
+    - mongoose
+  nameRegex: index|schema|unique
+  triggerCalls:
+    - index
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: index
+    argIndex: 1
+    propName: dropDups
+    forbiddenValue: true
+    passDetail: index() options do not set the removed dropDups flag; uniqueness
+      relies on a genuine unique index that MongoDB enforces.
+    failDetail: "index() options set dropDups:true. This flag was removed in MongoDB
+      3.0 / Mongoose 3.x and is silently ignored: the schema compiles and the
+      app runs, but existing duplicate documents are NOT dropped and the
+      developer's assumption that duplicates were cleaned up is false, leaving
+      duplicate rows that break the intended uniqueness guarantee."
+    absentCallDetail: No index() call found on this schema.
+    absentArgDetail: index() called without an options object; dropDups cannot be set here.
+test:
+  kind: none

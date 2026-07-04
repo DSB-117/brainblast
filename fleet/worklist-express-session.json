@@ -1,0 +1,49 @@
+{
+  "generatedAt": "2026-07-03T23:19:40.525Z",
+  "sdk": "express-session",
+  "npmDownloadsLastMonth": 17189349,
+  "discovered": 98,
+  "skippedAlreadyInvestigated": 0,
+  "worklist": [
+    {
+      "repo": "async-labs/builderbook",
+      "stars": 3797,
+      "url": "https://github.com/async-labs/builderbook"
+    },
+    {
+      "repo": "jdesboeufs/connect-mongo",
+      "stars": 1970,
+      "url": "https://github.com/jdesboeufs/connect-mongo"
+    },
+    {
+      "repo": "trochette/Angular-Design-Patterns-Best-Practices",
+      "stars": 782,
+      "url": "https://github.com/trochette/Angular-Design-Patterns-Best-Practices"
+    },
+    {
+      "repo": "linagora/openpaas-esn",
+      "stars": 486,
+      "url": "https://github.com/linagora/openpaas-esn"
+    },
+    {
+      "repo": "jaredhanson/connect-ensure-login",
+      "stars": 468,
+      "url": "https://github.com/jaredhanson/connect-ensure-login"
+    },
+    {
+      "repo": "zachgoll/express-session-authentication-starter",
+      "stars": 374,
+      "url": "https://github.com/zachgoll/express-session-authentication-starter"
+    },
+    {
+      "repo": "hoangvvo/next-session",
+      "stars": 358,
+      "url": "https://github.com/hoangvvo/next-session"
+    },
+    {
+      "repo": "wcamarao/session.socket.io",
+      "stars": 349,
+      "url": "https://github.com/wcamarao/session.socket.io"
+    }
+  ]
+}

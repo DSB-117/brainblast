@@ -3,30 +3,30 @@
   "dataset": "brainblast-verified-traps",
   "version": "0.1.0",
   "generator": "pack-dataset@0.1.0",
-  "generatedAt": "2026-07-04T07:44:22.825Z",
+  "generatedAt": "2026-07-04T07:55:49.086Z",
   "recordSchema": "schema/vti.schema.json",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "full": 47,
+    "full": 56,
     "sample": 3,
-    "sdks": 36
+    "sdks": 39
   },
   "classDistribution": {
-    "auth-bypass": 22,
-    "missing-verification": 11,
-    "unconfirmed-state": 4,
+    "auth-bypass": 24,
+    "missing-verification": 14,
+    "unconfirmed-state": 7,
     "missing-slippage-guard": 3,
+    "other": 2,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
-    "wrong-constant": 1,
-    "other": 1
+    "wrong-constant": 1
   },
   "severityDistribution": {
-    "high": 32,
-    "critical": 12,
-    "medium": 3
+    "high": 39,
+    "critical": 13,
+    "medium": 4
   },
   "sdks": [
     "@metaplex-foundation/js",
@@ -41,8 +41,10 @@
     "Solana lamports arithmetic",
     "Stripe Node SDK",
     "aws-sdk",
+    "better-auth",
     "cookie-session",
     "cors",
+    "crypto/tls",
     "express",
     "express-jwt",
     "express-rate-limit",
@@ -63,6 +65,7 @@
     "playwright",
     "puppeteer",
     "python",
+    "solidity",
     "stripe",
     "ws"
   ],

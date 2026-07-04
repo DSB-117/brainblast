@@ -1,0 +1,5 @@
+id: jwt-node-react-ecom-mongoose-dropdups
+name: "Jwt Node React Ecom Mongoose Dropdups"
+version: 0.1.0
+author: brainblast-fleet
+description: "Mongoose index option dropDups:true is silently ignored, so duplicate uniques are never dropped"

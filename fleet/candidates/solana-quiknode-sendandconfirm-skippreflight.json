@@ -1,0 +1,42 @@
+{
+  "id": "solana-quiknode-sendandconfirm-skippreflight",
+  "severity": "high",
+  "title": "sendAndConfirmTransaction (kit factory) called with skipPreflight: true skips simulation on a transfer",
+  "class": "unconfirmed-state",
+  "component": {
+    "name": "@solana/web3.js",
+    "type": "Blockchain",
+    "version": ">=1.0.0",
+    "sourceUrl": "https://solana.com/docs/rpc/http/sendtransaction"
+  },
+  "detect": {
+    "modules": ["@solana/web3.js"],
+    "nameRegex": "send|confirm|swap|transfer|execute",
+    "triggerCalls": ["sendAndConfirmTransaction"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "sendAndConfirmTransaction",
+        "argIndex": 1,
+        "propName": "skipPreflight",
+        "forbiddenValue": true,
+        "passDetail": "sendAndConfirmTransaction runs preflight simulation (skipPreflight not set to true), so a transfer that would fail on-chain is rejected client-side before submission.",
+        "failDetail": "sendAndConfirmTransaction is called with skipPreflight: true, disabling preflight simulation. A failing transfer is submitted anyway; the happy path returns without error but the tx can fail on-chain with no client-side signal.",
+        "absentCallDetail": "No sendAndConfirmTransaction call found in this file.",
+        "absentArgDetail": "sendAndConfirmTransaction is called without an options object, so skipPreflight defaults to false (preflight runs). Safe."
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "transferSol.ts",
+    "vulnerable": "import type { Signature } from '@solana/web3.js';\n\ntype Signed = unknown;\ntype SendAndConfirm = (tx: Signed, config: { commitment: string; skipPreflight: boolean }) => Promise<void>;\n\nexport async function transferSol(\n  sendAndConfirmTransaction: SendAndConfirm,\n  signedTransaction: Signed,\n): Promise<void> {\n  await sendAndConfirmTransaction(\n    signedTransaction,\n    { commitment: 'confirmed', skipPreflight: true },\n  );\n}\n",
+    "fixed": "import type { Signature } from '@solana/web3.js';\n\ntype Signed = unknown;\ntype SendAndConfirm = (tx: Signed, config: { commitment: string; skipPreflight: boolean }) => Promise<void>;\n\nexport async function transferSol(\n  sendAndConfirmTransaction: SendAndConfirm,\n  signedTransaction: Signed,\n): Promise<void> {\n  await sendAndConfirmTransaction(\n    signedTransaction,\n    { commitment: 'confirmed', skipPreflight: false },\n  );\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://www.quicknode.com/guides/solana-development/solana-web3.js-2.0/transfer-sol",
+    "note": "quiknode-labs/qn-guide-examples solana/web3.js-2.0/basics/transferSol.ts:97 ships the canonical 'How to Send Transactions with Solana Web3.js 2.0' guide, whose final send step is sendAndConfirmTransaction(signedTransaction, { commitment: 'confirmed', skipPreflight: true }). The @solana/web3.js-2.0 (kit) factory sendAndConfirmTransactionFactory returns this exact function. Because it is the reference transfer snippet, agents lift it verbatim into production transfers, keeping skipPreflight: true; a failing transfer then submits without simulation and the guide's try/catch only reports RPC-level errors, not the silently-failed on-chain tx."
+  }
+}

@@ -1,49 +1,50 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-04T07:44:22.852Z",
+  "generatedAt": "2026-07-04T07:55:50.357Z",
   "counts": {
-    "total": 47,
-    "proven": 47,
-    "sdks": 36,
+    "total": 56,
+    "proven": 56,
+    "sdks": 39,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 32,
-    "critical": 12,
-    "medium": 3
+    "high": 39,
+    "critical": 13,
+    "medium": 4
   },
   "classDistribution": {
-    "auth-bypass": 22,
-    "missing-verification": 11,
-    "unconfirmed-state": 4,
+    "auth-bypass": 24,
+    "missing-verification": 14,
+    "unconfirmed-state": 7,
     "missing-slippage-guard": 3,
+    "other": 2,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
-    "wrong-constant": 1,
-    "other": 1
+    "wrong-constant": 1
   },
   "sdkDistribution": {
     "aws-sdk": 1,
     "cookie-session": 2,
     "cors": 2,
-    "express-jwt": 1,
+    "express-jwt": 2,
     "express-rate-limit": 1,
     "express-session": 2,
+    "crypto/tls": 1,
     "helmet": 3,
     "node:https": 2,
     "ioredis": 1,
     "Jito (block engine / bundles)": 1,
     "jose": 1,
     "Jupiter Aggregator API": 1,
+    "mongoose": 2,
     "jsonwebtoken": 4,
     "kafkajs": 1,
     "@metaplex-foundation/mpl-token-metadata": 1,
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "mongodb": 1,
-    "mongoose": 1,
     "mssql": 1,
     "mysql2": 1,
     "nodemailer": 1,
@@ -55,15 +56,17 @@
     "python": 1,
     "@raydium-io/raydium-sdk-v2": 1,
     "express": 1,
-    "@solana/web3.js": 3,
+    "@solana/web3.js": 6,
     "Solana lamports arithmetic": 1,
+    "solidity": 1,
     "SPL Token": 1,
+    "better-auth": 2,
     "stripe": 1,
     "Stripe Node SDK": 1,
     "ws": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 47
+    "synthetic-owned": 56
   },
   "quality": {
     "mean": 50,
@@ -71,8 +74,8 @@
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-07-04T07:44:19.856Z",
-    "newest": "2026-07-04T07:44:19.856Z"
+    "oldest": "2026-07-04T07:55:45.102Z",
+    "newest": "2026-07-04T07:55:45.102Z"
   },
   "tiers": [
     {
@@ -116,7 +119,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:44:19.856Z",
+      "capturedAt": "2026-07-04T07:55:45.102Z",
       "sourceUrls": [
         "https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html#canned-acl"
       ],
@@ -124,7 +127,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:44:19.856Z"
+        "verifiedAt": "2026-07-04T07:55:45.102Z"
       }
     },
     {
@@ -139,7 +142,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:44:19.856Z",
+      "capturedAt": "2026-07-04T07:55:45.102Z",
       "sourceUrls": [
         "https://github.com/expressjs/cookie-session#cookie-options"
       ],
@@ -147,7 +150,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:44:19.856Z"
+        "verifiedAt": "2026-07-04T07:55:45.102Z"
       }
     },
     {
@@ -162,7 +165,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:44:19.856Z",
+      "capturedAt": "2026-07-04T07:55:45.102Z",
       "sourceUrls": [
         "https://github.com/expressjs/cookie-session#cookie-options"
       ],
@@ -170,7 +173,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:44:19.856Z"
+        "verifiedAt": "2026-07-04T07:55:45.102Z"
       }
     },
     {
@@ -185,7 +188,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:44:19.856Z",
+      "capturedAt": "2026-07-04T07:55:45.102Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -193,7 +196,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:44:19.856Z"
+        "verifiedAt": "2026-07-04T07:55:45.102Z"
       }
     },
     {
@@ -208,7 +211,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:44:19.856Z",
+      "capturedAt": "2026-07-04T07:55:45.102Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -216,7 +219,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:44:19.856Z"
+        "verifiedAt": "2026-07-04T07:55:45.102Z"
       }
     }
   ]

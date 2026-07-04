@@ -1,0 +1,49 @@
+{
+  "generatedAt": "2026-07-03T23:08:30.156Z",
+  "sdk": "jsonwebtoken",
+  "npmDownloadsLastMonth": 202221898,
+  "discovered": 96,
+  "skippedAlreadyInvestigated": 0,
+  "worklist": [
+    {
+      "repo": "panva/jose",
+      "stars": 7674,
+      "url": "https://github.com/panva/jose"
+    },
+    {
+      "repo": "auth0/express-jwt",
+      "stars": 4515,
+      "url": "https://github.com/auth0/express-jwt"
+    },
+    {
+      "repo": "kunalkapadia/express-mongoose-es6-rest-api",
+      "stars": 2923,
+      "url": "https://github.com/kunalkapadia/express-mongoose-es6-rest-api"
+    },
+    {
+      "repo": "Keats/jsonwebtoken",
+      "stars": 2066,
+      "url": "https://github.com/Keats/jsonwebtoken"
+    },
+    {
+      "repo": "basir/node-react-ecommerce",
+      "stars": 1759,
+      "url": "https://github.com/basir/node-react-ecommerce"
+    },
+    {
+      "repo": "murraco/spring-boot-jwt",
+      "stars": 1678,
+      "url": "https://github.com/murraco/spring-boot-jwt"
+    },
+    {
+      "repo": "DavideViolante/Angular-Full-Stack",
+      "stars": 1563,
+      "url": "https://github.com/DavideViolante/Angular-Full-Stack"
+    },
+    {
+      "repo": "mike-engel/jwt-cli",
+      "stars": 1488,
+      "url": "https://github.com/mike-engel/jwt-cli"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "id": "jwt-node-react-ecom-mongoose-dropdups",
+  "severity": "high",
+  "title": "Mongoose index option dropDups:true is silently ignored, so duplicate uniques are never dropped",
+  "class": "other",
+  "component": {
+    "name": "mongoose",
+    "type": "Auth",
+    "version": ">=3.0.0",
+    "sourceUrl": "https://mongoosejs.com/docs/guide.html#indexes"
+  },
+  "detect": {
+    "modules": [
+      "mongoose"
+    ],
+    "nameRegex": "index|schema|unique",
+    "triggerCalls": [
+      "index"
+    ]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "index",
+        "argIndex": 1,
+        "propName": "dropDups",
+        "forbiddenValue": true,
+        "passDetail": "index() options do not set the removed dropDups flag; uniqueness relies on a genuine unique index that MongoDB enforces.",
+        "failDetail": "index() options set dropDups:true. This flag was removed in MongoDB 3.0 / Mongoose 3.x and is silently ignored: the schema compiles and the app runs, but existing duplicate documents are NOT dropped and the developer's assumption that duplicates were cleaned up is false, leaving duplicate rows that break the intended uniqueness guarantee.",
+        "absentCallDetail": "No index() call found on this schema.",
+        "absentArgDetail": "index() called without an options object; dropDups cannot be set here."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "userIndex.ts",
+    "vulnerable": "import mongoose from 'mongoose';\n\n// Schema/index builder — the audited scope.\nexport function buildUserIndex() {\n  const userSchema = new mongoose.Schema({\n    email: { type: String, required: true },\n  });\n  // VULNERABLE: dropDups was removed in MongoDB 3.0 and is silently ignored by\n  // Mongoose. The unique index is created but duplicate emails are NEVER dropped.\n  userSchema.index({ email: 1 }, { unique: true, dropDups: true });\n  return mongoose.model('User', userSchema);\n}\n",
+    "fixed": "import mongoose from 'mongoose';\n\n// Schema/index builder — the audited scope.\nexport function buildUserIndex() {\n  const userSchema = new mongoose.Schema({\n    email: { type: String, required: true },\n  });\n  // FIXED: dropDups:false — do not rely on the removed/ignored dedup flag.\n  // Uniqueness is enforced by the real unique index; dups are removed manually.\n  userSchema.index({ email: 1 }, { unique: true, dropDups: false });\n  return mongoose.model('User', userSchema);\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/basir/node-react-ecommerce/blob/master/backend/models/userModel.js#L5-L7",
+    "note": "backend/models/userModel.js sets `email: { type: String, required: true, unique: true, index: true, dropDups: true }`. Agents copy the old Mongoose tutorial idiom expecting dropDups to purge duplicate emails; since MongoDB 3.0 the option is silently dropped, so the code compiles, the app runs, and duplicates persist while everyone believes they were removed."
+  }
+}

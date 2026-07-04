@@ -1,0 +1,5 @@
+id: jwt-expressjwt-ignore-notbefore
+name: "Jwt Expressjwt Ignore Notbefore"
+version: 0.1.0
+author: brainblast-fleet
+description: "express-jwt passes ignoreNotBefore:true through to jwt.verify, silently accepting not-yet-valid tokens"

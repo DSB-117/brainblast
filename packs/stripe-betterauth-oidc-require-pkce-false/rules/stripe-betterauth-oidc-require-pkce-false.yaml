@@ -1,0 +1,40 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: stripe-betterauth-oidc-require-pkce-false
+severity: high
+title: "oidcProvider({ requirePKCE: false }) — OIDC provider issues
+  authorization codes without PKCE, enabling code-interception attacks"
+component:
+  name: better-auth
+  type: Auth
+  version: ">=1.0.0"
+  sourceUrl: https://www.better-auth.com/docs/plugins/oidc-provider
+detect:
+  modules:
+    - better-auth/plugins
+    - better-auth
+  nameRegex: oidc|auth|provider|config
+  triggerCalls:
+    - oidcProvider
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: oidcProvider
+    argIndex: 0
+    propName: requirePKCE
+    forbiddenValue: false
+    passDetail: requirePKCE is true (the default), so the OIDC provider rejects any
+      authorization request lacking a code_challenge with 'pkce is required'.
+      This is what OAuth 2.1 mandates for all authorization-code flows.
+    failDetail: "requirePKCE: false disables PKCE enforcement — the provider will
+      happily issue authorization codes to clients that send no code_challenge.
+      An attacker who intercepts an authorization code (via a malicious app
+      registered on a redirect scheme, referer leakage, or a compromised
+      network) can redeem it directly, because there is no code_verifier binding
+      the code to the original client. OAuth 2.1 REQUIRES PKCE. Fix: remove this
+      option or set requirePKCE: true."
+    absentCallDetail: No oidcProvider() call in this scope; rule N/A here.
+    absentArgDetail: oidcProvider() is called but requirePKCE is not set; the
+      default (true) applies and PKCE is enforced.
+test:
+  kind: none

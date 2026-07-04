@@ -1,24 +1,24 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:44:19.856Z",
+  "generatedAt": "2026-07-04T07:55:45.102Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 47,
-    "sdks": 36,
-    "packsScanned": 47
+    "records": 56,
+    "sdks": 39,
+    "packsScanned": 56
   },
   "classDistribution": {
-    "auth-bypass": 22,
-    "missing-verification": 11,
-    "unconfirmed-state": 4,
+    "auth-bypass": 24,
+    "missing-verification": 14,
+    "unconfirmed-state": 7,
     "missing-slippage-guard": 3,
+    "other": 2,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
-    "wrong-constant": 1,
-    "other": 1
+    "wrong-constant": 1
   },
   "proof": [
     {
@@ -85,6 +85,13 @@
       "emitted": true
     },
     {
+      "pack": "go-tls-insecureskipverify",
+      "rule": "go-tls-insecureskipverify",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "helmet-csp-disabled",
       "rule": "helmet-csp-disabled",
       "red": true,
@@ -143,6 +150,20 @@
     {
       "pack": "jupiter-quote-zero-slippage",
       "rule": "jupiter-quote-zero-slippage",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "jwt-expressjwt-ignore-notbefore",
+      "rule": "jwt-expressjwt-ignore-notbefore",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "jwt-node-react-ecom-mongoose-dropdups",
+      "rule": "jwt-node-react-ecom-mongoose-dropdups",
       "red": true,
       "green": true,
       "emitted": true
@@ -295,6 +316,13 @@
       "emitted": true
     },
     {
+      "pack": "solana-backpack-sendrawtransaction-skippreflight",
+      "rule": "solana-backpack-sendrawtransaction-skippreflight",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "solana-confirm-processed-commitment",
       "rule": "solana-confirm-processed-commitment",
       "red": true,
@@ -302,8 +330,22 @@
       "emitted": true
     },
     {
+      "pack": "solana-hive-sendtransaction-skippreflight",
+      "rule": "solana-hive-sendtransaction-skippreflight",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "solana-lamports-scaling-wrong-constant",
       "rule": "solana-lamports-scaling-wrong-constant",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "solana-quiknode-sendandconfirm-skippreflight",
+      "rule": "solana-quiknode-sendandconfirm-skippreflight",
       "red": true,
       "green": true,
       "emitted": true
@@ -323,8 +365,29 @@
       "emitted": true
     },
     {
+      "pack": "solidity-txorigin-auth",
+      "rule": "solidity-txorigin-auth",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "spl-transfer-not-checked-in-payout",
       "rule": "spl-transfer-not-checked-in-payout",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "stripe-betterauth-oidc-allow-plain-pkce",
+      "rule": "stripe-betterauth-oidc-allow-plain-pkce",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "stripe-betterauth-oidc-require-pkce-false",
+      "rule": "stripe-betterauth-oidc-require-pkce-false",
       "red": true,
       "green": true,
       "emitted": true

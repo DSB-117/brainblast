@@ -1,0 +1,49 @@
+{
+  "generatedAt": "2026-07-03T23:20:21.872Z",
+  "sdk": "@jup-ag/api",
+  "npmDownloadsLastMonth": 172942,
+  "discovered": 40,
+  "skippedAlreadyInvestigated": 0,
+  "worklist": [
+    {
+      "repo": "elizaOS/eliza",
+      "stars": 18683,
+      "url": "https://github.com/elizaOS/eliza"
+    },
+    {
+      "repo": "coral-xyz/backpack",
+      "stars": 1647,
+      "url": "https://github.com/coral-xyz/backpack"
+    },
+    {
+      "repo": "coinbase/agentkit",
+      "stars": 1255,
+      "url": "https://github.com/coinbase/agentkit"
+    },
+    {
+      "repo": "goat-sdk/goat",
+      "stars": 1000,
+      "url": "https://github.com/goat-sdk/goat"
+    },
+    {
+      "repo": "AudiusProject/apps",
+      "stars": 611,
+      "url": "https://github.com/AudiusProject/apps"
+    },
+    {
+      "repo": "alsk1992/CloddsBot",
+      "stars": 450,
+      "url": "https://github.com/alsk1992/CloddsBot"
+    },
+    {
+      "repo": "Shyft-to/solana-defi",
+      "stars": 352,
+      "url": "https://github.com/Shyft-to/solana-defi"
+    },
+    {
+      "repo": "quiknode-labs/qn-guide-examples",
+      "stars": 265,
+      "url": "https://github.com/quiknode-labs/qn-guide-examples"
+    }
+  ]
+}
