@@ -1,0 +1,31 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: solidity-txorigin-auth
+severity: high
+title: Authorization via tx.origin — a relaying contract passes the owner check
+  (phishing)
+component:
+  name: solidity
+  type: SmartContract
+  version: ">=0.8.0"
+  sourceUrl: https://docs.soliditylang.org/en/latest/security-considerations.html#tx-origin
+detect:
+  modules:
+    - solidity
+  nameRegex: withdraw|owner|only|auth|transfer|admin
+  triggerCalls:
+    - tx.origin
+  lang: solidity
+check:
+  kind: cst-member-access-forbidden
+  params:
+    object: tx
+    property: origin
+    failDetail: Authorization uses tx.origin. tx.origin is the ORIGINAL external
+      account, so if the owner is tricked into calling a malicious contract,
+      that contract can relay the call and this check passes. Use msg.sender
+      (the immediate caller) for authorization.
+    passDetail: Authorization does not rely on tx.origin — msg.sender (the immediate
+      caller) is the correct identity to check.
+test:
+  kind: none

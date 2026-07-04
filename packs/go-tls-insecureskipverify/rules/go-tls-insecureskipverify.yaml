@@ -1,0 +1,34 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: go-tls-insecureskipverify
+severity: critical
+title: "tls.Config{InsecureSkipVerify: true} disables TLS certificate
+  verification (MITM)"
+component:
+  name: crypto/tls
+  type: Networking
+  version: ">=1.0.0"
+  sourceUrl: https://pkg.go.dev/crypto/tls#Config
+detect:
+  modules:
+    - crypto/tls
+  nameRegex: client|tls|transport|dial|new
+  triggerCalls:
+    - tls.Config
+  lang: go
+check:
+  kind: cst-struct-field-forbidden-literal
+  params:
+    typeName: tls.Config
+    field: InsecureSkipVerify
+    forbiddenValue: true
+    passDetail: tls.Config sets InsecureSkipVerify to a safe value — the server's
+      certificate chain and host name are verified.
+    failDetail: "tls.Config sets InsecureSkipVerify: true, which turns OFF
+      certificate and host-name verification. Any machine on the path can
+      present a self-signed cert and silently MITM the connection. Remove it
+      (default false); for a private CA set RootCAs instead."
+    absentDetail: "No tls.Config{ InsecureSkipVerify: ... } literal in this scope;
+      the secure default (false) applies."
+test:
+  kind: none

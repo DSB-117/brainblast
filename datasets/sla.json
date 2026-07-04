@@ -1,12 +1,21 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-sla@0.1.0",
+<<<<<<< Updated upstream
   "generatedAt": "2026-07-03T23:31:26.522Z",
   "corpus": {
     "total": 22,
     "verifiable": 20,
     "reproduced": 20,
     "schemaValid": 22
+=======
+  "generatedAt": "2026-07-04T02:21:21.807Z",
+  "corpus": {
+    "total": 26,
+    "verifiable": 24,
+    "reproduced": 24,
+    "schemaValid": 26
+>>>>>>> Stashed changes
   },
   "rates": {
     "reproduction": 1,
@@ -20,9 +29,15 @@
   "lots": [
     {
       "lot": "synthetic-owned",
+<<<<<<< Updated upstream
       "total": 22,
       "schemaValid": 22,
       "reproduced": 20,
+=======
+      "total": 26,
+      "schemaValid": 26,
+      "reproduced": 24,
+>>>>>>> Stashed changes
       "unverifiable": 2,
       "failures": [],
       "ageDaysMedian": 0,

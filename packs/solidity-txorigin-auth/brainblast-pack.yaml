@@ -1,0 +1,5 @@
+id: solidity-txorigin-auth
+name: "Solidity Txorigin Auth"
+version: 0.1.0
+author: brainblast-fleet
+description: "Authorization via tx.origin — a relaying contract passes the owner check (phishing)"

@@ -44,6 +44,23 @@ export interface RustCandidate {
   fnBodyNode: any;
 }
 
+// Generic tree-sitter candidate for languages parsed via a tree-sitter grammar
+// but without a bespoke finder (Go, Solidity — parallel to RustCandidate, which
+// is Anchor-specific). Created by treeSitterFinder.ts; consumed by CST checker
+// kinds that query `bodyNode` for a grammar-specific pattern.
+export interface CstCandidate {
+  /** Source file (absolute path) */
+  filePath: string;
+  /** Function-like scope name, e.g. a Go func or a Solidity function */
+  fnName: string;
+  /** The source language (drives which grammar/node kinds a checker expects) */
+  lang: "go" | "solidity";
+  /** tree-sitter SyntaxNode for the function body/block — checkers query this */
+  bodyNode: any;
+  /** The file's root node — for checkers that need file-level context */
+  rootNode: any;
+}
+
 // Config/env candidate — a whole file matched by `detect.filePatterns`
 // (e.g. `.env`, `next.config.js`, `vercel.json`). Unlike Candidate/RustCandidate
 // these aren't function-scoped: the "finding" is about the file as a whole.
@@ -118,7 +135,7 @@ export interface Rule {
      * Defaults to "typescript". Set to "rust" for Anchor/Rust checker kinds,
      * or "config" for whole-file config/env audits (see `filePatterns`).
      */
-    lang?: "typescript" | "rust" | "config";
+    lang?: "typescript" | "rust" | "config" | "go" | "solidity";
     /**
      * Required when `lang: "config"`. Regexes (matched against the file path
      * relative to the scan root) selecting which files this rule audits,
@@ -177,6 +194,7 @@ export interface PackManifest {
 export type Checker = (candidate: Candidate, params: any) => CheckOutcome;
 export type RustChecker = (candidate: RustCandidate, params: any) => CheckOutcome;
 export type ConfigChecker = (candidate: ConfigCandidate, params: any) => CheckOutcome;
+export type CstChecker = (candidate: CstCandidate, params: any) => CheckOutcome;
 // Fix-it mode: human-vetted fixer template, bound to the same `check.kind` as
 // its checker counterpart. Receives the same candidate/params plus the
 // checker's "fail" outcome, and returns a Fix or undefined if no vetted

@@ -19,12 +19,14 @@ import { anchorCpiUnverifiedProgram } from "./anchorCpiUnverifiedProgram.ts";
 import { feeConfigsZeroOrMissing } from "./feeConfigsZeroOrMissing.ts";
 import { compilesAgainstSdk } from "./compilesAgainstSdk.ts";
 import { differentialIo } from "./differentialIo.ts";
-import type { Candidate, RustCandidate, ConfigCandidate, CheckOutcome, Checker, RustChecker, ConfigChecker } from "../types.ts";
+import { cstStructFieldForbiddenLiteral } from "./cstStructFieldForbiddenLiteral.ts";
+import { cstMemberAccessForbidden } from "./cstMemberAccessForbidden.ts";
+import type { Candidate, RustCandidate, ConfigCandidate, CstCandidate, CheckOutcome, Checker, RustChecker, ConfigChecker, CstChecker } from "../types.ts";
 
 // Registry of human-vetted checker templates. Rules bind to these by `kind`.
 // TypeScript checkers receive Candidate; Rust checkers receive RustCandidate;
 // config checkers receive ConfigCandidate.
-const registry: Record<string, Checker | RustChecker | ConfigChecker> = {
+const registry: Record<string, Checker | RustChecker | ConfigChecker | CstChecker> = {
   "positional-arg-identity": positionalArgIdentity,
   "required-call-with-options": requiredCallWithOptions,
   "fee-allocation-shape": feeAllocationShape,
@@ -48,6 +50,11 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker> = {
   // v0.9.1 — bound to the Tier-2 differential oracle; static abstains (cant_tell).
   "differential-io": differentialIo,
   "array-property-contains-forbidden-literal": arrayPropertyContainsForbiddenLiteral as Checker,
+  // Multi-language static AST (tree-sitter). Go: struct/composite-literal field set
+  // to a forbidden literal (e.g. tls.Config{InsecureSkipVerify: true}). Solidity:
+  // a forbidden object.property member access (e.g. tx.origin auth).
+  "cst-struct-field-forbidden-literal": cstStructFieldForbiddenLiteral as CstChecker,
+  "cst-member-access-forbidden": cstMemberAccessForbidden as CstChecker,
 };
 
 // Move 2 — self-extending checkers. The meta-gate (scripts/fleet-checker-gate.ts)
@@ -56,14 +63,14 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker> = {
 // calls registerChecker — the overlay is empty in a normal audit. A registered
 // kind is only trusted after the meta-gate proves it sound AND a human ratifies
 // it into the static registry.
-const overlay: Record<string, Checker | RustChecker | ConfigChecker> = {};
+const overlay: Record<string, Checker | RustChecker | ConfigChecker | CstChecker> = {};
 
 export function registerChecker(kind: string, fn: Checker | RustChecker | ConfigChecker): void {
   overlay[kind] = fn;
   if (!checkerKinds.includes(kind)) checkerKinds.push(kind);
 }
 
-export function runChecker(kind: string, c: Candidate | RustCandidate | ConfigCandidate, params: any): CheckOutcome {
+export function runChecker(kind: string, c: Candidate | RustCandidate | ConfigCandidate | CstCandidate, params: any): CheckOutcome {
   const fn = overlay[kind] ?? registry[kind];
   if (!fn) return { result: "cant_tell", detail: `Unknown checker kind '${kind}'.` };
   return (fn as (c: any, p: any) => CheckOutcome)(c, params);

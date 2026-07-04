@@ -1,22 +1,36 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
+<<<<<<< Updated upstream
   "generatedAt": "2026-07-03T23:31:11.297Z",
+=======
+  "generatedAt": "2026-07-04T02:21:20.967Z",
+>>>>>>> Stashed changes
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
+<<<<<<< Updated upstream
       "count": 22
     }
   ],
   "counts": {
     "vtis": 22,
     "unique": 22,
+=======
+      "count": 26
+    }
+  ],
+  "counts": {
+    "vtis": 26,
+    "unique": 26,
+>>>>>>> Stashed changes
     "duplicates": 0,
-    "sdks": 17,
+    "sdks": 19,
     "classes": 8
   },
   "severityDistribution": {
+<<<<<<< Updated upstream
     "high": 19,
     "critical": 2,
     "medium": 1
@@ -24,6 +38,15 @@
   "classDistribution": {
     "auth-bypass": 4,
     "unconfirmed-state": 5,
+=======
+    "high": 22,
+    "critical": 3,
+    "medium": 1
+  },
+  "classDistribution": {
+    "auth-bypass": 6,
+    "unconfirmed-state": 7,
+>>>>>>> Stashed changes
     "missing-slippage-guard": 3,
     "missing-verification": 4,
     "other": 2,
@@ -33,6 +56,7 @@
   },
   "sdkDistribution": {
     "cors": 1,
+    "crypto/tls": 1,
     "node:https": 1,
     "Jito (block engine / bundles)": 1,
     "Jupiter Aggregator API": 1,
@@ -46,21 +70,30 @@
     "@raydium-io/raydium-sdk-v2": 1,
     "@solana/web3.js": 4,
     "Solana lamports arithmetic": 1,
+    "solidity": 1,
     "SPL Token": 1,
     "better-auth": 2,
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
+<<<<<<< Updated upstream
     "synthetic-owned": 22
+=======
+    "synthetic-owned": 26
+>>>>>>> Stashed changes
   },
   "quality": {
-    "mean": 48,
+    "mean": 49,
     "median": 48,
     "min": 30,
     "max": 60,
     "buckets": {
       "high": 0,
+<<<<<<< Updated upstream
       "medium": 21,
+=======
+      "medium": 25,
+>>>>>>> Stashed changes
       "low": 1
     }
   },
@@ -68,8 +101,10 @@
     "matrix": {
       "auth-bypass": {
         "cors": 1,
+        "crypto/tls": 1,
         "node:https": 1,
-        "jsonwebtoken": 2
+        "jsonwebtoken": 2,
+        "solidity": 1
       },
       "unconfirmed-state": {
         "Jito (block engine / bundles)": 1,
@@ -107,7 +142,15 @@
       },
       {
         "class": "auth-bypass",
+        "sdk": "crypto/tls"
+      },
+      {
+        "class": "auth-bypass",
         "sdk": "node:https"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "solidity"
       },
       {
         "class": "unconfirmed-state",
@@ -171,6 +214,15 @@
       "corroborationCount": 0,
       "license": "synthetic-owned",
       "score": 48
+    },
+    {
+      "trapId": "go-tls-insecureskipverify",
+      "sdk": "crypto/tls",
+      "class": "auth-bypass",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
     },
     {
       "trapId": "https-reject-unauthorized-disabled",
@@ -320,6 +372,15 @@
       "trapId": "solana-sendtx-unconfirmed",
       "sdk": "@solana/web3.js",
       "class": "unconfirmed-state",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "solidity-txorigin-auth",
+      "sdk": "solidity",
+      "class": "auth-bypass",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",
