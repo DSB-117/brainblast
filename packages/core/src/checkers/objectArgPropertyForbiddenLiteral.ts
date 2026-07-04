@@ -39,16 +39,21 @@ function isBnWrappedZero(init: Expression): boolean {
 //   absentCallDetail    — message when the target call is not found (cant_tell)
 //   absentArgDetail     — message when the arg/property is absent (cant_tell)
 export const objectArgPropertyForbiddenLiteral: Checker = (c, p) => {
-  const calls = c.fn
-    .getDescendantsOfKind(SyntaxKind.CallExpression)
-    .filter((ce) => {
-      const expr = ce.getExpression();
-      if (expr.getKind() === SyntaxKind.Identifier) return expr.getText() === p.call;
-      if (expr.getKind() === SyntaxKind.PropertyAccessExpression) {
-        return expr.asKind(SyntaxKind.PropertyAccessExpression)!.getName() === p.call;
-      }
-      return false;
-    });
+  // Match both plain calls `foo({...})` and constructor calls `new Foo({...})`.
+  // Many SDK footguns live in a constructor's options object (e.g. passport-jwt
+  // `new Strategy({ ignoreExpiration: true })`, `new Pool({ ssl: {...} })`), which
+  // are NewExpression nodes, not CallExpression — both expose getExpression()/getArguments().
+  const calls = [
+    ...c.fn.getDescendantsOfKind(SyntaxKind.CallExpression),
+    ...c.fn.getDescendantsOfKind(SyntaxKind.NewExpression),
+  ].filter((ce) => {
+    const expr = ce.getExpression();
+    if (expr.getKind() === SyntaxKind.Identifier) return expr.getText() === p.call;
+    if (expr.getKind() === SyntaxKind.PropertyAccessExpression) {
+      return expr.asKind(SyntaxKind.PropertyAccessExpression)!.getName() === p.call;
+    }
+    return false;
+  });
 
   if (calls.length === 0) {
     return {
