@@ -1,0 +1,5 @@
+id: https-agent-reject-unauthorized-false
+name: "Https Agent Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "new https.Agent with rejectUnauthorized: false — every request through this agent skips TLS validation (MITM)"

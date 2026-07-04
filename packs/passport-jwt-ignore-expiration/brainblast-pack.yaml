@@ -1,0 +1,5 @@
+id: passport-jwt-ignore-expiration
+name: "Passport Jwt Ignore Expiration"
+version: 0.1.0
+author: brainblast-fleet
+description: "passport-jwt Strategy with ignoreExpiration: true — expired JWTs are accepted forever"

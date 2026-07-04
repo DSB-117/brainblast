@@ -1,0 +1,44 @@
+{
+  "id": "passport-jwt-ignore-expiration",
+  "severity": "critical",
+  "title": "passport-jwt Strategy with ignoreExpiration: true — expired JWTs are accepted forever",
+  "class": "auth-bypass",
+  "component": {
+    "name": "passport-jwt",
+    "type": "Auth",
+    "version": ">=4.0.0",
+    "sourceUrl": "http://www.passportjs.org/packages/passport-jwt/"
+  },
+  "detect": {
+    "modules": ["passport-jwt"],
+    "nameRegex": "jwt|strategy|auth|passport|makeJwt|guard",
+    "triggerCalls": ["Strategy"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "Strategy",
+        "argIndex": 0,
+        "propName": "ignoreExpiration",
+        "forbiddenValue": true,
+        "passDetail": "The passport-jwt Strategy enforces expiry (ignoreExpiration is not true) — a token past its exp claim is rejected.",
+        "failDetail": "The passport-jwt Strategy is constructed with ignoreExpiration: true, so the exp claim is NOT checked and expired tokens are accepted indefinitely. A token leaked or logged months ago still authenticates; revocation-by-expiry no longer works. Remove ignoreExpiration: true (the default false enforces expiry).",
+        "absentCallDetail": "No passport-jwt Strategy construction in this scope; this rule does not apply here.",
+        "absentArgDetail": "The Strategy does not set ignoreExpiration; the secure default (false) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "strategy.ts",
+    "vulnerable": "import { Strategy, ExtractJwt } from \"passport-jwt\";\n\nexport function makeJwtStrategy(secret: string) {\n  // VULNERABLE: ignoreExpiration: true accepts expired tokens forever — expiry stops meaning anything.\n  return new Strategy(\n    { jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), ignoreExpiration: true, secretOrKey: secret },\n    (payload, done) => done(null, payload),\n  );\n}\n",
+    "fixed": "import { Strategy, ExtractJwt } from \"passport-jwt\";\n\nexport function makeJwtStrategy(secret: string) {\n  // FIXED: expiry is enforced — expired tokens are rejected.\n  return new Strategy(\n    { jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), ignoreExpiration: false, secretOrKey: secret },\n    (payload, done) => done(null, payload),\n  );\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "http://www.passportjs.org/packages/passport-jwt/",
+    "note": "The passport-jwt twin of jwt-verify-ignore-expiration: ignoreExpiration: true is set to stop tokens expiring during development and left in, so the whole app accepts expired JWTs. Distinct SDK and constructor call site from the jsonwebtoken verify-side rule."
+  }
+}

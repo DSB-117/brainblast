@@ -61,6 +61,8 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "stripe-connect-zero-application-fee": "silent-zero-revenue",
   "cookie-session-httponly-false": "auth-bypass",
   "aws-s3-public-read-acl": "auth-bypass",
+  "passport-jwt-ignore-expiration": "auth-bypass",
+  "https-agent-reject-unauthorized-false": "auth-bypass",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

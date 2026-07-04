@@ -1,28 +1,28 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-04T07:25:36.785Z",
+  "generatedAt": "2026-07-04T07:28:33.883Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 31
+      "count": 33
     }
   ],
   "counts": {
-    "vtis": 31,
-    "unique": 31,
+    "vtis": 33,
+    "unique": 33,
     "duplicates": 0,
-    "sdks": 25,
+    "sdks": 26,
     "classes": 9
   },
   "severityDistribution": {
     "high": 25,
-    "critical": 5,
+    "critical": 7,
     "medium": 1
   },
   "classDistribution": {
-    "auth-bypass": 14,
+    "auth-bypass": 16,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
@@ -39,7 +39,7 @@
     "express-jwt": 1,
     "express-session": 1,
     "helmet": 1,
-    "node:https": 1,
+    "node:https": 2,
     "Jito (block engine / bundles)": 1,
     "Jupiter Aggregator API": 1,
     "jsonwebtoken": 4,
@@ -47,6 +47,7 @@
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "mongoose": 1,
+    "passport-jwt": 1,
     "playwright": 1,
     "puppeteer": 1,
     "Pyth Network price feeds": 1,
@@ -60,16 +61,16 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 31
+    "synthetic-owned": 33
   },
   "quality": {
-    "mean": 49,
+    "mean": 50,
     "median": 48,
     "min": 30,
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 30,
+      "medium": 32,
       "low": 1
     }
   },
@@ -82,8 +83,9 @@
         "express-jwt": 1,
         "express-session": 1,
         "helmet": 1,
-        "node:https": 1,
+        "node:https": 2,
         "jsonwebtoken": 4,
+        "passport-jwt": 1,
         "express": 1
       },
       "unconfirmed-state": {
@@ -138,7 +140,7 @@
       },
       {
         "class": "auth-bypass",
-        "sdk": "node:https"
+        "sdk": "passport-jwt"
       },
       {
         "class": "auth-bypass",
@@ -281,6 +283,15 @@
       "score": 30
     },
     {
+      "trapId": "https-agent-reject-unauthorized-false",
+      "sdk": "node:https",
+      "class": "auth-bypass",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
       "trapId": "https-reject-unauthorized-disabled",
       "sdk": "node:https",
       "class": "auth-bypass",
@@ -374,6 +385,15 @@
       "trapId": "mongoose-tls-allow-invalid-certificates",
       "sdk": "mongoose",
       "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "passport-jwt-ignore-expiration",
+      "sdk": "passport-jwt",
+      "class": "auth-bypass",
       "severity": "critical",
       "corroborationCount": 0,
       "license": "synthetic-owned",

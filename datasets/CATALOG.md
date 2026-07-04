@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T07:25:36.795Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:28:33.896Z from 1 lot(s): seed-vti.jsonl._
 
-**31 verified trap instances** across **25 SDKs** and **9 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T07:25:33.733Z → 2026-07-04T07:25:33.733Z.
+**33 verified trap instances** across **26 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 30–60). Freshness: 2026-07-04T07:28:31.033Z → 2026-07-04T07:28:31.033Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,7 +20,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-| auth-bypass | 14 |
+| auth-bypass | 16 |
 | missing-verification | 4 |
 | unconfirmed-state | 3 |
 | missing-slippage-guard | 3 |
@@ -37,18 +37,19 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | jsonwebtoken | 4 |
 | cookie-session | 2 |
 | cors | 2 |
+| node:https | 2 |
 | @solana/web3.js | 2 |
 | aws-sdk | 1 |
 | express-jwt | 1 |
 | express-session | 1 |
 | helmet | 1 |
-| node:https | 1 |
 | Jito (block engine / bundles) | 1 |
 | Jupiter Aggregator API | 1 |
 | @metaplex-foundation/mpl-token-metadata | 1 |
 | @metaplex-foundation/js | 1 |
 | @meteora-ag/dlmm | 1 |
 | mongoose | 1 |
+| passport-jwt | 1 |
 | playwright | 1 |
 | puppeteer | 1 |
 | Pyth Network price feeds | 1 |

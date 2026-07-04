@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:25:33.733Z",
+  "generatedAt": "2026-07-04T07:28:31.033Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 31,
-    "sdks": 25,
-    "packsScanned": 31
+    "records": 33,
+    "sdks": 26,
+    "packsScanned": 33
   },
   "classDistribution": {
-    "auth-bypass": 14,
+    "auth-bypass": 16,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
@@ -73,6 +73,13 @@
     {
       "pack": "helmet-hsts-maxage-zero",
       "rule": "helmet-hsts-maxage-zero",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "https-agent-reject-unauthorized-false",
+      "rule": "https-agent-reject-unauthorized-false",
       "red": true,
       "green": true,
       "emitted": true
@@ -150,6 +157,13 @@
     {
       "pack": "mongoose-tls-allow-invalid-certificates",
       "rule": "mongoose-tls-allow-invalid-certificates",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "passport-jwt-ignore-expiration",
+      "rule": "passport-jwt-ignore-expiration",
       "red": true,
       "green": true,
       "emitted": true

@@ -1,20 +1,20 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-04T07:25:36.795Z",
+  "generatedAt": "2026-07-04T07:28:33.896Z",
   "counts": {
-    "total": 31,
-    "proven": 31,
-    "sdks": 25,
+    "total": 33,
+    "proven": 33,
+    "sdks": 26,
     "classes": 9
   },
   "severityDistribution": {
     "high": 25,
-    "critical": 5,
+    "critical": 7,
     "medium": 1
   },
   "classDistribution": {
-    "auth-bypass": 14,
+    "auth-bypass": 16,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
@@ -31,7 +31,7 @@
     "express-jwt": 1,
     "express-session": 1,
     "helmet": 1,
-    "node:https": 1,
+    "node:https": 2,
     "Jito (block engine / bundles)": 1,
     "Jupiter Aggregator API": 1,
     "jsonwebtoken": 4,
@@ -39,6 +39,7 @@
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "mongoose": 1,
+    "passport-jwt": 1,
     "playwright": 1,
     "puppeteer": 1,
     "Pyth Network price feeds": 1,
@@ -52,16 +53,16 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 31
+    "synthetic-owned": 33
   },
   "quality": {
-    "mean": 49,
+    "mean": 50,
     "min": 30,
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-07-04T07:25:33.733Z",
-    "newest": "2026-07-04T07:25:33.733Z"
+    "oldest": "2026-07-04T07:28:31.033Z",
+    "newest": "2026-07-04T07:28:31.033Z"
   },
   "tiers": [
     {
@@ -105,7 +106,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:25:33.733Z",
+      "capturedAt": "2026-07-04T07:28:31.033Z",
       "sourceUrls": [
         "https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html#canned-acl"
       ],
@@ -113,7 +114,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:25:33.733Z"
+        "verifiedAt": "2026-07-04T07:28:31.033Z"
       }
     },
     {
@@ -128,7 +129,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:25:33.733Z",
+      "capturedAt": "2026-07-04T07:28:31.033Z",
       "sourceUrls": [
         "https://github.com/expressjs/cookie-session#cookie-options"
       ],
@@ -136,7 +137,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:25:33.733Z"
+        "verifiedAt": "2026-07-04T07:28:31.033Z"
       }
     },
     {
@@ -151,7 +152,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:25:33.733Z",
+      "capturedAt": "2026-07-04T07:28:31.033Z",
       "sourceUrls": [
         "https://github.com/expressjs/cookie-session#cookie-options"
       ],
@@ -159,7 +160,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:25:33.733Z"
+        "verifiedAt": "2026-07-04T07:28:31.033Z"
       }
     },
     {
@@ -174,7 +175,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:25:33.733Z",
+      "capturedAt": "2026-07-04T07:28:31.033Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -182,7 +183,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:25:33.733Z"
+        "verifiedAt": "2026-07-04T07:28:31.033Z"
       }
     },
     {
@@ -197,7 +198,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:25:33.733Z",
+      "capturedAt": "2026-07-04T07:28:31.033Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -205,7 +206,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:25:33.733Z"
+        "verifiedAt": "2026-07-04T07:28:31.033Z"
       }
     }
   ]

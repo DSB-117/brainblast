@@ -1,6 +1,6 @@
 # Datasheet — Brainblast Verified Traps v0.1.0
 
-_Generated 2026-07-04T07:25:36.774Z by pack-dataset@0.1.0. Records conform to [`schema/vti.schema.json`](../../schema/vti.schema.json)._
+_Generated 2026-07-04T07:28:33.870Z by pack-dataset@0.1.0. Records conform to [`schema/vti.schema.json`](../../schema/vti.schema.json)._
 
 ## Motivation
 A corpus of **machine-verified `error → fix → proof` records** for real SDK
@@ -9,10 +9,10 @@ checker fails (RED) on the vulnerable code and passes (GREEN) on the fix. This i
 the property scraped bug data lacks. See [`ROADMAP-TRAINING-DATA.md`](../../ROADMAP-TRAINING-DATA.md).
 
 ## Composition
-- **Records:** 31 (full lot), 3 (open sample).
-- **SDKs covered (25):** @metaplex-foundation/js, @metaplex-foundation/mpl-token-metadata, @meteora-ag/dlmm, @raydium-io/raydium-sdk-v2, @solana/web3.js, Jito (block engine / bundles), Jupiter Aggregator API, Pyth Network price feeds, SPL Token, Solana lamports arithmetic, Stripe Node SDK, aws-sdk, cookie-session, cors, express, express-jwt, express-session, helmet, jsonwebtoken, mongoose, node:https, playwright, puppeteer, python, stripe.
-- **Class distribution:** auth-bypass=14, unconfirmed-state=3, missing-slippage-guard=3, immutable-after-deploy=1, silent-zero-revenue=3, missing-verification=4, unchecked-staleness=1, wrong-constant=1, other=1.
-- **Severity distribution:** high=25, critical=5, medium=1.
+- **Records:** 33 (full lot), 3 (open sample).
+- **SDKs covered (26):** @metaplex-foundation/js, @metaplex-foundation/mpl-token-metadata, @meteora-ag/dlmm, @raydium-io/raydium-sdk-v2, @solana/web3.js, Jito (block engine / bundles), Jupiter Aggregator API, Pyth Network price feeds, SPL Token, Solana lamports arithmetic, Stripe Node SDK, aws-sdk, cookie-session, cors, express, express-jwt, express-session, helmet, jsonwebtoken, mongoose, node:https, passport-jwt, playwright, puppeteer, python, stripe.
+- **Class distribution:** auth-bypass=16, unconfirmed-state=3, missing-slippage-guard=3, immutable-after-deploy=1, silent-zero-revenue=3, missing-verification=4, unchecked-staleness=1, wrong-constant=1, other=1.
+- **Severity distribution:** high=25, critical=7, medium=1.
 - Each record carries: vulnerable + fixed snippet, checker fail/pass detail,
   RED→GREEN proof, source-doc URL, producing pack, severity, and trap class.
 
