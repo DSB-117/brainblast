@@ -55,6 +55,8 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "solana-hive-sendtransaction-skippreflight": "unconfirmed-state",
   "solana-backpack-sendrawtransaction-skippreflight": "unconfirmed-state",
   "solana-quiknode-sendandconfirm-skippreflight": "unconfirmed-state",
+  "solana-hummingbot-skippreflight-sendraw": "unconfirmed-state",
+  "solana-arbbot-skippreflight-send": "unconfirmed-state",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

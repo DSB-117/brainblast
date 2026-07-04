@@ -1,0 +1,5 @@
+id: solana-hummingbot-skippreflight-sendraw
+name: "Solana Hummingbot Skippreflight Sendraw"
+version: 0.1.0
+author: brainblast-fleet
+description: "Solana connector sends raw transactions with skipPreflight: true, broadcasting txs that would fail simulation"

@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-03T23:31:11.308Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T01:19:21.383Z from 1 lot(s): seed-vti.jsonl._
 
-**22 verified trap instances** across **17 SDKs** and **8 trap classes**. Quality score mean 48/100 (range 30–60). Freshness: 2026-07-03T23:31:09.486Z → 2026-07-03T23:31:09.486Z.
+**24 verified trap instances** across **17 SDKs** and **8 trap classes**. Quality score mean 48/100 (range 30–60). Freshness: 2026-07-04T01:19:19.287Z → 2026-07-04T01:19:19.287Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,7 +20,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-| unconfirmed-state | 5 |
+| unconfirmed-state | 7 |
 | auth-bypass | 4 |
 | missing-verification | 4 |
 | missing-slippage-guard | 3 |
@@ -33,7 +33,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | SDK | Count |
 |---|---|
-| @solana/web3.js | 4 |
+| @solana/web3.js | 6 |
 | jsonwebtoken | 2 |
 | better-auth | 2 |
 | cors | 1 |

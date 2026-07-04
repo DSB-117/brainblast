@@ -1,17 +1,17 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-03T23:31:09.486Z",
+  "generatedAt": "2026-07-04T01:19:19.287Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 22,
+    "records": 24,
     "sdks": 17,
-    "packsScanned": 22
+    "packsScanned": 24
   },
   "classDistribution": {
     "auth-bypass": 4,
-    "unconfirmed-state": 5,
+    "unconfirmed-state": 7,
     "missing-slippage-guard": 3,
     "missing-verification": 4,
     "other": 2,
@@ -112,6 +112,13 @@
       "emitted": true
     },
     {
+      "pack": "solana-arbbot-skippreflight-send",
+      "rule": "solana-arbbot-skippreflight-send",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "solana-backpack-sendrawtransaction-skippreflight",
       "rule": "solana-backpack-sendrawtransaction-skippreflight",
       "red": true,
@@ -121,6 +128,13 @@
     {
       "pack": "solana-hive-sendtransaction-skippreflight",
       "rule": "solana-hive-sendtransaction-skippreflight",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "solana-hummingbot-skippreflight-sendraw",
+      "rule": "solana-hummingbot-skippreflight-sendraw",
       "red": true,
       "green": true,
       "emitted": true

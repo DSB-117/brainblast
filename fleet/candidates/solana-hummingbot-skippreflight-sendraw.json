@@ -1,0 +1,53 @@
+{
+  "id": "solana-hummingbot-skippreflight-sendraw",
+  "severity": "high",
+  "title": "Solana connector sends raw transactions with skipPreflight: true, broadcasting txs that would fail simulation",
+  "class": "unconfirmed-state",
+  "component": {
+    "name": "@solana/web3.js",
+    "type": "DEX",
+    "version": ">=1.0.0",
+    "sourceUrl": "https://github.com/hummingbot/gateway/blob/241c4ed807a1336803e8f7747ea4b950074eb19b/src/chains/solana/solana.ts#L1701"
+  },
+  "detect": {
+    "modules": [
+      "@solana/web3.js"
+    ],
+    "nameRegex": "swap|send|confirm|execute|trade",
+    "triggerCalls": [
+      "sendRawTransaction"
+    ]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "sendRawTransaction",
+        "argIndex": 1,
+        "propName": "skipPreflight",
+        "forbiddenValue": true,
+        "passDetail": "sendRawTransaction is called with skipPreflight left at its safe default (false), so the RPC simulates the transaction before broadcasting and rejects ones that would fail.",
+        "failDetail": "sendRawTransaction is called with skipPreflight: true. Preflight simulation is disabled, so transactions that would fail (stale blockhash, insufficient funds, failing swap, slippage breach) are broadcast blindly and silently dropped or land as failed, instead of being caught before submission.",
+        "absentCallDetail": "No sendRawTransaction call found in this function, so the skipPreflight footgun does not apply here.",
+        "absentArgDetail": "sendRawTransaction is called without an options object, so skipPreflight defaults to false (safe)."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "sendRawTransaction.ts",
+    "vulnerable": "import { Connection } from '@solana/web3.js';\n\nexport async function sendRawTransaction(\n  connection: Connection,\n  rawTx: Buffer,\n): Promise<string> {\n  const signature = await connection.sendRawTransaction(rawTx, {\n    skipPreflight: true,\n    preflightCommitment: 'confirmed',\n    maxRetries: 0,\n  });\n  return signature;\n}\n",
+    "fixed": "import { Connection } from '@solana/web3.js';\n\nexport async function sendRawTransaction(\n  connection: Connection,\n  rawTx: Buffer,\n): Promise<string> {\n  const signature = await connection.sendRawTransaction(rawTx, {\n    skipPreflight: false,\n    preflightCommitment: 'confirmed',\n    maxRetries: 0,\n  });\n  return signature;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/hummingbot/gateway/blob/241c4ed807a1336803e8f7747ea4b950074eb19b/src/chains/solana/solana.ts#L1701-L1721",
+    "note": "The public Solana.sendRawTransaction method disables preflight simulation (skipPreflight: true) when broadcasting signed transactions. Preflight simulation is the last client-side guard that rejects a transaction which would fail on-chain; with it off, failing swaps/transfers are broadcast blindly and surface as unconfirmed or silently-dropped state rather than an immediate error. Shipped because skipPreflight shaves a round-trip and avoids false-negative simulations under load, but it removes the safety net for genuinely bad transactions.",
+    "repo": "hummingbot/gateway",
+    "commit": "241c4ed807a1336803e8f7747ea4b950074eb19b",
+    "repoPath": "src/chains/solana/solana.ts",
+    "evidence": "        skipPreflight: true,",
+    "sourceRef": "hummingbot/gateway@241c4ed807a1336803e8f7747ea4b950074eb19b:src/chains/solana/solana.ts"
+  }
+}

@@ -1,0 +1,36 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: solana-arbbot-skippreflight-send
+severity: high
+title: Arbitrage execution sends the swap transaction with skipPreflight:true,
+  disabling simulation so failing/losing arb txs land silently
+component:
+  name: "@solana/web3.js"
+  type: DEX
+  version: ">=1.0.0"
+  sourceUrl: https://github.com/katlogic/solana-arbitrage-bot
+detect:
+  modules:
+    - "@solana/web3.js"
+  nameRegex: swap|send|trade|execute|arb|tryArbSwap
+  triggerCalls:
+    - sendTransaction
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: sendTransaction
+    argIndex: 1
+    propName: skipPreflight
+    forbiddenValue: true
+    passDetail: sendTransaction runs preflight simulation, so a transaction that
+      would fail (e.g. slippage exceeded, insufficient balance) is rejected
+      client-side before it is submitted and lands on chain.
+    failDetail: skipPreflight:true disables the preflight simulation, so an
+      arbitrage transaction that would revert or execute at a loss is broadcast
+      blindly; the bot never learns it failed and cannot react, committing funds
+      to an unconfirmed/losing state.
+    absentCallDetail: No sendTransaction call found; nothing to check.
+    absentArgDetail: sendTransaction called without an options object; preflight
+      defaults to enabled, which is safe.
+test:
+  kind: none

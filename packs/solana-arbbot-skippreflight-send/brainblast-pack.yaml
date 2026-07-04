@@ -1,0 +1,5 @@
+id: solana-arbbot-skippreflight-send
+name: "Solana Arbbot Skippreflight Send"
+version: 0.1.0
+author: brainblast-fleet
+description: "Arbitrage execution sends the swap transaction with skipPreflight:true, disabling simulation so failing/losing arb txs land silently"

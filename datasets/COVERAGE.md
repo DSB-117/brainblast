@@ -1,12 +1,12 @@
 # Corpus coverage — Brainblast Verified Traps
 
-_Generated 2026-07-03T23:31:11.297Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
+_Generated 2026-07-04T01:19:21.372Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
 
 ## Summary
-- **22** VTIs (22 unique, 0 duplicate) across **17** SDKs and **8** trap classes.
+- **24** VTIs (24 unique, 0 duplicate) across **17** SDKs and **8** trap classes.
 - **Quality** (0–100): mean 48, median 48, range 30–60.
-  Buckets — high (≥70): 0, medium (40–69): 21, low (<40): 1.
-- **Lots:** synthetic-owned (22).
+  Buckets — high (≥70): 0, medium (40–69): 23, low (<40): 1.
+- **Lots:** synthetic-owned (24).
 
 ## Coverage heatmap (class × SDK, unique records)
 | class \ sdk | @metaplex-foundation/js | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Solana lamports arithmetic | Stripe Node SDK | better-auth | cors | express-jwt | jsonwebtoken | mongoose | node:https | python |
@@ -17,7 +17,7 @@ _Generated 2026-07-03T23:31:11.297Z by corpus-report@0.1.0. Source of truth: `da
 | other | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | 1 | · | · |
 | silent-zero-revenue | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 |
 | unchecked-staleness | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · |
-| unconfirmed-state | · | · | · | 4 | 1 | · | · | · | · | · | · | · | · | · | · | · | · |
+| unconfirmed-state | · | · | · | 6 | 1 | · | · | · | · | · | · | · | · | · | · | · | · |
 | wrong-constant | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · |
 
 (`·` = no coverage yet.)
