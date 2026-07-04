@@ -76,6 +76,7 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "kafkajs-ssl-reject-unauthorized-false": "missing-verification",
   "express-session-cookie-secure-false": "auth-bypass",
   "mssql-trust-server-certificate-true": "missing-verification",
+  "solana-confirm-processed-commitment": "unconfirmed-state",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

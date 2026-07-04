@@ -1,0 +1,41 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: solana-confirm-processed-commitment
+severity: high
+title: 'sendAndConfirmTransaction with commitment: "processed" — a transaction
+  that can still be rolled back is treated as final'
+component:
+  name: "@solana/web3.js"
+  type: Blockchain
+  version: ">=1.30.0"
+  sourceUrl: https://solana.com/docs/rpc#configuring-state-commitment
+detect:
+  modules:
+    - "@solana/web3.js"
+  nameRegex: send|confirm|submit|tx|transaction|settle|payout
+  triggerCalls:
+    - sendAndConfirmTransaction
+    - confirmTransaction
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: sendAndConfirmTransaction
+    argIndex: 3
+    propName: commitment
+    forbiddenValue: processed
+    passDetail: Confirmation waits for a durable commitment (not "processed") — the
+      transaction is only treated as done once it is confirmed/finalized and
+      cannot be dropped.
+    failDetail: "sendAndConfirmTransaction is called with commitment: \"processed\",
+      the weakest level: the transaction has merely been processed by the
+      current leader and can still be dropped or rolled back if that fork does
+      not win. Code that unlocks a purchase, credits a balance, or ships goods
+      on this 'confirmation' acts on a state that may never finalize — a
+      double-spend / phantom-payment window. Use \"confirmed\" or \"finalized\"
+      before treating a transaction as settled."
+    absentCallDetail: No sendAndConfirmTransaction call in this scope; this rule
+      does not apply here.
+    absentArgDetail: sendAndConfirmTransaction does not set commitment; verify the
+      resolved commitment is confirmed/finalized, not processed.
+test:
+  kind: none

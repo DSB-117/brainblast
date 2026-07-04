@@ -1,0 +1,5 @@
+id: solana-confirm-processed-commitment
+name: "Solana Confirm Processed Commitment"
+version: 0.1.0
+author: brainblast-fleet
+description: "sendAndConfirmTransaction with commitment: \"processed\" — a transaction that can still be rolled back is treated as final"

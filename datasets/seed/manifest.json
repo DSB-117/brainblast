@@ -1,18 +1,18 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:42:46.454Z",
+  "generatedAt": "2026-07-04T07:44:19.856Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 46,
+    "records": 47,
     "sdks": 36,
-    "packsScanned": 46
+    "packsScanned": 47
   },
   "classDistribution": {
     "auth-bypass": 22,
     "missing-verification": 11,
-    "unconfirmed-state": 3,
+    "unconfirmed-state": 4,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
@@ -290,6 +290,13 @@
     {
       "pack": "res-cookie-httponly-false",
       "rule": "res-cookie-httponly-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "solana-confirm-processed-commitment",
+      "rule": "solana-confirm-processed-commitment",
       "red": true,
       "green": true,
       "emitted": true

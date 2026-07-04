@@ -3,19 +3,19 @@
   "dataset": "brainblast-verified-traps",
   "version": "0.1.0",
   "generator": "pack-dataset@0.1.0",
-  "generatedAt": "2026-07-04T07:42:50.584Z",
+  "generatedAt": "2026-07-04T07:44:22.825Z",
   "recordSchema": "schema/vti.schema.json",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "full": 46,
+    "full": 47,
     "sample": 3,
     "sdks": 36
   },
   "classDistribution": {
     "auth-bypass": 22,
     "missing-verification": 11,
-    "unconfirmed-state": 3,
+    "unconfirmed-state": 4,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
@@ -24,7 +24,7 @@
     "other": 1
   },
   "severityDistribution": {
-    "high": 31,
+    "high": 32,
     "critical": 12,
     "medium": 3
   },

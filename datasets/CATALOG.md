@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T07:42:50.624Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:44:22.852Z from 1 lot(s): seed-vti.jsonl._
 
-**46 verified trap instances** across **36 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 30–60). Freshness: 2026-07-04T07:42:46.454Z → 2026-07-04T07:42:46.454Z.
+**47 verified trap instances** across **36 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 30–60). Freshness: 2026-07-04T07:44:19.856Z → 2026-07-04T07:44:19.856Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -22,7 +22,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 |---|---|
 | auth-bypass | 22 |
 | missing-verification | 11 |
-| unconfirmed-state | 3 |
+| unconfirmed-state | 4 |
 | missing-slippage-guard | 3 |
 | silent-zero-revenue | 3 |
 | immutable-after-deploy | 1 |
@@ -36,11 +36,11 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 |---|---|
 | jsonwebtoken | 4 |
 | helmet | 3 |
+| @solana/web3.js | 3 |
 | cookie-session | 2 |
 | cors | 2 |
 | express-session | 2 |
 | node:https | 2 |
-| @solana/web3.js | 2 |
 | aws-sdk | 1 |
 | express-jwt | 1 |
 | express-rate-limit | 1 |
