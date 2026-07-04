@@ -1,0 +1,5 @@
+id: pagination-offset-off-by-one
+name: "Pagination Offset Off By One"
+version: 0.1.0
+author: brainblast-fleet
+description: "offsetFor multiplies a 1-indexed page directly by page size — the first page of records is skipped"

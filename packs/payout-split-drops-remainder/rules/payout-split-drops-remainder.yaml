@@ -1,0 +1,52 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: payout-split-drops-remainder
+severity: high
+title: splitEqually floors each share and drops the remainder — the split sums
+  to less than the total
+component:
+  name: typescript
+  type: Language
+  version: ">=4.0"
+  sourceUrl: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/floor
+detect:
+  modules: []
+  nameRegex: split|payout|distribute|share|allocate|dividend
+  triggerCalls: []
+check:
+  kind: differential-io
+  params:
+    lang: typescript
+    entryFile: split.ts
+    export: splitEqually
+    cases:
+      - input:
+          - 100
+          - 3
+        output:
+          - 34
+          - 33
+          - 33
+      - input:
+          - 10
+          - 4
+        output:
+          - 3
+          - 3
+          - 2
+          - 2
+      - input:
+          - 7
+          - 2
+        output:
+          - 4
+          - 3
+      - input:
+          - 9
+          - 3
+        output:
+          - 3
+          - 3
+          - 3
+test:
+  kind: none

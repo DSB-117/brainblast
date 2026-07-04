@@ -1,0 +1,5 @@
+id: payout-split-drops-remainder
+name: "Payout Split Drops Remainder"
+version: 0.1.0
+author: brainblast-fleet
+description: "splitEqually floors each share and drops the remainder — the split sums to less than the total"

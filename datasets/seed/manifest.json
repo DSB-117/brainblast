@@ -1,24 +1,24 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T08:58:44.553Z",
+  "generatedAt": "2026-07-04T16:41:42.902Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 81,
-    "sdks": 61,
-    "packsScanned": 81
+    "records": 89,
+    "sdks": 62,
+    "packsScanned": 89
   },
   "classDistribution": {
     "missing-verification": 27,
-    "auth-bypass": 34,
-    "other": 4,
+    "auth-bypass": 35,
+    "other": 8,
+    "silent-zero-revenue": 4,
     "unconfirmed-state": 7,
-    "missing-slippage-guard": 3,
+    "missing-slippage-guard": 4,
     "immutable-after-deploy": 1,
-    "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
-    "wrong-constant": 1
+    "wrong-constant": 2
   },
   "proof": [
     {
@@ -45,6 +45,13 @@
     {
       "pack": "aws-s3-v3-public-read-acl",
       "rule": "aws-s3-v3-public-read-acl",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "bigint-lamports-precision-loss",
+      "rule": "bigint-lamports-precision-loss",
       "red": true,
       "green": true,
       "emitted": true
@@ -87,6 +94,13 @@
     {
       "pack": "cors-wildcard-origin",
       "rule": "cors-wildcard-origin",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "discount-stacking-over-applied",
+      "rule": "discount-stacking-over-applied",
       "red": true,
       "green": true,
       "emitted": true
@@ -246,6 +260,13 @@
       "emitted": true
     },
     {
+      "pack": "jwt-expiry-unit-mismatch",
+      "rule": "jwt-expiry-unit-mismatch",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "jwt-expressjwt-ignore-notbefore",
       "rule": "jwt-expressjwt-ignore-notbefore",
       "red": true,
@@ -344,6 +365,13 @@
       "emitted": true
     },
     {
+      "pack": "modulo-negative-wrap",
+      "rule": "modulo-negative-wrap",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "mongodb-client-tls-allow-invalid-certificates",
       "rule": "mongodb-client-tls-allow-invalid-certificates",
       "red": true,
@@ -393,8 +421,22 @@
       "emitted": true
     },
     {
+      "pack": "pagination-offset-off-by-one",
+      "rule": "pagination-offset-off-by-one",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "passport-jwt-ignore-expiration",
       "rule": "passport-jwt-ignore-expiration",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "payout-split-drops-remainder",
+      "rule": "payout-split-drops-remainder",
       "red": true,
       "green": true,
       "emitted": true
@@ -458,6 +500,13 @@
     {
       "pack": "sequelize-dialectoptions-ssl-reject-unauthorized-false",
       "rule": "sequelize-dialectoptions-ssl-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "slippage-bps-wrong-divisor",
+      "rule": "slippage-bps-wrong-divisor",
       "red": true,
       "green": true,
       "emitted": true
@@ -563,6 +612,13 @@
     {
       "pack": "tedious-trust-server-certificate-true",
       "rule": "tedious-trust-server-certificate-true",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "token-decimals-off-by-one-scale",
+      "rule": "token-decimals-off-by-one-scale",
       "red": true,
       "green": true,
       "emitted": true

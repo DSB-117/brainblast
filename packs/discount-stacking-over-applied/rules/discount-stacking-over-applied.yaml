@@ -1,0 +1,44 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: discount-stacking-over-applied
+severity: high
+title: applyDiscounts adds two percentages instead of compounding them — orders
+  are massively over-discounted
+component:
+  name: typescript
+  type: Language
+  version: ">=4.0"
+  sourceUrl: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators
+detect:
+  modules: []
+  nameRegex: discount|price|checkout|total|coupon|promo
+  triggerCalls: []
+check:
+  kind: differential-io
+  params:
+    lang: typescript
+    entryFile: discount.ts
+    export: applyDiscounts
+    cases:
+      - input:
+          - 100
+          - 20
+          - 10
+        output: 72
+      - input:
+          - 200
+          - 50
+          - 50
+        output: 50
+      - input:
+          - 100
+          - 0
+          - 0
+        output: 100
+      - input:
+          - 150
+          - 10
+          - 10
+        output: 122
+test:
+  kind: none

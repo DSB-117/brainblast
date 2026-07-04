@@ -1,0 +1,43 @@
+{
+  "id": "slippage-bps-wrong-divisor",
+  "severity": "critical",
+  "title": "minAmountOut divides basis points by 100 instead of 10000 — slippage guard over-deducts, accepting catastrophic fills",
+  "class": "missing-slippage-guard",
+  "component": {
+    "name": "typescript",
+    "type": "Language",
+    "version": ">=4.0",
+    "sourceUrl": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Division"
+  },
+  "detect": {
+    "modules": [],
+    "nameRegex": "slippage|minout|minamount|swap|quote|amountout",
+    "triggerCalls": []
+  },
+  "binding": {
+    "check": {
+      "kind": "differential-io",
+      "params": {
+        "lang": "typescript",
+        "entryFile": "slippage.ts",
+        "export": "minAmountOut",
+        "cases": [
+          { "input": [1000, 50], "output": 995 },
+          { "input": [10000, 100], "output": 9900 },
+          { "input": [5000, 25], "output": 4988 },
+          { "input": [200, 300], "output": 194 }
+        ]
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "slippage.ts",
+    "vulnerable": "export function minAmountOut(quote: number, slippageBps: number): number {\n  // VULNERABLE: basis points are out of 10000, but this divides by 100 (treats\n  // bps as a percent). A 50-bps (0.5%) tolerance deducts 50%, so minAmountOut is\n  // far below the real floor and the swap accepts catastrophic fills / MEV.\n  return quote - Math.floor((quote * slippageBps) / 100);\n}\n",
+    "fixed": "export function minAmountOut(quote: number, slippageBps: number): number {\n  // FIXED: basis points divide by 10000 — a 50-bps tolerance deducts 0.5%.\n  return quote - Math.floor((quote * slippageBps) / 10000);\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Division",
+    "note": "The bps-vs-percent divisor mixup (100 vs 10000) has no static shape — both versions type-check and run. Only golden I/O reveals that the guard deducts 100x too much, dropping minAmountOut far below the real floor so the swap fills at any price."
+  }
+}

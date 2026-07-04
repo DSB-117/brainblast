@@ -3,30 +3,30 @@
   "dataset": "brainblast-verified-traps",
   "version": "0.1.0",
   "generator": "pack-dataset@0.1.0",
-  "generatedAt": "2026-07-04T08:58:47.720Z",
+  "generatedAt": "2026-07-04T16:41:52.155Z",
   "recordSchema": "schema/vti.schema.json",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "full": 81,
+    "full": 89,
     "sample": 3,
-    "sdks": 61
+    "sdks": 62
   },
   "classDistribution": {
     "missing-verification": 27,
-    "auth-bypass": 34,
-    "other": 4,
+    "auth-bypass": 35,
+    "other": 8,
+    "silent-zero-revenue": 4,
     "unconfirmed-state": 7,
-    "missing-slippage-guard": 3,
+    "missing-slippage-guard": 4,
     "immutable-after-deploy": 1,
-    "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
-    "wrong-constant": 1
+    "wrong-constant": 2
   },
   "severityDistribution": {
-    "high": 55,
-    "critical": 20,
-    "medium": 6
+    "high": 58,
+    "critical": 23,
+    "medium": 8
   },
   "sdks": [
     "@apollo/server",
@@ -88,6 +88,7 @@
     "stripe",
     "tedious",
     "typeorm",
+    "typescript",
     "undici",
     "ws"
   ],

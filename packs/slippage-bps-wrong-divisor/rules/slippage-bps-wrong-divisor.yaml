@@ -1,0 +1,40 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: slippage-bps-wrong-divisor
+severity: critical
+title: minAmountOut divides basis points by 100 instead of 10000 — slippage
+  guard over-deducts, accepting catastrophic fills
+component:
+  name: typescript
+  type: Language
+  version: ">=4.0"
+  sourceUrl: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Division
+detect:
+  modules: []
+  nameRegex: slippage|minout|minamount|swap|quote|amountout
+  triggerCalls: []
+check:
+  kind: differential-io
+  params:
+    lang: typescript
+    entryFile: slippage.ts
+    export: minAmountOut
+    cases:
+      - input:
+          - 1000
+          - 50
+        output: 995
+      - input:
+          - 10000
+          - 100
+        output: 9900
+      - input:
+          - 5000
+          - 25
+        output: 4988
+      - input:
+          - 200
+          - 300
+        output: 194
+test:
+  kind: none

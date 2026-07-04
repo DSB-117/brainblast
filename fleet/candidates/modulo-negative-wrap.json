@@ -1,0 +1,43 @@
+{
+  "id": "modulo-negative-wrap",
+  "severity": "medium",
+  "title": "wrapIndex uses raw % which returns a negative for negative inputs — out-of-bounds ring/array index",
+  "class": "other",
+  "component": {
+    "name": "typescript",
+    "type": "Language",
+    "version": ">=4.0",
+    "sourceUrl": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Remainder"
+  },
+  "detect": {
+    "modules": [],
+    "nameRegex": "wrap|index|modulo|mod|ring|rotate|circular",
+    "triggerCalls": []
+  },
+  "binding": {
+    "check": {
+      "kind": "differential-io",
+      "params": {
+        "lang": "typescript",
+        "entryFile": "wrap.ts",
+        "export": "wrapIndex",
+        "cases": [
+          { "input": [-1, 5], "output": 4 },
+          { "input": [7, 5], "output": 2 },
+          { "input": [-7, 5], "output": 3 },
+          { "input": [10, 3], "output": 1 }
+        ]
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "wrap.ts",
+    "vulnerable": "export function wrapIndex(i: number, n: number): number {\n  // VULNERABLE: JS `%` is a REMAINDER, not a modulo — it returns a NEGATIVE result\n  // for negative i (e.g. -1 % 5 === -1). Used as an array/ring-buffer index this\n  // reads out of bounds (undefined) or off the wrong end.\n  return i % n;\n}\n",
+    "fixed": "export function wrapIndex(i: number, n: number): number {\n  // FIXED: normalize into [0, n) so negative inputs wrap correctly.\n  return ((i % n) + n) % n;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Remainder",
+    "note": "The remainder-vs-modulo trap has no static shape and is correct for non-negative inputs. Golden I/O with negative indices reveals the negative result — an out-of-bounds access wherever the value indexes an array or ring buffer."
+  }
+}
