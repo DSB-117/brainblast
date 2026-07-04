@@ -1,0 +1,5 @@
+id: tedious-trust-server-certificate-true
+name: "Tedious Trust Server Certificate True"
+version: 0.1.0
+author: brainblast-fleet
+description: "new tedious Connection with options.trustServerCertificate: true — the SQL Server TLS certificate is not validated (MITM)"

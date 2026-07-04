@@ -1,0 +1,5 @@
+id: amqplib-reject-unauthorized-false
+name: "Amqplib Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "amqplib connect with rejectUnauthorized: false — the RabbitMQ broker certificate is not validated (MITM)"

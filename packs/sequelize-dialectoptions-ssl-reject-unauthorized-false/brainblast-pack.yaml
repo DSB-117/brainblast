@@ -1,0 +1,5 @@
+id: sequelize-dialectoptions-ssl-reject-unauthorized-false
+name: "Sequelize Dialectoptions Ssl Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "new Sequelize with dialectOptions.ssl.rejectUnauthorized: false — the database TLS certificate is not validated (MITM)"

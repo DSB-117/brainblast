@@ -1,0 +1,5 @@
+id: koa-session-secure-false
+name: "Koa Session Secure False"
+version: 0.1.0
+author: brainblast-fleet
+description: "koa-session with secure: false — the session cookie is sent over plain HTTP and can be sniffed"

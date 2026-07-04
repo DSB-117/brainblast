@@ -1,0 +1,44 @@
+{
+  "id": "elasticsearch-tls-reject-unauthorized-false",
+  "severity": "high",
+  "title": "new elasticsearch Client with tls.rejectUnauthorized: false — the search cluster certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "@elastic/elasticsearch",
+    "type": "Database",
+    "version": ">=8.0.0",
+    "sourceUrl": "https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/client-connecting.html"
+  },
+  "detect": {
+    "modules": ["@elastic/elasticsearch"],
+    "nameRegex": "client|elastic|search|index|connect|es",
+    "triggerCalls": ["Client"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "Client",
+        "argIndex": 0,
+        "propName": "tls.rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "The Elasticsearch client validates the cluster certificate (tls.rejectUnauthorized is not false) — the connection's TLS identity is verified.",
+        "failDetail": "new Client is created with tls: { rejectUnauthorized: false }, disabling validation of the Elasticsearch cluster's TLS certificate. A network attacker can present a forged certificate and man-in-the-middle the connection — reading indexed data (often PII/logs) and the API key or basic-auth credentials sent with each request. Remove rejectUnauthorized: false; trust the cluster CA via tls.ca.",
+        "absentCallDetail": "No Elasticsearch Client construction in this scope; this rule does not apply here.",
+        "absentArgDetail": "The Client does not set tls.rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "es.ts",
+    "vulnerable": "import { Client } from \"@elastic/elasticsearch\";\n\nexport function makeEsClient(node: string, apiKey: string) {\n  // VULNERABLE: tls.rejectUnauthorized: false — the cluster certificate is not validated.\n  return new Client({ node, auth: { apiKey }, tls: { rejectUnauthorized: false } });\n}\n",
+    "fixed": "import { Client } from \"@elastic/elasticsearch\";\n\nexport function makeEsClient(node: string, apiKey: string, ca: string) {\n  // FIXED: certificate validation enforced; trust the cluster CA explicitly.\n  return new Client({ node, auth: { apiKey }, tls: { rejectUnauthorized: true, ca } });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/client-connecting.html",
+    "note": "tls: { rejectUnauthorized: false } is copied from a 'connect to local Elasticsearch with self-signed cert' guide into production config, disabling MITM protection on the channel that carries indexed data and cluster credentials."
+  }
+}

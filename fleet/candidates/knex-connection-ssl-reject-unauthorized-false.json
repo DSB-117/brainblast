@@ -1,0 +1,44 @@
+{
+  "id": "knex-connection-ssl-reject-unauthorized-false",
+  "severity": "critical",
+  "title": "knex with connection.ssl.rejectUnauthorized: false — the database TLS certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "knex",
+    "type": "Database",
+    "version": ">=2.0.0",
+    "sourceUrl": "https://knexjs.org/guide/#configuration-options"
+  },
+  "detect": {
+    "modules": ["knex"],
+    "nameRegex": "knex|db|database|query|connect|conn",
+    "triggerCalls": ["knex"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "knex",
+        "argIndex": 0,
+        "propName": "connection.ssl.rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "knex validates the database server certificate (connection.ssl.rejectUnauthorized is not false) — the connection's TLS identity is verified.",
+        "failDetail": "knex is initialized with connection: { ssl: { rejectUnauthorized: false } }, disabling validation of the database server's TLS certificate for the whole pool. A network attacker can present a forged certificate and man-in-the-middle the database — exposing every query, credential, and row. Remove rejectUnauthorized: false; provide the provider's CA via connection.ssl.ca.",
+        "absentCallDetail": "No knex() call in this scope; this rule does not apply here.",
+        "absentArgDetail": "knex() does not set connection.ssl.rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "knex.ts",
+    "vulnerable": "import knex from \"knex\";\n\nexport function makeDb(connectionString: string) {\n  // VULNERABLE: connection.ssl.rejectUnauthorized: false — the DB certificate is not validated.\n  return knex({ client: \"pg\", connection: { connectionString, ssl: { rejectUnauthorized: false } } });\n}\n",
+    "fixed": "import knex from \"knex\";\n\nexport function makeDb(connectionString: string, ca: string) {\n  // FIXED: certificate validation enforced; trust the provider's CA explicitly.\n  return knex({ client: \"pg\", connection: { connectionString, ssl: { rejectUnauthorized: true, ca } } });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://knexjs.org/guide/#configuration-options",
+    "note": "connection: { ssl: { rejectUnauthorized: false } } is pasted into knex config to connect to a managed Postgres/MySQL without wiring the CA. It ships and disables MITM protection on the database."
+  }
+}

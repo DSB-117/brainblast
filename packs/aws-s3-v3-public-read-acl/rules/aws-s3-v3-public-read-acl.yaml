@@ -1,0 +1,37 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: aws-s3-v3-public-read-acl
+severity: high
+title: 'AWS SDK v3 PutObjectCommand with ACL: "public-read" — every uploaded
+  object is world-readable'
+component:
+  name: "@aws-sdk/client-s3"
+  type: Storage
+  version: ">=3.0.0"
+  sourceUrl: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-s3/Interface/PutObjectCommandInput/
+detect:
+  modules:
+    - "@aws-sdk/client-s3"
+  nameRegex: upload|put|s3|store|save|object|file|command
+  triggerCalls:
+    - PutObjectCommand
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: PutObjectCommand
+    argIndex: 0
+    propName: ACL
+    forbiddenValue: public-read
+    passDetail: The PutObjectCommand uses a non-public ACL (not "public-read") — the
+      object is not world-readable.
+    failDetail: 'new PutObjectCommand is created with ACL: "public-read", making the
+      uploaded object readable by ANYONE on the internet who knows or guesses
+      the URL. If user uploads flow through this command they are silently
+      exposed publicly. Uploads succeed and the app works, so it ships. Use ACL:
+      "private" (the default) and serve objects via pre-signed URLs.'
+    absentCallDetail: No PutObjectCommand construction in this scope; this rule does
+      not apply here.
+    absentArgDetail: PutObjectCommand does not set ACL; the bucket default applies —
+      verify it is not public.
+test:
+  kind: none

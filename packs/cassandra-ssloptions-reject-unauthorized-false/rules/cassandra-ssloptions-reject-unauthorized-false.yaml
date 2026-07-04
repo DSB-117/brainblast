@@ -1,0 +1,39 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: cassandra-ssloptions-reject-unauthorized-false
+severity: critical
+title: "new cassandra-driver Client with sslOptions.rejectUnauthorized: false —
+  the Cassandra TLS certificate is not validated (MITM)"
+component:
+  name: cassandra-driver
+  type: Database
+  version: ">=4.0.0"
+  sourceUrl: https://docs.datastax.com/en/developer/nodejs-driver/latest/features/security/ssl/
+detect:
+  modules:
+    - cassandra-driver
+  nameRegex: client|cassandra|db|database|connect|conn|scylla
+  triggerCalls:
+    - Client
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: Client
+    argIndex: 0
+    propName: sslOptions.rejectUnauthorized
+    forbiddenValue: false
+    passDetail: The Cassandra client validates the node certificate
+      (sslOptions.rejectUnauthorized is not false) — the connection's TLS
+      identity is verified.
+    failDetail: "new cassandra-driver Client is created with sslOptions: {
+      rejectUnauthorized: false }, disabling validation of the
+      Cassandra/ScyllaDB node's TLS certificate. A network attacker can present
+      a forged certificate and man-in-the-middle the connection — exposing every
+      query, credential, and row. Remove rejectUnauthorized: false; provide the
+      cluster CA via sslOptions.ca."
+    absentCallDetail: No cassandra-driver Client construction in this scope; this
+      rule does not apply here.
+    absentArgDetail: The Cassandra Client does not set
+      sslOptions.rejectUnauthorized; the secure default (validate) applies.
+test:
+  kind: none

@@ -1,0 +1,44 @@
+{
+  "id": "nats-tls-reject-unauthorized-false",
+  "severity": "high",
+  "title": "NATS connect with tls.rejectUnauthorized: false — the NATS server certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "nats",
+    "type": "Networking",
+    "version": ">=2.0.0",
+    "sourceUrl": "https://github.com/nats-io/nats.js#tls"
+  },
+  "detect": {
+    "modules": ["nats"],
+    "nameRegex": "nats|connect|client|broker|messaging|bus",
+    "triggerCalls": ["connect"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "connect",
+        "argIndex": 0,
+        "propName": "tls.rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "The NATS client validates the server certificate (tls.rejectUnauthorized is not false) — the connection's TLS identity is verified.",
+        "failDetail": "NATS connect is configured with tls: { rejectUnauthorized: false }, disabling validation of the NATS server's TLS certificate. A network attacker can present a forged certificate and man-in-the-middle the connection — reading and injecting messages on every subject (events, commands, credentials). Remove rejectUnauthorized: false; trust the server CA via tls.ca.",
+        "absentCallDetail": "No NATS connect call in this scope; this rule does not apply here.",
+        "absentArgDetail": "NATS connect does not set tls.rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "nats.ts",
+    "vulnerable": "import { connect } from \"nats\";\n\nexport function connectNats(servers: string) {\n  // VULNERABLE: tls.rejectUnauthorized: false — the NATS server certificate is not validated.\n  return connect({ servers, tls: { rejectUnauthorized: false } });\n}\n",
+    "fixed": "import { connect } from \"nats\";\n\nexport function connectNats(servers: string, ca: string) {\n  // FIXED: certificate validation enforced; trust the server CA explicitly.\n  return connect({ servers, tls: { rejectUnauthorized: true, ca } });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/nats-io/nats.js#tls",
+    "note": "tls: { rejectUnauthorized: false } is pasted to connect to a NATS cluster with a self-signed cert and ships, exposing the messaging bus to MITM."
+  }
+}

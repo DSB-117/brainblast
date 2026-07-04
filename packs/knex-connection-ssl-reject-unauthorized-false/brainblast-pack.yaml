@@ -1,0 +1,5 @@
+id: knex-connection-ssl-reject-unauthorized-false
+name: "Knex Connection Ssl Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "knex with connection.ssl.rejectUnauthorized: false — the database TLS certificate is not validated (MITM)"

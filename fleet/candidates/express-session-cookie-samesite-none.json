@@ -1,0 +1,44 @@
+{
+  "id": "express-session-cookie-samesite-none",
+  "severity": "high",
+  "title": "express-session with cookie.sameSite: \"none\" — the session cookie is sent on cross-site requests (CSRF)",
+  "class": "auth-bypass",
+  "component": {
+    "name": "express-session",
+    "type": "Auth",
+    "version": ">=1.17.0",
+    "sourceUrl": "https://github.com/expressjs/session#cookiesamesite"
+  },
+  "detect": {
+    "modules": ["express-session"],
+    "nameRegex": "session|auth|app|server|index|config",
+    "triggerCalls": ["session"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "session",
+        "argIndex": 0,
+        "propName": "cookie.sameSite",
+        "forbiddenValue": "none",
+        "passDetail": "express-session sets cookie.sameSite to a restrictive value (\"lax\" or \"strict\", not \"none\") — the session cookie is not sent on cross-site requests, blocking CSRF.",
+        "failDetail": "express-session is configured with cookie: { sameSite: \"none\" }, so the session cookie is attached to cross-site requests. This removes the SameSite CSRF defense: a malicious page can trigger state-changing requests that carry the victim's session. Unless a true cross-site flow is required (and paired with CSRF tokens), use sameSite: \"lax\" or \"strict\".",
+        "absentCallDetail": "This scope does not call session(); this rule does not apply here.",
+        "absentArgDetail": "session() does not set cookie.sameSite; verify the effective value is lax/strict, not none."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "app.ts",
+    "vulnerable": "import session from \"express-session\";\nimport express from \"express\";\n\nexport function configureSession(app: express.Express) {\n  // VULNERABLE: sameSite: \"none\" sends the session cookie cross-site, removing the SameSite CSRF defense.\n  app.use(session({\n    secret: process.env.SECRET as string,\n    resave: false,\n    saveUninitialized: false,\n    cookie: { secure: true, sameSite: \"none\" },\n  }));\n  return app;\n}\n",
+    "fixed": "import session from \"express-session\";\nimport express from \"express\";\n\nexport function configureSession(app: express.Express) {\n  // FIXED: sameSite: \"lax\" keeps the session cookie off cross-site requests.\n  app.use(session({\n    secret: process.env.SECRET as string,\n    resave: false,\n    saveUninitialized: false,\n    cookie: { secure: true, sameSite: \"lax\" },\n  }));\n  return app;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/expressjs/session#cookiesamesite",
+    "note": "sameSite: \"none\" is set to support an embedded/cross-site widget and applied to the whole session, silently disabling the SameSite CSRF defense for every state-changing route."
+  }
+}

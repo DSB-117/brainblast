@@ -1,60 +1,76 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-04T07:55:49.727Z",
+  "generatedAt": "2026-07-04T08:58:47.734Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 56
+      "count": 81
     }
   ],
   "counts": {
-    "vtis": 56,
-    "unique": 56,
+    "vtis": 81,
+    "unique": 81,
     "duplicates": 0,
-    "sdks": 39,
+    "sdks": 61,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 39,
-    "critical": 13,
-    "medium": 4
+    "high": 55,
+    "critical": 20,
+    "medium": 6
   },
   "classDistribution": {
-    "auth-bypass": 24,
-    "missing-verification": 14,
+    "missing-verification": 27,
+    "auth-bypass": 34,
+    "other": 4,
     "unconfirmed-state": 7,
     "missing-slippage-guard": 3,
-    "other": 2,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
     "wrong-constant": 1
   },
   "sdkDistribution": {
+    "amqplib": 1,
+    "@apollo/server": 1,
     "aws-sdk": 1,
+    "@aws-sdk/client-s3": 1,
+    "cassandra-driver": 1,
+    "cookie": 1,
     "cookie-session": 2,
     "cors": 2,
+    "@elastic/elasticsearch": 1,
+    "express-fileupload": 1,
     "express-jwt": 2,
     "express-rate-limit": 1,
-    "express-session": 2,
+    "express-session": 3,
+    "@fastify/cors": 1,
     "crypto/tls": 1,
-    "helmet": 3,
+    "got": 1,
+    "helmet": 5,
     "node:https": 2,
     "ioredis": 1,
+    "iron-session": 1,
     "Jito (block engine / bundles)": 1,
     "jose": 1,
     "Jupiter Aggregator API": 1,
     "mongoose": 2,
     "jsonwebtoken": 4,
     "kafkajs": 1,
+    "knex": 1,
+    "koa-session": 1,
+    "ldapjs": 1,
+    "libxmljs2": 1,
     "@metaplex-foundation/mpl-token-metadata": 1,
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "mongodb": 1,
+    "mqtt": 1,
     "mssql": 1,
     "mysql2": 1,
+    "nats": 1,
     "nodemailer": 1,
     "passport-jwt": 1,
     "pg": 1,
@@ -63,7 +79,10 @@
     "Pyth Network price feeds": 1,
     "python": 1,
     "@raydium-io/raydium-sdk-v2": 1,
+    "redis": 1,
     "express": 1,
+    "sequelize": 1,
+    "socket.io": 1,
     "@solana/web3.js": 6,
     "Solana lamports arithmetic": 1,
     "solidity": 1,
@@ -71,10 +90,13 @@
     "better-auth": 2,
     "stripe": 1,
     "Stripe Node SDK": 1,
+    "tedious": 1,
+    "typeorm": 1,
+    "undici": 1,
     "ws": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 56
+    "synthetic-owned": 81
   },
   "quality": {
     "mean": 50,
@@ -83,43 +105,69 @@
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 52,
-      "low": 4
+      "medium": 75,
+      "low": 6
     }
   },
   "coverage": {
     "matrix": {
-      "auth-bypass": {
-        "aws-sdk": 1,
-        "cookie-session": 2,
-        "cors": 2,
-        "express-jwt": 1,
-        "express-rate-limit": 1,
-        "express-session": 2,
-        "crypto/tls": 1,
-        "helmet": 3,
-        "node:https": 2,
-        "jose": 1,
-        "jsonwebtoken": 4,
-        "passport-jwt": 1,
-        "express": 1,
-        "solidity": 1,
-        "ws": 1
-      },
       "missing-verification": {
+        "amqplib": 1,
+        "cassandra-driver": 1,
+        "@elastic/elasticsearch": 1,
+        "got": 1,
         "ioredis": 1,
         "express-jwt": 1,
         "kafkajs": 1,
+        "knex": 1,
+        "ldapjs": 1,
         "mongodb": 1,
         "mongoose": 1,
+        "mqtt": 1,
         "mssql": 1,
         "mysql2": 1,
+        "nats": 1,
         "nodemailer": 1,
         "pg": 1,
         "playwright": 1,
         "puppeteer": 1,
+        "redis": 1,
+        "sequelize": 1,
         "SPL Token": 1,
-        "better-auth": 2
+        "better-auth": 2,
+        "tedious": 1,
+        "typeorm": 1,
+        "undici": 1
+      },
+      "auth-bypass": {
+        "@apollo/server": 1,
+        "aws-sdk": 1,
+        "@aws-sdk/client-s3": 1,
+        "cookie": 1,
+        "cookie-session": 2,
+        "cors": 2,
+        "express-jwt": 1,
+        "express-rate-limit": 1,
+        "express-session": 3,
+        "@fastify/cors": 1,
+        "crypto/tls": 1,
+        "helmet": 5,
+        "node:https": 2,
+        "iron-session": 1,
+        "jose": 1,
+        "jsonwebtoken": 4,
+        "koa-session": 1,
+        "passport-jwt": 1,
+        "express": 1,
+        "socket.io": 1,
+        "solidity": 1,
+        "ws": 1
+      },
+      "other": {
+        "express-fileupload": 1,
+        "mongoose": 1,
+        "libxmljs2": 1,
+        "Stripe Node SDK": 1
       },
       "unconfirmed-state": {
         "Jito (block engine / bundles)": 1,
@@ -129,10 +177,6 @@
         "Jupiter Aggregator API": 1,
         "@meteora-ag/dlmm": 1,
         "@raydium-io/raydium-sdk-v2": 1
-      },
-      "other": {
-        "mongoose": 1,
-        "Stripe Node SDK": 1
       },
       "immutable-after-deploy": {
         "@metaplex-foundation/mpl-token-metadata": 1
@@ -151,40 +195,20 @@
     },
     "thinCells": [
       {
-        "class": "auth-bypass",
-        "sdk": "aws-sdk"
+        "class": "missing-verification",
+        "sdk": "amqplib"
       },
       {
-        "class": "auth-bypass",
-        "sdk": "express-jwt"
+        "class": "missing-verification",
+        "sdk": "cassandra-driver"
       },
       {
-        "class": "auth-bypass",
-        "sdk": "express-rate-limit"
+        "class": "missing-verification",
+        "sdk": "@elastic/elasticsearch"
       },
       {
-        "class": "auth-bypass",
-        "sdk": "crypto/tls"
-      },
-      {
-        "class": "auth-bypass",
-        "sdk": "jose"
-      },
-      {
-        "class": "auth-bypass",
-        "sdk": "passport-jwt"
-      },
-      {
-        "class": "auth-bypass",
-        "sdk": "express"
-      },
-      {
-        "class": "auth-bypass",
-        "sdk": "solidity"
-      },
-      {
-        "class": "auth-bypass",
-        "sdk": "ws"
+        "class": "missing-verification",
+        "sdk": "got"
       },
       {
         "class": "missing-verification",
@@ -200,6 +224,14 @@
       },
       {
         "class": "missing-verification",
+        "sdk": "knex"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "ldapjs"
+      },
+      {
+        "class": "missing-verification",
         "sdk": "mongodb"
       },
       {
@@ -208,11 +240,19 @@
       },
       {
         "class": "missing-verification",
+        "sdk": "mqtt"
+      },
+      {
+        "class": "missing-verification",
         "sdk": "mssql"
       },
       {
         "class": "missing-verification",
         "sdk": "mysql2"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "nats"
       },
       {
         "class": "missing-verification",
@@ -232,7 +272,107 @@
       },
       {
         "class": "missing-verification",
+        "sdk": "redis"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "sequelize"
+      },
+      {
+        "class": "missing-verification",
         "sdk": "SPL Token"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "tedious"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "typeorm"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "undici"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "@apollo/server"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "aws-sdk"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "@aws-sdk/client-s3"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "cookie"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "express-jwt"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "express-rate-limit"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "@fastify/cors"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "crypto/tls"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "iron-session"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "jose"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "koa-session"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "passport-jwt"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "express"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "socket.io"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "solidity"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "ws"
+      },
+      {
+        "class": "other",
+        "sdk": "express-fileupload"
+      },
+      {
+        "class": "other",
+        "sdk": "mongoose"
+      },
+      {
+        "class": "other",
+        "sdk": "libxmljs2"
+      },
+      {
+        "class": "other",
+        "sdk": "Stripe Node SDK"
       },
       {
         "class": "unconfirmed-state",
@@ -249,14 +389,6 @@
       {
         "class": "missing-slippage-guard",
         "sdk": "@raydium-io/raydium-sdk-v2"
-      },
-      {
-        "class": "other",
-        "sdk": "mongoose"
-      },
-      {
-        "class": "other",
-        "sdk": "Stripe Node SDK"
       },
       {
         "class": "immutable-after-deploy",
@@ -287,8 +419,53 @@
   },
   "scored": [
     {
+      "trapId": "amqplib-reject-unauthorized-false",
+      "sdk": "amqplib",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "apollo-server-csrf-prevention-false",
+      "sdk": "@apollo/server",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "aws-s3-public-read-acl",
       "sdk": "aws-sdk",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "aws-s3-v3-public-read-acl",
+      "sdk": "@aws-sdk/client-s3",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "cassandra-ssloptions-reject-unauthorized-false",
+      "sdk": "cassandra-driver",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "cookie-serialize-httponly-false",
+      "sdk": "cookie",
       "class": "auth-bypass",
       "severity": "high",
       "corroborationCount": 0,
@@ -332,6 +509,24 @@
       "score": 48
     },
     {
+      "trapId": "elasticsearch-tls-reject-unauthorized-false",
+      "sdk": "@elastic/elasticsearch",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "express-fileupload-safe-file-names-false",
+      "sdk": "express-fileupload",
+      "class": "other",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "express-jwt-credentials-not-required",
       "sdk": "express-jwt",
       "class": "auth-bypass",
@@ -348,6 +543,15 @@
       "corroborationCount": 0,
       "license": "synthetic-owned",
       "score": 30
+    },
+    {
+      "trapId": "express-session-cookie-samesite-none",
+      "sdk": "express-session",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
     },
     {
       "trapId": "express-session-cookie-secure-false",
@@ -368,6 +572,15 @@
       "score": 48
     },
     {
+      "trapId": "fastify-cors-wildcard-origin",
+      "sdk": "@fastify/cors",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "go-tls-insecureskipverify",
       "sdk": "crypto/tls",
       "class": "auth-bypass",
@@ -375,6 +588,15 @@
       "corroborationCount": 0,
       "license": "synthetic-owned",
       "score": 60
+    },
+    {
+      "trapId": "got-https-reject-unauthorized-false",
+      "sdk": "got",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
     },
     {
       "trapId": "helmet-csp-disabled",
@@ -395,7 +617,25 @@
       "score": 30
     },
     {
+      "trapId": "helmet-hsts-disabled",
+      "sdk": "helmet",
+      "class": "auth-bypass",
+      "severity": "medium",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 30
+    },
+    {
       "trapId": "helmet-hsts-maxage-zero",
+      "sdk": "helmet",
+      "class": "auth-bypass",
+      "severity": "medium",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 30
+    },
+    {
+      "trapId": "helmet-nosniff-disabled",
       "sdk": "helmet",
       "class": "auth-bypass",
       "severity": "medium",
@@ -425,6 +665,15 @@
       "trapId": "ioredis-tls-reject-unauthorized-false",
       "sdk": "ioredis",
       "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "iron-session-cookie-secure-false",
+      "sdk": "iron-session",
+      "class": "auth-bypass",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",
@@ -521,6 +770,42 @@
       "score": 48
     },
     {
+      "trapId": "knex-connection-ssl-reject-unauthorized-false",
+      "sdk": "knex",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "koa-session-secure-false",
+      "sdk": "koa-session",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "ldapjs-tls-reject-unauthorized-false",
+      "sdk": "ldapjs",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "libxmljs-noent-true",
+      "sdk": "libxmljs2",
+      "class": "other",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
       "trapId": "metaplex-ismutable-false-locks-metadata",
       "sdk": "@metaplex-foundation/mpl-token-metadata",
       "class": "immutable-after-deploy",
@@ -566,6 +851,15 @@
       "score": 60
     },
     {
+      "trapId": "mqtt-reject-unauthorized-false",
+      "sdk": "mqtt",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "mssql-trust-server-certificate-true",
       "sdk": "mssql",
       "class": "missing-verification",
@@ -582,6 +876,15 @@
       "corroborationCount": 0,
       "license": "synthetic-owned",
       "score": 60
+    },
+    {
+      "trapId": "nats-tls-reject-unauthorized-false",
+      "sdk": "nats",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
     },
     {
       "trapId": "nodemailer-tls-reject-unauthorized-false",
@@ -656,8 +959,35 @@
       "score": 48
     },
     {
+      "trapId": "redis-socket-reject-unauthorized-false",
+      "sdk": "redis",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "res-cookie-httponly-false",
       "sdk": "express",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "sequelize-dialectoptions-ssl-reject-unauthorized-false",
+      "sdk": "sequelize",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "socketio-cors-wildcard-origin",
+      "sdk": "socket.io",
       "class": "auth-bypass",
       "severity": "high",
       "corroborationCount": 0,
@@ -776,6 +1106,33 @@
       "trapId": "stripe-paymentintents-moved",
       "sdk": "Stripe Node SDK",
       "class": "other",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "tedious-trust-server-certificate-true",
+      "sdk": "tedious",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "typeorm-ssl-reject-unauthorized-false",
+      "sdk": "typeorm",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "undici-connect-reject-unauthorized-false",
+      "sdk": "undici",
+      "class": "missing-verification",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",

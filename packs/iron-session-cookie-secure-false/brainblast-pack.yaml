@@ -1,0 +1,5 @@
+id: iron-session-cookie-secure-false
+name: "Iron Session Cookie Secure False"
+version: 0.1.0
+author: brainblast-fleet
+description: "iron-session with cookieOptions.secure: false — the encrypted session cookie is sent over plain HTTP"

@@ -1,0 +1,40 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: libxmljs-noent-true
+severity: critical
+title: "libxmljs parseXml with noent: true — external entities are expanded,
+  enabling XXE"
+component:
+  name: libxmljs2
+  type: Networking
+  version: ">=0.30.0"
+  sourceUrl: https://github.com/marudor/libxmljs2
+detect:
+  modules:
+    - libxmljs2
+    - libxmljs
+  nameRegex: xml|parse|libxml|document|entity
+  triggerCalls:
+    - parseXml
+    - parseXmlString
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: parseXml
+    argIndex: 1
+    propName: noent
+    forbiddenValue: true
+    passDetail: parseXml leaves entity substitution off (noent is not true) —
+      external/general entities are not expanded, so XXE cannot read files or
+      reach internal hosts.
+    failDetail: 'parseXml is called with noent: true, which turns ON entity
+      substitution. A document with a DOCTYPE that declares an external entity
+      (e.g. SYSTEM "file:///etc/passwd" or an http:// URL) will have it EXPANDED
+      during parsing — a classic XML External Entity (XXE) attack that leaks
+      local files and enables SSRF against internal services. Remove noent:
+      true; never enable entity substitution on untrusted XML.'
+    absentCallDetail: No parseXml call in this scope; this rule does not apply here.
+    absentArgDetail: parseXml does not set noent; the safe default (no entity
+      substitution) applies.
+test:
+  kind: none

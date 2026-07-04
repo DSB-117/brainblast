@@ -1,0 +1,44 @@
+{
+  "id": "express-fileupload-safe-file-names-false",
+  "severity": "high",
+  "title": "express-fileupload with safeFileNames: false — uploaded filenames keep path/special characters (traversal)",
+  "class": "other",
+  "component": {
+    "name": "express-fileupload",
+    "type": "Storage",
+    "version": ">=1.0.0",
+    "sourceUrl": "https://github.com/richardgirges/express-fileupload#available-options"
+  },
+  "detect": {
+    "modules": ["express-fileupload"],
+    "nameRegex": "upload|file|fileupload|middleware|app|multipart",
+    "triggerCalls": ["fileUpload"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "fileUpload",
+        "argIndex": 0,
+        "propName": "safeFileNames",
+        "forbiddenValue": false,
+        "passDetail": "express-fileupload sanitizes uploaded filenames (safeFileNames is not false) — path separators and special characters are stripped before the name is used.",
+        "failDetail": "express-fileupload is configured with safeFileNames: false, so an uploaded file's name is used as-is — including `../`, path separators, and null bytes. If that name is passed to mv()/a filesystem path, an attacker can traverse out of the upload directory and overwrite arbitrary files (e.g. a config or a served script). Set safeFileNames: true (ideally with a regex) and never build a path from an untrusted filename.",
+        "absentCallDetail": "No fileUpload() call in this scope; this rule does not apply here.",
+        "absentArgDetail": "fileUpload() does not set safeFileNames; note express-fileupload defaults it to false — set it to true explicitly."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "upload.ts",
+    "vulnerable": "import express from \"express\";\nimport fileUpload from \"express-fileupload\";\n\nexport function withUploads(app: express.Express) {\n  // VULNERABLE: safeFileNames: false keeps raw filenames (../, separators) — path traversal on mv().\n  app.use(fileUpload({ safeFileNames: false, preserveExtension: true }));\n  return app;\n}\n",
+    "fixed": "import express from \"express\";\nimport fileUpload from \"express-fileupload\";\n\nexport function withUploads(app: express.Express) {\n  // FIXED: safeFileNames: true strips path separators and special characters from filenames.\n  app.use(fileUpload({ safeFileNames: true, preserveExtension: true }));\n  return app;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/richardgirges/express-fileupload#available-options",
+    "note": "safeFileNames defaults to false, so uploaded names keep `../` and separators. Code that builds a destination path from the untrusted name is a path-traversal write. It looks fine on normal uploads, so it ships."
+  }
+}

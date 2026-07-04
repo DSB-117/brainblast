@@ -1,0 +1,38 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: mqtt-reject-unauthorized-false
+severity: high
+title: "mqtt.connect with rejectUnauthorized: false — the MQTT broker
+  certificate is not validated (MITM)"
+component:
+  name: mqtt
+  type: Networking
+  version: ">=4.0.0"
+  sourceUrl: https://github.com/mqttjs/MQTT.js#client
+detect:
+  modules:
+    - mqtt
+  nameRegex: mqtt|connect|client|broker|iot|device
+  triggerCalls:
+    - connect
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: connect
+    argIndex: 1
+    propName: rejectUnauthorized
+    forbiddenValue: false
+    passDetail: The MQTT client validates the broker certificate (rejectUnauthorized
+      is not false) — the mqtts:// connection's TLS identity is verified.
+    failDetail: "mqtt.connect is called with rejectUnauthorized: false, disabling
+      validation of the broker's TLS certificate. A network attacker can present
+      a forged certificate and man-in-the-middle the connection — reading and
+      injecting messages on every topic (device telemetry, commands,
+      credentials). For an IoT fleet this can mean spoofed sensor data or
+      attacker-issued device commands. Remove rejectUnauthorized: false; trust
+      the broker CA via the `ca` option."
+    absentCallDetail: No mqtt.connect call in this scope; this rule does not apply here.
+    absentArgDetail: mqtt.connect does not set rejectUnauthorized; the secure
+      default (validate) applies.
+test:
+  kind: none

@@ -1,0 +1,5 @@
+id: ldapjs-tls-reject-unauthorized-false
+name: "Ldapjs Tls Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "ldapjs createClient with tlsOptions.rejectUnauthorized: false — the LDAP directory certificate is not validated (auth MITM)"

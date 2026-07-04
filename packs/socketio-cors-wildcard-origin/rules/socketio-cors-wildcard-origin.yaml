@@ -1,0 +1,37 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: socketio-cors-wildcard-origin
+severity: high
+title: 'socket.io Server with cors.origin: "*" — any website can open an
+  authenticated socket to the API'
+component:
+  name: socket.io
+  type: Networking
+  version: ">=3.0.0"
+  sourceUrl: https://socket.io/docs/v4/handling-cors/
+detect:
+  modules:
+    - socket.io
+  nameRegex: server|socket|io|ws|realtime|gateway
+  triggerCalls:
+    - Server
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: Server
+    argIndex: 1
+    propName: cors.origin
+    forbiddenValue: "*"
+    passDetail: The socket.io Server pins cors.origin to an explicit allow-list (not
+      "*") — only trusted front-ends can open a socket.
+    failDetail: "new socket.io Server is created with cors: { origin: \"*\" },
+      allowing ANY website to open a Socket.IO connection to this server.
+      Because the handshake carries the user's cookies, a malicious page can
+      establish an authenticated real-time channel and drive or read events as
+      the logged-in user. Set cors.origin to an explicit allow-list, not \"*\"."
+    absentCallDetail: No socket.io Server construction in this scope; this rule does
+      not apply here.
+    absentArgDetail: The socket.io Server does not set cors.origin; verify the
+      resolved origin is a trusted allow-list, not "*".
+test:
+  kind: none

@@ -1,0 +1,5 @@
+id: helmet-hsts-disabled
+name: "Helmet Hsts Disabled"
+version: 0.1.0
+author: brainblast-fleet
+description: "helmet({ hsts: false }) — Strict-Transport-Security is off, allowing HTTPS-downgrade attacks"

@@ -1,0 +1,5 @@
+id: express-fileupload-safe-file-names-false
+name: "Express Fileupload Safe File Names False"
+version: 0.1.0
+author: brainblast-fleet
+description: "express-fileupload with safeFileNames: false — uploaded filenames keep path/special characters (traversal)"

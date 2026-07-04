@@ -1,0 +1,44 @@
+{
+  "id": "iron-session-cookie-secure-false",
+  "severity": "high",
+  "title": "iron-session with cookieOptions.secure: false — the encrypted session cookie is sent over plain HTTP",
+  "class": "auth-bypass",
+  "component": {
+    "name": "iron-session",
+    "type": "Auth",
+    "version": ">=8.0.0",
+    "sourceUrl": "https://github.com/vvo/iron-session#session-options"
+  },
+  "detect": {
+    "modules": ["iron-session"],
+    "nameRegex": "session|iron|auth|cookie|getSession",
+    "triggerCalls": ["getIronSession"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "getIronSession",
+        "argIndex": 2,
+        "propName": "cookieOptions.secure",
+        "forbiddenValue": false,
+        "passDetail": "iron-session sets cookieOptions.secure to true — the encrypted session cookie is only ever transmitted over HTTPS.",
+        "failDetail": "getIronSession is configured with cookieOptions: { secure: false }, so the sealed session cookie is sent over plain HTTP. On any non-TLS hop an attacker can capture the sealed cookie and replay it to impersonate the user until it expires. Set cookieOptions.secure: true in production.",
+        "absentCallDetail": "No getIronSession call in this scope; this rule does not apply here.",
+        "absentArgDetail": "getIronSession does not set cookieOptions.secure; iron-session defaults secure to true in production — verify it is not overridden to false."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "session.ts",
+    "vulnerable": "import { getIronSession } from \"iron-session\";\nimport type { IncomingMessage, ServerResponse } from \"node:http\";\n\nexport function loadSession(req: IncomingMessage, res: ServerResponse, password: string) {\n  // VULNERABLE: cookieOptions.secure: false sends the sealed session cookie over plain HTTP.\n  return getIronSession(req, res, { password, cookieName: \"sid\", cookieOptions: { secure: false } });\n}\n",
+    "fixed": "import { getIronSession } from \"iron-session\";\nimport type { IncomingMessage, ServerResponse } from \"node:http\";\n\nexport function loadSession(req: IncomingMessage, res: ServerResponse, password: string) {\n  // FIXED: cookieOptions.secure: true — the session cookie is only sent over HTTPS.\n  return getIronSession(req, res, { password, cookieName: \"sid\", cookieOptions: { secure: true } });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/vvo/iron-session#session-options",
+    "note": "cookieOptions: { secure: false } is copied from local-dev config (no HTTPS) into production, sending the sealed session cookie in the clear where it can be sniffed and replayed."
+  }
+}

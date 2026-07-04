@@ -1,0 +1,35 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: cookie-serialize-httponly-false
+severity: high
+title: "cookie.serialize with httpOnly: false — the auth cookie is readable from
+  JavaScript (XSS session theft)"
+component:
+  name: cookie
+  type: Auth
+  version: ">=0.5.0"
+  sourceUrl: https://github.com/jshttp/cookie#cookieserializename-value-options
+detect:
+  modules:
+    - cookie
+  nameRegex: cookie|serialize|session|auth|set|header
+  triggerCalls:
+    - serialize
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: serialize
+    argIndex: 2
+    propName: httpOnly
+    forbiddenValue: false
+    passDetail: "cookie.serialize sets httpOnly: true — the cookie is not exposed to
+      document.cookie, so client-side scripts cannot read the token."
+    failDetail: "cookie.serialize is called with httpOnly: false, so the Set-Cookie
+      it builds is readable by JavaScript via document.cookie. Any XSS on the
+      origin can exfiltrate the session/auth token and hijack the account. Set
+      httpOnly: true for authentication cookies."
+    absentCallDetail: No cookie.serialize call in this scope; this rule does not apply here.
+    absentArgDetail: "cookie.serialize does not set httpOnly; verify auth cookies
+      are serialized with httpOnly: true."
+test:
+  kind: none

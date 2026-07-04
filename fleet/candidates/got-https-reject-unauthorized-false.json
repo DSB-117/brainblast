@@ -1,0 +1,44 @@
+{
+  "id": "got-https-reject-unauthorized-false",
+  "severity": "high",
+  "title": "got() with https.rejectUnauthorized: false — the HTTP client skips TLS certificate validation (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "got",
+    "type": "Networking",
+    "version": ">=11.0.0",
+    "sourceUrl": "https://github.com/sindresorhus/got/blob/main/documentation/2-options.md#https"
+  },
+  "detect": {
+    "modules": ["got"],
+    "nameRegex": "got|fetch|client|request|http|api|call",
+    "triggerCalls": ["got"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "got",
+        "argIndex": 1,
+        "propName": "https.rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "got keeps certificate validation on (https.rejectUnauthorized is not false) — the server's TLS identity is verified.",
+        "failDetail": "got is called with https: { rejectUnauthorized: false }, disabling TLS certificate validation for the request. Any machine on the network path can present a forged certificate and man-in-the-middle the call — capturing credentials, tokens, and response data. Remove rejectUnauthorized: false; pass a trusted CA via https.certificateAuthority if a private CA is required.",
+        "absentCallDetail": "No got() call in this scope; this rule does not apply here.",
+        "absentArgDetail": "got() does not set https.rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "client.ts",
+    "vulnerable": "import got from \"got\";\n\nexport function fetchSecret(url: string) {\n  // VULNERABLE: https.rejectUnauthorized: false disables TLS validation — the call can be MITM'd.\n  return got(url, { https: { rejectUnauthorized: false }, timeout: { request: 5000 } });\n}\n",
+    "fixed": "import got from \"got\";\n\nexport function fetchSecret(url: string) {\n  // FIXED: certificate validation enforced.\n  return got(url, { https: { rejectUnauthorized: true }, timeout: { request: 5000 } });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/sindresorhus/got/blob/main/documentation/2-options.md#https",
+    "note": "https: { rejectUnauthorized: false } is pasted to get past a self-signed cert during integration and left in the shared client, silently disabling MITM protection for every request it makes."
+  }
+}

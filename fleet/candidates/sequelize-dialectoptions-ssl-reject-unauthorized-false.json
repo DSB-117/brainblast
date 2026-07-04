@@ -1,0 +1,44 @@
+{
+  "id": "sequelize-dialectoptions-ssl-reject-unauthorized-false",
+  "severity": "critical",
+  "title": "new Sequelize with dialectOptions.ssl.rejectUnauthorized: false — the database TLS certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "sequelize",
+    "type": "Database",
+    "version": ">=6.0.0",
+    "sourceUrl": "https://sequelize.org/docs/v6/other-topics/dialect-specific-things/#postgresql"
+  },
+  "detect": {
+    "modules": ["sequelize"],
+    "nameRegex": "sequelize|db|database|orm|connect|conn",
+    "triggerCalls": ["Sequelize"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "Sequelize",
+        "argIndex": 1,
+        "propName": "dialectOptions.ssl.rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "Sequelize validates the database server certificate (dialectOptions.ssl.rejectUnauthorized is not false) — the connection's TLS identity is verified.",
+        "failDetail": "new Sequelize is created with dialectOptions: { ssl: { rejectUnauthorized: false } }, disabling validation of the database server's TLS certificate for every connection in the pool. A network attacker can present a forged certificate and man-in-the-middle the database — exposing every query, credential, and row. Remove rejectUnauthorized: false; provide the managed provider's CA via dialectOptions.ssl.ca.",
+        "absentCallDetail": "No Sequelize construction in this scope; this rule does not apply here.",
+        "absentArgDetail": "Sequelize does not set dialectOptions.ssl.rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "sequelize.ts",
+    "vulnerable": "import { Sequelize } from \"sequelize\";\n\nexport function makeSequelize(url: string) {\n  // VULNERABLE: dialectOptions.ssl.rejectUnauthorized: false — the DB certificate is not validated.\n  return new Sequelize(url, { dialect: \"postgres\", dialectOptions: { ssl: { rejectUnauthorized: false } } });\n}\n",
+    "fixed": "import { Sequelize } from \"sequelize\";\n\nexport function makeSequelize(url: string, ca: string) {\n  // FIXED: certificate validation enforced; trust the provider's CA explicitly.\n  return new Sequelize(url, { dialect: \"postgres\", dialectOptions: { ssl: { rejectUnauthorized: true, ca } } });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://sequelize.org/docs/v6/other-topics/dialect-specific-things/#postgresql",
+    "note": "dialectOptions: { ssl: { rejectUnauthorized: false } } is the most-copied Sequelize snippet for connecting to Heroku/RDS Postgres without the CA. It works, so it ships — silently disabling MITM protection on the database."
+  }
+}

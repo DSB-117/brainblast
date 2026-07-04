@@ -1,0 +1,5 @@
+id: nats-tls-reject-unauthorized-false
+name: "Nats Tls Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "NATS connect with tls.rejectUnauthorized: false — the NATS server certificate is not validated (MITM)"

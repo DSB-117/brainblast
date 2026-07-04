@@ -1,0 +1,44 @@
+{
+  "id": "tedious-trust-server-certificate-true",
+  "severity": "critical",
+  "title": "new tedious Connection with options.trustServerCertificate: true — the SQL Server TLS certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "tedious",
+    "type": "Database",
+    "version": ">=11.0.0",
+    "sourceUrl": "https://tediousjs.github.io/tedious/api-connection.html"
+  },
+  "detect": {
+    "modules": ["tedious"],
+    "nameRegex": "connection|tedious|sql|db|database|connect|mssql",
+    "triggerCalls": ["Connection"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "Connection",
+        "argIndex": 0,
+        "propName": "options.trustServerCertificate",
+        "forbiddenValue": true,
+        "passDetail": "The tedious Connection validates the server certificate (options.trustServerCertificate is not true) — the SQL Server connection's TLS identity is verified.",
+        "failDetail": "new tedious Connection is created with options: { trustServerCertificate: true }, which makes the driver trust ANY certificate the SQL Server presents. A network attacker can present a forged certificate and man-in-the-middle the connection — exposing every query, credential, and record. Remove trustServerCertificate: true; install and trust the server's real CA instead.",
+        "absentCallDetail": "No tedious Connection construction in this scope; this rule does not apply here.",
+        "absentArgDetail": "The tedious Connection does not set options.trustServerCertificate; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "conn.ts",
+    "vulnerable": "import { Connection } from \"tedious\";\n\nexport function makeConnection(server: string, userName: string, password: string) {\n  // VULNERABLE: options.trustServerCertificate: true — the SQL Server certificate is not validated.\n  return new Connection({\n    server,\n    authentication: { type: \"default\", options: { userName, password } },\n    options: { encrypt: true, trustServerCertificate: true },\n  });\n}\n",
+    "fixed": "import { Connection } from \"tedious\";\n\nexport function makeConnection(server: string, userName: string, password: string) {\n  // FIXED: certificate validation enforced on the SQL Server connection.\n  return new Connection({\n    server,\n    authentication: { type: \"default\", options: { userName, password } },\n    options: { encrypt: true, trustServerCertificate: false },\n  });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://tediousjs.github.io/tedious/api-connection.html",
+    "note": "tedious is the driver under mssql. trustServerCertificate: true is pasted from a 'fix the self-signed cert error' answer and ships, disabling MITM protection on the SQL Server connection."
+  }
+}

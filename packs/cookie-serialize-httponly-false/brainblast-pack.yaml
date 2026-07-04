@@ -1,0 +1,5 @@
+id: cookie-serialize-httponly-false
+name: "Cookie Serialize Httponly False"
+version: 0.1.0
+author: brainblast-fleet
+description: "cookie.serialize with httpOnly: false — the auth cookie is readable from JavaScript (XSS session theft)"

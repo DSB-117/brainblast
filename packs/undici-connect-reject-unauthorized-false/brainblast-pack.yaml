@@ -1,0 +1,5 @@
+id: undici-connect-reject-unauthorized-false
+name: "Undici Connect Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "new undici Agent with connect.rejectUnauthorized: false — the HTTP client skips TLS certificate validation (MITM)"
