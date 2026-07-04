@@ -1,0 +1,41 @@
+{
+  "id": "connection-positional-processed-commitment",
+  "severity": "high",
+  "title": "new Connection(url, \"processed\") sets the weakest commitment as the app-wide default — every read/confirm sees reversible state",
+  "class": "unconfirmed-state",
+  "component": {
+    "name": "@solana/web3.js",
+    "type": "Blockchain",
+    "version": ">=1.30.0",
+    "sourceUrl": "https://solana-labs.github.io/solana-web3.js/classes/Connection.html#constructor"
+  },
+  "detect": {
+    "modules": ["@solana/web3.js"],
+    "nameRegex": "conn|connection|rpc|client|make|provider",
+    "triggerCalls": ["Connection"]
+  },
+  "binding": {
+    "check": {
+      "kind": "positional-arg-forbidden-literal",
+      "params": {
+        "call": "Connection",
+        "argIndex": 1,
+        "forbiddenValue": "processed",
+        "passDetail": "The Connection is created with a durable default commitment (not \"processed\") — reads and confirmations see state that cannot be trivially rolled back.",
+        "failDetail": "new Connection is created with \"processed\" as its second positional argument, making the weakest, still-forkable commitment the DEFAULT for every RPC call on this connection. Balances, account reads, and confirmations all resolve against reversible state that can disappear on a fork switch — a phantom-state / unconfirmed-read footgun. Pass \"confirmed\" or \"finalized\".",
+        "absentCallDetail": "No Connection constructor in this scope; this rule does not apply here.",
+        "absentArgDetail": "new Connection does not pass a commitment positional argument; the client default applies."
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "conn.ts",
+    "vulnerable": "import { Connection } from \"@solana/web3.js\";\n\nexport function makeConnection(url: string) {\n  // VULNERABLE: \"processed\" is the weakest commitment, set as the app-wide default.\n  return new Connection(url, \"processed\");\n}\n",
+    "fixed": "import { Connection } from \"@solana/web3.js\";\n\nexport function makeConnection(url: string) {\n  // FIXED: a durable default commitment for every RPC call on this connection.\n  return new Connection(url, \"confirmed\");\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://solana-labs.github.io/solana-web3.js/classes/Connection.html#constructor",
+    "note": "Setting commitment positionally on the Connection constructor is idiomatic and common, and the object-arg checker can't see it — a whole seam the fleet had to skip. This proposal adds the positional-argument shape."
+  }
+}

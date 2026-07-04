@@ -1,4 +1,5 @@
 import { checker as arrayPropertyContainsForbiddenLiteral } from "./arrayPropertyContainsForbiddenLiteral.ts";
+import { checker as positionalArgForbiddenLiteral } from "./positionalArgForbiddenLiteral.ts";
 import { positionalArgIdentity } from "./positionalArgIdentity.ts";
 import { requiredCallWithOptions } from "./requiredCallWithOptions.ts";
 import { feeAllocationShape } from "./feeAllocationShape.ts";
@@ -50,6 +51,10 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker | CstChecke
   // v0.9.1 — bound to the Tier-2 differential oracle; static abstains (cant_tell).
   "differential-io": differentialIo,
   "array-property-contains-forbidden-literal": arrayPropertyContainsForbiddenLiteral as Checker,
+  // Positional-argument analog of object-arg-property-forbidden-literal: a call or
+  // constructor whose POSITIONAL arg is a forbidden literal — new Connection(url,
+  // "processed"), createHash("md5"), etc. Handles CallExpression and NewExpression.
+  "positional-arg-forbidden-literal": positionalArgForbiddenLiteral as Checker,
   // Multi-language static AST (tree-sitter). Go: struct/composite-literal field set
   // to a forbidden literal (e.g. tls.Config{InsecureSkipVerify: true}). Solidity:
   // a forbidden object.property member access (e.g. tx.origin auth).
