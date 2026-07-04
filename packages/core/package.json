@@ -84,8 +84,10 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",
-    "tree-sitter": "^0.22.4",
+    "tree-sitter": "^0.25.0",
+    "tree-sitter-go": "^0.25.0",
     "tree-sitter-rust": "^0.24.0",
+    "tree-sitter-solidity": "^1.2.13",
     "ts-morph": "^23",
     "yaml": "^2"
   },

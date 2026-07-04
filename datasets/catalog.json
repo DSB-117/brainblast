@@ -1,6 +1,7 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
+<<<<<<< Updated upstream
   "generatedAt": "2026-07-03T23:31:11.308Z",
   "counts": {
     "total": 22,
@@ -16,6 +17,23 @@
   "classDistribution": {
     "auth-bypass": 4,
     "unconfirmed-state": 5,
+=======
+  "generatedAt": "2026-07-04T02:21:20.977Z",
+  "counts": {
+    "total": 26,
+    "proven": 26,
+    "sdks": 19,
+    "classes": 8
+  },
+  "severityDistribution": {
+    "high": 22,
+    "critical": 3,
+    "medium": 1
+  },
+  "classDistribution": {
+    "auth-bypass": 6,
+    "unconfirmed-state": 7,
+>>>>>>> Stashed changes
     "missing-slippage-guard": 3,
     "missing-verification": 4,
     "other": 2,
@@ -25,6 +43,7 @@
   },
   "sdkDistribution": {
     "cors": 1,
+    "crypto/tls": 1,
     "node:https": 1,
     "Jito (block engine / bundles)": 1,
     "Jupiter Aggregator API": 1,
@@ -38,21 +57,31 @@
     "@raydium-io/raydium-sdk-v2": 1,
     "@solana/web3.js": 4,
     "Solana lamports arithmetic": 1,
+    "solidity": 1,
     "SPL Token": 1,
     "better-auth": 2,
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
+<<<<<<< Updated upstream
     "synthetic-owned": 22
+=======
+    "synthetic-owned": 26
+>>>>>>> Stashed changes
   },
   "quality": {
-    "mean": 48,
+    "mean": 49,
     "min": 30,
     "max": 60
   },
   "freshness": {
+<<<<<<< Updated upstream
     "oldest": "2026-07-03T23:31:09.486Z",
     "newest": "2026-07-03T23:31:09.486Z"
+=======
+    "oldest": "2026-07-04T02:21:19.295Z",
+    "newest": "2026-07-04T02:21:19.295Z"
+>>>>>>> Stashed changes
   },
   "tiers": [
     {
@@ -96,7 +125,11 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
+<<<<<<< Updated upstream
       "capturedAt": "2026-07-03T23:31:09.486Z",
+=======
+      "capturedAt": "2026-07-04T02:21:19.295Z",
+>>>>>>> Stashed changes
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -104,7 +137,34 @@
         "red": true,
         "green": true,
         "method": "static-checker",
+<<<<<<< Updated upstream
         "verifiedAt": "2026-07-03T23:31:09.486Z"
+=======
+        "verifiedAt": "2026-07-04T02:21:19.295Z"
+      }
+    },
+    {
+      "trapId": "go-tls-insecureskipverify",
+      "title": "tls.Config{InsecureSkipVerify: true} disables TLS certificate verification (MITM)",
+      "sdk": {
+        "name": "crypto/tls",
+        "version": ">=1.0.0"
+      },
+      "severity": "critical",
+      "class": "auth-bypass",
+      "score": 60,
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "capturedAt": "2026-07-04T02:21:19.295Z",
+      "sourceUrls": [
+        "https://pkg.go.dev/crypto/tls#Config"
+      ],
+      "receipt": {
+        "red": true,
+        "green": true,
+        "method": "static-checker",
+        "verifiedAt": "2026-07-04T02:21:19.295Z"
+>>>>>>> Stashed changes
       }
     },
     {
@@ -119,7 +179,11 @@
       "score": 60,
       "corroborationCount": 0,
       "license": "synthetic-owned",
+<<<<<<< Updated upstream
       "capturedAt": "2026-07-03T23:31:09.486Z",
+=======
+      "capturedAt": "2026-07-04T02:21:19.295Z",
+>>>>>>> Stashed changes
       "sourceUrls": [
         "https://nodejs.org/api/https.html#httpsrequestoptions-callback"
       ],
@@ -127,7 +191,11 @@
         "red": true,
         "green": true,
         "method": "static-checker",
+<<<<<<< Updated upstream
         "verifiedAt": "2026-07-03T23:31:09.486Z"
+=======
+        "verifiedAt": "2026-07-04T02:21:19.295Z"
+>>>>>>> Stashed changes
       }
     },
     {
@@ -142,7 +210,11 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
+<<<<<<< Updated upstream
       "capturedAt": "2026-07-03T23:31:09.486Z",
+=======
+      "capturedAt": "2026-07-04T02:21:19.295Z",
+>>>>>>> Stashed changes
       "sourceUrls": [
         "https://docs.jito.wtf/lowlatencytxnsend/"
       ],
@@ -150,7 +222,11 @@
         "red": true,
         "green": true,
         "method": "static-checker",
+<<<<<<< Updated upstream
         "verifiedAt": "2026-07-03T23:31:09.486Z"
+=======
+        "verifiedAt": "2026-07-04T02:21:19.295Z"
+>>>>>>> Stashed changes
       }
     },
     {
@@ -165,7 +241,11 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
+<<<<<<< Updated upstream
       "capturedAt": "2026-07-03T23:31:09.486Z",
+=======
+      "capturedAt": "2026-07-04T02:21:19.295Z",
+>>>>>>> Stashed changes
       "sourceUrls": [
         "https://station.jup.ag/docs/apis/swap-api"
       ],
@@ -173,6 +253,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
+<<<<<<< Updated upstream
         "verifiedAt": "2026-07-03T23:31:09.486Z"
       }
     },
@@ -197,6 +278,9 @@
         "green": true,
         "method": "static-checker",
         "verifiedAt": "2026-07-03T23:31:09.486Z"
+=======
+        "verifiedAt": "2026-07-04T02:21:19.295Z"
+>>>>>>> Stashed changes
       }
     }
   ]

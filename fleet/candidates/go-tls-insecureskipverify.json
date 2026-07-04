@@ -1,0 +1,47 @@
+{
+  "id": "go-tls-insecureskipverify",
+  "severity": "critical",
+  "title": "tls.Config{InsecureSkipVerify: true} disables TLS certificate verification (MITM)",
+  "class": "auth-bypass",
+  "component": {
+    "name": "crypto/tls",
+    "type": "Networking",
+    "version": ">=1.0.0",
+    "sourceUrl": "https://pkg.go.dev/crypto/tls#Config"
+  },
+  "detect": {
+    "modules": [
+      "crypto/tls"
+    ],
+    "nameRegex": "client|tls|transport|dial|new",
+    "triggerCalls": [
+      "tls.Config"
+    ],
+    "lang": "go"
+  },
+  "binding": {
+    "check": {
+      "kind": "cst-struct-field-forbidden-literal",
+      "params": {
+        "typeName": "tls.Config",
+        "field": "InsecureSkipVerify",
+        "forbiddenValue": true,
+        "passDetail": "tls.Config sets InsecureSkipVerify to a safe value — the server's certificate chain and host name are verified.",
+        "failDetail": "tls.Config sets InsecureSkipVerify: true, which turns OFF certificate and host-name verification. Any machine on the path can present a self-signed cert and silently MITM the connection. Remove it (default false); for a private CA set RootCAs instead.",
+        "absentDetail": "No tls.Config{ InsecureSkipVerify: ... } literal in this scope; the secure default (false) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "client.go",
+    "vulnerable": "package client\n\nimport \"crypto/tls\"\n\n// newClient builds the API client's TLS transport.\nfunc newClient() *tls.Config {\n\t// VULNERABLE: certificate verification OFF — any MITM cert is accepted.\n\treturn &tls.Config{InsecureSkipVerify: true}\n}\n",
+    "fixed": "package client\n\nimport \"crypto/tls\"\n\n// newClient builds the API client's TLS transport.\nfunc newClient() *tls.Config {\n\t// FIXED: certificate verification enforced (the secure default, explicit here).\n\treturn &tls.Config{InsecureSkipVerify: false}\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://pkg.go.dev/crypto/tls#Config",
+    "note": "InsecureSkipVerify: true is the Go 'make the TLS error go away' fix that ships to prod and silently disables MITM protection — the Go twin of node's rejectUnauthorized: false."
+  }
+}

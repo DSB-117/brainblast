@@ -1,5 +1,6 @@
 import { findCandidates } from "./finder.ts";
 import { findRustCandidates } from "./rustFinder.ts";
+import { findCstCandidates } from "./treeSitterFinder.ts";
 import { findConfigCandidates } from "./configFinder.ts";
 import { runChecker } from "./checkers/index.ts";
 import { runFixer } from "./fixers/index.ts";
@@ -45,6 +46,28 @@ export function auditWithRule(targetDir: string, rule: Rule, changedRanges?: Cha
           title: rule.title,
           file: c.filePath,
           line: 1, // tree-sitter line numbers available via fnBodyNode.startPosition.row + 1
+          exportName: c.fnName,
+          ...outcome,
+        };
+      });
+  }
+
+  if (rule.detect.lang === "go" || rule.detect.lang === "solidity") {
+    return findCstCandidates(targetDir, rule)
+      .filter((c) => {
+        if (!changedRanges) return true;
+        const start = (c.bodyNode?.startPosition?.row ?? 0) + 1;
+        const end = (c.bodyNode?.endPosition?.row ?? start - 1) + 1;
+        return rangeChanged(changedRanges, c.filePath, start, end);
+      })
+      .map((c) => {
+        const outcome = runChecker(rule.check.kind, c as any, rule.check.params);
+        return {
+          ruleId: rule.id,
+          severity: rule.severity,
+          title: rule.title,
+          file: c.filePath,
+          line: (c.bodyNode?.startPosition?.row ?? 0) + 1,
           exportName: c.fnName,
           ...outcome,
         };

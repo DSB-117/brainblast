@@ -1,8 +1,14 @@
 # brainblast-verified-traps — catalog
 
+<<<<<<< Updated upstream
 _Generated 2026-07-03T23:31:11.308Z from 1 lot(s): seed-vti.jsonl._
 
 **22 verified trap instances** across **17 SDKs** and **8 trap classes**. Quality score mean 48/100 (range 30–60). Freshness: 2026-07-03T23:31:09.486Z → 2026-07-03T23:31:09.486Z.
+=======
+_Generated 2026-07-04T02:21:20.977Z from 1 lot(s): seed-vti.jsonl._
+
+**26 verified trap instances** across **19 SDKs** and **8 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T02:21:19.295Z → 2026-07-04T02:21:19.295Z.
+>>>>>>> Stashed changes
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,8 +26,13 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
+<<<<<<< Updated upstream
 | unconfirmed-state | 5 |
 | auth-bypass | 4 |
+=======
+| unconfirmed-state | 7 |
+| auth-bypass | 6 |
+>>>>>>> Stashed changes
 | missing-verification | 4 |
 | missing-slippage-guard | 3 |
 | other | 2 |
@@ -37,6 +48,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | jsonwebtoken | 2 |
 | better-auth | 2 |
 | cors | 1 |
+| crypto/tls | 1 |
 | node:https | 1 |
 | Jito (block engine / bundles) | 1 |
 | Jupiter Aggregator API | 1 |
@@ -48,6 +60,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | python | 1 |
 | @raydium-io/raydium-sdk-v2 | 1 |
 | Solana lamports arithmetic | 1 |
+| solidity | 1 |
 | SPL Token | 1 |
 | Stripe Node SDK | 1 |
 
@@ -58,10 +71,10 @@ The open sample tier shows metadata + the RED→GREEN receipt (proof we have it)
 | Trap | SDK | Class | Severity | Score | Corroboration | RED→GREEN |
 |---|---|---|---|---|---|---|
 | cors-wildcard-origin | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
+| go-tls-insecureskipverify | crypto/tls | auth-bypass | critical | 60 | 0 | ✓/✓ |
 | https-reject-unauthorized-disabled | node:https | auth-bypass | critical | 60 | 0 | ✓/✓ |
 | jito-bundle-zero-tip | Jito (block engine / bundles) | unconfirmed-state | high | 48 | 0 | ✓/✓ |
 | jupiter-quote-zero-slippage | Jupiter Aggregator API | missing-slippage-guard | high | 48 | 0 | ✓/✓ |
-| jwt-expressjwt-ignore-notbefore | express-jwt | missing-verification | high | 48 | 0 | ✓/✓ |
 
 ---
 

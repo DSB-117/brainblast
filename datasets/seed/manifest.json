@@ -1,6 +1,7 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
+<<<<<<< Updated upstream
   "generatedAt": "2026-07-03T23:31:09.486Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
@@ -12,6 +13,19 @@
   "classDistribution": {
     "auth-bypass": 4,
     "unconfirmed-state": 5,
+=======
+  "generatedAt": "2026-07-04T02:21:19.295Z",
+  "license": "synthetic-owned",
+  "consentScope": "owned",
+  "counts": {
+    "records": 26,
+    "sdks": 19,
+    "packsScanned": 26
+  },
+  "classDistribution": {
+    "auth-bypass": 6,
+    "unconfirmed-state": 7,
+>>>>>>> Stashed changes
     "missing-slippage-guard": 3,
     "missing-verification": 4,
     "other": 2,
@@ -23,6 +37,13 @@
     {
       "pack": "cors-wildcard-origin",
       "rule": "cors-wildcard-origin",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "go-tls-insecureskipverify",
+      "rule": "go-tls-insecureskipverify",
       "red": true,
       "green": true,
       "emitted": true
@@ -142,6 +163,13 @@
     {
       "pack": "solana-sendtx-unconfirmed",
       "rule": "solana-sendtx-unconfirmed",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "solidity-txorigin-auth",
+      "rule": "solidity-txorigin-auth",
       "red": true,
       "green": true,
       "emitted": true
