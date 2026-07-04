@@ -1,0 +1,5 @@
+id: playwright-ignore-https-errors-true
+name: "Playwright Ignore Https Errors True"
+version: 0.1.0
+author: brainblast-fleet
+description: "playwright newContext with ignoreHTTPSErrors: true — the browser context accepts any TLS certificate (MITM)"

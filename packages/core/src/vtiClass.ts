@@ -56,6 +56,8 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "jwt-sign-allow-insecure-key-sizes-true": "auth-bypass",
   "res-cookie-httponly-false": "auth-bypass",
   "express-jwt-credentials-not-required": "auth-bypass",
+  "puppeteer-ignore-https-errors-true": "missing-verification",
+  "playwright-ignore-https-errors-true": "missing-verification",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

@@ -1,23 +1,23 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-04T07:19:42.266Z",
+  "generatedAt": "2026-07-04T07:21:12.687Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 26
+      "count": 28
     }
   ],
   "counts": {
-    "vtis": 26,
-    "unique": 26,
+    "vtis": 28,
+    "unique": 28,
     "duplicates": 0,
-    "sdks": 21,
+    "sdks": 23,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 20,
+    "high": 22,
     "critical": 5,
     "medium": 1
   },
@@ -27,7 +27,7 @@
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 2,
-    "missing-verification": 2,
+    "missing-verification": 4,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
     "other": 1
@@ -46,6 +46,8 @@
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "mongoose": 1,
+    "playwright": 1,
+    "puppeteer": 1,
     "Pyth Network price feeds": 1,
     "python": 1,
     "@raydium-io/raydium-sdk-v2": 1,
@@ -56,7 +58,7 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 26
+    "synthetic-owned": 28
   },
   "quality": {
     "mean": 50,
@@ -65,7 +67,7 @@
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 25,
+      "medium": 27,
       "low": 1
     }
   },
@@ -99,6 +101,8 @@
       },
       "missing-verification": {
         "mongoose": 1,
+        "playwright": 1,
+        "puppeteer": 1,
         "SPL Token": 1
       },
       "unchecked-staleness": {
@@ -167,6 +171,14 @@
       {
         "class": "missing-verification",
         "sdk": "mongoose"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "playwright"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "puppeteer"
       },
       {
         "class": "missing-verification",
@@ -340,6 +352,24 @@
       "corroborationCount": 0,
       "license": "synthetic-owned",
       "score": 60
+    },
+    {
+      "trapId": "playwright-ignore-https-errors-true",
+      "sdk": "playwright",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "puppeteer-ignore-https-errors-true",
+      "sdk": "puppeteer",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
     },
     {
       "trapId": "pyth-price-unchecked-staleness",

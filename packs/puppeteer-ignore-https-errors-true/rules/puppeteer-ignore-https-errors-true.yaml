@@ -1,0 +1,38 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: puppeteer-ignore-https-errors-true
+severity: high
+title: "puppeteer.launch with ignoreHTTPSErrors: true — the headless browser
+  accepts any TLS certificate (MITM)"
+component:
+  name: puppeteer
+  type: Networking
+  version: ">=13.0.0"
+  sourceUrl: https://pptr.dev/api/puppeteer.launchoptions
+detect:
+  modules:
+    - puppeteer
+    - puppeteer-core
+  nameRegex: launch|browser|scrape|render|crawl|fetch|puppeteer
+  triggerCalls:
+    - launch
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: launch
+    argIndex: 0
+    propName: ignoreHTTPSErrors
+    forbiddenValue: true
+    passDetail: puppeteer.launch validates TLS certificates (ignoreHTTPSErrors is
+      not true) — the headless browser rejects forged or invalid certificates.
+    failDetail: "puppeteer.launch is called with ignoreHTTPSErrors: true, so the
+      headless browser accepts ANY TLS certificate — self-signed, expired, or
+      attacker-supplied. When this browser fetches authenticated pages or
+      scrapes data server-side, anyone on the network path can man-in-the-middle
+      it and feed forged content or capture credentials. Remove
+      ignoreHTTPSErrors: true; if a private CA is needed, trust it explicitly."
+    absentCallDetail: No puppeteer launch() call in this scope; this rule does not apply here.
+    absentArgDetail: puppeteer.launch does not set ignoreHTTPSErrors; the secure
+      default (validate) applies.
+test:
+  kind: none

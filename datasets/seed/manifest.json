@@ -1,13 +1,13 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:19:39.875Z",
+  "generatedAt": "2026-07-04T07:21:10.231Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 26,
-    "sdks": 21,
-    "packsScanned": 26
+    "records": 28,
+    "sdks": 23,
+    "packsScanned": 28
   },
   "classDistribution": {
     "auth-bypass": 12,
@@ -15,7 +15,7 @@
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 2,
-    "missing-verification": 2,
+    "missing-verification": 4,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
     "other": 1
@@ -136,6 +136,20 @@
     {
       "pack": "mongoose-tls-allow-invalid-certificates",
       "rule": "mongoose-tls-allow-invalid-certificates",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "playwright-ignore-https-errors-true",
+      "rule": "playwright-ignore-https-errors-true",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "puppeteer-ignore-https-errors-true",
+      "rule": "puppeteer-ignore-https-errors-true",
       "red": true,
       "green": true,
       "emitted": true

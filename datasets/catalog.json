@@ -1,15 +1,15 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-04T07:19:42.279Z",
+  "generatedAt": "2026-07-04T07:21:12.697Z",
   "counts": {
-    "total": 26,
-    "proven": 26,
-    "sdks": 21,
+    "total": 28,
+    "proven": 28,
+    "sdks": 23,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 20,
+    "high": 22,
     "critical": 5,
     "medium": 1
   },
@@ -19,7 +19,7 @@
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 2,
-    "missing-verification": 2,
+    "missing-verification": 4,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
     "other": 1
@@ -38,6 +38,8 @@
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "mongoose": 1,
+    "playwright": 1,
+    "puppeteer": 1,
     "Pyth Network price feeds": 1,
     "python": 1,
     "@raydium-io/raydium-sdk-v2": 1,
@@ -48,7 +50,7 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 26
+    "synthetic-owned": 28
   },
   "quality": {
     "mean": 50,
@@ -56,8 +58,8 @@
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-07-04T07:19:39.875Z",
-    "newest": "2026-07-04T07:19:39.875Z"
+    "oldest": "2026-07-04T07:21:10.231Z",
+    "newest": "2026-07-04T07:21:10.231Z"
   },
   "tiers": [
     {
@@ -101,7 +103,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:19:39.875Z",
+      "capturedAt": "2026-07-04T07:21:10.231Z",
       "sourceUrls": [
         "https://github.com/expressjs/cookie-session#cookie-options"
       ],
@@ -109,7 +111,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:19:39.875Z"
+        "verifiedAt": "2026-07-04T07:21:10.231Z"
       }
     },
     {
@@ -124,7 +126,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:19:39.875Z",
+      "capturedAt": "2026-07-04T07:21:10.231Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -132,7 +134,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:19:39.875Z"
+        "verifiedAt": "2026-07-04T07:21:10.231Z"
       }
     },
     {
@@ -147,7 +149,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:19:39.875Z",
+      "capturedAt": "2026-07-04T07:21:10.231Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -155,7 +157,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:19:39.875Z"
+        "verifiedAt": "2026-07-04T07:21:10.231Z"
       }
     },
     {
@@ -170,7 +172,7 @@
       "score": 60,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:19:39.875Z",
+      "capturedAt": "2026-07-04T07:21:10.231Z",
       "sourceUrls": [
         "https://github.com/auth0/express-jwt#usage"
       ],
@@ -178,7 +180,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:19:39.875Z"
+        "verifiedAt": "2026-07-04T07:21:10.231Z"
       }
     },
     {
@@ -193,7 +195,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:19:39.875Z",
+      "capturedAt": "2026-07-04T07:21:10.231Z",
       "sourceUrls": [
         "https://www.npmjs.com/package/express-session#saveuninitialized"
       ],
@@ -201,7 +203,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:19:39.875Z"
+        "verifiedAt": "2026-07-04T07:21:10.231Z"
       }
     }
   ]

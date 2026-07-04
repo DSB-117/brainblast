@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T07:19:42.279Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:21:12.697Z from 1 lot(s): seed-vti.jsonl._
 
-**26 verified trap instances** across **21 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 30–60). Freshness: 2026-07-04T07:19:39.875Z → 2026-07-04T07:19:39.875Z.
+**28 verified trap instances** across **23 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 30–60). Freshness: 2026-07-04T07:21:10.231Z → 2026-07-04T07:21:10.231Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -21,10 +21,10 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | Class | Count |
 |---|---|
 | auth-bypass | 12 |
+| missing-verification | 4 |
 | unconfirmed-state | 3 |
 | missing-slippage-guard | 3 |
 | silent-zero-revenue | 2 |
-| missing-verification | 2 |
 | immutable-after-deploy | 1 |
 | unchecked-staleness | 1 |
 | wrong-constant | 1 |
@@ -48,6 +48,8 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | @metaplex-foundation/js | 1 |
 | @meteora-ag/dlmm | 1 |
 | mongoose | 1 |
+| playwright | 1 |
+| puppeteer | 1 |
 | Pyth Network price feeds | 1 |
 | python | 1 |
 | @raydium-io/raydium-sdk-v2 | 1 |
