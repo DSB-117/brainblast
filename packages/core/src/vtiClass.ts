@@ -72,6 +72,8 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "pg-pool-ssl-reject-unauthorized-false": "missing-verification",
   "nodemailer-tls-reject-unauthorized-false": "missing-verification",
   "mysql2-ssl-reject-unauthorized-false": "missing-verification",
+  "ioredis-tls-reject-unauthorized-false": "missing-verification",
+  "kafkajs-ssl-reject-unauthorized-false": "missing-verification",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

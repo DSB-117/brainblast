@@ -1,21 +1,21 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:39:14.720Z",
+  "generatedAt": "2026-07-04T07:40:55.508Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 42,
-    "sdks": 33,
-    "packsScanned": 42
+    "records": 44,
+    "sdks": 35,
+    "packsScanned": 44
   },
   "classDistribution": {
     "auth-bypass": 21,
+    "missing-verification": 10,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
-    "missing-verification": 8,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
     "other": 1
@@ -113,6 +113,13 @@
       "emitted": true
     },
     {
+      "pack": "ioredis-tls-reject-unauthorized-false",
+      "rule": "ioredis-tls-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "jito-bundle-zero-tip",
       "rule": "jito-bundle-zero-tip",
       "red": true,
@@ -157,6 +164,13 @@
     {
       "pack": "jwt-verify-ignore-expiration",
       "rule": "jwt-verify-ignore-expiration",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "kafkajs-ssl-reject-unauthorized-false",
+      "rule": "kafkajs-ssl-reject-unauthorized-false",
       "red": true,
       "green": true,
       "emitted": true

@@ -3,28 +3,28 @@
   "dataset": "brainblast-verified-traps",
   "version": "0.1.0",
   "generator": "pack-dataset@0.1.0",
-  "generatedAt": "2026-07-04T07:39:17.682Z",
+  "generatedAt": "2026-07-04T07:40:58.388Z",
   "recordSchema": "schema/vti.schema.json",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "full": 42,
+    "full": 44,
     "sample": 3,
-    "sdks": 33
+    "sdks": 35
   },
   "classDistribution": {
     "auth-bypass": 21,
+    "missing-verification": 10,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
-    "missing-verification": 8,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
     "other": 1
   },
   "severityDistribution": {
-    "high": 28,
+    "high": 30,
     "critical": 11,
     "medium": 3
   },
@@ -48,8 +48,10 @@
     "express-rate-limit",
     "express-session",
     "helmet",
+    "ioredis",
     "jose",
     "jsonwebtoken",
+    "kafkajs",
     "mongodb",
     "mongoose",
     "mysql2",

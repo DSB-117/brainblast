@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T07:39:17.704Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:40:58.420Z from 1 lot(s): seed-vti.jsonl._
 
-**42 verified trap instances** across **33 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 30–60). Freshness: 2026-07-04T07:39:14.720Z → 2026-07-04T07:39:14.720Z.
+**44 verified trap instances** across **35 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 30–60). Freshness: 2026-07-04T07:40:55.508Z → 2026-07-04T07:40:55.508Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -21,7 +21,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | Class | Count |
 |---|---|
 | auth-bypass | 21 |
-| missing-verification | 8 |
+| missing-verification | 10 |
 | unconfirmed-state | 3 |
 | missing-slippage-guard | 3 |
 | silent-zero-revenue | 3 |
@@ -44,9 +44,11 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | express-jwt | 1 |
 | express-rate-limit | 1 |
 | express-session | 1 |
+| ioredis | 1 |
 | Jito (block engine / bundles) | 1 |
 | jose | 1 |
 | Jupiter Aggregator API | 1 |
+| kafkajs | 1 |
 | @metaplex-foundation/mpl-token-metadata | 1 |
 | @metaplex-foundation/js | 1 |
 | @meteora-ag/dlmm | 1 |
