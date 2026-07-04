@@ -10,9 +10,13 @@
     "sourceUrl": "https://solana.com/docs/rpc/http/sendtransaction"
   },
   "detect": {
-    "modules": ["@solana/web3.js"],
+    "modules": [
+      "@solana/web3.js"
+    ],
     "nameRegex": "send|confirm|swap|transfer",
-    "triggerCalls": ["sendTransaction"]
+    "triggerCalls": [
+      "sendTransaction"
+    ]
   },
   "binding": {
     "check": {
@@ -28,7 +32,9 @@
         "absentArgDetail": "sendTransaction is called without an options object, so skipPreflight defaults to false (preflight runs). Safe."
       }
     },
-    "test": { "kind": "none" }
+    "test": {
+      "kind": "none"
+    }
   },
   "fixtures": {
     "filename": "send.ts",
@@ -37,6 +43,8 @@
   },
   "provenance": {
     "sourceUrl": "https://solana.com/docs/rpc/http/sendtransaction",
-    "note": "Agents copy skipPreflight: true from 'optimize transaction landing' guides to shave latency, not realizing it disables the client-side simulation that catches malformed/failing transactions. In the-hive this is the single send path used by every Privy embedded-wallet swap and transfer (hooks/privy/use-send-transaction.ts:97), so a failing tx is submitted with no error surfaced to the user."
+    "note": "Agents copy skipPreflight: true from 'optimize transaction landing' guides to shave latency, not realizing it disables the client-side simulation that catches malformed/failing transactions. In the-hive this is the single send path used by every Privy embedded-wallet swap and transfer (hooks/privy/use-send-transaction.ts:97), so a failing tx is submitted with no error surfaced to the user.",
+    "sourceRef": "ask-the-hive/the-hive@d35c326d1520ce88d6879a22e9c9aef3366375c9:hooks/privy/use-send-transaction.ts",
+    "evidence": "skipPreflight: true"
   }
 }

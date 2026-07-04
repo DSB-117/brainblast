@@ -330,6 +330,56 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   to close the flywheel. **Exit:** the loop self-sustains (revenue ≥ emissions
   value) and its accounting is public.
 
+- ◐ **R11 — Direct git-less ingest API. `[infra]` — core DONE, endpoint deploy remaining.**
+  Serves North Star #2 at scale. A PR per submission doesn't survive hundreds of
+  contributions a day; VTIs must be able to feed straight into the database. The
+  piece that makes a git-less write *safe* is built and tested in-repo:
+  **`ingestSubmission`** (`src/contrib/submit.ts`) runs the SAME gates as file/PR
+  intake on an untrusted single-shot Finding — shape validation + vetted-kind
+  check (fail-closed), Keyguard secret scan, RED→GREEN re-proof under the
+  **hardened "ingest" sandbox**, consent stamp — and returns a verdict + the
+  minted `contributor-grant-v1` VTI. A pluggable **`VtiStore`**
+  (`src/contrib/store.ts`; JSONL locally, swap for Supabase) is the DB seam
+  (idempotent, non-destructive, like the ledger). A runnable reference server
+  (`scripts/registry-server.ts`, `npm run registry:serve`) exposes
+  **`POST /api/vti`** (re-prove → insert, `201`/`200`-duplicate/`422`-rejected)
+  and **`GET /api/vti`** (open sample-tier teasers, no fixtures); a client
+  (`npm run submit:vti -- --candidate <file>`, `--dry-run` runs the identical
+  gate locally) mirrors the fleet-ledger pattern.
+  **The three "before you flip it on" items are now DONE (in-repo, tested):**
+  **(a) Supabase store** — `SupabaseVtiStore` (`src/contrib/store.ts`) talks
+  PostgREST over `fetch` (no SDK dep); `storeFromEnv` picks it up from
+  `SUPABASE_URL`+`SUPABASE_SERVICE_ROLE_KEY`, PK + `ignore-duplicates` gives
+  DB-level idempotency (migration in `datasets/contrib/README.md`).
+  **(b) Auth decision** — OPEN by default (the gates are the guard, per the
+  "prefer simple, open designs" bar), with a per-IP fixed-window
+  `RateLimiter` (default 30 POST/min) and an optional `BRAINBLAST_INGEST_TOKEN`
+  to close POST. **(c) Provenance / anti-fabrication** — `verifyProvenance`
+  (`src/contrib/provenance.ts`) requires each submission to cite a
+  **commit-pinned** source (`owner/repo@<sha>:path`; a mutable branch is
+  rejected) + a verbatim `evidence` snippet, then FETCHES that exact file at that
+  exact commit and confirms the vulnerable line is really there — the check that
+  replaces human PR review, since RED→GREEN can't tell an invented-but-reproducing
+  fixture from a real find. On by default at the server. **Verified:** 32 contrib
+  tests + a live round-trip that landed a real trap
+  (`solana-hive-sendtransaction-skippreflight`, provenance confirmed against a
+  real `ask-the-hive/the-hive` commit) and REJECTED a fabricated variant (evidence
+  not at the commit) with 422; 429 rate-limiting confirmed.
+  **Registry endpoint BUILT + PR'd (brainblast-registry#21).** Discovery: the
+  registry is a deliberately lean data layer (no `ts-morph`, vendors only pure
+  slices), so the deployed `POST /api/vti` runs the gates that fit the edge —
+  **shape + secret-scan + provenance** (all pure, un-fakeable server-side) — and
+  the heavy RED→GREEN reproduction stays where ts-morph already lives (client
+  `submit:vti` + an async brainblast-side re-proof that flips `proof_verified`;
+  paid tiers gate on that flag, matching the registry's existing cron pattern).
+  Added: `app/api/vti/route.ts` (open + per-IP hourly cap, idempotent upsert),
+  `lib/vtiIngest.ts`, vendored `lib/brainblast/{detect,provenance}.ts`, and the
+  `vtis` + `vti_ingest_audit` migration. `tsc` clean; gate verified against real
+  GitHub. **Remaining (repo-owner creds only):** apply
+  `supabase/migrations/0001_vtis.sql` to prod Supabase, then merge #21 → Vercel
+  auto-deploys (no new env). **Exit:** a contributor lands a provenance-verified
+  VTI in the live corpus via one POST, no fork/PR.
+
 **Legal gate (applies before R3 opens anything to the public):** open the
 **owned synthetic corpus** publicly first (zero consent obligation). Contributed
 lots stay behind `contributor-grant-v1` separation until the consent/revocation
