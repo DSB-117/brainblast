@@ -1,31 +1,17 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-<<<<<<< Updated upstream
-  "generatedAt": "2026-07-03T23:31:09.486Z",
+  "generatedAt": "2026-07-04T03:07:29.439Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 22,
-    "sdks": 17,
-    "packsScanned": 22
-  },
-  "classDistribution": {
-    "auth-bypass": 4,
-    "unconfirmed-state": 5,
-=======
-  "generatedAt": "2026-07-04T02:21:19.295Z",
-  "license": "synthetic-owned",
-  "consentScope": "owned",
-  "counts": {
-    "records": 26,
+    "records": 24,
     "sdks": 19,
-    "packsScanned": 26
+    "packsScanned": 24
   },
   "classDistribution": {
     "auth-bypass": 6,
-    "unconfirmed-state": 7,
->>>>>>> Stashed changes
+    "unconfirmed-state": 5,
     "missing-slippage-guard": 3,
     "missing-verification": 4,
     "other": 2,
