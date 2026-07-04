@@ -330,6 +330,30 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   to close the flywheel. **Exit:** the loop self-sustains (revenue ≥ emissions
   value) and its accounting is public.
 
+- ◐ **R11 — Direct git-less ingest API. `[infra]` — core DONE, endpoint deploy remaining.**
+  Serves North Star #2 at scale. A PR per submission doesn't survive hundreds of
+  contributions a day; VTIs must be able to feed straight into the database. The
+  piece that makes a git-less write *safe* is built and tested in-repo:
+  **`ingestSubmission`** (`src/contrib/submit.ts`) runs the SAME gates as file/PR
+  intake on an untrusted single-shot Finding — shape validation + vetted-kind
+  check (fail-closed), Keyguard secret scan, RED→GREEN re-proof under the
+  **hardened "ingest" sandbox**, consent stamp — and returns a verdict + the
+  minted `contributor-grant-v1` VTI. A pluggable **`VtiStore`**
+  (`src/contrib/store.ts`; JSONL locally, swap for Supabase) is the DB seam
+  (idempotent, non-destructive, like the ledger). A runnable reference server
+  (`scripts/registry-server.ts`, `npm run registry:serve`) exposes
+  **`POST /api/vti`** (re-prove → insert, `201`/`200`-duplicate/`422`-rejected)
+  and **`GET /api/vti`** (open sample-tier teasers, no fixtures); a client
+  (`npm run submit:vti -- --candidate <file>`, `--dry-run` runs the identical
+  gate locally) mirrors the fleet-ledger pattern. 13 tests + a live HTTP
+  round-trip green. **Remaining (infra, your call):** deploy the route on the
+  registry that holds the Supabase key (import `ingestSubmission`, back it with a
+  Supabase `VtiStore`), decide the POST auth posture (`BRAINBLAST_INGEST_TOKEN`
+  vs open like the ledger + per-IP rate limit), and — the one thing the proof
+  gate can't catch — a lightweight provenance/anti-fabrication check, since RED→
+  GREEN can't tell invented-but-reproducing code from a real repo find. **Exit:**
+  a contributor lands a proven VTI in the live corpus via one POST, no fork/PR.
+
 **Legal gate (applies before R3 opens anything to the public):** open the
 **owned synthetic corpus** publicly first (zero consent obligation). Contributed
 lots stay behind `contributor-grant-v1` separation until the consent/revocation
