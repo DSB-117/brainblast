@@ -1168,9 +1168,12 @@ describe("objectArgPropertyForbiddenLiteral (BN(0)-aware, v0.7.6)", () => {
     expect(objectArgPropertyForbiddenLiteral(c, P).result).toBe("pass");
   });
 
-  it("does NOT flag a nonzero BN or computed value (cant_tell, not fail)", () => {
+  it("does NOT flag a nonzero BN (pass — a determinable non-zero wrapper), and cant_tell for a non-wrapper computed value", () => {
+    // A recognized numeric wrapper with a non-zero value is a determinable SAFE
+    // value (this is what lets a `fixed` fixture reach GREEN); never a false fail.
     const c = candidate(`export function h(q: any) { return pool.swap({ minOutAmount: new BN(100) }); }`, "h");
-    expect(objectArgPropertyForbiddenLiteral(c, P).result).toBe("cant_tell");
+    expect(objectArgPropertyForbiddenLiteral(c, P).result).toBe("pass");
+    // A non-wrapper computed value (property access / arbitrary call) stays cant_tell.
     const c2 = candidate(`export function h(q: any) { return pool.swap({ minOutAmount: q.minOutAmount }); }`, "h");
     expect(objectArgPropertyForbiddenLiteral(c2, P).result).toBe("cant_tell");
   });
@@ -1178,5 +1181,18 @@ describe("objectArgPropertyForbiddenLiteral (BN(0)-aware, v0.7.6)", () => {
   it("CANT_TELL when the call is absent", () => {
     const c = candidate(`export function h() { return other({ minOutAmount: new BN(0) }); }`, "h");
     expect(objectArgPropertyForbiddenLiteral(c, P).result).toBe("cant_tell");
+  });
+
+  it("flags a zero-valued percentage/amount wrapper as the forbidden 0, and passes a non-zero one", () => {
+    // Real slippage/royalty footguns are written as constructor/factory calls, not
+    // bare 0s — the bare-literal check misses them. Recognize the well-known wrappers.
+    const zeroFraction = candidate(`export function h(q: any) { return pool.swap({ minOutAmount: Percentage.fromFraction(0, 100) }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(zeroFraction, P).result).toBe("fail");
+    const nonZeroFraction = candidate(`export function h(q: any) { return pool.swap({ minOutAmount: Percentage.fromFraction(500, 10000) }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(nonZeroFraction, P).result).toBe("pass");
+    const zeroAmount = candidate(`export function h(q: any) { return pool.swap({ minOutAmount: percentAmount(0) }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(zeroAmount, P).result).toBe("fail");
+    const zeroDecimal = candidate(`export function h(q: any) { return pool.swap({ minOutAmount: new Decimal(0) }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(zeroDecimal, P).result).toBe("fail");
   });
 });
