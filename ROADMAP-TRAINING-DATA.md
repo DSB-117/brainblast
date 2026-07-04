@@ -345,14 +345,30 @@ runs in parallel. Update the checkbox and the ledger above at the end of each.
   **`POST /api/vti`** (re-prove → insert, `201`/`200`-duplicate/`422`-rejected)
   and **`GET /api/vti`** (open sample-tier teasers, no fixtures); a client
   (`npm run submit:vti -- --candidate <file>`, `--dry-run` runs the identical
-  gate locally) mirrors the fleet-ledger pattern. 13 tests + a live HTTP
-  round-trip green. **Remaining (infra, your call):** deploy the route on the
-  registry that holds the Supabase key (import `ingestSubmission`, back it with a
-  Supabase `VtiStore`), decide the POST auth posture (`BRAINBLAST_INGEST_TOKEN`
-  vs open like the ledger + per-IP rate limit), and — the one thing the proof
-  gate can't catch — a lightweight provenance/anti-fabrication check, since RED→
-  GREEN can't tell invented-but-reproducing code from a real repo find. **Exit:**
-  a contributor lands a proven VTI in the live corpus via one POST, no fork/PR.
+  gate locally) mirrors the fleet-ledger pattern.
+  **The three "before you flip it on" items are now DONE (in-repo, tested):**
+  **(a) Supabase store** — `SupabaseVtiStore` (`src/contrib/store.ts`) talks
+  PostgREST over `fetch` (no SDK dep); `storeFromEnv` picks it up from
+  `SUPABASE_URL`+`SUPABASE_SERVICE_ROLE_KEY`, PK + `ignore-duplicates` gives
+  DB-level idempotency (migration in `datasets/contrib/README.md`).
+  **(b) Auth decision** — OPEN by default (the gates are the guard, per the
+  "prefer simple, open designs" bar), with a per-IP fixed-window
+  `RateLimiter` (default 30 POST/min) and an optional `BRAINBLAST_INGEST_TOKEN`
+  to close POST. **(c) Provenance / anti-fabrication** — `verifyProvenance`
+  (`src/contrib/provenance.ts`) requires each submission to cite a
+  **commit-pinned** source (`owner/repo@<sha>:path`; a mutable branch is
+  rejected) + a verbatim `evidence` snippet, then FETCHES that exact file at that
+  exact commit and confirms the vulnerable line is really there — the check that
+  replaces human PR review, since RED→GREEN can't tell an invented-but-reproducing
+  fixture from a real find. On by default at the server. **Verified:** 32 contrib
+  tests + a live round-trip that landed a real trap
+  (`solana-hive-sendtransaction-skippreflight`, provenance confirmed against a
+  real `ask-the-hive/the-hive` commit) and REJECTED a fabricated variant (evidence
+  not at the commit) with 422; 429 rate-limiting confirmed. **Remaining (infra):**
+  deploy the route on the registry host that holds the Supabase key — it just
+  imports `ingestSubmission` + `SupabaseVtiStore` and serves `route()`. **Exit:**
+  a contributor lands a proven, provenance-verified VTI in the live corpus via one
+  POST, no fork/PR.
 
 **Legal gate (applies before R3 opens anything to the public):** open the
 **owned synthetic corpus** publicly first (zero consent obligation). Contributed
