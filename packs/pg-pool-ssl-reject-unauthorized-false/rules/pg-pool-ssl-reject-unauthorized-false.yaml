@@ -1,0 +1,39 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: pg-pool-ssl-reject-unauthorized-false
+severity: critical
+title: "new pg Pool with ssl.rejectUnauthorized: false — the Postgres TLS
+  certificate is not validated (MITM)"
+component:
+  name: pg
+  type: Database
+  version: ">=8.0.0"
+  sourceUrl: https://node-postgres.com/features/ssl
+detect:
+  modules:
+    - pg
+  nameRegex: pool|pg|db|database|connect|conn|client
+  triggerCalls:
+    - Pool
+    - Client
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: Pool
+    argIndex: 0
+    propName: ssl.rejectUnauthorized
+    forbiddenValue: false
+    passDetail: The pg Pool validates the Postgres server certificate
+      (ssl.rejectUnauthorized is not false) — the database connection's TLS
+      identity is verified.
+    failDetail: "new Pool is created with ssl: { rejectUnauthorized: false },
+      disabling validation of the Postgres server's TLS certificate. Anyone on
+      the network path can present a forged certificate and man-in-the-middle
+      the database connection — every query, credential, and row is exposed.
+      Remove rejectUnauthorized: false; provide the managed provider's CA via
+      ssl.ca instead."
+    absentCallDetail: No pg Pool construction in this scope; this rule does not apply here.
+    absentArgDetail: The pg Pool does not set ssl.rejectUnauthorized; the secure
+      default (validate) applies.
+test:
+  kind: none

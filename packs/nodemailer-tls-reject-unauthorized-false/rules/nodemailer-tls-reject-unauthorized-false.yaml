@@ -1,0 +1,38 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: nodemailer-tls-reject-unauthorized-false
+severity: high
+title: "nodemailer createTransport with tls.rejectUnauthorized: false — the SMTP
+  server certificate is not validated (MITM)"
+component:
+  name: nodemailer
+  type: Networking
+  version: ">=6.0.0"
+  sourceUrl: https://nodemailer.com/smtp/#tls-options
+detect:
+  modules:
+    - nodemailer
+  nameRegex: mail|transport|smtp|send|nodemailer|createTransport
+  triggerCalls:
+    - createTransport
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: createTransport
+    argIndex: 0
+    propName: tls.rejectUnauthorized
+    forbiddenValue: false
+    passDetail: The transport validates the SMTP server certificate
+      (tls.rejectUnauthorized is not false) — the mail connection's TLS identity
+      is verified.
+    failDetail: "createTransport is configured with tls: { rejectUnauthorized: false
+      }, disabling validation of the SMTP server's TLS certificate. A network
+      attacker can present a forged certificate and man-in-the-middle the mail
+      connection — capturing SMTP credentials and the contents of every email
+      sent (password resets, invites, magic links). Remove rejectUnauthorized:
+      false; trust a private CA via tls.ca if needed."
+    absentCallDetail: No createTransport call in this scope; this rule does not apply here.
+    absentArgDetail: createTransport does not set tls.rejectUnauthorized; the secure
+      default (validate) applies.
+test:
+  kind: none

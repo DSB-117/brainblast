@@ -1,13 +1,13 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:32:18.953Z",
+  "generatedAt": "2026-07-04T07:39:14.720Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 39,
-    "sdks": 30,
-    "packsScanned": 39
+    "records": 42,
+    "sdks": 33,
+    "packsScanned": 42
   },
   "classDistribution": {
     "auth-bypass": 21,
@@ -15,7 +15,7 @@
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
-    "missing-verification": 5,
+    "missing-verification": 8,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
     "other": 1
@@ -197,8 +197,29 @@
       "emitted": true
     },
     {
+      "pack": "mysql2-ssl-reject-unauthorized-false",
+      "rule": "mysql2-ssl-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "nodemailer-tls-reject-unauthorized-false",
+      "rule": "nodemailer-tls-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "passport-jwt-ignore-expiration",
       "rule": "passport-jwt-ignore-expiration",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "pg-pool-ssl-reject-unauthorized-false",
+      "rule": "pg-pool-ssl-reject-unauthorized-false",
       "red": true,
       "green": true,
       "emitted": true

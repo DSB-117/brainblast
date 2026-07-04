@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-04T07:32:22.765Z",
+  "generatedAt": "2026-07-04T07:39:17.704Z",
   "counts": {
-    "total": 39,
-    "proven": 39,
-    "sdks": 30,
+    "total": 42,
+    "proven": 42,
+    "sdks": 33,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 27,
-    "critical": 9,
+    "high": 28,
+    "critical": 11,
     "medium": 3
   },
   "classDistribution": {
@@ -19,7 +19,7 @@
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
-    "missing-verification": 5,
+    "missing-verification": 8,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
     "other": 1
@@ -42,7 +42,10 @@
     "@meteora-ag/dlmm": 1,
     "mongodb": 1,
     "mongoose": 1,
+    "mysql2": 1,
+    "nodemailer": 1,
     "passport-jwt": 1,
+    "pg": 1,
     "playwright": 1,
     "puppeteer": 1,
     "Pyth Network price feeds": 1,
@@ -57,16 +60,16 @@
     "ws": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 39
+    "synthetic-owned": 42
   },
   "quality": {
-    "mean": 49,
+    "mean": 50,
     "min": 30,
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-07-04T07:32:18.953Z",
-    "newest": "2026-07-04T07:32:18.953Z"
+    "oldest": "2026-07-04T07:39:14.720Z",
+    "newest": "2026-07-04T07:39:14.720Z"
   },
   "tiers": [
     {
@@ -110,7 +113,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:32:18.953Z",
+      "capturedAt": "2026-07-04T07:39:14.720Z",
       "sourceUrls": [
         "https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html#canned-acl"
       ],
@@ -118,7 +121,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:32:18.953Z"
+        "verifiedAt": "2026-07-04T07:39:14.720Z"
       }
     },
     {
@@ -133,7 +136,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:32:18.953Z",
+      "capturedAt": "2026-07-04T07:39:14.720Z",
       "sourceUrls": [
         "https://github.com/expressjs/cookie-session#cookie-options"
       ],
@@ -141,7 +144,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:32:18.953Z"
+        "verifiedAt": "2026-07-04T07:39:14.720Z"
       }
     },
     {
@@ -156,7 +159,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:32:18.953Z",
+      "capturedAt": "2026-07-04T07:39:14.720Z",
       "sourceUrls": [
         "https://github.com/expressjs/cookie-session#cookie-options"
       ],
@@ -164,7 +167,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:32:18.953Z"
+        "verifiedAt": "2026-07-04T07:39:14.720Z"
       }
     },
     {
@@ -179,7 +182,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:32:18.953Z",
+      "capturedAt": "2026-07-04T07:39:14.720Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -187,7 +190,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:32:18.953Z"
+        "verifiedAt": "2026-07-04T07:39:14.720Z"
       }
     },
     {
@@ -202,7 +205,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:32:18.953Z",
+      "capturedAt": "2026-07-04T07:39:14.720Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -210,7 +213,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:32:18.953Z"
+        "verifiedAt": "2026-07-04T07:39:14.720Z"
       }
     }
   ]

@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T07:32:22.765Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:39:17.704Z from 1 lot(s): seed-vti.jsonl._
 
-**39 verified trap instances** across **30 SDKs** and **9 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T07:32:18.953Z → 2026-07-04T07:32:18.953Z.
+**42 verified trap instances** across **33 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 30–60). Freshness: 2026-07-04T07:39:14.720Z → 2026-07-04T07:39:14.720Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -21,7 +21,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | Class | Count |
 |---|---|
 | auth-bypass | 21 |
-| missing-verification | 5 |
+| missing-verification | 8 |
 | unconfirmed-state | 3 |
 | missing-slippage-guard | 3 |
 | silent-zero-revenue | 3 |
@@ -52,7 +52,10 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | @meteora-ag/dlmm | 1 |
 | mongodb | 1 |
 | mongoose | 1 |
+| mysql2 | 1 |
+| nodemailer | 1 |
 | passport-jwt | 1 |
+| pg | 1 |
 | playwright | 1 |
 | puppeteer | 1 |
 | Pyth Network price feeds | 1 |

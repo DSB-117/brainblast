@@ -1,0 +1,44 @@
+{
+  "id": "nodemailer-tls-reject-unauthorized-false",
+  "severity": "high",
+  "title": "nodemailer createTransport with tls.rejectUnauthorized: false — the SMTP server certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "nodemailer",
+    "type": "Networking",
+    "version": ">=6.0.0",
+    "sourceUrl": "https://nodemailer.com/smtp/#tls-options"
+  },
+  "detect": {
+    "modules": ["nodemailer"],
+    "nameRegex": "mail|transport|smtp|send|nodemailer|createTransport",
+    "triggerCalls": ["createTransport"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "createTransport",
+        "argIndex": 0,
+        "propName": "tls.rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "The transport validates the SMTP server certificate (tls.rejectUnauthorized is not false) — the mail connection's TLS identity is verified.",
+        "failDetail": "createTransport is configured with tls: { rejectUnauthorized: false }, disabling validation of the SMTP server's TLS certificate. A network attacker can present a forged certificate and man-in-the-middle the mail connection — capturing SMTP credentials and the contents of every email sent (password resets, invites, magic links). Remove rejectUnauthorized: false; trust a private CA via tls.ca if needed.",
+        "absentCallDetail": "No createTransport call in this scope; this rule does not apply here.",
+        "absentArgDetail": "createTransport does not set tls.rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "mailer.ts",
+    "vulnerable": "import nodemailer from \"nodemailer\";\n\nexport function makeTransport(host: string, user: string, pass: string) {\n  // VULNERABLE: tls.rejectUnauthorized: false — the SMTP server certificate is not validated.\n  return nodemailer.createTransport({\n    host,\n    port: 587,\n    auth: { user, pass },\n    tls: { rejectUnauthorized: false },\n  });\n}\n",
+    "fixed": "import nodemailer from \"nodemailer\";\n\nexport function makeTransport(host: string, user: string, pass: string) {\n  // FIXED: certificate validation enforced on the SMTP connection.\n  return nodemailer.createTransport({\n    host,\n    port: 587,\n    auth: { user, pass },\n    tls: { rejectUnauthorized: true },\n  });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://nodemailer.com/smtp/#tls-options",
+    "note": "tls: { rejectUnauthorized: false } is pasted to get past a self-signed cert on an internal SMTP relay and left in. It disables MITM protection on the channel that carries password-reset and magic-link emails — the keys to every account."
+  }
+}

@@ -1,0 +1,5 @@
+id: nodemailer-tls-reject-unauthorized-false
+name: "Nodemailer Tls Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "nodemailer createTransport with tls.rejectUnauthorized: false — the SMTP server certificate is not validated (MITM)"

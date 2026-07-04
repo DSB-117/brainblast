@@ -1,6 +1,6 @@
 # Datasheet — Brainblast Verified Traps v0.1.0
 
-_Generated 2026-07-04T07:32:22.739Z by pack-dataset@0.1.0. Records conform to [`schema/vti.schema.json`](../../schema/vti.schema.json)._
+_Generated 2026-07-04T07:39:17.682Z by pack-dataset@0.1.0. Records conform to [`schema/vti.schema.json`](../../schema/vti.schema.json)._
 
 ## Motivation
 A corpus of **machine-verified `error → fix → proof` records** for real SDK
@@ -9,10 +9,10 @@ checker fails (RED) on the vulnerable code and passes (GREEN) on the fix. This i
 the property scraped bug data lacks. See [`ROADMAP-TRAINING-DATA.md`](../../ROADMAP-TRAINING-DATA.md).
 
 ## Composition
-- **Records:** 39 (full lot), 3 (open sample).
-- **SDKs covered (30):** @metaplex-foundation/js, @metaplex-foundation/mpl-token-metadata, @meteora-ag/dlmm, @raydium-io/raydium-sdk-v2, @solana/web3.js, Jito (block engine / bundles), Jupiter Aggregator API, Pyth Network price feeds, SPL Token, Solana lamports arithmetic, Stripe Node SDK, aws-sdk, cookie-session, cors, express, express-jwt, express-rate-limit, express-session, helmet, jose, jsonwebtoken, mongodb, mongoose, node:https, passport-jwt, playwright, puppeteer, python, stripe, ws.
-- **Class distribution:** auth-bypass=21, unconfirmed-state=3, missing-slippage-guard=3, immutable-after-deploy=1, silent-zero-revenue=3, missing-verification=5, unchecked-staleness=1, wrong-constant=1, other=1.
-- **Severity distribution:** high=27, critical=9, medium=3.
+- **Records:** 42 (full lot), 3 (open sample).
+- **SDKs covered (33):** @metaplex-foundation/js, @metaplex-foundation/mpl-token-metadata, @meteora-ag/dlmm, @raydium-io/raydium-sdk-v2, @solana/web3.js, Jito (block engine / bundles), Jupiter Aggregator API, Pyth Network price feeds, SPL Token, Solana lamports arithmetic, Stripe Node SDK, aws-sdk, cookie-session, cors, express, express-jwt, express-rate-limit, express-session, helmet, jose, jsonwebtoken, mongodb, mongoose, mysql2, node:https, nodemailer, passport-jwt, pg, playwright, puppeteer, python, stripe, ws.
+- **Class distribution:** auth-bypass=21, unconfirmed-state=3, missing-slippage-guard=3, immutable-after-deploy=1, silent-zero-revenue=3, missing-verification=8, unchecked-staleness=1, wrong-constant=1, other=1.
+- **Severity distribution:** high=28, critical=11, medium=3.
 - Each record carries: vulnerable + fixed snippet, checker fail/pass detail,
   RED→GREEN proof, source-doc URL, producing pack, severity, and trap class.
 

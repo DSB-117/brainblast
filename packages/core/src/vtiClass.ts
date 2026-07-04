@@ -69,6 +69,9 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "helmet-csp-disabled": "auth-bypass",
   "helmet-frameguard-disabled": "auth-bypass",
   "express-rate-limit-max-zero": "auth-bypass",
+  "pg-pool-ssl-reject-unauthorized-false": "missing-verification",
+  "nodemailer-tls-reject-unauthorized-false": "missing-verification",
+  "mysql2-ssl-reject-unauthorized-false": "missing-verification",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

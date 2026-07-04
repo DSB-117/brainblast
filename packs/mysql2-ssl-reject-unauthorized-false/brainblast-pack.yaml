@@ -1,0 +1,5 @@
+id: mysql2-ssl-reject-unauthorized-false
+name: "Mysql2 Ssl Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "mysql2 createConnection with ssl.rejectUnauthorized: false — the MySQL TLS certificate is not validated (MITM)"

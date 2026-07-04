@@ -1,24 +1,24 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-04T07:32:22.750Z",
+  "generatedAt": "2026-07-04T07:39:17.694Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 39
+      "count": 42
     }
   ],
   "counts": {
-    "vtis": 39,
-    "unique": 39,
+    "vtis": 42,
+    "unique": 42,
     "duplicates": 0,
-    "sdks": 30,
+    "sdks": 33,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 27,
-    "critical": 9,
+    "high": 28,
+    "critical": 11,
     "medium": 3
   },
   "classDistribution": {
@@ -27,7 +27,7 @@
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
-    "missing-verification": 5,
+    "missing-verification": 8,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
     "other": 1
@@ -50,7 +50,10 @@
     "@meteora-ag/dlmm": 1,
     "mongodb": 1,
     "mongoose": 1,
+    "mysql2": 1,
+    "nodemailer": 1,
     "passport-jwt": 1,
+    "pg": 1,
     "playwright": 1,
     "puppeteer": 1,
     "Pyth Network price feeds": 1,
@@ -65,16 +68,16 @@
     "ws": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 39
+    "synthetic-owned": 42
   },
   "quality": {
-    "mean": 49,
+    "mean": 50,
     "median": 48,
     "min": 30,
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 36,
+      "medium": 39,
       "low": 3
     }
   },
@@ -115,6 +118,9 @@
       "missing-verification": {
         "mongodb": 1,
         "mongoose": 1,
+        "mysql2": 1,
+        "nodemailer": 1,
+        "pg": 1,
         "playwright": 1,
         "puppeteer": 1,
         "SPL Token": 1
@@ -201,6 +207,18 @@
       {
         "class": "missing-verification",
         "sdk": "mongoose"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "mysql2"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "nodemailer"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "pg"
       },
       {
         "class": "missing-verification",
@@ -456,9 +474,36 @@
       "score": 60
     },
     {
+      "trapId": "mysql2-ssl-reject-unauthorized-false",
+      "sdk": "mysql2",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "nodemailer-tls-reject-unauthorized-false",
+      "sdk": "nodemailer",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "passport-jwt-ignore-expiration",
       "sdk": "passport-jwt",
       "class": "auth-bypass",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "pg-pool-ssl-reject-unauthorized-false",
+      "sdk": "pg",
+      "class": "missing-verification",
       "severity": "critical",
       "corroborationCount": 0,
       "license": "synthetic-owned",
