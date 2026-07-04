@@ -1,0 +1,5 @@
+id: mssql-trust-server-certificate-true
+name: "Mssql Trust Server Certificate True"
+version: 0.1.0
+author: brainblast-fleet
+description: "mssql connect with options.trustServerCertificate: true — the SQL Server TLS certificate is not validated (MITM)"

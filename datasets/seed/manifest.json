@@ -1,17 +1,17 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:40:55.508Z",
+  "generatedAt": "2026-07-04T07:42:46.454Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 44,
-    "sdks": 35,
-    "packsScanned": 44
+    "records": 46,
+    "sdks": 36,
+    "packsScanned": 46
   },
   "classDistribution": {
-    "auth-bypass": 21,
-    "missing-verification": 10,
+    "auth-bypass": 22,
+    "missing-verification": 11,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
@@ -66,6 +66,13 @@
     {
       "pack": "express-rate-limit-max-zero",
       "rule": "express-rate-limit-max-zero",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "express-session-cookie-secure-false",
+      "rule": "express-session-cookie-secure-false",
       "red": true,
       "green": true,
       "emitted": true
@@ -206,6 +213,13 @@
     {
       "pack": "mongoose-tls-allow-invalid-certificates",
       "rule": "mongoose-tls-allow-invalid-certificates",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "mssql-trust-server-certificate-true",
+      "rule": "mssql-trust-server-certificate-true",
       "red": true,
       "green": true,
       "emitted": true

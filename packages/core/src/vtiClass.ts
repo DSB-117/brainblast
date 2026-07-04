@@ -74,6 +74,8 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "mysql2-ssl-reject-unauthorized-false": "missing-verification",
   "ioredis-tls-reject-unauthorized-false": "missing-verification",
   "kafkajs-ssl-reject-unauthorized-false": "missing-verification",
+  "express-session-cookie-secure-false": "auth-bypass",
+  "mssql-trust-server-certificate-true": "missing-verification",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

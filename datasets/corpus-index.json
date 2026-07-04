@@ -1,29 +1,29 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-04T07:40:58.406Z",
+  "generatedAt": "2026-07-04T07:42:50.604Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 44
+      "count": 46
     }
   ],
   "counts": {
-    "vtis": 44,
-    "unique": 44,
+    "vtis": 46,
+    "unique": 46,
     "duplicates": 0,
-    "sdks": 35,
+    "sdks": 36,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 30,
-    "critical": 11,
+    "high": 31,
+    "critical": 12,
     "medium": 3
   },
   "classDistribution": {
-    "auth-bypass": 21,
-    "missing-verification": 10,
+    "auth-bypass": 22,
+    "missing-verification": 11,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
@@ -38,7 +38,7 @@
     "cors": 2,
     "express-jwt": 1,
     "express-rate-limit": 1,
-    "express-session": 1,
+    "express-session": 2,
     "helmet": 3,
     "node:https": 2,
     "ioredis": 1,
@@ -52,6 +52,7 @@
     "@meteora-ag/dlmm": 1,
     "mongodb": 1,
     "mongoose": 1,
+    "mssql": 1,
     "mysql2": 1,
     "nodemailer": 1,
     "passport-jwt": 1,
@@ -70,7 +71,7 @@
     "ws": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 44
+    "synthetic-owned": 46
   },
   "quality": {
     "mean": 50,
@@ -79,7 +80,7 @@
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 41,
+      "medium": 43,
       "low": 3
     }
   },
@@ -91,7 +92,7 @@
         "cors": 2,
         "express-jwt": 1,
         "express-rate-limit": 1,
-        "express-session": 1,
+        "express-session": 2,
         "helmet": 3,
         "node:https": 2,
         "jose": 1,
@@ -105,6 +106,7 @@
         "kafkajs": 1,
         "mongodb": 1,
         "mongoose": 1,
+        "mssql": 1,
         "mysql2": 1,
         "nodemailer": 1,
         "pg": 1,
@@ -154,10 +156,6 @@
       },
       {
         "class": "auth-bypass",
-        "sdk": "express-session"
-      },
-      {
-        "class": "auth-bypass",
         "sdk": "jose"
       },
       {
@@ -187,6 +185,10 @@
       {
         "class": "missing-verification",
         "sdk": "mongoose"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "mssql"
       },
       {
         "class": "missing-verification",
@@ -322,6 +324,15 @@
       "corroborationCount": 0,
       "license": "synthetic-owned",
       "score": 30
+    },
+    {
+      "trapId": "express-session-cookie-secure-false",
+      "sdk": "express-session",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
     },
     {
       "trapId": "express-session-saveuninitialized-true",
@@ -497,6 +508,15 @@
     {
       "trapId": "mongoose-tls-allow-invalid-certificates",
       "sdk": "mongoose",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "mssql-trust-server-certificate-true",
+      "sdk": "mssql",
       "class": "missing-verification",
       "severity": "critical",
       "corroborationCount": 0,

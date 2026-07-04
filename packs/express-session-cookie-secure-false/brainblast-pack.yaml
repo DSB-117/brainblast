@@ -1,0 +1,5 @@
+id: express-session-cookie-secure-false
+name: "Express Session Cookie Secure False"
+version: 0.1.0
+author: brainblast-fleet
+description: "express-session with cookie.secure: false — the session cookie is sent over plain HTTP and can be sniffed"
