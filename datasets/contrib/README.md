@@ -21,6 +21,29 @@ contributor's `consentScope`.
 3. **Consent + license stamped** — `license: contributor-grant-v1` and the
    contributor's `consentScope` (`opt-in:train` / `eval` / `train+eval`).
 
+## Two ways in: files (PR) or a direct POST (no PR)
+
+The file/PR path (`npm run ingest:vti`) is the reviewable on-ramp. For scale —
+where a PR per submission doesn't hold — a VTI can feed **straight into the
+database** through the same three gates, run server-side:
+
+```bash
+# client — POST a candidate Finding to the registry; it re-proves RED→GREEN and,
+# if it reproduces, inserts it. No fork, no branch, no PR.
+npm run submit:vti -- --candidate fleet/candidates/<id>.json
+npm run submit:vti -- --candidate <file> --dry-run   # run the identical gate locally first
+
+# server — the reference ingest endpoint (POST/GET /api/vti). Swap the JSONL
+# store for a Supabase VtiStore and this is the production route.
+npm run registry:serve
+```
+
+The client is never trusted: `POST /api/vti` runs `ingestSubmission`
+(`src/contrib/submit.ts`) — shape validation, Keyguard secret scan, RED→GREEN
+re-proof in the **hardened sandbox**, consent stamp — and only inserts records
+that reproduce. `GET /api/vti` returns open sample-tier teasers (metadata + the
+receipt), never the trainable fixtures.
+
 ## Deferred (needs rails, not just code)
 - `$BRAIN` **stake-and-slash** bonding and the **data dividend** payout settle
   on-chain via the ops-wallet flow (`scripts/agent-stake`) + registry; wired in a
