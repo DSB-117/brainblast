@@ -1,0 +1,44 @@
+{
+  "id": "helmet-csp-disabled",
+  "severity": "high",
+  "title": "helmet({ contentSecurityPolicy: false }) — Content-Security-Policy is turned off, removing the main XSS mitigation",
+  "class": "auth-bypass",
+  "component": {
+    "name": "helmet",
+    "type": "Networking",
+    "version": ">=4.0.0",
+    "sourceUrl": "https://helmetjs.github.io/#content-security-policy"
+  },
+  "detect": {
+    "modules": ["helmet"],
+    "nameRegex": "helmet|security|header|app|server|middleware",
+    "triggerCalls": ["helmet"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "helmet",
+        "argIndex": 0,
+        "propName": "contentSecurityPolicy",
+        "forbiddenValue": false,
+        "passDetail": "helmet keeps Content-Security-Policy on (contentSecurityPolicy is not false) — a CSP header is sent that constrains where scripts and resources can load from.",
+        "failDetail": "helmet is configured with contentSecurityPolicy: false, which DISABLES the Content-Security-Policy header entirely. CSP is the primary defense-in-depth against XSS and data injection; with it off, any injected script runs unrestricted and can exfiltrate tokens or data. Leave CSP enabled (helmet's default) and configure directives instead of turning it off.",
+        "absentCallDetail": "No helmet() call in this scope; this rule does not apply here.",
+        "absentArgDetail": "helmet() does not set contentSecurityPolicy; the default (CSP enabled) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "security.ts",
+    "vulnerable": "import express from \"express\";\nimport helmet from \"helmet\";\n\nexport function applySecurityHeaders(app: express.Express) {\n  // VULNERABLE: contentSecurityPolicy: false ships no CSP header — the main XSS mitigation is gone.\n  app.use(helmet({ contentSecurityPolicy: false }));\n  return app;\n}\n",
+    "fixed": "import express from \"express\";\nimport helmet from \"helmet\";\n\nexport function applySecurityHeaders(app: express.Express) {\n  // FIXED: CSP stays enabled (helmet's secure default).\n  app.use(helmet({ contentSecurityPolicy: true }));\n  return app;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://helmetjs.github.io/#content-security-policy",
+    "note": "contentSecurityPolicy: false is pasted to stop CSP from blocking an inline script during development and left in. The app works, so it ships — silently removing the strongest XSS mitigation the stack had."
+  }
+}

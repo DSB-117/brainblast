@@ -66,6 +66,9 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "jose-sign-alg-none": "auth-bypass",
   "mongodb-client-tls-allow-invalid-certificates": "missing-verification",
   "ws-reject-unauthorized-false": "auth-bypass",
+  "helmet-csp-disabled": "auth-bypass",
+  "helmet-frameguard-disabled": "auth-bypass",
+  "express-rate-limit-max-zero": "auth-bypass",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

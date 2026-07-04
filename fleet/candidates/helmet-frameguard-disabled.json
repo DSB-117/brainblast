@@ -1,0 +1,44 @@
+{
+  "id": "helmet-frameguard-disabled",
+  "severity": "medium",
+  "title": "helmet({ frameguard: false }) — X-Frame-Options is off, exposing the app to clickjacking",
+  "class": "auth-bypass",
+  "component": {
+    "name": "helmet",
+    "type": "Networking",
+    "version": ">=4.0.0",
+    "sourceUrl": "https://helmetjs.github.io/#x-frame-options"
+  },
+  "detect": {
+    "modules": ["helmet"],
+    "nameRegex": "helmet|security|header|app|server|middleware",
+    "triggerCalls": ["helmet"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "helmet",
+        "argIndex": 0,
+        "propName": "frameguard",
+        "forbiddenValue": false,
+        "passDetail": "helmet keeps frameguard on (frameguard is not false) — an X-Frame-Options header is sent that stops the app being embedded in a hostile frame.",
+        "failDetail": "helmet is configured with frameguard: false, which removes the X-Frame-Options header. Any site can now embed this app in an invisible iframe and trick a logged-in user into clicking hidden controls (clickjacking) — approving actions they never intended. Leave frameguard enabled (helmet's default DENY/SAMEORIGIN).",
+        "absentCallDetail": "No helmet() call in this scope; this rule does not apply here.",
+        "absentArgDetail": "helmet() does not set frameguard; the default (X-Frame-Options enabled) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "headers.ts",
+    "vulnerable": "import express from \"express\";\nimport helmet from \"helmet\";\n\nexport function applyFrameHeaders(app: express.Express) {\n  // VULNERABLE: frameguard: false removes X-Frame-Options — the app can be framed for clickjacking.\n  app.use(helmet({ frameguard: false }));\n  return app;\n}\n",
+    "fixed": "import express from \"express\";\nimport helmet from \"helmet\";\n\nexport function applyFrameHeaders(app: express.Express) {\n  // FIXED: frameguard stays enabled (helmet's secure default).\n  app.use(helmet({ frameguard: true }));\n  return app;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://helmetjs.github.io/#x-frame-options",
+    "note": "frameguard: false is set so the app can be embedded in a partner's iframe, but scoped to the whole app it reopens clickjacking everywhere. Nothing breaks visibly, so it ships."
+  }
+}

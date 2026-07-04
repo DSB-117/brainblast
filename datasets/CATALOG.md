@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T07:30:23.099Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:32:22.765Z from 1 lot(s): seed-vti.jsonl._
 
-**36 verified trap instances** across **29 SDKs** and **9 trap classes**. Quality score mean 51/100 (range 30–60). Freshness: 2026-07-04T07:30:20.060Z → 2026-07-04T07:30:20.060Z.
+**39 verified trap instances** across **30 SDKs** and **9 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T07:32:18.953Z → 2026-07-04T07:32:18.953Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,7 +20,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-| auth-bypass | 18 |
+| auth-bypass | 21 |
 | missing-verification | 5 |
 | unconfirmed-state | 3 |
 | missing-slippage-guard | 3 |
@@ -35,14 +35,15 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | SDK | Count |
 |---|---|
 | jsonwebtoken | 4 |
+| helmet | 3 |
 | cookie-session | 2 |
 | cors | 2 |
 | node:https | 2 |
 | @solana/web3.js | 2 |
 | aws-sdk | 1 |
 | express-jwt | 1 |
+| express-rate-limit | 1 |
 | express-session | 1 |
-| helmet | 1 |
 | Jito (block engine / bundles) | 1 |
 | jose | 1 |
 | Jupiter Aggregator API | 1 |

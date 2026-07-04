@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:30:20.060Z",
+  "generatedAt": "2026-07-04T07:32:18.953Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 36,
-    "sdks": 29,
-    "packsScanned": 36
+    "records": 39,
+    "sdks": 30,
+    "packsScanned": 39
   },
   "classDistribution": {
-    "auth-bypass": 18,
+    "auth-bypass": 21,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
@@ -64,8 +64,29 @@
       "emitted": true
     },
     {
+      "pack": "express-rate-limit-max-zero",
+      "rule": "express-rate-limit-max-zero",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "express-session-saveuninitialized-true",
       "rule": "express-session-saveuninitialized-true",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "helmet-csp-disabled",
+      "rule": "helmet-csp-disabled",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "helmet-frameguard-disabled",
+      "rule": "helmet-frameguard-disabled",
       "red": true,
       "green": true,
       "emitted": true

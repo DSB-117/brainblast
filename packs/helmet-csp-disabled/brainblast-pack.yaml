@@ -1,0 +1,5 @@
+id: helmet-csp-disabled
+name: "Helmet Csp Disabled"
+version: 0.1.0
+author: brainblast-fleet
+description: "helmet({ contentSecurityPolicy: false }) — Content-Security-Policy is turned off, removing the main XSS mitigation"
