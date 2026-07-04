@@ -3,28 +3,29 @@
   "dataset": "brainblast-verified-traps",
   "version": "0.1.0",
   "generator": "pack-dataset@0.1.0",
-  "generatedAt": "2026-07-01T20:56:57.136Z",
+  "generatedAt": "2026-07-03T23:31:11.287Z",
   "recordSchema": "schema/vti.schema.json",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "full": 15,
+    "full": 22,
     "sample": 3,
-    "sdks": 14
+    "sdks": 17
   },
   "classDistribution": {
     "auth-bypass": 4,
-    "unconfirmed-state": 2,
+    "unconfirmed-state": 5,
     "missing-slippage-guard": 3,
+    "missing-verification": 4,
+    "other": 2,
     "silent-zero-revenue": 2,
     "unchecked-staleness": 1,
-    "wrong-constant": 1,
-    "missing-verification": 1,
-    "other": 1
+    "wrong-constant": 1
   },
   "severityDistribution": {
-    "high": 13,
-    "critical": 2
+    "high": 19,
+    "critical": 2,
+    "medium": 1
   },
   "sdks": [
     "@metaplex-foundation/js",
@@ -37,8 +38,11 @@
     "SPL Token",
     "Solana lamports arithmetic",
     "Stripe Node SDK",
+    "better-auth",
     "cors",
+    "express-jwt",
     "jsonwebtoken",
+    "mongoose",
     "node:https",
     "python"
   ],

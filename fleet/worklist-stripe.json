@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-07-03T23:07:11.377Z",
+  "sdk": "stripe",
+  "npmDownloadsLastMonth": 57852774,
+  "discovered": 95,
+  "skippedAlreadyInvestigated": 0,
+  "worklist": [
+    {
+      "repo": "juspay/hyperswitch",
+      "stars": 43199,
+      "url": "https://github.com/juspay/hyperswitch"
+    },
+    {
+      "repo": "better-auth/better-auth",
+      "stars": 28934,
+      "url": "https://github.com/better-auth/better-auth"
+    },
+    {
+      "repo": "kriasoft/react-starter-kit",
+      "stars": 23620,
+      "url": "https://github.com/kriasoft/react-starter-kit"
+    },
+    {
+      "repo": "nextjs/saas-starter",
+      "stars": 15937,
+      "url": "https://github.com/nextjs/saas-starter"
+    },
+    {
+      "repo": "wasp-lang/open-saas",
+      "stars": 14817,
+      "url": "https://github.com/wasp-lang/open-saas"
+    },
+    {
+      "repo": "vercel/next-forge",
+      "stars": 7119,
+      "url": "https://github.com/vercel/next-forge"
+    },
+    {
+      "repo": "t3dotgg/stripe-recommendations",
+      "stars": 6360,
+      "url": "https://github.com/t3dotgg/stripe-recommendations"
+    },
+    {
+      "repo": "sadmann7/skateshop",
+      "stars": 5461,
+      "url": "https://github.com/sadmann7/skateshop"
+    },
+    {
+      "repo": "yournextstore/yournextstore",
+      "stars": 5447,
+      "url": "https://github.com/yournextstore/yournextstore"
+    },
+    {
+      "repo": "samyk/magspoof",
+      "stars": 4134,
+      "url": "https://github.com/samyk/magspoof"
+    }
+  ]
+}

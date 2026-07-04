@@ -24,11 +24,11 @@ const NOW = "2030-01-01T00:00:00.000Z";
 describe("VTI feed — tier eligibility from $BRAIN", () => {
   it("maps held $BRAIN to the right tier", () => {
     expect(tierForBrain(0)).toBe("sample");
-    expect(tierForBrain(999)).toBe("sample");
-    expect(tierForBrain(1_000)).toBe("standard");
-    expect(tierForBrain(9_999)).toBe("standard");
-    expect(tierForBrain(10_000)).toBe("firehose");
+    expect(tierForBrain(99_999)).toBe("sample");
+    expect(tierForBrain(100_000)).toBe("standard");
+    expect(tierForBrain(999_999)).toBe("standard");
     expect(tierForBrain(1_000_000)).toBe("firehose");
+    expect(tierForBrain(5_000_000)).toBe("firehose");
   });
 });
 

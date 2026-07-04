@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-07-03T23:19:16.737Z",
+  "sdk": "solana-agent-kit",
+  "npmDownloadsLastMonth": 5116,
+  "discovered": 65,
+  "skippedAlreadyInvestigated": 0,
+  "worklist": [
+    {
+      "repo": "NeurProjects/neur-app",
+      "stars": 446,
+      "url": "https://github.com/NeurProjects/neur-app"
+    },
+    {
+      "repo": "sendaifun/solana-mcp",
+      "stars": 161,
+      "url": "https://github.com/sendaifun/solana-mcp"
+    }
+  ]
+}

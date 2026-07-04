@@ -1,0 +1,42 @@
+{
+  "id": "solana-backpack-sendrawtransaction-skippreflight",
+  "severity": "high",
+  "title": "connection.sendRawTransaction called with skipPreflight: true skips simulation and silently lands failing transfers",
+  "class": "unconfirmed-state",
+  "component": {
+    "name": "@solana/web3.js",
+    "type": "Blockchain",
+    "version": ">=1.0.0",
+    "sourceUrl": "https://solana.com/docs/rpc/http/sendtransaction"
+  },
+  "detect": {
+    "modules": ["@solana/web3.js"],
+    "nameRegex": "send|confirm|swap|transfer|burn",
+    "triggerCalls": ["sendRawTransaction"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "sendRawTransaction",
+        "argIndex": 1,
+        "propName": "skipPreflight",
+        "forbiddenValue": true,
+        "passDetail": "sendRawTransaction runs preflight simulation (skipPreflight not set to true), so a transaction that would fail on-chain is rejected client-side before submission.",
+        "failDetail": "sendRawTransaction is called with skipPreflight: true, disabling the preflight simulation. A malformed or failing transfer is submitted anyway; the happy path returns a signature but the transaction can fail or do the wrong thing on-chain with no client-side error surfaced to the user.",
+        "absentCallDetail": "No sendRawTransaction call found in this file.",
+        "absentArgDetail": "sendRawTransaction is called without an options object, so skipPreflight defaults to false (preflight runs). Safe."
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "transfer.ts",
+    "vulnerable": "import { Connection, Transaction } from '@solana/web3.js';\n\nexport async function transferProgrammableNft(\n  connection: Connection,\n  signedTx: Transaction,\n  commitment: 'confirmed'\n) {\n  const rawTx = signedTx.serialize();\n  return await connection.sendRawTransaction(rawTx, {\n    skipPreflight: true,\n    preflightCommitment: commitment,\n  });\n}\n",
+    "fixed": "import { Connection, Transaction } from '@solana/web3.js';\n\nexport async function transferProgrammableNft(\n  connection: Connection,\n  signedTx: Transaction,\n  commitment: 'confirmed'\n) {\n  const rawTx = signedTx.serialize();\n  return await connection.sendRawTransaction(rawTx, {\n    skipPreflight: false,\n    preflightCommitment: commitment,\n  });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://solana.com/docs/rpc/http/sendtransaction",
+    "note": "coral-xyz/backpack (packages/secure-clients/src/SolanaClient/solanaLegacy/index.ts) submits transfers via connection.sendRawTransaction(rawTx, { skipPreflight: true }) in transferProgrammableNft (line 768), transferOpenCreatorProtocol (line 569), transferCompressedNft (line 668) and burnCompressedNft (line 208). skipPreflight: true disables the client-side simulation that catches malformed/failing transactions, so a failing transfer is submitted with no error surfaced. Agents copy this from 'optimize transaction landing' guides to shave latency, not realizing sibling transfer methods in the same file correctly use skipPreflight: false."
+  }
+}

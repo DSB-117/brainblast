@@ -45,6 +45,16 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "cors-wildcard-origin": "auth-bypass",
   "https-reject-unauthorized-disabled": "auth-bypass",
   "jwt-verify-algorithm-none": "auth-bypass",
+  // Fleet-sourced (this run) — the keyword heuristic reads "auth"/"jwt"/"pkce" as
+  // auth-bypass, but these are verification-step omissions and a silently-ignored
+  // config flag, so pin them explicitly.
+  "jwt-expressjwt-ignore-notbefore": "missing-verification",
+  "stripe-betterauth-oidc-require-pkce-false": "missing-verification",
+  "stripe-betterauth-oidc-allow-plain-pkce": "missing-verification",
+  "jwt-node-react-ecom-mongoose-dropdups": "other",
+  "solana-hive-sendtransaction-skippreflight": "unconfirmed-state",
+  "solana-backpack-sendrawtransaction-skippreflight": "unconfirmed-state",
+  "solana-quiknode-sendandconfirm-skippreflight": "unconfirmed-state",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

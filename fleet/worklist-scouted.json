@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-07-03",
+  "sdk": null,
+  "note": "Consolidated list of repos actually scouted this fleet run (2 rounds). traps = VTIs promoted from that repo; [] = clean or pruned-as-duplicate.",
+  "worklist": [
+    { "repo": "better-auth/better-auth", "traps": ["stripe-betterauth-oidc-require-pkce-false", "stripe-betterauth-oidc-allow-plain-pkce"] },
+    { "repo": "auth0/express-jwt", "traps": ["jwt-expressjwt-ignore-notbefore"] },
+    { "repo": "basir/node-react-ecommerce", "traps": ["jwt-node-react-ecom-mongoose-dropdups"] },
+    { "repo": "ask-the-hive/the-hive", "traps": ["solana-hive-sendtransaction-skippreflight"] },
+    { "repo": "coral-xyz/backpack", "traps": ["solana-backpack-sendrawtransaction-skippreflight"] },
+    { "repo": "quiknode-labs/qn-guide-examples", "traps": ["solana-quiknode-sendandconfirm-skippreflight"] },
+    { "repo": "nextjs/saas-starter", "traps": [] },
+    { "repo": "wasp-lang/open-saas", "traps": [] },
+    { "repo": "vercel/next-forge", "traps": [] },
+    { "repo": "sadmann7/skateshop", "traps": [] },
+    { "repo": "yournextstore/yournextstore", "traps": [] },
+    { "repo": "kriasoft/react-starter-kit", "traps": [] },
+    { "repo": "kunalkapadia/express-mongoose-es6-rest-api", "traps": [] },
+    { "repo": "NeurProjects/neur-app", "traps": [] },
+    { "repo": "elizaOS/eliza", "traps": [] },
+    { "repo": "coinbase/agentkit", "traps": [] },
+    { "repo": "Rabnail-SOL/Solana-Raydium-Volume-Bot", "traps": [] },
+    { "repo": "Shyft-to/solana-defi", "traps": [] },
+    { "repo": "cryptoloutre/solana-tools", "traps": [] },
+    { "repo": "ilmoi/nft-armory", "traps": [] }
+  ]
+}

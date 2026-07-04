@@ -1,0 +1,42 @@
+{
+  "id": "solana-hive-sendtransaction-skippreflight",
+  "severity": "high",
+  "title": "wallet.sendTransaction called with skipPreflight: true skips simulation and silently lands failing/wrong txs",
+  "class": "unconfirmed-state",
+  "component": {
+    "name": "@solana/web3.js",
+    "type": "Blockchain",
+    "version": ">=1.0.0",
+    "sourceUrl": "https://solana.com/docs/rpc/http/sendtransaction"
+  },
+  "detect": {
+    "modules": ["@solana/web3.js"],
+    "nameRegex": "send|confirm|swap|transfer",
+    "triggerCalls": ["sendTransaction"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "sendTransaction",
+        "argIndex": 2,
+        "propName": "skipPreflight",
+        "forbiddenValue": true,
+        "passDetail": "sendTransaction runs preflight simulation (skipPreflight not set to true), so a transaction that would fail on-chain is rejected client-side before submission.",
+        "failDetail": "sendTransaction is called with skipPreflight: true, disabling the preflight simulation. A malformed or failing transaction is submitted anyway; the happy path returns a signature but the transaction can fail or do the wrong thing on-chain with no client-side error.",
+        "absentCallDetail": "No sendTransaction call found in this file.",
+        "absentArgDetail": "sendTransaction is called without an options object, so skipPreflight defaults to false (preflight runs). Safe."
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "send.ts",
+    "vulnerable": "import { Connection, VersionedTransaction } from '@solana/web3.js';\n\ndeclare const wallet: {\n  sendTransaction(\n    tx: VersionedTransaction,\n    connection: Connection,\n    opts: { skipPreflight: boolean }\n  ): Promise<string>;\n};\n\nexport async function send(tx: VersionedTransaction) {\n  const connection = new Connection(process.env.SOLANA_RPC_URL!);\n  return wallet.sendTransaction(tx, connection, {\n    skipPreflight: true,\n  });\n}\n",
+    "fixed": "import { Connection, VersionedTransaction } from '@solana/web3.js';\n\ndeclare const wallet: {\n  sendTransaction(\n    tx: VersionedTransaction,\n    connection: Connection,\n    opts: { skipPreflight: boolean }\n  ): Promise<string>;\n};\n\nexport async function send(tx: VersionedTransaction) {\n  const connection = new Connection(process.env.SOLANA_RPC_URL!);\n  return wallet.sendTransaction(tx, connection, {\n    skipPreflight: false,\n  });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://solana.com/docs/rpc/http/sendtransaction",
+    "note": "Agents copy skipPreflight: true from 'optimize transaction landing' guides to shave latency, not realizing it disables the client-side simulation that catches malformed/failing transactions. In the-hive this is the single send path used by every Privy embedded-wallet swap and transfer (hooks/privy/use-send-transaction.ts:97), so a failing tx is submitted with no error surfaced to the user."
+  }
+}

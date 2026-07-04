@@ -1,0 +1,49 @@
+{
+  "id": "jwt-expressjwt-ignore-notbefore",
+  "severity": "high",
+  "title": "express-jwt passes ignoreNotBefore:true through to jwt.verify, silently accepting not-yet-valid tokens",
+  "class": "missing-verification",
+  "component": {
+    "name": "express-jwt",
+    "type": "Auth",
+    "version": ">=1.0.0",
+    "sourceUrl": "https://github.com/auth0/express-jwt/blob/master/src/index.ts"
+  },
+  "detect": {
+    "modules": [
+      "express-jwt"
+    ],
+    "nameRegex": "verify|auth|jwt",
+    "triggerCalls": [
+      "expressjwt"
+    ]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "expressjwt",
+        "argIndex": 0,
+        "propName": "ignoreNotBefore",
+        "forbiddenValue": true,
+        "passDetail": "expressjwt() options do not set ignoreNotBefore:true, so the underlying jwt.verify enforces the 'nbf' (not-before) claim and rejects tokens that are not yet valid.",
+        "failDetail": "expressjwt() is configured with ignoreNotBefore:true. express-jwt spreads the whole options object into jwt.verify(token, key, options) (src/index.ts:175), and Params extends jwt.VerifyOptions, so this flag flows straight through and disables 'nbf' enforcement. Tokens minted with a future not-before time are accepted as valid — the happy path compiles and runs, but pre-activation / future-dated tokens are honored.",
+        "absentCallDetail": "expressjwt() is not called in this module; no JWT middleware to inspect.",
+        "absentArgDetail": "expressjwt() is called without an options object; ignoreNotBefore cannot be asserted.",
+        "absentPropDetail": "expressjwt() options omit ignoreNotBefore, so 'nbf' enforcement follows the safe default (enabled)."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "expressjwt-nbf.ts",
+    "vulnerable": "import { expressjwt } from 'express-jwt';\n\n// Express middleware factory — the audited scope.\nexport function authMiddleware() {\n  // VULNERABLE: ignoreNotBefore disables 'nbf' enforcement, so future-dated /\n  // not-yet-valid tokens are accepted.\n  return expressjwt({\n    secret: 'shhhhhhared-secret',\n    algorithms: ['HS256'],\n    ignoreNotBefore: true,\n  });\n}\n",
+    "fixed": "import { expressjwt } from 'express-jwt';\n\n// Express middleware factory — the audited scope.\nexport function authMiddleware() {\n  // FIXED: 'nbf' (not-before) enforcement kept on (the secure default, explicit here).\n  return expressjwt({\n    secret: 'shhhhhhared-secret',\n    algorithms: ['HS256'],\n    ignoreNotBefore: false,\n  });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/auth0/express-jwt/blob/master/src/index.ts#L175",
+    "note": "express-jwt's Params type is `{...} & jwt.VerifyOptions`, so every jsonwebtoken verify flag is accepted at the express-jwt call site and passed verbatim into jwt.verify. Agents copy jsonwebtoken's ignoreNotBefore flag onto the express-jwt options to 'fix' clock-skew errors during local testing (a token minted with `notBefore`/`nbf` in the future), compiles cleanly, tests pass, and the not-before window is silently disabled in production — future-dated or pre-activation tokens are honored. This is the same passthrough vector as the already-corpus'd ignoreExpiration:true, but on a distinct, less-obvious claim (nbf)."
+  }
+}

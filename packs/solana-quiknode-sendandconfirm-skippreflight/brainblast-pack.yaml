@@ -1,0 +1,5 @@
+id: solana-quiknode-sendandconfirm-skippreflight
+name: "Solana Quiknode Sendandconfirm Skippreflight"
+version: 0.1.0
+author: brainblast-fleet
+description: "sendAndConfirmTransaction (kit factory) called with skipPreflight: true skips simulation on a transfer"

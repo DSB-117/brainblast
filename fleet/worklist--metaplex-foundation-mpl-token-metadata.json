@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-07-03T23:20:03.001Z",
+  "sdk": "@metaplex-foundation/mpl-token-metadata",
+  "npmDownloadsLastMonth": 824355,
+  "discovered": 51,
+  "skippedAlreadyInvestigated": 0,
+  "worklist": [
+    {
+      "repo": "metaplex-foundation/mpl-token-metadata",
+      "stars": 249,
+      "url": "https://github.com/metaplex-foundation/mpl-token-metadata"
+    },
+    {
+      "repo": "cryptoloutre/solana-tools",
+      "stars": 208,
+      "url": "https://github.com/cryptoloutre/solana-tools"
+    },
+    {
+      "repo": "ilmoi/nft-armory",
+      "stars": 189,
+      "url": "https://github.com/ilmoi/nft-armory"
+    },
+    {
+      "repo": "Rabnail-SOL/Solana-Raydium-Volume-Bot",
+      "stars": 172,
+      "url": "https://github.com/Rabnail-SOL/Solana-Raydium-Volume-Bot"
+    }
+  ]
+}
