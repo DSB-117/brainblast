@@ -1,0 +1,40 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: express-session-saveuninitialized-true
+severity: high
+title: "express-session configured with saveUninitialized: true — empty,
+  unauthenticated sessions are persisted (session fixation + resource
+  exhaustion)"
+component:
+  name: express-session
+  type: Auth
+  version: ">=1.17.0"
+  sourceUrl: https://www.npmjs.com/package/express-session#saveuninitialized
+detect:
+  modules:
+    - express-session
+  nameRegex: session|auth|app|server|index|config
+  triggerCalls:
+    - session
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: session
+    argIndex: 0
+    propName: saveUninitialized
+    forbiddenValue: true
+    passDetail: express-session sets saveUninitialized to false — a session cookie
+      is only established once something is actually stored on the session (e.g.
+      after login), preventing empty-session persistence.
+    failDetail: "express-session is configured with saveUninitialized: true, so a
+      brand-new, never-modified (unauthenticated) session is forced into the
+      store and a Set-Cookie is sent to every visitor. This enables session
+      fixation — an attacker can pre-seed a session id and get it accepted — and
+      lets anonymous traffic exhaust the session store. The express-session docs
+      recommend false; set saveUninitialized: false."
+    absentCallDetail: This scope does not call session(); this rule does not apply here.
+    absentArgDetail: "session() does not pass a saveUninitialized option literal.
+      The default is true (deprecated) — set saveUninitialized: false explicitly
+      to be safe."
+test:
+  kind: none

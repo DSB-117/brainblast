@@ -1,0 +1,5 @@
+id: ioredis-tls-reject-unauthorized-false
+name: "Ioredis Tls Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "new Redis with tls.rejectUnauthorized: false — the Redis TLS certificate is not validated (MITM)"

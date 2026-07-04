@@ -1,12 +1,12 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-sla@0.1.0",
-  "generatedAt": "2026-07-04T03:45:00.963Z",
+  "generatedAt": "2026-07-04T07:55:51.632Z",
   "corpus": {
-    "total": 24,
-    "verifiable": 22,
-    "reproduced": 22,
-    "schemaValid": 24
+    "total": 56,
+    "verifiable": 54,
+    "reproduced": 54,
+    "schemaValid": 56
   },
   "rates": {
     "reproduction": 1,
@@ -20,9 +20,9 @@
   "lots": [
     {
       "lot": "synthetic-owned",
-      "total": 24,
-      "schemaValid": 24,
-      "reproduced": 22,
+      "total": 56,
+      "schemaValid": 56,
+      "reproduced": 54,
       "unverifiable": 2,
       "failures": [],
       "ageDaysMedian": 0,

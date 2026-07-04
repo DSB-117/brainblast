@@ -1,0 +1,42 @@
+{
+  "id": "metaplex-ismutable-false-locks-metadata",
+  "severity": "high",
+  "title": "isMutable: false on Metaplex NFT metadata permanently locks it — a broken URI or trait can never be fixed",
+  "class": "immutable-after-deploy",
+  "component": {
+    "name": "@metaplex-foundation/mpl-token-metadata",
+    "type": "NFT",
+    "version": ">=2.0.0",
+    "sourceUrl": "https://developers.metaplex.com/token-metadata/mint#minting-non-fungible-tokens"
+  },
+  "detect": {
+    "modules": ["@metaplex-foundation/mpl-token-metadata", "@metaplex-foundation/mpl-bubblegum"],
+    "nameRegex": "createNft|createV1|mint|metadata|MetadataArgs|CreateMetadataAccountArgsV3",
+    "triggerCalls": ["createNft", "createV1", "mintCompressedNFT", "createCollection"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "createNft",
+        "argIndex": 1,
+        "propName": "isMutable",
+        "forbiddenValue": false,
+        "passDetail": "isMutable: true — metadata stays updatable, so a broken URI or trait can be corrected later.",
+        "failDetail": "isMutable: false permanently freezes the NFT/collection metadata on-chain: the update authority can never fix a broken metadata URI, wrong trait, or dead image link. The mint succeeds and the happy path runs — the asset is just silently locked forever.",
+        "absentCallDetail": "No NFT mint / metadata-create call found in this scope.",
+        "absentArgDetail": "isMutable not set explicitly; the SDK default applies (mutable), so no forbidden literal is present."
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "mint-nft.ts",
+    "vulnerable": "import { createNft } from '@metaplex-foundation/mpl-token-metadata';\nimport { generateSigner, percentAmount } from '@metaplex-foundation/umi';\n\nexport async function mint(umi: any) {\n  const mint = generateSigner(umi);\n  await createNft(umi, {\n    mint,\n    name: 'Super Sweet NFT',\n    uri: 'https://example.com/token.json',\n    sellerFeeBasisPoints: percentAmount(5),\n    isMutable: false,\n  }).sendAndConfirm(umi);\n  return mint;\n}\n",
+    "fixed": "import { createNft } from '@metaplex-foundation/mpl-token-metadata';\nimport { generateSigner, percentAmount } from '@metaplex-foundation/umi';\n\nexport async function mint(umi: any) {\n  const mint = generateSigner(umi);\n  await createNft(umi, {\n    mint,\n    name: 'Super Sweet NFT',\n    uri: 'https://example.com/token.json',\n    sellerFeeBasisPoints: percentAmount(5),\n    isMutable: true,\n  }).sendAndConfirm(umi);\n  return mint;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://developers.metaplex.com/token-metadata/mint#minting-non-fungible-tokens",
+    "note": "Seen in solana-developers/compressed-nfts (scripts/createAndMint.ts:112 & :145, scripts/verboseCreateAndMint.ts:202 & :254): both the collection metadata and the per-NFT MetadataArgs are minted with isMutable: false. The mint compiles and succeeds, but freezes the metadata permanently — a broken/placeholder URI (the demo ships notarealurl links) can never be corrected. Agents copy this canonical example verbatim and ship un-fixable NFTs."
+  }
+}

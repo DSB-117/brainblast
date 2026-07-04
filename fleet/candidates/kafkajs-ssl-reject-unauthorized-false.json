@@ -1,0 +1,44 @@
+{
+  "id": "kafkajs-ssl-reject-unauthorized-false",
+  "severity": "high",
+  "title": "new Kafka with ssl.rejectUnauthorized: false — the broker TLS certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "kafkajs",
+    "type": "Networking",
+    "version": ">=1.15.0",
+    "sourceUrl": "https://kafka.js.org/docs/configuration#ssl"
+  },
+  "detect": {
+    "modules": ["kafkajs"],
+    "nameRegex": "kafka|broker|client|producer|consumer|connect|Kafka",
+    "triggerCalls": ["Kafka"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "Kafka",
+        "argIndex": 0,
+        "propName": "ssl.rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "The Kafka client validates the broker certificate (ssl.rejectUnauthorized is not false) — the broker connection's TLS identity is verified.",
+        "failDetail": "new Kafka is created with ssl: { rejectUnauthorized: false }, disabling validation of the broker's TLS certificate. A network attacker can present a forged certificate and man-in-the-middle the connection — reading and injecting messages on every topic (events, commands, PII streams). Remove rejectUnauthorized: false; trust the broker CA via ssl.ca.",
+        "absentCallDetail": "No Kafka construction in this scope; this rule does not apply here.",
+        "absentArgDetail": "The Kafka client does not set ssl.rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "kafka.ts",
+    "vulnerable": "import { Kafka } from \"kafkajs\";\n\nexport function makeKafka(brokers: string[]) {\n  // VULNERABLE: ssl.rejectUnauthorized: false — the broker certificate is not validated.\n  return new Kafka({ clientId: \"app\", brokers, ssl: { rejectUnauthorized: false } });\n}\n",
+    "fixed": "import { Kafka } from \"kafkajs\";\n\nexport function makeKafka(brokers: string[], ca: string) {\n  // FIXED: certificate validation enforced; trust the broker CA explicitly.\n  return new Kafka({ clientId: \"app\", brokers, ssl: { rejectUnauthorized: true, ca } });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://kafka.js.org/docs/configuration#ssl",
+    "note": "ssl: { rejectUnauthorized: false } is pasted to connect to a managed Kafka (Confluent/MSK) without wiring the CA. It ships and disables MITM protection on the event bus — often the backbone carrying commands and PII between services."
+  }
+}

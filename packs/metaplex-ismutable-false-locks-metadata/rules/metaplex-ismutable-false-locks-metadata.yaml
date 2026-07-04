@@ -1,0 +1,39 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: metaplex-ismutable-false-locks-metadata
+severity: high
+title: "isMutable: false on Metaplex NFT metadata permanently locks it — a
+  broken URI or trait can never be fixed"
+component:
+  name: "@metaplex-foundation/mpl-token-metadata"
+  type: NFT
+  version: ">=2.0.0"
+  sourceUrl: https://developers.metaplex.com/token-metadata/mint#minting-non-fungible-tokens
+detect:
+  modules:
+    - "@metaplex-foundation/mpl-token-metadata"
+    - "@metaplex-foundation/mpl-bubblegum"
+  nameRegex: createNft|createV1|mint|metadata|MetadataArgs|CreateMetadataAccountArgsV3
+  triggerCalls:
+    - createNft
+    - createV1
+    - mintCompressedNFT
+    - createCollection
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: createNft
+    argIndex: 1
+    propName: isMutable
+    forbiddenValue: false
+    passDetail: "isMutable: true — metadata stays updatable, so a broken URI or
+      trait can be corrected later."
+    failDetail: "isMutable: false permanently freezes the NFT/collection metadata
+      on-chain: the update authority can never fix a broken metadata URI, wrong
+      trait, or dead image link. The mint succeeds and the happy path runs — the
+      asset is just silently locked forever."
+    absentCallDetail: No NFT mint / metadata-create call found in this scope.
+    absentArgDetail: isMutable not set explicitly; the SDK default applies
+      (mutable), so no forbidden literal is present.
+test:
+  kind: none

@@ -1,5 +1,5 @@
 import { SyntaxKind } from "ts-morph";
-import type { Expression } from "ts-morph";
+import type { Expression, ObjectLiteralExpression, PropertyAssignment } from "ts-morph";
 import type { Checker } from "../types.ts";
 
 // Solana amounts are almost always BN-wrapped: `minOutAmount: new BN(0)`,
@@ -39,16 +39,21 @@ function isBnWrappedZero(init: Expression): boolean {
 //   absentCallDetail    — message when the target call is not found (cant_tell)
 //   absentArgDetail     — message when the arg/property is absent (cant_tell)
 export const objectArgPropertyForbiddenLiteral: Checker = (c, p) => {
-  const calls = c.fn
-    .getDescendantsOfKind(SyntaxKind.CallExpression)
-    .filter((ce) => {
-      const expr = ce.getExpression();
-      if (expr.getKind() === SyntaxKind.Identifier) return expr.getText() === p.call;
-      if (expr.getKind() === SyntaxKind.PropertyAccessExpression) {
-        return expr.asKind(SyntaxKind.PropertyAccessExpression)!.getName() === p.call;
-      }
-      return false;
-    });
+  // Match both plain calls `foo({...})` and constructor calls `new Foo({...})`.
+  // Many SDK footguns live in a constructor's options object (e.g. passport-jwt
+  // `new Strategy({ ignoreExpiration: true })`, `new Pool({ ssl: {...} })`), which
+  // are NewExpression nodes, not CallExpression — both expose getExpression()/getArguments().
+  const calls = [
+    ...c.fn.getDescendantsOfKind(SyntaxKind.CallExpression),
+    ...c.fn.getDescendantsOfKind(SyntaxKind.NewExpression),
+  ].filter((ce) => {
+    const expr = ce.getExpression();
+    if (expr.getKind() === SyntaxKind.Identifier) return expr.getText() === p.call;
+    if (expr.getKind() === SyntaxKind.PropertyAccessExpression) {
+      return expr.asKind(SyntaxKind.PropertyAccessExpression)!.getName() === p.call;
+    }
+    return false;
+  });
 
   if (calls.length === 0) {
     return {
@@ -70,10 +75,32 @@ export const objectArgPropertyForbiddenLiteral: Checker = (c, p) => {
     };
   }
 
-  const propAssignment = objLit
-    .getProperties()
-    .map((prop) => prop.asKind(SyntaxKind.PropertyAssignment))
-    .find((pa) => pa?.getName() === (p.propName as string));
+  // propName may be a dotted PATH into nested object literals, e.g.
+  // `ssl.rejectUnauthorized` for `new Pool({ ssl: { rejectUnauthorized: false } })`
+  // or `tls.rejectUnauthorized` for nodemailer.createTransport. A single segment
+  // (no dot) behaves exactly as before. We only descend through inline object
+  // literals; a non-inline intermediate (spread, variable, call) is `cant_tell`.
+  const path = String(p.propName).split(".");
+  let cursor: ObjectLiteralExpression | undefined = objLit;
+  let propAssignment: PropertyAssignment | undefined = undefined;
+
+  for (let i = 0; i < path.length; i++) {
+    if (!cursor) break;
+    const seg = path[i];
+    const pa: PropertyAssignment | undefined = cursor
+      .getProperties()
+      .map((prop) => prop.asKind(SyntaxKind.PropertyAssignment))
+      .find((x) => x?.getName() === seg);
+    if (!pa) {
+      propAssignment = undefined;
+      break;
+    }
+    if (i === path.length - 1) {
+      propAssignment = pa;
+      break;
+    }
+    cursor = pa.getInitializer()?.asKind(SyntaxKind.ObjectLiteralExpression);
+  }
 
   if (!propAssignment) {
     return {

@@ -1,0 +1,5 @@
+id: res-cookie-httponly-false
+name: "Res Cookie Httponly False"
+version: 0.1.0
+author: brainblast-fleet
+description: "res.cookie with httpOnly: false — the auth cookie is readable from JavaScript and can be stolen via XSS"

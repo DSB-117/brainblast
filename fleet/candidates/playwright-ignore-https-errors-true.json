@@ -1,0 +1,44 @@
+{
+  "id": "playwright-ignore-https-errors-true",
+  "severity": "high",
+  "title": "playwright newContext with ignoreHTTPSErrors: true — the browser context accepts any TLS certificate (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "playwright",
+    "type": "Networking",
+    "version": ">=1.20.0",
+    "sourceUrl": "https://playwright.dev/docs/api/class-browser#browser-new-context-option-ignore-https-errors"
+  },
+  "detect": {
+    "modules": ["playwright", "playwright-core", "@playwright/test"],
+    "nameRegex": "context|browser|scrape|render|crawl|fetch|newContext",
+    "triggerCalls": ["newContext"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "newContext",
+        "argIndex": 0,
+        "propName": "ignoreHTTPSErrors",
+        "forbiddenValue": true,
+        "passDetail": "browser.newContext validates TLS certificates (ignoreHTTPSErrors is not true) — the context rejects forged or invalid certificates.",
+        "failDetail": "browser.newContext is called with ignoreHTTPSErrors: true, so every page in this Playwright context accepts ANY TLS certificate. In a server-side scraper, SSR renderer, or automated flow that handles authenticated content, a network attacker can present a forged certificate and man-in-the-middle the session — injecting content or capturing credentials. Remove ignoreHTTPSErrors: true; trust a private CA explicitly if one is required.",
+        "absentCallDetail": "No newContext() call in this scope; this rule does not apply here.",
+        "absentArgDetail": "browser.newContext does not set ignoreHTTPSErrors; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "context.ts",
+    "vulnerable": "import { chromium, type Browser } from \"playwright\";\n\nexport async function openContext(browser: Browser) {\n  // VULNERABLE: ignoreHTTPSErrors accepts any certificate — the context can be silently MITM'd.\n  const context = await browser.newContext({ ignoreHTTPSErrors: true });\n  return context;\n}\n",
+    "fixed": "import { chromium, type Browser } from \"playwright\";\n\nexport async function openContext(browser: Browser) {\n  // FIXED: TLS certificate validation enforced for every page in the context.\n  const context = await browser.newContext({ ignoreHTTPSErrors: false });\n  return context;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://playwright.dev/docs/api/class-browser#browser-new-context-option-ignore-https-errors",
+    "note": "ignoreHTTPSErrors: true is copied from test setups (where a self-signed dev cert is expected) into server-side automation that touches real, authenticated sites — silently disabling MITM protection in production."
+  }
+}

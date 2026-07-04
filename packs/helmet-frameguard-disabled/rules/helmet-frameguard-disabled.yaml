@@ -1,0 +1,37 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: helmet-frameguard-disabled
+severity: medium
+title: "helmet({ frameguard: false }) — X-Frame-Options is off, exposing the app
+  to clickjacking"
+component:
+  name: helmet
+  type: Networking
+  version: ">=4.0.0"
+  sourceUrl: https://helmetjs.github.io/#x-frame-options
+detect:
+  modules:
+    - helmet
+  nameRegex: helmet|security|header|app|server|middleware
+  triggerCalls:
+    - helmet
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: helmet
+    argIndex: 0
+    propName: frameguard
+    forbiddenValue: false
+    passDetail: helmet keeps frameguard on (frameguard is not false) — an
+      X-Frame-Options header is sent that stops the app being embedded in a
+      hostile frame.
+    failDetail: "helmet is configured with frameguard: false, which removes the
+      X-Frame-Options header. Any site can now embed this app in an invisible
+      iframe and trick a logged-in user into clicking hidden controls
+      (clickjacking) — approving actions they never intended. Leave frameguard
+      enabled (helmet's default DENY/SAMEORIGIN)."
+    absentCallDetail: No helmet() call in this scope; this rule does not apply here.
+    absentArgDetail: helmet() does not set frameguard; the default (X-Frame-Options
+      enabled) applies.
+test:
+  kind: none

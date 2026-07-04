@@ -1,0 +1,44 @@
+{
+  "id": "ws-reject-unauthorized-false",
+  "severity": "high",
+  "title": "new WebSocket with rejectUnauthorized: false — the wss:// connection skips TLS certificate validation (MITM)",
+  "class": "auth-bypass",
+  "component": {
+    "name": "ws",
+    "type": "Networking",
+    "version": ">=7.0.0",
+    "sourceUrl": "https://github.com/websockets/ws/blob/master/doc/ws.md#new-websocketaddress-protocols-options"
+  },
+  "detect": {
+    "modules": ["ws"],
+    "nameRegex": "socket|ws|client|connect|stream|WebSocket",
+    "triggerCalls": ["WebSocket"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "WebSocket",
+        "argIndex": 1,
+        "propName": "rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "The WebSocket keeps certificate validation on (rejectUnauthorized is not false) — the wss:// server's TLS identity is verified.",
+        "failDetail": "new WebSocket is created with rejectUnauthorized: false, disabling TLS certificate validation on the wss:// connection. A network attacker can present a forged certificate and man-in-the-middle the real-time channel — reading and injecting messages (auth tokens, trades, commands). Remove rejectUnauthorized: false; pass a proper `ca` if a private CA is required.",
+        "absentCallDetail": "No WebSocket construction in this scope; this rule does not apply here.",
+        "absentArgDetail": "WebSocket does not set rejectUnauthorized; the secure default (true) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "socket.ts",
+    "vulnerable": "import WebSocket from \"ws\";\n\nexport function connectFeed(url: string) {\n  // VULNERABLE: rejectUnauthorized: false disables TLS validation — the wss connection can be MITM'd.\n  return new WebSocket(url, { rejectUnauthorized: false, handshakeTimeout: 5000 });\n}\n",
+    "fixed": "import WebSocket from \"ws\";\n\nexport function connectFeed(url: string) {\n  // FIXED: certificate validation enforced on the wss connection.\n  return new WebSocket(url, { rejectUnauthorized: true, handshakeTimeout: 5000 });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/websockets/ws/blob/master/doc/ws.md#new-websocketaddress-protocols-options",
+    "note": "rejectUnauthorized: false on a ws client is the WebSocket version of the https bypass — pasted to connect to a dev server with a self-signed cert, it ships and exposes the real-time channel (often carrying auth tokens or trading data) to MITM."
+  }
+}

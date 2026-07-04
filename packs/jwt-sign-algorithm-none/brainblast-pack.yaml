@@ -1,0 +1,5 @@
+id: jwt-sign-algorithm-none
+name: "Jwt Sign Algorithm None"
+version: 0.1.0
+author: brainblast-fleet
+description: "jwt.sign with algorithm: \"none\" — tokens are issued unsigned and can be forged by anyone"

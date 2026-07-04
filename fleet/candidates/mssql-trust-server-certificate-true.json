@@ -1,0 +1,44 @@
+{
+  "id": "mssql-trust-server-certificate-true",
+  "severity": "critical",
+  "title": "mssql connect with options.trustServerCertificate: true — the SQL Server TLS certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "mssql",
+    "type": "Database",
+    "version": ">=8.0.0",
+    "sourceUrl": "https://github.com/tediousjs/node-mssql#general-same-for-all-drivers"
+  },
+  "detect": {
+    "modules": ["mssql"],
+    "nameRegex": "connect|mssql|sql|db|database|pool|conn",
+    "triggerCalls": ["connect", "ConnectionPool"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "connect",
+        "argIndex": 0,
+        "propName": "options.trustServerCertificate",
+        "forbiddenValue": true,
+        "passDetail": "The mssql connection validates the server certificate (options.trustServerCertificate is not true) — the database connection's TLS identity is verified.",
+        "failDetail": "mssql.connect is configured with options: { trustServerCertificate: true }, which makes the driver trust ANY certificate the SQL Server presents. A network attacker can present a forged certificate and man-in-the-middle the connection — every query, credential, and record is exposed. Remove trustServerCertificate: true; install and trust the server's real CA instead.",
+        "absentCallDetail": "No mssql connect call in this scope; this rule does not apply here.",
+        "absentArgDetail": "mssql.connect does not set options.trustServerCertificate; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "sql.ts",
+    "vulnerable": "import sql from \"mssql\";\n\nexport function connectSql(user: string, password: string, server: string) {\n  // VULNERABLE: options.trustServerCertificate: true — the SQL Server certificate is not validated.\n  return sql.connect({\n    user,\n    password,\n    server,\n    database: \"app\",\n    options: { encrypt: true, trustServerCertificate: true },\n  });\n}\n",
+    "fixed": "import sql from \"mssql\";\n\nexport function connectSql(user: string, password: string, server: string) {\n  // FIXED: certificate validation enforced on the SQL Server connection.\n  return sql.connect({\n    user,\n    password,\n    server,\n    database: \"app\",\n    options: { encrypt: true, trustServerCertificate: false },\n  });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/tediousjs/node-mssql#general-same-for-all-drivers",
+    "note": "trustServerCertificate: true is the Azure SQL / SQL Server equivalent of rejectUnauthorized: false, pasted from a 'fix the self-signed cert error' answer. It ships and disables MITM protection on the database connection."
+  }
+}

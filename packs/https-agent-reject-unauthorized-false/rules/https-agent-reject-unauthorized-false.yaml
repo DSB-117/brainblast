@@ -1,0 +1,39 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: https-agent-reject-unauthorized-false
+severity: critical
+title: "new https.Agent with rejectUnauthorized: false — every request through
+  this agent skips TLS validation (MITM)"
+component:
+  name: node:https
+  type: Networking
+  version: ">=18.0.0"
+  sourceUrl: https://nodejs.org/api/https.html#class-httpsagent
+detect:
+  modules:
+    - https
+    - node:https
+  nameRegex: agent|client|http|request|fetch|axios|api
+  triggerCalls:
+    - Agent
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: Agent
+    argIndex: 0
+    propName: rejectUnauthorized
+    forbiddenValue: false
+    passDetail: The https.Agent keeps certificate validation on (rejectUnauthorized
+      is not false) — connections made through it verify the server's TLS
+      identity.
+    failDetail: "new https.Agent is created with rejectUnauthorized: false,
+      disabling TLS certificate validation for EVERY request routed through this
+      agent. When the agent is attached to axios/got/node-fetch (a common way to
+      'fix' a cert error globally), the whole HTTP client silently trusts forged
+      certificates and can be man-in-the-middled. Remove rejectUnauthorized:
+      false; pass a proper `ca` if a private CA is required."
+    absentCallDetail: No https.Agent construction in this scope; this rule does not apply here.
+    absentArgDetail: https.Agent does not set rejectUnauthorized; the secure default
+      (true) applies.
+test:
+  kind: none

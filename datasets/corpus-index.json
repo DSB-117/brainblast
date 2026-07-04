@@ -1,101 +1,146 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-04T03:07:32.609Z",
+  "generatedAt": "2026-07-04T07:55:49.727Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 24
+      "count": 56
     }
   ],
   "counts": {
-    "vtis": 24,
-    "unique": 24,
+    "vtis": 56,
+    "unique": 56,
     "duplicates": 0,
-    "sdks": 19,
-    "classes": 8
+    "sdks": 39,
+    "classes": 9
   },
   "severityDistribution": {
-    "high": 20,
-    "critical": 3,
-    "medium": 1
+    "high": 39,
+    "critical": 13,
+    "medium": 4
   },
   "classDistribution": {
-    "auth-bypass": 6,
-    "unconfirmed-state": 5,
+    "auth-bypass": 24,
+    "missing-verification": 14,
+    "unconfirmed-state": 7,
     "missing-slippage-guard": 3,
-    "missing-verification": 4,
     "other": 2,
-    "silent-zero-revenue": 2,
+    "immutable-after-deploy": 1,
+    "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
     "wrong-constant": 1
   },
   "sdkDistribution": {
-    "cors": 1,
+    "aws-sdk": 1,
+    "cookie-session": 2,
+    "cors": 2,
+    "express-jwt": 2,
+    "express-rate-limit": 1,
+    "express-session": 2,
     "crypto/tls": 1,
-    "node:https": 1,
+    "helmet": 3,
+    "node:https": 2,
+    "ioredis": 1,
     "Jito (block engine / bundles)": 1,
+    "jose": 1,
     "Jupiter Aggregator API": 1,
-    "express-jwt": 1,
-    "mongoose": 1,
-    "jsonwebtoken": 2,
+    "mongoose": 2,
+    "jsonwebtoken": 4,
+    "kafkajs": 1,
+    "@metaplex-foundation/mpl-token-metadata": 1,
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
+    "mongodb": 1,
+    "mssql": 1,
+    "mysql2": 1,
+    "nodemailer": 1,
+    "passport-jwt": 1,
+    "pg": 1,
+    "playwright": 1,
+    "puppeteer": 1,
     "Pyth Network price feeds": 1,
     "python": 1,
     "@raydium-io/raydium-sdk-v2": 1,
-    "@solana/web3.js": 4,
+    "express": 1,
+    "@solana/web3.js": 6,
     "Solana lamports arithmetic": 1,
     "solidity": 1,
     "SPL Token": 1,
     "better-auth": 2,
-    "Stripe Node SDK": 1
+    "stripe": 1,
+    "Stripe Node SDK": 1,
+    "ws": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 24
+    "synthetic-owned": 56
   },
   "quality": {
-    "mean": 49,
+    "mean": 50,
     "median": 48,
     "min": 30,
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 23,
-      "low": 1
+      "medium": 52,
+      "low": 4
     }
   },
   "coverage": {
     "matrix": {
       "auth-bypass": {
-        "cors": 1,
+        "aws-sdk": 1,
+        "cookie-session": 2,
+        "cors": 2,
+        "express-jwt": 1,
+        "express-rate-limit": 1,
+        "express-session": 2,
         "crypto/tls": 1,
-        "node:https": 1,
-        "jsonwebtoken": 2,
-        "solidity": 1
+        "helmet": 3,
+        "node:https": 2,
+        "jose": 1,
+        "jsonwebtoken": 4,
+        "passport-jwt": 1,
+        "express": 1,
+        "solidity": 1,
+        "ws": 1
+      },
+      "missing-verification": {
+        "ioredis": 1,
+        "express-jwt": 1,
+        "kafkajs": 1,
+        "mongodb": 1,
+        "mongoose": 1,
+        "mssql": 1,
+        "mysql2": 1,
+        "nodemailer": 1,
+        "pg": 1,
+        "playwright": 1,
+        "puppeteer": 1,
+        "SPL Token": 1,
+        "better-auth": 2
       },
       "unconfirmed-state": {
         "Jito (block engine / bundles)": 1,
-        "@solana/web3.js": 4
+        "@solana/web3.js": 6
       },
       "missing-slippage-guard": {
         "Jupiter Aggregator API": 1,
         "@meteora-ag/dlmm": 1,
         "@raydium-io/raydium-sdk-v2": 1
       },
-      "missing-verification": {
-        "express-jwt": 1,
-        "SPL Token": 1,
-        "better-auth": 2
-      },
       "other": {
         "mongoose": 1,
         "Stripe Node SDK": 1
       },
+      "immutable-after-deploy": {
+        "@metaplex-foundation/mpl-token-metadata": 1
+      },
       "silent-zero-revenue": {
         "@metaplex-foundation/js": 1,
-        "python": 1
+        "python": 1,
+        "stripe": 1
       },
       "unchecked-staleness": {
         "Pyth Network price feeds": 1
@@ -107,7 +152,15 @@
     "thinCells": [
       {
         "class": "auth-bypass",
-        "sdk": "cors"
+        "sdk": "aws-sdk"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "express-jwt"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "express-rate-limit"
       },
       {
         "class": "auth-bypass",
@@ -115,11 +168,71 @@
       },
       {
         "class": "auth-bypass",
-        "sdk": "node:https"
+        "sdk": "jose"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "passport-jwt"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "express"
       },
       {
         "class": "auth-bypass",
         "sdk": "solidity"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "ws"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "ioredis"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "express-jwt"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "kafkajs"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "mongodb"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "mongoose"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "mssql"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "mysql2"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "nodemailer"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "pg"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "playwright"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "puppeteer"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "SPL Token"
       },
       {
         "class": "unconfirmed-state",
@@ -138,20 +251,16 @@
         "sdk": "@raydium-io/raydium-sdk-v2"
       },
       {
-        "class": "missing-verification",
-        "sdk": "express-jwt"
-      },
-      {
-        "class": "missing-verification",
-        "sdk": "SPL Token"
-      },
-      {
         "class": "other",
         "sdk": "mongoose"
       },
       {
         "class": "other",
         "sdk": "Stripe Node SDK"
+      },
+      {
+        "class": "immutable-after-deploy",
+        "sdk": "@metaplex-foundation/mpl-token-metadata"
       },
       {
         "class": "silent-zero-revenue",
@@ -162,6 +271,10 @@
         "sdk": "python"
       },
       {
+        "class": "silent-zero-revenue",
+        "sdk": "stripe"
+      },
+      {
         "class": "unchecked-staleness",
         "sdk": "Pyth Network price feeds"
       },
@@ -170,14 +283,84 @@
         "sdk": "Solana lamports arithmetic"
       }
     ],
-    "missingClasses": [
-      "immutable-after-deploy"
-    ]
+    "missingClasses": []
   },
   "scored": [
     {
+      "trapId": "aws-s3-public-read-acl",
+      "sdk": "aws-sdk",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "cookie-session-httponly-false",
+      "sdk": "cookie-session",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "cookie-session-secure-false",
+      "sdk": "cookie-session",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "cors-credentials-reflect-origin-true",
+      "sdk": "cors",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "cors-wildcard-origin",
       "sdk": "cors",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "express-jwt-credentials-not-required",
+      "sdk": "express-jwt",
+      "class": "auth-bypass",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "express-rate-limit-max-zero",
+      "sdk": "express-rate-limit",
+      "class": "auth-bypass",
+      "severity": "medium",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 30
+    },
+    {
+      "trapId": "express-session-cookie-secure-false",
+      "sdk": "express-session",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "express-session-saveuninitialized-true",
+      "sdk": "express-session",
       "class": "auth-bypass",
       "severity": "high",
       "corroborationCount": 0,
@@ -194,6 +377,42 @@
       "score": 60
     },
     {
+      "trapId": "helmet-csp-disabled",
+      "sdk": "helmet",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "helmet-frameguard-disabled",
+      "sdk": "helmet",
+      "class": "auth-bypass",
+      "severity": "medium",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 30
+    },
+    {
+      "trapId": "helmet-hsts-maxage-zero",
+      "sdk": "helmet",
+      "class": "auth-bypass",
+      "severity": "medium",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 30
+    },
+    {
+      "trapId": "https-agent-reject-unauthorized-false",
+      "sdk": "node:https",
+      "class": "auth-bypass",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
       "trapId": "https-reject-unauthorized-disabled",
       "sdk": "node:https",
       "class": "auth-bypass",
@@ -203,6 +422,15 @@
       "score": 60
     },
     {
+      "trapId": "ioredis-tls-reject-unauthorized-false",
+      "sdk": "ioredis",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "jito-bundle-zero-tip",
       "sdk": "Jito (block engine / bundles)",
       "class": "unconfirmed-state",
@@ -210,6 +438,15 @@
       "corroborationCount": 0,
       "license": "synthetic-owned",
       "score": 48
+    },
+    {
+      "trapId": "jose-sign-alg-none",
+      "sdk": "jose",
+      "class": "auth-bypass",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
     },
     {
       "trapId": "jupiter-quote-zero-slippage",
@@ -239,6 +476,24 @@
       "score": 48
     },
     {
+      "trapId": "jwt-sign-algorithm-none",
+      "sdk": "jsonwebtoken",
+      "class": "auth-bypass",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "jwt-sign-allow-insecure-key-sizes-true",
+      "sdk": "jsonwebtoken",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "jwt-verify-algorithm-none",
       "sdk": "jsonwebtoken",
       "class": "auth-bypass",
@@ -257,6 +512,24 @@
       "score": 48
     },
     {
+      "trapId": "kafkajs-ssl-reject-unauthorized-false",
+      "sdk": "kafkajs",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "metaplex-ismutable-false-locks-metadata",
+      "sdk": "@metaplex-foundation/mpl-token-metadata",
+      "class": "immutable-after-deploy",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "metaplex-nft-royalty-zero",
       "sdk": "@metaplex-foundation/js",
       "class": "silent-zero-revenue",
@@ -269,6 +542,87 @@
       "trapId": "meteora-dlmm-zero-min-out",
       "sdk": "@meteora-ag/dlmm",
       "class": "missing-slippage-guard",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "mongodb-client-tls-allow-invalid-certificates",
+      "sdk": "mongodb",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "mongoose-tls-allow-invalid-certificates",
+      "sdk": "mongoose",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "mssql-trust-server-certificate-true",
+      "sdk": "mssql",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "mysql2-ssl-reject-unauthorized-false",
+      "sdk": "mysql2",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "nodemailer-tls-reject-unauthorized-false",
+      "sdk": "nodemailer",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "passport-jwt-ignore-expiration",
+      "sdk": "passport-jwt",
+      "class": "auth-bypass",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "pg-pool-ssl-reject-unauthorized-false",
+      "sdk": "pg",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "playwright-ignore-https-errors-true",
+      "sdk": "playwright",
+      "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "puppeteer-ignore-https-errors-true",
+      "sdk": "puppeteer",
+      "class": "missing-verification",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",
@@ -302,7 +656,25 @@
       "score": 48
     },
     {
+      "trapId": "res-cookie-httponly-false",
+      "sdk": "express",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "solana-backpack-sendrawtransaction-skippreflight",
+      "sdk": "@solana/web3.js",
+      "class": "unconfirmed-state",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "solana-confirm-processed-commitment",
       "sdk": "@solana/web3.js",
       "class": "unconfirmed-state",
       "severity": "high",
@@ -330,6 +702,15 @@
     },
     {
       "trapId": "solana-quiknode-sendandconfirm-skippreflight",
+      "sdk": "@solana/web3.js",
+      "class": "unconfirmed-state",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "solana-send-skip-preflight-true",
       "sdk": "@solana/web3.js",
       "class": "unconfirmed-state",
       "severity": "high",
@@ -383,9 +764,27 @@
       "score": 48
     },
     {
+      "trapId": "stripe-connect-zero-application-fee",
+      "sdk": "stripe",
+      "class": "silent-zero-revenue",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "stripe-paymentintents-moved",
       "sdk": "Stripe Node SDK",
       "class": "other",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "ws-reject-unauthorized-false",
+      "sdk": "ws",
+      "class": "auth-bypass",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",

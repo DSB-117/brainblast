@@ -1,48 +1,65 @@
 # Corpus coverage — Brainblast Verified Traps
 
-_Generated 2026-07-04T03:07:32.609Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
+_Generated 2026-07-04T07:55:49.727Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
 
 ## Summary
-- **24** VTIs (24 unique, 0 duplicate) across **19** SDKs and **8** trap classes.
-- **Quality** (0–100): mean 49, median 48, range 30–60.
-  Buckets — high (≥70): 0, medium (40–69): 23, low (<40): 1.
-- **Lots:** synthetic-owned (24).
+- **56** VTIs (56 unique, 0 duplicate) across **39** SDKs and **9** trap classes.
+- **Quality** (0–100): mean 50, median 48, range 30–60.
+  Buckets — high (≥70): 0, medium (40–69): 52, low (<40): 4.
+- **Lots:** synthetic-owned (56).
 
 ## Coverage heatmap (class × SDK, unique records)
-| class \ sdk | @metaplex-foundation/js | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Solana lamports arithmetic | Stripe Node SDK | better-auth | cors | crypto/tls | express-jwt | jsonwebtoken | mongoose | node:https | python | solidity |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| auth-bypass | · | · | · | · | · | · | · | · | · | · | · | 1 | 1 | · | 2 | · | 1 | · | 1 |
-| missing-slippage-guard | · | 1 | 1 | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| missing-verification | · | · | · | · | · | · | · | 1 | · | · | 2 | · | · | 1 | · | · | · | · | · |
-| other | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | 1 | · | · | · |
-| silent-zero-revenue | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · |
-| unchecked-staleness | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · |
-| unconfirmed-state | · | · | · | 4 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| wrong-constant | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · |
+| class \ sdk | @metaplex-foundation/js | @metaplex-foundation/mpl-token-metadata | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Solana lamports arithmetic | Stripe Node SDK | aws-sdk | better-auth | cookie-session | cors | crypto/tls | express | express-jwt | express-rate-limit | express-session | helmet | ioredis | jose | jsonwebtoken | kafkajs | mongodb | mongoose | mssql | mysql2 | node:https | nodemailer | passport-jwt | pg | playwright | puppeteer | python | solidity | stripe | ws |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| auth-bypass | · | · | · | · | · | · | · | · | · | · | · | 1 | · | 2 | 2 | 1 | 1 | 1 | 1 | 2 | 3 | · | 1 | 4 | · | · | · | · | · | 2 | · | 1 | · | · | · | · | 1 | · | 1 |
+| immutable-after-deploy | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| missing-slippage-guard | · | · | 1 | 1 | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| missing-verification | · | · | · | · | · | · | · | · | 1 | · | · | · | 2 | · | · | · | · | 1 | · | · | · | 1 | · | · | 1 | 1 | 1 | 1 | 1 | · | 1 | · | 1 | 1 | 1 | · | · | · | · |
+| other | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · |
+| silent-zero-revenue | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | 1 | · |
+| unchecked-staleness | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| unconfirmed-state | · | · | · | · | 6 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| wrong-constant | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
 
 (`·` = no coverage yet.)
 
 ## Scout work-orders (where to dig next)
 **Thin cells** (only one instance — corroborate or broaden):
-- auth-bypass · cors
+- auth-bypass · aws-sdk
+- auth-bypass · express-jwt
+- auth-bypass · express-rate-limit
 - auth-bypass · crypto/tls
-- auth-bypass · node:https
+- auth-bypass · jose
+- auth-bypass · passport-jwt
+- auth-bypass · express
 - auth-bypass · solidity
+- auth-bypass · ws
+- missing-verification · ioredis
+- missing-verification · express-jwt
+- missing-verification · kafkajs
+- missing-verification · mongodb
+- missing-verification · mongoose
+- missing-verification · mssql
+- missing-verification · mysql2
+- missing-verification · nodemailer
+- missing-verification · pg
+- missing-verification · playwright
+- missing-verification · puppeteer
+- missing-verification · SPL Token
 - unconfirmed-state · Jito (block engine / bundles)
 - missing-slippage-guard · Jupiter Aggregator API
 - missing-slippage-guard · @meteora-ag/dlmm
 - missing-slippage-guard · @raydium-io/raydium-sdk-v2
-- missing-verification · express-jwt
-- missing-verification · SPL Token
 - other · mongoose
 - other · Stripe Node SDK
+- immutable-after-deploy · @metaplex-foundation/mpl-token-metadata
 - silent-zero-revenue · @metaplex-foundation/js
 - silent-zero-revenue · python
+- silent-zero-revenue · stripe
 - unchecked-staleness · Pyth Network price feeds
 - wrong-constant · Solana lamports arithmetic
 
-**Uncovered trap classes** (no instance yet):
-- immutable-after-deploy
+_All trap classes have at least one instance._
 
 ## $BRAIN curation
 The per-record `score` in `corpus-index.json` is what pricing and the curation

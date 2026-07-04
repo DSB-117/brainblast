@@ -1,0 +1,40 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: solana-send-skip-preflight-true
+severity: high
+title: "sendRawTransaction with skipPreflight: true — a failing transaction is
+  broadcast with no simulation, so errors surface silently (or never)"
+component:
+  name: "@solana/web3.js"
+  type: Blockchain
+  version: ">=1.30.0"
+  sourceUrl: https://solana-labs.github.io/solana-web3.js/classes/Connection.html#sendRawTransaction
+detect:
+  modules:
+    - "@solana/web3.js"
+  nameRegex: send|submit|tx|transaction|broadcast|relay
+  triggerCalls:
+    - sendRawTransaction
+    - sendTransaction
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: sendRawTransaction
+    argIndex: 1
+    propName: skipPreflight
+    forbiddenValue: true
+    passDetail: sendRawTransaction runs preflight simulation (skipPreflight is not
+      true) — a transaction that would fail is caught before it is broadcast and
+      its error is surfaced to the caller.
+    failDetail: "sendRawTransaction is called with skipPreflight: true, so the
+      client broadcasts the transaction WITHOUT the preflight simulation that
+      normally catches a failing instruction. A transaction that reverts
+      on-chain is sent anyway; the caller gets a signature and assumes success,
+      while the intended state change (a transfer, a swap, a mint) silently
+      never happened. Remove skipPreflight: true unless you independently
+      simulate and confirm the transaction."
+    absentCallDetail: No sendRawTransaction call in this scope; this rule does not apply here.
+    absentArgDetail: sendRawTransaction does not set skipPreflight; the default (run
+      preflight) applies.
+test:
+  kind: none

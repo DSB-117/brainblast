@@ -1,28 +1,85 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T03:07:29.439Z",
+  "generatedAt": "2026-07-04T07:55:45.102Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 24,
-    "sdks": 19,
-    "packsScanned": 24
+    "records": 56,
+    "sdks": 39,
+    "packsScanned": 56
   },
   "classDistribution": {
-    "auth-bypass": 6,
-    "unconfirmed-state": 5,
+    "auth-bypass": 24,
+    "missing-verification": 14,
+    "unconfirmed-state": 7,
     "missing-slippage-guard": 3,
-    "missing-verification": 4,
     "other": 2,
-    "silent-zero-revenue": 2,
+    "immutable-after-deploy": 1,
+    "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
     "wrong-constant": 1
   },
   "proof": [
     {
+      "pack": "aws-s3-public-read-acl",
+      "rule": "aws-s3-public-read-acl",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "cookie-session-httponly-false",
+      "rule": "cookie-session-httponly-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "cookie-session-secure-false",
+      "rule": "cookie-session-secure-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "cors-credentials-reflect-origin-true",
+      "rule": "cors-credentials-reflect-origin-true",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "cors-wildcard-origin",
       "rule": "cors-wildcard-origin",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "express-jwt-credentials-not-required",
+      "rule": "express-jwt-credentials-not-required",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "express-rate-limit-max-zero",
+      "rule": "express-rate-limit-max-zero",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "express-session-cookie-secure-false",
+      "rule": "express-session-cookie-secure-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "express-session-saveuninitialized-true",
+      "rule": "express-session-saveuninitialized-true",
       "red": true,
       "green": true,
       "emitted": true
@@ -35,6 +92,34 @@
       "emitted": true
     },
     {
+      "pack": "helmet-csp-disabled",
+      "rule": "helmet-csp-disabled",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "helmet-frameguard-disabled",
+      "rule": "helmet-frameguard-disabled",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "helmet-hsts-maxage-zero",
+      "rule": "helmet-hsts-maxage-zero",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "https-agent-reject-unauthorized-false",
+      "rule": "https-agent-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "https-reject-unauthorized-disabled",
       "rule": "https-reject-unauthorized-disabled",
       "red": true,
@@ -42,8 +127,22 @@
       "emitted": true
     },
     {
+      "pack": "ioredis-tls-reject-unauthorized-false",
+      "rule": "ioredis-tls-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "jito-bundle-zero-tip",
       "rule": "jito-bundle-zero-tip",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "jose-sign-alg-none",
+      "rule": "jose-sign-alg-none",
       "red": true,
       "green": true,
       "emitted": true
@@ -70,6 +169,20 @@
       "emitted": true
     },
     {
+      "pack": "jwt-sign-algorithm-none",
+      "rule": "jwt-sign-algorithm-none",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "jwt-sign-allow-insecure-key-sizes-true",
+      "rule": "jwt-sign-allow-insecure-key-sizes-true",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "jwt-verify-algorithm-none",
       "rule": "jwt-verify-algorithm-none",
       "red": true,
@@ -84,6 +197,20 @@
       "emitted": true
     },
     {
+      "pack": "kafkajs-ssl-reject-unauthorized-false",
+      "rule": "kafkajs-ssl-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "metaplex-ismutable-false-locks-metadata",
+      "rule": "metaplex-ismutable-false-locks-metadata",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "metaplex-nft-royalty-zero",
       "rule": "metaplex-nft-royalty-zero",
       "red": true,
@@ -93,6 +220,69 @@
     {
       "pack": "meteora-dlmm-zero-min-out",
       "rule": "meteora-dlmm-zero-min-out",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "mongodb-client-tls-allow-invalid-certificates",
+      "rule": "mongodb-client-tls-allow-invalid-certificates",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "mongoose-tls-allow-invalid-certificates",
+      "rule": "mongoose-tls-allow-invalid-certificates",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "mssql-trust-server-certificate-true",
+      "rule": "mssql-trust-server-certificate-true",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "mysql2-ssl-reject-unauthorized-false",
+      "rule": "mysql2-ssl-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "nodemailer-tls-reject-unauthorized-false",
+      "rule": "nodemailer-tls-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "passport-jwt-ignore-expiration",
+      "rule": "passport-jwt-ignore-expiration",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "pg-pool-ssl-reject-unauthorized-false",
+      "rule": "pg-pool-ssl-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "playwright-ignore-https-errors-true",
+      "rule": "playwright-ignore-https-errors-true",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "puppeteer-ignore-https-errors-true",
+      "rule": "puppeteer-ignore-https-errors-true",
       "red": true,
       "green": true,
       "emitted": true
@@ -119,8 +309,22 @@
       "emitted": true
     },
     {
+      "pack": "res-cookie-httponly-false",
+      "rule": "res-cookie-httponly-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "solana-backpack-sendrawtransaction-skippreflight",
       "rule": "solana-backpack-sendrawtransaction-skippreflight",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "solana-confirm-processed-commitment",
+      "rule": "solana-confirm-processed-commitment",
       "red": true,
       "green": true,
       "emitted": true
@@ -142,6 +346,13 @@
     {
       "pack": "solana-quiknode-sendandconfirm-skippreflight",
       "rule": "solana-quiknode-sendandconfirm-skippreflight",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "solana-send-skip-preflight-true",
+      "rule": "solana-send-skip-preflight-true",
       "red": true,
       "green": true,
       "emitted": true
@@ -182,8 +393,22 @@
       "emitted": true
     },
     {
+      "pack": "stripe-connect-zero-application-fee",
+      "rule": "stripe-connect-zero-application-fee",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "stripe-paymentintents-moved",
       "rule": "stripe-paymentintents-moved",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "ws-reject-unauthorized-false",
+      "rule": "ws-reject-unauthorized-false",
       "red": true,
       "green": true,
       "emitted": true

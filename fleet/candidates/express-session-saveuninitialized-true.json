@@ -1,0 +1,44 @@
+{
+  "id": "express-session-saveuninitialized-true",
+  "severity": "high",
+  "title": "express-session configured with saveUninitialized: true — empty, unauthenticated sessions are persisted (session fixation + resource exhaustion)",
+  "class": "auth-bypass",
+  "component": {
+    "name": "express-session",
+    "type": "Auth",
+    "version": ">=1.17.0",
+    "sourceUrl": "https://www.npmjs.com/package/express-session#saveuninitialized"
+  },
+  "detect": {
+    "modules": ["express-session"],
+    "nameRegex": "session|auth|app|server|index|config",
+    "triggerCalls": ["session"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "session",
+        "argIndex": 0,
+        "propName": "saveUninitialized",
+        "forbiddenValue": true,
+        "passDetail": "express-session sets saveUninitialized to false — a session cookie is only established once something is actually stored on the session (e.g. after login), preventing empty-session persistence.",
+        "failDetail": "express-session is configured with saveUninitialized: true, so a brand-new, never-modified (unauthenticated) session is forced into the store and a Set-Cookie is sent to every visitor. This enables session fixation — an attacker can pre-seed a session id and get it accepted — and lets anonymous traffic exhaust the session store. The express-session docs recommend false; set saveUninitialized: false.",
+        "absentCallDetail": "This scope does not call session(); this rule does not apply here.",
+        "absentArgDetail": "session() does not pass a saveUninitialized option literal. The default is true (deprecated) — set saveUninitialized: false explicitly to be safe."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "app.ts",
+    "vulnerable": "import session from \"express-session\";\nimport express from \"express\";\n\nexport function configureSession(app: express.Express) {\n  // VULNERABLE: saveUninitialized: true persists empty, unauthenticated sessions —\n  // enabling session fixation and unbounded store growth from anonymous traffic.\n  app.use(session({\n    secret: process.env.SECRET as string,\n    resave: false,\n    saveUninitialized: true,\n    cookie: { maxAge: 1000 * 60 * 60 * 24 },\n  }));\n  return app;\n}\n",
+    "fixed": "import session from \"express-session\";\nimport express from \"express\";\n\nexport function configureSession(app: express.Express) {\n  // FIXED: saveUninitialized: false — a session is only stored once it is modified\n  // (e.g. after login), preventing empty-session persistence and fixation.\n  app.use(session({\n    secret: process.env.SECRET as string,\n    resave: false,\n    saveUninitialized: false,\n    cookie: { maxAge: 1000 * 60 * 60 * 24 },\n  }));\n  return app;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://www.npmjs.com/package/express-session#saveuninitialized",
+    "note": "The express-session README documents the default (true) as deprecated and recommends false, noting true is 'useful for login sessions' but persists uninitialized sessions and enables session-fixation / storage-exhaustion. The zachgoll/express-session-authentication-starter tutorial (final and final-all-in-one branches) ships saveUninitialized: true, and AI agents scaffolding auth from such starters copy the insecure default verbatim."
+  }
+}

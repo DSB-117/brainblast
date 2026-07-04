@@ -1,0 +1,36 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: express-rate-limit-max-zero
+severity: medium
+title: "express-rate-limit with max: 0 — the limiter is disabled, so there is no
+  brute-force / abuse throttle"
+component:
+  name: express-rate-limit
+  type: Auth
+  version: ">=6.0.0"
+  sourceUrl: https://github.com/express-rate-limit/express-rate-limit#max
+detect:
+  modules:
+    - express-rate-limit
+  nameRegex: limit|rate|throttle|guard|middleware|app|login
+  triggerCalls:
+    - rateLimit
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: rateLimit
+    argIndex: 0
+    propName: max
+    forbiddenValue: 0
+    passDetail: express-rate-limit sets a positive max — requests beyond the
+      threshold in the window are throttled.
+    failDetail: "express-rate-limit is configured with max: 0, which disables the
+      limit entirely (0 means no cap). The middleware is mounted and looks like
+      it protects the route, but it never throttles anything — login, OTP, and
+      password-reset endpoints can be brute-forced without limit. Set max to a
+      real per-window cap (e.g. 5 for auth endpoints)."
+    absentCallDetail: No rateLimit() call in this scope; this rule does not apply here.
+    absentArgDetail: rateLimit() does not set max as a literal; verify the resolved
+      cap is a positive number, not 0.
+test:
+  kind: none

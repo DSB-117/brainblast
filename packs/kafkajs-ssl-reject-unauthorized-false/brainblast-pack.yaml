@@ -1,0 +1,5 @@
+id: kafkajs-ssl-reject-unauthorized-false
+name: "Kafkajs Ssl Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "new Kafka with ssl.rejectUnauthorized: false — the broker TLS certificate is not validated (MITM)"

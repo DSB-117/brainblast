@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T03:07:33.179Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:55:50.357Z from 1 lot(s): seed-vti.jsonl._
 
-**24 verified trap instances** across **19 SDKs** and **8 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T03:07:29.439Z → 2026-07-04T03:07:29.439Z.
+**56 verified trap instances** across **39 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 30–60). Freshness: 2026-07-04T07:55:45.102Z → 2026-07-04T07:55:45.102Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,12 +20,13 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-| auth-bypass | 6 |
-| unconfirmed-state | 5 |
-| missing-verification | 4 |
+| auth-bypass | 24 |
+| missing-verification | 14 |
+| unconfirmed-state | 7 |
 | missing-slippage-guard | 3 |
+| silent-zero-revenue | 3 |
 | other | 2 |
-| silent-zero-revenue | 2 |
+| immutable-after-deploy | 1 |
 | unchecked-staleness | 1 |
 | wrong-constant | 1 |
 
@@ -33,25 +34,45 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | SDK | Count |
 |---|---|
-| @solana/web3.js | 4 |
-| jsonwebtoken | 2 |
+| @solana/web3.js | 6 |
+| jsonwebtoken | 4 |
+| helmet | 3 |
+| cookie-session | 2 |
+| cors | 2 |
+| express-jwt | 2 |
+| express-session | 2 |
+| node:https | 2 |
+| mongoose | 2 |
 | better-auth | 2 |
-| cors | 1 |
+| aws-sdk | 1 |
+| express-rate-limit | 1 |
 | crypto/tls | 1 |
-| node:https | 1 |
+| ioredis | 1 |
 | Jito (block engine / bundles) | 1 |
+| jose | 1 |
 | Jupiter Aggregator API | 1 |
-| express-jwt | 1 |
-| mongoose | 1 |
+| kafkajs | 1 |
+| @metaplex-foundation/mpl-token-metadata | 1 |
 | @metaplex-foundation/js | 1 |
 | @meteora-ag/dlmm | 1 |
+| mongodb | 1 |
+| mssql | 1 |
+| mysql2 | 1 |
+| nodemailer | 1 |
+| passport-jwt | 1 |
+| pg | 1 |
+| playwright | 1 |
+| puppeteer | 1 |
 | Pyth Network price feeds | 1 |
 | python | 1 |
 | @raydium-io/raydium-sdk-v2 | 1 |
+| express | 1 |
 | Solana lamports arithmetic | 1 |
 | solidity | 1 |
 | SPL Token | 1 |
+| stripe | 1 |
 | Stripe Node SDK | 1 |
+| ws | 1 |
 
 ## Sample (receipt-only teasers)
 
@@ -59,11 +80,11 @@ The open sample tier shows metadata + the RED→GREEN receipt (proof we have it)
 
 | Trap | SDK | Class | Severity | Score | Corroboration | RED→GREEN |
 |---|---|---|---|---|---|---|
+| aws-s3-public-read-acl | aws-sdk | auth-bypass | high | 48 | 0 | ✓/✓ |
+| cookie-session-httponly-false | cookie-session | auth-bypass | high | 48 | 0 | ✓/✓ |
+| cookie-session-secure-false | cookie-session | auth-bypass | high | 48 | 0 | ✓/✓ |
+| cors-credentials-reflect-origin-true | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
 | cors-wildcard-origin | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
-| go-tls-insecureskipverify | crypto/tls | auth-bypass | critical | 60 | 0 | ✓/✓ |
-| https-reject-unauthorized-disabled | node:https | auth-bypass | critical | 60 | 0 | ✓/✓ |
-| jito-bundle-zero-tip | Jito (block engine / bundles) | unconfirmed-state | high | 48 | 0 | ✓/✓ |
-| jupiter-quote-zero-slippage | Jupiter Aggregator API | missing-slippage-guard | high | 48 | 0 | ✓/✓ |
 
 ---
 

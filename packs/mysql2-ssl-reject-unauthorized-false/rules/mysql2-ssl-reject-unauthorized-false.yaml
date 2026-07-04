@@ -1,0 +1,40 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: mysql2-ssl-reject-unauthorized-false
+severity: critical
+title: "mysql2 createConnection with ssl.rejectUnauthorized: false — the MySQL
+  TLS certificate is not validated (MITM)"
+component:
+  name: mysql2
+  type: Database
+  version: ">=2.0.0"
+  sourceUrl: https://sidorares.github.io/node-mysql2/docs#using-connection-options
+detect:
+  modules:
+    - mysql2
+    - mysql2/promise
+  nameRegex: connection|mysql|db|database|connect|pool|conn
+  triggerCalls:
+    - createConnection
+    - createPool
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: createConnection
+    argIndex: 0
+    propName: ssl.rejectUnauthorized
+    forbiddenValue: false
+    passDetail: The mysql2 connection validates the server certificate
+      (ssl.rejectUnauthorized is not false) — the database connection's TLS
+      identity is verified.
+    failDetail: "createConnection is configured with ssl: { rejectUnauthorized:
+      false }, disabling validation of the MySQL server's TLS certificate.
+      Anyone on the network path can present a forged certificate and
+      man-in-the-middle the database connection — every query and credential is
+      exposed. Remove rejectUnauthorized: false; provide the provider's CA via
+      ssl.ca."
+    absentCallDetail: No createConnection call in this scope; this rule does not apply here.
+    absentArgDetail: createConnection does not set ssl.rejectUnauthorized; the
+      secure default (validate) applies.
+test:
+  kind: none

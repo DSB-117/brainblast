@@ -1,0 +1,5 @@
+id: puppeteer-ignore-https-errors-true
+name: "Puppeteer Ignore Https Errors True"
+version: 0.1.0
+author: brainblast-fleet
+description: "puppeteer.launch with ignoreHTTPSErrors: true — the headless browser accepts any TLS certificate (MITM)"

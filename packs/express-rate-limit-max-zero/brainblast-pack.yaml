@@ -1,0 +1,5 @@
+id: express-rate-limit-max-zero
+name: "Express Rate Limit Max Zero"
+version: 0.1.0
+author: brainblast-fleet
+description: "express-rate-limit with max: 0 — the limiter is disabled, so there is no brute-force / abuse throttle"

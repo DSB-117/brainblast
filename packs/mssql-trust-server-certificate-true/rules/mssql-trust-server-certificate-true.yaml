@@ -1,0 +1,39 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: mssql-trust-server-certificate-true
+severity: critical
+title: "mssql connect with options.trustServerCertificate: true — the SQL Server
+  TLS certificate is not validated (MITM)"
+component:
+  name: mssql
+  type: Database
+  version: ">=8.0.0"
+  sourceUrl: https://github.com/tediousjs/node-mssql#general-same-for-all-drivers
+detect:
+  modules:
+    - mssql
+  nameRegex: connect|mssql|sql|db|database|pool|conn
+  triggerCalls:
+    - connect
+    - ConnectionPool
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: connect
+    argIndex: 0
+    propName: options.trustServerCertificate
+    forbiddenValue: true
+    passDetail: The mssql connection validates the server certificate
+      (options.trustServerCertificate is not true) — the database connection's
+      TLS identity is verified.
+    failDetail: "mssql.connect is configured with options: { trustServerCertificate:
+      true }, which makes the driver trust ANY certificate the SQL Server
+      presents. A network attacker can present a forged certificate and
+      man-in-the-middle the connection — every query, credential, and record is
+      exposed. Remove trustServerCertificate: true; install and trust the
+      server's real CA instead."
+    absentCallDetail: No mssql connect call in this scope; this rule does not apply here.
+    absentArgDetail: mssql.connect does not set options.trustServerCertificate; the
+      secure default (validate) applies.
+test:
+  kind: none

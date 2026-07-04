@@ -1,0 +1,44 @@
+{
+  "id": "jwt-sign-allow-insecure-key-sizes-true",
+  "severity": "high",
+  "title": "jwt.sign with allowInsecureKeySizes: true — signs tokens with a key below the RSA minimum, weakening every signature",
+  "class": "auth-bypass",
+  "component": {
+    "name": "jsonwebtoken",
+    "type": "Auth",
+    "version": ">=9.0.0",
+    "sourceUrl": "https://github.com/auth0/node-jsonwebtoken#jwtsignpayload-secretorprivatekey-options-callback"
+  },
+  "detect": {
+    "modules": ["jsonwebtoken"],
+    "nameRegex": "sign|issue|token|jwt|auth|login|session",
+    "triggerCalls": ["sign"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "sign",
+        "argIndex": 2,
+        "propName": "allowInsecureKeySizes",
+        "forbiddenValue": true,
+        "passDetail": "jwt.sign does not force allowInsecureKeySizes: true — the library enforces its minimum key-size check, so tokens are signed with an adequately sized key.",
+        "failDetail": "jwt.sign is called with allowInsecureKeySizes: true, which suppresses jsonwebtoken's built-in guard that rejects RSA keys shorter than 2048 bits. Tokens then get signed with an undersized (brute-forceable) key and the signatures they carry are weak — an attacker who factors the small key can forge valid tokens. Remove the flag (or set it false) so the minimum-key-size check protects every signature.",
+        "absentCallDetail": "No jwt.sign call in this scope; this rule does not apply here.",
+        "absentArgDetail": "jwt.sign does not pass an allowInsecureKeySizes literal; the library default (false, key-size check enforced) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "token.ts",
+    "vulnerable": "import jwt from \"jsonwebtoken\";\n\nexport function signToken(payload: object, secret: string) {\n  // VULNERABLE: allowInsecureKeySizes: true disables the RSA minimum-key-size guard, so the token is signed with a brute-forceable key.\n  return jwt.sign(payload, secret, { algorithm: \"HS256\", allowInsecureKeySizes: true, expiresIn: 86400 });\n}\n",
+    "fixed": "import jwt from \"jsonwebtoken\";\n\nexport function signToken(payload: object, secret: string) {\n  // FIXED: allowInsecureKeySizes: false keeps the minimum-key-size check enforced.\n  return jwt.sign(payload, secret, { algorithm: \"HS256\", allowInsecureKeySizes: false, expiresIn: 86400 });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/auth0/node-jsonwebtoken#jwtsignpayload-secretorprivatekey-options-callback",
+    "note": "Copied verbatim from the bezkoder/node-js-jwt-auth tutorial, whose login controller signs with { algorithm: 'HS256', allowInsecureKeySizes: true }. The flag exists only to bypass jsonwebtoken's post-9.0 minimum-key-size guard; a starter that ships it teaches agents to weaken every signature to silence a warning."
+  }
+}

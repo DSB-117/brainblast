@@ -1,0 +1,5 @@
+id: pg-pool-ssl-reject-unauthorized-false
+name: "Pg Pool Ssl Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "new pg Pool with ssl.rejectUnauthorized: false — the Postgres TLS certificate is not validated (MITM)"

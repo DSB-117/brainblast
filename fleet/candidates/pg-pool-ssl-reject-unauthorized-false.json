@@ -1,0 +1,44 @@
+{
+  "id": "pg-pool-ssl-reject-unauthorized-false",
+  "severity": "critical",
+  "title": "new pg Pool with ssl.rejectUnauthorized: false — the Postgres TLS certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "pg",
+    "type": "Database",
+    "version": ">=8.0.0",
+    "sourceUrl": "https://node-postgres.com/features/ssl"
+  },
+  "detect": {
+    "modules": ["pg"],
+    "nameRegex": "pool|pg|db|database|connect|conn|client",
+    "triggerCalls": ["Pool", "Client"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "Pool",
+        "argIndex": 0,
+        "propName": "ssl.rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "The pg Pool validates the Postgres server certificate (ssl.rejectUnauthorized is not false) — the database connection's TLS identity is verified.",
+        "failDetail": "new Pool is created with ssl: { rejectUnauthorized: false }, disabling validation of the Postgres server's TLS certificate. Anyone on the network path can present a forged certificate and man-in-the-middle the database connection — every query, credential, and row is exposed. Remove rejectUnauthorized: false; provide the managed provider's CA via ssl.ca instead.",
+        "absentCallDetail": "No pg Pool construction in this scope; this rule does not apply here.",
+        "absentArgDetail": "The pg Pool does not set ssl.rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "pool.ts",
+    "vulnerable": "import { Pool } from \"pg\";\n\nexport function makePool(connectionString: string) {\n  // VULNERABLE: ssl.rejectUnauthorized: false — the Postgres server certificate is not validated.\n  return new Pool({ connectionString, ssl: { rejectUnauthorized: false } });\n}\n",
+    "fixed": "import { Pool } from \"pg\";\n\nexport function makePool(connectionString: string, caCert: string) {\n  // FIXED: certificate validation enforced; trust the provider's CA explicitly.\n  return new Pool({ connectionString, ssl: { rejectUnauthorized: true, ca: caCert } });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://node-postgres.com/features/ssl",
+    "note": "ssl: { rejectUnauthorized: false } is the single most common node-postgres snippet on the internet, pasted to connect to Heroku/RDS without configuring the CA. It works, so it ships — silently disabling MITM protection on the database."
+  }
+}

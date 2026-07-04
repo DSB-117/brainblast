@@ -1,0 +1,5 @@
+id: solana-send-skip-preflight-true
+name: "Solana Send Skip Preflight True"
+version: 0.1.0
+author: brainblast-fleet
+description: "sendRawTransaction with skipPreflight: true — a failing transaction is broadcast with no simulation, so errors surface silently (or never)"

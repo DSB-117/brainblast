@@ -1,0 +1,44 @@
+{
+  "id": "mongoose-tls-allow-invalid-certificates",
+  "severity": "critical",
+  "title": "mongoose.connect with tlsAllowInvalidCertificates: true — the database TLS certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "mongoose",
+    "type": "Database",
+    "version": ">=6.0.0",
+    "sourceUrl": "https://mongoosejs.com/docs/connections.html#tls-ssl-connections"
+  },
+  "detect": {
+    "modules": ["mongoose"],
+    "nameRegex": "connect|mongo|db|database|conn|index|config",
+    "triggerCalls": ["connect"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "connect",
+        "argIndex": 1,
+        "propName": "tlsAllowInvalidCertificates",
+        "forbiddenValue": true,
+        "passDetail": "mongoose.connect validates the database server certificate (tlsAllowInvalidCertificates is not true) — the connection's TLS identity is verified.",
+        "failDetail": "mongoose.connect is called with tlsAllowInvalidCertificates: true, which turns OFF validation of the MongoDB server's TLS certificate. Anyone on the network path can present a forged certificate and silently man-in-the-middle the database connection — every query and credential is exposed. Remove tlsAllowInvalidCertificates: true; supply the proper CA via `tlsCAFile` if a private CA is used.",
+        "absentCallDetail": "No mongoose.connect call in this scope; this rule does not apply here.",
+        "absentArgDetail": "mongoose.connect does not set tlsAllowInvalidCertificates; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "db.ts",
+    "vulnerable": "import mongoose from \"mongoose\";\n\nexport function connectDatabase(uri: string) {\n  // VULNERABLE: the MongoDB server's TLS certificate is not validated — the connection can be MITM'd.\n  return mongoose.connect(uri, {\n    tls: true,\n    tlsAllowInvalidCertificates: true,\n  });\n}\n",
+    "fixed": "import mongoose from \"mongoose\";\n\nexport function connectDatabase(uri: string) {\n  // FIXED: certificate validation enforced (the secure default, here explicit).\n  return mongoose.connect(uri, {\n    tls: true,\n    tlsAllowInvalidCertificates: false,\n  });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://mongoosejs.com/docs/connections.html#tls-ssl-connections",
+    "note": "tlsAllowInvalidCertificates: true is the Mongo/mongoose equivalent of rejectUnauthorized: false — pasted to silence a self-signed-cert error against a managed cluster, it ships to production and disables MITM protection on the database connection."
+  }
+}

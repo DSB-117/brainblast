@@ -1,0 +1,44 @@
+{
+  "id": "puppeteer-ignore-https-errors-true",
+  "severity": "high",
+  "title": "puppeteer.launch with ignoreHTTPSErrors: true — the headless browser accepts any TLS certificate (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "puppeteer",
+    "type": "Networking",
+    "version": ">=13.0.0",
+    "sourceUrl": "https://pptr.dev/api/puppeteer.launchoptions"
+  },
+  "detect": {
+    "modules": ["puppeteer", "puppeteer-core"],
+    "nameRegex": "launch|browser|scrape|render|crawl|fetch|puppeteer",
+    "triggerCalls": ["launch"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "launch",
+        "argIndex": 0,
+        "propName": "ignoreHTTPSErrors",
+        "forbiddenValue": true,
+        "passDetail": "puppeteer.launch validates TLS certificates (ignoreHTTPSErrors is not true) — the headless browser rejects forged or invalid certificates.",
+        "failDetail": "puppeteer.launch is called with ignoreHTTPSErrors: true, so the headless browser accepts ANY TLS certificate — self-signed, expired, or attacker-supplied. When this browser fetches authenticated pages or scrapes data server-side, anyone on the network path can man-in-the-middle it and feed forged content or capture credentials. Remove ignoreHTTPSErrors: true; if a private CA is needed, trust it explicitly.",
+        "absentCallDetail": "No puppeteer launch() call in this scope; this rule does not apply here.",
+        "absentArgDetail": "puppeteer.launch does not set ignoreHTTPSErrors; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "scrape.ts",
+    "vulnerable": "import puppeteer from \"puppeteer\";\n\nexport async function launchScraper() {\n  // VULNERABLE: ignoreHTTPSErrors accepts any certificate — the scrape can be silently MITM'd.\n  const browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true });\n  return browser;\n}\n",
+    "fixed": "import puppeteer from \"puppeteer\";\n\nexport async function launchScraper() {\n  // FIXED: TLS certificate validation enforced.\n  const browser = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: false });\n  return browser;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://pptr.dev/api/puppeteer.launchoptions",
+    "note": "ignoreHTTPSErrors: true is pasted to get past a self-signed cert on a staging box and left in place. In a server-side scraper or SSR renderer that pulls authenticated content, it silently disables MITM protection for every page it loads."
+  }
+}

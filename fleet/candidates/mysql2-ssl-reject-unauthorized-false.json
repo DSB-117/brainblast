@@ -1,0 +1,44 @@
+{
+  "id": "mysql2-ssl-reject-unauthorized-false",
+  "severity": "critical",
+  "title": "mysql2 createConnection with ssl.rejectUnauthorized: false — the MySQL TLS certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "mysql2",
+    "type": "Database",
+    "version": ">=2.0.0",
+    "sourceUrl": "https://sidorares.github.io/node-mysql2/docs#using-connection-options"
+  },
+  "detect": {
+    "modules": ["mysql2", "mysql2/promise"],
+    "nameRegex": "connection|mysql|db|database|connect|pool|conn",
+    "triggerCalls": ["createConnection", "createPool"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "createConnection",
+        "argIndex": 0,
+        "propName": "ssl.rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "The mysql2 connection validates the server certificate (ssl.rejectUnauthorized is not false) — the database connection's TLS identity is verified.",
+        "failDetail": "createConnection is configured with ssl: { rejectUnauthorized: false }, disabling validation of the MySQL server's TLS certificate. Anyone on the network path can present a forged certificate and man-in-the-middle the database connection — every query and credential is exposed. Remove rejectUnauthorized: false; provide the provider's CA via ssl.ca.",
+        "absentCallDetail": "No createConnection call in this scope; this rule does not apply here.",
+        "absentArgDetail": "createConnection does not set ssl.rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "conn.ts",
+    "vulnerable": "import mysql from \"mysql2/promise\";\n\nexport function makeConnection(host: string, user: string, password: string) {\n  // VULNERABLE: ssl.rejectUnauthorized: false — the MySQL server certificate is not validated.\n  return mysql.createConnection({ host, user, password, ssl: { rejectUnauthorized: false } });\n}\n",
+    "fixed": "import mysql from \"mysql2/promise\";\n\nexport function makeConnection(host: string, user: string, password: string, ca: string) {\n  // FIXED: certificate validation enforced; trust the provider's CA explicitly.\n  return mysql.createConnection({ host, user, password, ssl: { rejectUnauthorized: true, ca } });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://sidorares.github.io/node-mysql2/docs#using-connection-options",
+    "note": "ssl: { rejectUnauthorized: false } is the mysql2 equivalent of the node-postgres footgun, pasted to connect to a managed MySQL (PlanetScale/RDS) without wiring the CA. Nothing errors, so it ships and disables MITM protection on the database."
+  }
+}

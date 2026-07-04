@@ -1,0 +1,44 @@
+{
+  "id": "https-agent-reject-unauthorized-false",
+  "severity": "critical",
+  "title": "new https.Agent with rejectUnauthorized: false — every request through this agent skips TLS validation (MITM)",
+  "class": "auth-bypass",
+  "component": {
+    "name": "node:https",
+    "type": "Networking",
+    "version": ">=18.0.0",
+    "sourceUrl": "https://nodejs.org/api/https.html#class-httpsagent"
+  },
+  "detect": {
+    "modules": ["https", "node:https"],
+    "nameRegex": "agent|client|http|request|fetch|axios|api",
+    "triggerCalls": ["Agent"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "Agent",
+        "argIndex": 0,
+        "propName": "rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "The https.Agent keeps certificate validation on (rejectUnauthorized is not false) — connections made through it verify the server's TLS identity.",
+        "failDetail": "new https.Agent is created with rejectUnauthorized: false, disabling TLS certificate validation for EVERY request routed through this agent. When the agent is attached to axios/got/node-fetch (a common way to 'fix' a cert error globally), the whole HTTP client silently trusts forged certificates and can be man-in-the-middled. Remove rejectUnauthorized: false; pass a proper `ca` if a private CA is required.",
+        "absentCallDetail": "No https.Agent construction in this scope; this rule does not apply here.",
+        "absentArgDetail": "https.Agent does not set rejectUnauthorized; the secure default (true) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "agent.ts",
+    "vulnerable": "import https from \"node:https\";\n\nexport function makeHttpsAgent() {\n  // VULNERABLE: rejectUnauthorized: false disables TLS validation for every request through this agent.\n  return new https.Agent({ keepAlive: true, rejectUnauthorized: false });\n}\n",
+    "fixed": "import https from \"node:https\";\n\nexport function makeHttpsAgent() {\n  // FIXED: certificate validation enforced for all requests through this agent.\n  return new https.Agent({ keepAlive: true, rejectUnauthorized: true });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://nodejs.org/api/https.html#class-httpsagent",
+    "note": "Setting rejectUnauthorized: false on a shared https.Agent is the 'global' version of the per-request bypass — one agent disables MITM protection for an entire HTTP client. Pasted from a Stack Overflow answer to silence a self-signed-cert error, it ships everywhere the agent is reused."
+  }
+}

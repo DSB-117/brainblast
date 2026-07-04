@@ -1,0 +1,5 @@
+id: aws-s3-public-read-acl
+name: "Aws S3 Public Read Acl"
+version: 0.1.0
+author: brainblast-fleet
+description: "S3 putObject with ACL: \"public-read\" — every uploaded object is world-readable"

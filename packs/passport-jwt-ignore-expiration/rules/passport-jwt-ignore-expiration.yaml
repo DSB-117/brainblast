@@ -1,0 +1,37 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: passport-jwt-ignore-expiration
+severity: critical
+title: "passport-jwt Strategy with ignoreExpiration: true — expired JWTs are
+  accepted forever"
+component:
+  name: passport-jwt
+  type: Auth
+  version: ">=4.0.0"
+  sourceUrl: http://www.passportjs.org/packages/passport-jwt/
+detect:
+  modules:
+    - passport-jwt
+  nameRegex: jwt|strategy|auth|passport|makeJwt|guard
+  triggerCalls:
+    - Strategy
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: Strategy
+    argIndex: 0
+    propName: ignoreExpiration
+    forbiddenValue: true
+    passDetail: The passport-jwt Strategy enforces expiry (ignoreExpiration is not
+      true) — a token past its exp claim is rejected.
+    failDetail: "The passport-jwt Strategy is constructed with ignoreExpiration:
+      true, so the exp claim is NOT checked and expired tokens are accepted
+      indefinitely. A token leaked or logged months ago still authenticates;
+      revocation-by-expiry no longer works. Remove ignoreExpiration: true (the
+      default false enforces expiry)."
+    absentCallDetail: No passport-jwt Strategy construction in this scope; this rule
+      does not apply here.
+    absentArgDetail: The Strategy does not set ignoreExpiration; the secure default
+      (false) applies.
+test:
+  kind: none

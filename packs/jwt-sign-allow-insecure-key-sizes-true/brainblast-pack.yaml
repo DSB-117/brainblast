@@ -1,0 +1,5 @@
+id: jwt-sign-allow-insecure-key-sizes-true
+name: "Jwt Sign Allow Insecure Key Sizes True"
+version: 0.1.0
+author: brainblast-fleet
+description: "jwt.sign with allowInsecureKeySizes: true — signs tokens with a key below the RSA minimum, weakening every signature"

@@ -1,0 +1,44 @@
+{
+  "id": "ioredis-tls-reject-unauthorized-false",
+  "severity": "high",
+  "title": "new Redis with tls.rejectUnauthorized: false — the Redis TLS certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "ioredis",
+    "type": "Database",
+    "version": ">=4.0.0",
+    "sourceUrl": "https://github.com/redis/ioredis#tls-options"
+  },
+  "detect": {
+    "modules": ["ioredis"],
+    "nameRegex": "redis|cache|client|connect|store|Redis",
+    "triggerCalls": ["Redis"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "Redis",
+        "argIndex": 0,
+        "propName": "tls.rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "The ioredis client validates the server certificate (tls.rejectUnauthorized is not false) — the Redis connection's TLS identity is verified.",
+        "failDetail": "new Redis is created with tls: { rejectUnauthorized: false }, disabling validation of the Redis server's TLS certificate. Anyone on the network path can present a forged certificate and man-in-the-middle the connection — reading and tampering with cached sessions, rate-limit counters, and queues. Remove rejectUnauthorized: false; trust the provider's CA via tls.ca.",
+        "absentCallDetail": "No ioredis Redis construction in this scope; this rule does not apply here.",
+        "absentArgDetail": "The Redis client does not set tls.rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "redis.ts",
+    "vulnerable": "import Redis from \"ioredis\";\n\nexport function makeRedis(host: string, port: number) {\n  // VULNERABLE: tls.rejectUnauthorized: false — the Redis server certificate is not validated.\n  return new Redis({ host, port, tls: { rejectUnauthorized: false } });\n}\n",
+    "fixed": "import Redis from \"ioredis\";\n\nexport function makeRedis(host: string, port: number, ca: string) {\n  // FIXED: certificate validation enforced; trust the provider's CA explicitly.\n  return new Redis({ host, port, tls: { rejectUnauthorized: true, ca } });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/redis/ioredis#tls-options",
+    "note": "tls: { rejectUnauthorized: false } is pasted to connect to a managed Redis (Upstash/ElastiCache) whose cert chain isn't configured locally. It ships and disables MITM protection on the store that often holds session state."
+  }
+}
