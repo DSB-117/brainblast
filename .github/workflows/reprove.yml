@@ -1,0 +1,31 @@
+# Reconciliation loop (brainblast side): re-prove RED→GREEN the VTIs submitted
+# directly to registry.brainblast.tech/api/vti, and write the verdict back so the
+# proven ones surface in the served corpus — no PR per VTI.
+name: reprove-submissions
+
+on:
+  schedule:
+    - cron: "*/30 * * * *" # every 30 minutes
+  workflow_dispatch: {}
+
+# Don't pile runs up if one is slow.
+concurrency:
+  group: reprove-submissions
+  cancel-in-progress: false
+
+jobs:
+  reprove:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - run: npm run reprove
+        env:
+          FLEET_REGISTRY_URL: https://registry.brainblast.tech
+          BRAINBLAST_REPROVE_TOKEN: ${{ secrets.BRAINBLAST_REPROVE_TOKEN }}

@@ -64,6 +64,7 @@
     "pack:dataset": "tsx scripts/pack-dataset.ts",
     "ingest:vti": "tsx scripts/ingest-vti.ts",
     "submit:vti": "tsx scripts/submit-vti.ts",
+    "reprove": "tsx scripts/reprove-submissions.ts",
     "registry:serve": "tsx scripts/registry-server.ts",
     "corpus": "tsx scripts/corpus-report.ts",
     "catalog": "tsx scripts/catalog.ts",
