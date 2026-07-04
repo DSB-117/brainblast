@@ -1,5 +1,5 @@
 import { SyntaxKind } from "ts-morph";
-import type { Expression } from "ts-morph";
+import type { Expression, ObjectLiteralExpression, PropertyAssignment } from "ts-morph";
 import type { Checker } from "../types.ts";
 
 // Solana amounts are almost always BN-wrapped: `minOutAmount: new BN(0)`,
@@ -75,10 +75,32 @@ export const objectArgPropertyForbiddenLiteral: Checker = (c, p) => {
     };
   }
 
-  const propAssignment = objLit
-    .getProperties()
-    .map((prop) => prop.asKind(SyntaxKind.PropertyAssignment))
-    .find((pa) => pa?.getName() === (p.propName as string));
+  // propName may be a dotted PATH into nested object literals, e.g.
+  // `ssl.rejectUnauthorized` for `new Pool({ ssl: { rejectUnauthorized: false } })`
+  // or `tls.rejectUnauthorized` for nodemailer.createTransport. A single segment
+  // (no dot) behaves exactly as before. We only descend through inline object
+  // literals; a non-inline intermediate (spread, variable, call) is `cant_tell`.
+  const path = String(p.propName).split(".");
+  let cursor: ObjectLiteralExpression | undefined = objLit;
+  let propAssignment: PropertyAssignment | undefined = undefined;
+
+  for (let i = 0; i < path.length; i++) {
+    if (!cursor) break;
+    const seg = path[i];
+    const pa: PropertyAssignment | undefined = cursor
+      .getProperties()
+      .map((prop) => prop.asKind(SyntaxKind.PropertyAssignment))
+      .find((x) => x?.getName() === seg);
+    if (!pa) {
+      propAssignment = undefined;
+      break;
+    }
+    if (i === path.length - 1) {
+      propAssignment = pa;
+      break;
+    }
+    cursor = pa.getInitializer()?.asKind(SyntaxKind.ObjectLiteralExpression);
+  }
 
   if (!propAssignment) {
     return {
