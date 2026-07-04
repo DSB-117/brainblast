@@ -66,9 +66,15 @@ each subagent EXACTLY this contract:
 > property set to a forbidden string/number/boolean literal), write a candidate
 > Finding to `fleet/candidates/<id>.json` following `fleet/README.md`. The
 > `vulnerable` fixture must contain the forbidden value; the `fixed` fixture must
-> set a safe literal (so it PASSES). Set `class`. **Do not fabricate** — if the
-> repo has no provable footgun, write nothing and report "clean". Return: repo,
-> the candidate ids you wrote (or "clean"), and a one-line note per finding.
+> set a safe literal (so it PASSES). Set `class`. **Capture provenance from the
+> real code** — the registry requires it: record the exact `git rev-parse HEAD` of
+> the shallow clone and, in the candidate's `provenance`, set `sourceRef` to
+> `github.com/<owner>/<repo>/blob/<that-sha>/<path>` and `evidence` to the verbatim
+> vulnerable line as it appears in the file. Without a real, fetchable sourceRef +
+> evidence the finding can only enter the repo seed corpus, never the registry.
+> **Do not fabricate** — if the repo has no provable footgun, write nothing and
+> report "clean". Return: repo, the candidate ids you wrote (or "clean"), and a
+> one-line note per finding.
 
 Collect each subagent's report (repo → candidate ids / clean).
 
@@ -89,22 +95,46 @@ npm run sla   # must be green (100% reproduce) before anything is submitted
 
 ## Phase 4 — Submit + log
 
-**Submit (gated — never skip the gate).** Only after `npm run sla` is green AND
-`npm run typecheck` passes, submit the newly-promoted VTIs:
+**Submit via the git-less API (the standard default). No push, no branch, no PR.**
+The corpus is grown by POSTing each proven candidate to the registry's `/api/vti`
+ingest, which **re-proves it RED→GREEN server-side** and inserts it into the corpus
+database. The client is never trusted; a non-reproducing or secret-bearing
+submission is rejected with reasons. Ingest is **idempotent** — resubmitting an
+existing trap returns `duplicate: true` and no-ops, so it is safe to re-run.
+
+**The registry requires verified provenance — it only accepts REAL finds.** Each
+submission must include `provenance.sourceRef` (a commit-pinned GitHub URL, e.g.
+`github.com/owner/repo/blob/<40-hex-sha>/path` — a branch ref is rejected) and
+`provenance.evidence` (a verbatim snippet of the vulnerable line). The server
+fetches that exact file at that exact commit and confirms the evidence is present;
+if it 404s or the line isn't there, the submission is rejected. **This means the
+Phase 2 scouts MUST capture the commit SHA + the exact vulnerable line** when they
+find a footgun — a candidate without real, fetchable provenance cannot enter the
+registry (only the repo seed corpus below accepts un-sourced/authored traps).
+
+First check what the registry already has (so you only send new ones), then submit
+each newly-promoted candidate:
 
 ```bash
-git add packs/ datasets/ fleet/candidates/
-git commit -m "fleet: <N> VTIs from <SDKs> (auto-sourced)"
+# what's already in the registry
+curl -s "${FLEET_REGISTRY_URL:-https://registry.brainblast.tech}/api/vti" | jq '.count, [.records[].id]'
+
+# dry-run the SAME gate locally first (nothing sent), then submit for real
+npm run submit:vti -- --candidate fleet/candidates/<id>.json --dry-run
+npm run submit:vti -- --candidate fleet/candidates/<id>.json
 ```
 
-Then, **per the operator's policy** (`BRAINBLAST_FLEET_PUSH`):
-- unset / `branch` (default, recommended): push a `fleet/auto-<date>` branch and
-  open a PR — automated but reviewable before the public corpus changes.
-- `main`: the operator has authorized direct push — `git push origin HEAD:main`.
+Loop over the candidates promoted this run. `FLEET_REGISTRY_URL` overrides the
+endpoint; `BRAINBLAST_INGEST_TOKEN` supplies the Bearer token if the registry
+requires one. If any submission is rejected, **stop and report** its reasons — do
+not hand-edit a fixture to force it through.
 
-If any gate is red, **stop and report** — do not submit. The proof gate already
-guarantees each VTI reproduces; this second gate guarantees the *whole corpus*
-still does.
+**Optional — repo seed corpus (only when explicitly asked).** Committing the
+generated `packs/` + `datasets/` and opening a PR changes the *bundled* corpus
+that ships in the repo. This is a heavier, separate destination from the registry
+and is **not** part of the default flow. Do it only when the operator explicitly
+wants the seed corpus updated (e.g. a release); otherwise the API submission above
+is all that's needed and **no git push is required**.
 
 **Log to the shared ledger** so sibling fleets skip these repos:
 
