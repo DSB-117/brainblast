@@ -1,0 +1,43 @@
+{
+  "id": "payout-split-drops-remainder",
+  "severity": "high",
+  "title": "splitEqually floors each share and drops the remainder — the split sums to less than the total",
+  "class": "other",
+  "component": {
+    "name": "typescript",
+    "type": "Language",
+    "version": ">=4.0",
+    "sourceUrl": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/floor"
+  },
+  "detect": {
+    "modules": [],
+    "nameRegex": "split|payout|distribute|share|allocate|dividend",
+    "triggerCalls": []
+  },
+  "binding": {
+    "check": {
+      "kind": "differential-io",
+      "params": {
+        "lang": "typescript",
+        "entryFile": "split.ts",
+        "export": "splitEqually",
+        "cases": [
+          { "input": [100, 3], "output": [34, 33, 33] },
+          { "input": [10, 4], "output": [3, 3, 2, 2] },
+          { "input": [7, 2], "output": [4, 3] },
+          { "input": [9, 3], "output": [3, 3, 3] }
+        ]
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "split.ts",
+    "vulnerable": "export function splitEqually(total: number, n: number): number[] {\n  // VULNERABLE: floors each share and never redistributes the remainder, so the\n  // returned shares sum to LESS than total. Splitting 100 across 3 pays out 99 —\n  // one unit is silently lost on every uneven split.\n  const share = Math.floor(total / n);\n  return Array.from({ length: n }, () => share);\n}\n",
+    "fixed": "export function splitEqually(total: number, n: number): number[] {\n  // FIXED: distribute the remainder one unit at a time so the shares sum to total.\n  const base = Math.floor(total / n);\n  const remainder = total - base * n;\n  return Array.from({ length: n }, (_unused, i) => base + (i < remainder ? 1 : 0));\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/floor",
+    "note": "Dropping the integer-division remainder in a payout/dividend split has no static shape — it looks correct and balances on even splits. Golden I/O reveals the shares sum to less than the total, leaking the remainder on every uneven distribution."
+  }
+}

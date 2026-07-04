@@ -1,24 +1,24 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T08:58:44.553Z",
+  "generatedAt": "2026-07-04T16:33:21.829Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 81,
-    "sdks": 61,
-    "packsScanned": 81
+    "records": 85,
+    "sdks": 62,
+    "packsScanned": 85
   },
   "classDistribution": {
     "missing-verification": 27,
     "auth-bypass": 34,
-    "other": 4,
+    "other": 6,
     "unconfirmed-state": 7,
-    "missing-slippage-guard": 3,
+    "missing-slippage-guard": 4,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
-    "wrong-constant": 1
+    "wrong-constant": 2
   },
   "proof": [
     {
@@ -45,6 +45,13 @@
     {
       "pack": "aws-s3-v3-public-read-acl",
       "rule": "aws-s3-v3-public-read-acl",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "bigint-lamports-precision-loss",
+      "rule": "bigint-lamports-precision-loss",
       "red": true,
       "green": true,
       "emitted": true
@@ -400,6 +407,13 @@
       "emitted": true
     },
     {
+      "pack": "payout-split-drops-remainder",
+      "rule": "payout-split-drops-remainder",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "pg-pool-ssl-reject-unauthorized-false",
       "rule": "pg-pool-ssl-reject-unauthorized-false",
       "red": true,
@@ -458,6 +472,13 @@
     {
       "pack": "sequelize-dialectoptions-ssl-reject-unauthorized-false",
       "rule": "sequelize-dialectoptions-ssl-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "slippage-bps-wrong-divisor",
+      "rule": "slippage-bps-wrong-divisor",
       "red": true,
       "green": true,
       "emitted": true
@@ -563,6 +584,13 @@
     {
       "pack": "tedious-trust-server-certificate-true",
       "rule": "tedious-trust-server-certificate-true",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "token-decimals-off-by-one-scale",
+      "rule": "token-decimals-off-by-one-scale",
       "red": true,
       "green": true,
       "emitted": true

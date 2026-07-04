@@ -1,0 +1,5 @@
+id: bigint-lamports-precision-loss
+name: "Bigint Lamports Precision Loss"
+version: 0.1.0
+author: brainblast-fleet
+description: "addAmounts sums token amounts as Number — silently loses precision above 2^53"

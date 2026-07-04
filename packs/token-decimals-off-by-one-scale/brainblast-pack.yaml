@@ -1,0 +1,5 @@
+id: token-decimals-off-by-one-scale
+name: "Token Decimals Off By One Scale"
+version: 0.1.0
+author: brainblast-fleet
+description: "toBaseUnits scales by 10^(decimals-1) — every amount is 10x too small"

@@ -1,0 +1,39 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: bigint-lamports-precision-loss
+severity: high
+title: addAmounts sums token amounts as Number — silently loses precision above 2^53
+component:
+  name: typescript
+  type: Language
+  version: ">=4.0"
+  sourceUrl: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+detect:
+  modules: []
+  nameRegex: amount|lamports|balance|sum|add|total|wei
+  triggerCalls: []
+check:
+  kind: differential-io
+  params:
+    lang: typescript
+    entryFile: amount.ts
+    export: addAmounts
+    cases:
+      - input:
+          - "5"
+          - "7"
+        output: "12"
+      - input:
+          - "9007199254740993"
+          - "10"
+        output: "9007199254741003"
+      - input:
+          - "9007199254740992"
+          - "3"
+        output: "9007199254740995"
+      - input:
+          - "1000000000000000000"
+          - "2000000000000000000"
+        output: "3000000000000000000"
+test:
+  kind: none

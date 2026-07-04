@@ -1,0 +1,43 @@
+{
+  "id": "token-decimals-off-by-one-scale",
+  "severity": "critical",
+  "title": "toBaseUnits scales by 10^(decimals-1) — every amount is 10x too small",
+  "class": "wrong-constant",
+  "component": {
+    "name": "typescript",
+    "type": "Language",
+    "version": ">=4.0",
+    "sourceUrl": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Exponentiation"
+  },
+  "detect": {
+    "modules": [],
+    "nameRegex": "decimals|baseunits|scale|tobase|lamports|smallestunit",
+    "triggerCalls": []
+  },
+  "binding": {
+    "check": {
+      "kind": "differential-io",
+      "params": {
+        "lang": "typescript",
+        "entryFile": "units.ts",
+        "export": "toBaseUnits",
+        "cases": [
+          { "input": [1, 6], "output": 1000000 },
+          { "input": [2, 9], "output": 2000000000 },
+          { "input": [5, 2], "output": 500 },
+          { "input": [10, 8], "output": 1000000000 }
+        ]
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "units.ts",
+    "vulnerable": "export function toBaseUnits(uiAmount: number, decimals: number): number {\n  // VULNERABLE: exponent is off by one (decimals - 1), so every amount is scaled\n  // to 1/10th of its true base-unit value. A 1.0 USDC transfer moves 0.1 USDC.\n  return uiAmount * 10 ** (decimals - 1);\n}\n",
+    "fixed": "export function toBaseUnits(uiAmount: number, decimals: number): number {\n  // FIXED: scale by 10^decimals — the correct base-unit conversion.\n  return uiAmount * 10 ** decimals;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Exponentiation",
+    "note": "Off-by-one in the decimals exponent is a wrong-constant footgun with no static shape — both versions compile and run. Golden I/O exposes that every converted amount is 10x too small, so transfers/mints move a tenth of the intended value."
+  }
+}

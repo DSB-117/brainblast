@@ -1,0 +1,5 @@
+id: slippage-bps-wrong-divisor
+name: "Slippage Bps Wrong Divisor"
+version: 0.1.0
+author: brainblast-fleet
+description: "minAmountOut divides basis points by 100 instead of 10000 — slippage guard over-deducts, accepting catastrophic fills"

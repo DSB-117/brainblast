@@ -1,42 +1,43 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-04T08:58:47.734Z",
+  "generatedAt": "2026-07-04T16:33:27.238Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 81
+      "count": 85
     }
   ],
   "counts": {
-    "vtis": 81,
-    "unique": 81,
+    "vtis": 85,
+    "unique": 85,
     "duplicates": 0,
-    "sdks": 61,
+    "sdks": 62,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 55,
-    "critical": 20,
+    "high": 57,
+    "critical": 22,
     "medium": 6
   },
   "classDistribution": {
     "missing-verification": 27,
     "auth-bypass": 34,
-    "other": 4,
+    "other": 6,
     "unconfirmed-state": 7,
-    "missing-slippage-guard": 3,
+    "missing-slippage-guard": 4,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
-    "wrong-constant": 1
+    "wrong-constant": 2
   },
   "sdkDistribution": {
     "amqplib": 1,
     "@apollo/server": 1,
     "aws-sdk": 1,
     "@aws-sdk/client-s3": 1,
+    "typescript": 4,
     "cassandra-driver": 1,
     "cookie": 1,
     "cookie-session": 2,
@@ -96,7 +97,7 @@
     "ws": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 81
+    "synthetic-owned": 85
   },
   "quality": {
     "mean": 50,
@@ -105,7 +106,7 @@
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 75,
+      "medium": 79,
       "low": 6
     }
   },
@@ -164,6 +165,7 @@
         "ws": 1
       },
       "other": {
+        "typescript": 2,
         "express-fileupload": 1,
         "mongoose": 1,
         "libxmljs2": 1,
@@ -176,7 +178,8 @@
       "missing-slippage-guard": {
         "Jupiter Aggregator API": 1,
         "@meteora-ag/dlmm": 1,
-        "@raydium-io/raydium-sdk-v2": 1
+        "@raydium-io/raydium-sdk-v2": 1,
+        "typescript": 1
       },
       "immutable-after-deploy": {
         "@metaplex-foundation/mpl-token-metadata": 1
@@ -190,7 +193,8 @@
         "Pyth Network price feeds": 1
       },
       "wrong-constant": {
-        "Solana lamports arithmetic": 1
+        "Solana lamports arithmetic": 1,
+        "typescript": 1
       }
     },
     "thinCells": [
@@ -391,6 +395,10 @@
         "sdk": "@raydium-io/raydium-sdk-v2"
       },
       {
+        "class": "missing-slippage-guard",
+        "sdk": "typescript"
+      },
+      {
         "class": "immutable-after-deploy",
         "sdk": "@metaplex-foundation/mpl-token-metadata"
       },
@@ -413,6 +421,10 @@
       {
         "class": "wrong-constant",
         "sdk": "Solana lamports arithmetic"
+      },
+      {
+        "class": "wrong-constant",
+        "sdk": "typescript"
       }
     ],
     "missingClasses": []
@@ -449,6 +461,15 @@
       "trapId": "aws-s3-v3-public-read-acl",
       "sdk": "@aws-sdk/client-s3",
       "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "bigint-lamports-precision-loss",
+      "sdk": "typescript",
+      "class": "other",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",
@@ -905,6 +926,15 @@
       "score": 60
     },
     {
+      "trapId": "payout-split-drops-remainder",
+      "sdk": "typescript",
+      "class": "other",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
       "trapId": "pg-pool-ssl-reject-unauthorized-false",
       "sdk": "pg",
       "class": "missing-verification",
@@ -980,6 +1010,15 @@
       "trapId": "sequelize-dialectoptions-ssl-reject-unauthorized-false",
       "sdk": "sequelize",
       "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "slippage-bps-wrong-divisor",
+      "sdk": "typescript",
+      "class": "missing-slippage-guard",
       "severity": "critical",
       "corroborationCount": 0,
       "license": "synthetic-owned",
@@ -1115,6 +1154,15 @@
       "trapId": "tedious-trust-server-certificate-true",
       "sdk": "tedious",
       "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
+      "trapId": "token-decimals-off-by-one-scale",
+      "sdk": "typescript",
+      "class": "wrong-constant",
       "severity": "critical",
       "corroborationCount": 0,
       "license": "synthetic-owned",
