@@ -1,0 +1,5 @@
+id: stripe-connect-zero-application-fee
+name: "Stripe Connect Zero Application Fee"
+version: 0.1.0
+author: brainblast-fleet
+description: "Stripe PaymentIntent with application_fee_amount: 0 — the platform silently collects no fee on connected-account charges"

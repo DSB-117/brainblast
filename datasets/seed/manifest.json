@@ -1,26 +1,33 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:21:10.231Z",
+  "generatedAt": "2026-07-04T07:23:22.688Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 28,
-    "sdks": 23,
-    "packsScanned": 28
+    "records": 30,
+    "sdks": 24,
+    "packsScanned": 30
   },
   "classDistribution": {
-    "auth-bypass": 12,
+    "auth-bypass": 13,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
-    "silent-zero-revenue": 2,
+    "silent-zero-revenue": 3,
     "missing-verification": 4,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
     "other": 1
   },
   "proof": [
+    {
+      "pack": "cookie-session-httponly-false",
+      "rule": "cookie-session-httponly-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
     {
       "pack": "cookie-session-secure-false",
       "rule": "cookie-session-secure-false",
@@ -206,6 +213,13 @@
     {
       "pack": "spl-transfer-not-checked-in-payout",
       "rule": "spl-transfer-not-checked-in-payout",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "stripe-connect-zero-application-fee",
+      "rule": "stripe-connect-zero-application-fee",
       "red": true,
       "green": true,
       "emitted": true

@@ -1,0 +1,5 @@
+id: cookie-session-httponly-false
+name: "Cookie Session Httponly False"
+version: 0.1.0
+author: brainblast-fleet
+description: "cookie-session with httpOnly: false — the session cookie is readable from JavaScript (XSS session theft)"

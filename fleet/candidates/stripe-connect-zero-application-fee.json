@@ -1,0 +1,44 @@
+{
+  "id": "stripe-connect-zero-application-fee",
+  "severity": "high",
+  "title": "Stripe PaymentIntent with application_fee_amount: 0 — the platform silently collects no fee on connected-account charges",
+  "class": "silent-zero-revenue",
+  "component": {
+    "name": "stripe",
+    "type": "Payments",
+    "version": ">=10.0.0",
+    "sourceUrl": "https://stripe.com/docs/api/payment_intents/create#create_payment_intent-application_fee_amount"
+  },
+  "detect": {
+    "modules": ["stripe"],
+    "nameRegex": "payment|charge|checkout|intent|create|stripe|fee",
+    "triggerCalls": ["create"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "create",
+        "argIndex": 0,
+        "propName": "application_fee_amount",
+        "forbiddenValue": 0,
+        "passDetail": "The PaymentIntent sets a non-zero application_fee_amount — the platform collects its fee on each connected-account charge.",
+        "failDetail": "The PaymentIntent is created with application_fee_amount: 0 on a connected-account (Stripe Connect) charge. The payment succeeds and the customer is charged in full, but the platform's fee is ZERO — 100% of every transaction goes to the connected account and the marketplace silently earns nothing. This looks correct in every test (payments work) and is only caught when revenue is reconciled. Compute application_fee_amount from the order total (e.g. a platform percentage), never a hardcoded 0.",
+        "absentCallDetail": "No create() call in this scope; this rule does not apply here.",
+        "absentArgDetail": "This create() call does not set application_fee_amount; if it is a Connect charge, verify the platform fee is applied via application_fee_amount or transfer_data."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "checkout.ts",
+    "vulnerable": "import Stripe from \"stripe\";\n\nexport async function createCharge(stripe: Stripe, amount: number, connectedAccount: string) {\n  // VULNERABLE: application_fee_amount: 0 — the platform collects nothing on this Connect charge.\n  return stripe.paymentIntents.create({\n    amount,\n    currency: \"usd\",\n    application_fee_amount: 0,\n    transfer_data: { destination: connectedAccount },\n  });\n}\n",
+    "fixed": "import Stripe from \"stripe\";\n\nexport async function createCharge(stripe: Stripe, connectedAccount: string) {\n  // FIXED: the platform collects a real, non-zero fee on the Connect charge.\n  return stripe.paymentIntents.create({\n    amount: 5000,\n    currency: \"usd\",\n    application_fee_amount: 500,\n    transfer_data: { destination: connectedAccount },\n  });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://stripe.com/docs/api/payment_intents/create#create_payment_intent-application_fee_amount",
+    "note": "application_fee_amount: 0 is a placeholder left from wiring up Connect before the fee logic exists. Payments work end-to-end, so it ships; the platform just never earns — the canonical silent-zero-revenue trap for marketplaces."
+  }
+}

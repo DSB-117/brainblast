@@ -1,39 +1,39 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-04T07:21:12.687Z",
+  "generatedAt": "2026-07-04T07:23:25.104Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 28
+      "count": 30
     }
   ],
   "counts": {
-    "vtis": 28,
-    "unique": 28,
+    "vtis": 30,
+    "unique": 30,
     "duplicates": 0,
-    "sdks": 23,
+    "sdks": 24,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 22,
+    "high": 24,
     "critical": 5,
     "medium": 1
   },
   "classDistribution": {
-    "auth-bypass": 12,
+    "auth-bypass": 13,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
-    "silent-zero-revenue": 2,
+    "silent-zero-revenue": 3,
     "missing-verification": 4,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
     "other": 1
   },
   "sdkDistribution": {
-    "cookie-session": 1,
+    "cookie-session": 2,
     "cors": 2,
     "express-jwt": 1,
     "express-session": 1,
@@ -55,26 +55,27 @@
     "Solana lamports arithmetic": 1,
     "@solana/web3.js": 2,
     "SPL Token": 1,
+    "stripe": 1,
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 28
+    "synthetic-owned": 30
   },
   "quality": {
-    "mean": 50,
+    "mean": 49,
     "median": 48,
     "min": 30,
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 27,
+      "medium": 29,
       "low": 1
     }
   },
   "coverage": {
     "matrix": {
       "auth-bypass": {
-        "cookie-session": 1,
+        "cookie-session": 2,
         "cors": 2,
         "express-jwt": 1,
         "express-session": 1,
@@ -97,7 +98,8 @@
       },
       "silent-zero-revenue": {
         "@metaplex-foundation/js": 1,
-        "python": 1
+        "python": 1,
+        "stripe": 1
       },
       "missing-verification": {
         "mongoose": 1,
@@ -116,10 +118,6 @@
       }
     },
     "thinCells": [
-      {
-        "class": "auth-bypass",
-        "sdk": "cookie-session"
-      },
       {
         "class": "auth-bypass",
         "sdk": "express-jwt"
@@ -169,6 +167,10 @@
         "sdk": "python"
       },
       {
+        "class": "silent-zero-revenue",
+        "sdk": "stripe"
+      },
+      {
         "class": "missing-verification",
         "sdk": "mongoose"
       },
@@ -200,6 +202,15 @@
     "missingClasses": []
   },
   "scored": [
+    {
+      "trapId": "cookie-session-httponly-false",
+      "sdk": "cookie-session",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
     {
       "trapId": "cookie-session-secure-false",
       "sdk": "cookie-session",
@@ -438,6 +449,15 @@
       "trapId": "spl-transfer-not-checked-in-payout",
       "sdk": "SPL Token",
       "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "stripe-connect-zero-application-fee",
+      "sdk": "stripe",
+      "class": "silent-zero-revenue",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",

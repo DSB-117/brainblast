@@ -1,0 +1,35 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: cookie-session-httponly-false
+severity: high
+title: "cookie-session with httpOnly: false — the session cookie is readable
+  from JavaScript (XSS session theft)"
+component:
+  name: cookie-session
+  type: Auth
+  version: ">=2.0.0"
+  sourceUrl: https://github.com/expressjs/cookie-session#cookie-options
+detect:
+  modules:
+    - cookie-session
+  nameRegex: cookie|session|app|server|middleware|index|config
+  triggerCalls:
+    - cookieSession
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: cookieSession
+    argIndex: 0
+    propName: httpOnly
+    forbiddenValue: false
+    passDetail: "cookie-session sets httpOnly: true — the session cookie is not
+      exposed to document.cookie and cannot be read by client-side scripts."
+    failDetail: "cookie-session is configured with httpOnly: false, exposing the
+      signed session cookie to JavaScript via document.cookie. Any XSS on the
+      origin can read and exfiltrate the session and hijack the user's account.
+      Set httpOnly: true (the default) for session cookies."
+    absentCallDetail: No cookieSession() call in this scope; this rule does not apply here.
+    absentArgDetail: cookieSession() does not set httpOnly; the default (true)
+      applies — verify it is not overridden elsewhere.
+test:
+  kind: none

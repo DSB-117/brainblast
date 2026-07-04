@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T07:21:12.697Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:23:25.113Z from 1 lot(s): seed-vti.jsonl._
 
-**28 verified trap instances** across **23 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 30–60). Freshness: 2026-07-04T07:21:10.231Z → 2026-07-04T07:21:10.231Z.
+**30 verified trap instances** across **24 SDKs** and **9 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T07:23:22.688Z → 2026-07-04T07:23:22.688Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,11 +20,11 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-| auth-bypass | 12 |
+| auth-bypass | 13 |
 | missing-verification | 4 |
 | unconfirmed-state | 3 |
 | missing-slippage-guard | 3 |
-| silent-zero-revenue | 2 |
+| silent-zero-revenue | 3 |
 | immutable-after-deploy | 1 |
 | unchecked-staleness | 1 |
 | wrong-constant | 1 |
@@ -35,9 +35,9 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | SDK | Count |
 |---|---|
 | jsonwebtoken | 4 |
+| cookie-session | 2 |
 | cors | 2 |
 | @solana/web3.js | 2 |
-| cookie-session | 1 |
 | express-jwt | 1 |
 | express-session | 1 |
 | helmet | 1 |
@@ -56,6 +56,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | express | 1 |
 | Solana lamports arithmetic | 1 |
 | SPL Token | 1 |
+| stripe | 1 |
 | Stripe Node SDK | 1 |
 
 ## Sample (receipt-only teasers)
@@ -64,11 +65,11 @@ The open sample tier shows metadata + the RED→GREEN receipt (proof we have it)
 
 | Trap | SDK | Class | Severity | Score | Corroboration | RED→GREEN |
 |---|---|---|---|---|---|---|
+| cookie-session-httponly-false | cookie-session | auth-bypass | high | 48 | 0 | ✓/✓ |
 | cookie-session-secure-false | cookie-session | auth-bypass | high | 48 | 0 | ✓/✓ |
 | cors-credentials-reflect-origin-true | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
 | cors-wildcard-origin | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
 | express-jwt-credentials-not-required | express-jwt | auth-bypass | critical | 60 | 0 | ✓/✓ |
-| express-session-saveuninitialized-true | express-session | auth-bypass | high | 48 | 0 | ✓/✓ |
 
 ---
 
