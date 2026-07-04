@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T06:50:22.386Z",
+  "generatedAt": "2026-07-04T07:12:20.312Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 17,
+    "records": 19,
     "sdks": 16,
-    "packsScanned": 17
+    "packsScanned": 19
   },
   "classDistribution": {
-    "auth-bypass": 5,
+    "auth-bypass": 7,
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
@@ -21,6 +21,13 @@
     "other": 1
   },
   "proof": [
+    {
+      "pack": "cors-credentials-reflect-origin-true",
+      "rule": "cors-credentials-reflect-origin-true",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
     {
       "pack": "cors-wildcard-origin",
       "rule": "cors-wildcard-origin",
@@ -52,6 +59,13 @@
     {
       "pack": "jupiter-quote-zero-slippage",
       "rule": "jupiter-quote-zero-slippage",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "jwt-sign-algorithm-none",
+      "rule": "jwt-sign-algorithm-none",
       "red": true,
       "green": true,
       "emitted": true

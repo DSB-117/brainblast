@@ -1,17 +1,17 @@
 # Corpus coverage — Brainblast Verified Traps
 
-_Generated 2026-07-04T06:50:24.007Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
+_Generated 2026-07-04T07:12:23.290Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
 
 ## Summary
-- **17** VTIs (17 unique, 0 duplicate) across **16** SDKs and **9** trap classes.
-- **Quality** (0–100): mean 49, median 48, range 48–60.
-  Buckets — high (≥70): 0, medium (40–69): 17, low (<40): 0.
-- **Lots:** synthetic-owned (17).
+- **19** VTIs (19 unique, 0 duplicate) across **16** SDKs and **9** trap classes.
+- **Quality** (0–100): mean 50, median 48, range 48–60.
+  Buckets — high (≥70): 0, medium (40–69): 19, low (<40): 0.
+- **Lots:** synthetic-owned (19).
 
 ## Coverage heatmap (class × SDK, unique records)
 | class \ sdk | @metaplex-foundation/js | @metaplex-foundation/mpl-token-metadata | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Solana lamports arithmetic | Stripe Node SDK | cors | express-session | jsonwebtoken | node:https | python |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| auth-bypass | · | · | · | · | · | · | · | · | · | · | · | 1 | 1 | 2 | 1 | · |
+| auth-bypass | · | · | · | · | · | · | · | · | · | · | · | 2 | 1 | 3 | 1 | · |
 | immutable-after-deploy | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
 | missing-slippage-guard | · | · | 1 | 1 | · | · | 1 | · | · | · | · | · | · | · | · | · |
 | missing-verification | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · |
@@ -25,7 +25,6 @@ _Generated 2026-07-04T06:50:24.007Z by corpus-report@0.1.0. Source of truth: `da
 
 ## Scout work-orders (where to dig next)
 **Thin cells** (only one instance — corroborate or broaden):
-- auth-bypass · cors
 - auth-bypass · express-session
 - auth-bypass · node:https
 - unconfirmed-state · Jito (block engine / bundles)

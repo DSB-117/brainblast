@@ -1,0 +1,5 @@
+id: cors-credentials-reflect-origin-true
+name: "Cors Credentials Reflect Origin True"
+version: 0.1.0
+author: brainblast-fleet
+description: "cors() with origin: true and credentials — reflects any caller's origin, leaking authenticated responses cross-site"

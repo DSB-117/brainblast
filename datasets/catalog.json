@@ -1,19 +1,19 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-04T06:50:24.026Z",
+  "generatedAt": "2026-07-04T07:12:23.304Z",
   "counts": {
-    "total": 17,
-    "proven": 17,
+    "total": 19,
+    "proven": 19,
     "sdks": 16,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 15,
-    "critical": 2
+    "high": 16,
+    "critical": 3
   },
   "classDistribution": {
-    "auth-bypass": 5,
+    "auth-bypass": 7,
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
@@ -24,12 +24,12 @@
     "other": 1
   },
   "sdkDistribution": {
-    "cors": 1,
+    "cors": 2,
     "express-session": 1,
     "node:https": 1,
     "Jito (block engine / bundles)": 1,
     "Jupiter Aggregator API": 1,
-    "jsonwebtoken": 2,
+    "jsonwebtoken": 3,
     "@metaplex-foundation/mpl-token-metadata": 1,
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
@@ -42,16 +42,16 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 17
+    "synthetic-owned": 19
   },
   "quality": {
-    "mean": 49,
+    "mean": 50,
     "min": 48,
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-07-04T06:50:22.386Z",
-    "newest": "2026-07-04T06:50:22.386Z"
+    "oldest": "2026-07-04T07:12:20.312Z",
+    "newest": "2026-07-04T07:12:20.312Z"
   },
   "tiers": [
     {
@@ -84,6 +84,29 @@
   ],
   "teasers": [
     {
+      "trapId": "cors-credentials-reflect-origin-true",
+      "title": "cors() with origin: true and credentials — reflects any caller's origin, leaking authenticated responses cross-site",
+      "sdk": {
+        "name": "cors",
+        "version": ">=2.8.0"
+      },
+      "severity": "high",
+      "class": "auth-bypass",
+      "score": 48,
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "capturedAt": "2026-07-04T07:12:20.312Z",
+      "sourceUrls": [
+        "https://github.com/expressjs/cors#configuration-options"
+      ],
+      "receipt": {
+        "red": true,
+        "green": true,
+        "method": "static-checker",
+        "verifiedAt": "2026-07-04T07:12:20.312Z"
+      }
+    },
+    {
       "trapId": "cors-wildcard-origin",
       "title": "cors() configured with origin: \"*\" — any website can call the API with the user's session",
       "sdk": {
@@ -95,7 +118,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T06:50:22.386Z",
+      "capturedAt": "2026-07-04T07:12:20.312Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -103,7 +126,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T06:50:22.386Z"
+        "verifiedAt": "2026-07-04T07:12:20.312Z"
       }
     },
     {
@@ -118,7 +141,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T06:50:22.386Z",
+      "capturedAt": "2026-07-04T07:12:20.312Z",
       "sourceUrls": [
         "https://www.npmjs.com/package/express-session#saveuninitialized"
       ],
@@ -126,7 +149,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T06:50:22.386Z"
+        "verifiedAt": "2026-07-04T07:12:20.312Z"
       }
     },
     {
@@ -141,7 +164,7 @@
       "score": 60,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T06:50:22.386Z",
+      "capturedAt": "2026-07-04T07:12:20.312Z",
       "sourceUrls": [
         "https://nodejs.org/api/https.html#httpsrequestoptions-callback"
       ],
@@ -149,7 +172,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T06:50:22.386Z"
+        "verifiedAt": "2026-07-04T07:12:20.312Z"
       }
     },
     {
@@ -164,7 +187,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T06:50:22.386Z",
+      "capturedAt": "2026-07-04T07:12:20.312Z",
       "sourceUrls": [
         "https://docs.jito.wtf/lowlatencytxnsend/"
       ],
@@ -172,30 +195,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T06:50:22.386Z"
-      }
-    },
-    {
-      "trapId": "jupiter-quote-zero-slippage",
-      "title": "Jupiter quote/swap call hardcodes slippageBps to 0",
-      "sdk": {
-        "name": "Jupiter Aggregator API",
-        "version": "unversioned"
-      },
-      "severity": "high",
-      "class": "missing-slippage-guard",
-      "score": 48,
-      "corroborationCount": 0,
-      "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T06:50:22.386Z",
-      "sourceUrls": [
-        "https://station.jup.ag/docs/apis/swap-api"
-      ],
-      "receipt": {
-        "red": true,
-        "green": true,
-        "method": "static-checker",
-        "verifiedAt": "2026-07-04T06:50:22.386Z"
+        "verifiedAt": "2026-07-04T07:12:20.312Z"
       }
     }
   ]

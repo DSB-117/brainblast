@@ -47,6 +47,8 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "jwt-verify-algorithm-none": "auth-bypass",
   "metaplex-ismutable-false-locks-metadata": "immutable-after-deploy",
   "express-session-saveuninitialized-true": "auth-bypass",
+  "jwt-sign-algorithm-none": "auth-bypass",
+  "cors-credentials-reflect-origin-true": "auth-bypass",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

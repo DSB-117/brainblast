@@ -1,0 +1,36 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: jwt-sign-algorithm-none
+severity: critical
+title: 'jwt.sign with algorithm: "none" — tokens are issued unsigned and can be
+  forged by anyone'
+component:
+  name: jsonwebtoken
+  type: Auth
+  version: ">=9.0.0"
+  sourceUrl: https://github.com/auth0/node-jsonwebtoken#jwtsignpayload-secretorprivatekey-options-callback
+detect:
+  modules:
+    - jsonwebtoken
+  nameRegex: sign|issue|token|jwt|auth|login|session
+  triggerCalls:
+    - sign
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: sign
+    argIndex: 2
+    propName: algorithm
+    forbiddenValue: none
+    passDetail: jwt.sign issues the token with a real signing algorithm (not "none")
+      — the token carries a verifiable signature.
+    failDetail: 'jwt.sign is called with algorithm: "none", so the issued token has
+      an EMPTY signature. Anyone can craft a token with alg: none and arbitrary
+      claims and it will pass verification wherever "none" is accepted — a total
+      authentication bypass. Sign with a real algorithm (e.g. "HS256" or
+      "RS256") and never issue unsigned tokens.'
+    absentCallDetail: No jwt.sign call in this scope; this rule does not apply here.
+    absentArgDetail: jwt.sign does not pass an algorithm literal; the library
+      default (HS256) applies. Verify no code path forces "none".
+test:
+  kind: none
