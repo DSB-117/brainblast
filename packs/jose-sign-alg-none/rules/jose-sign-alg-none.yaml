@@ -1,0 +1,36 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: jose-sign-alg-none
+severity: critical
+title: 'jose SignJWT.setProtectedHeader with alg: "none" — the JWT is issued
+  unsigned and forgeable'
+component:
+  name: jose
+  type: Auth
+  version: ">=4.0.0"
+  sourceUrl: https://github.com/panva/jose/blob/main/docs/classes/jwt_sign.SignJWT.md
+detect:
+  modules:
+    - jose
+  nameRegex: sign|jwt|token|auth|issue|header
+  triggerCalls:
+    - setProtectedHeader
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: setProtectedHeader
+    argIndex: 0
+    propName: alg
+    forbiddenValue: none
+    passDetail: The protected header pins a real signing algorithm (not "none") —
+      the issued JWT carries a verifiable signature.
+    failDetail: 'setProtectedHeader is called with alg: "none", so jose issues an
+      UNSECURED JWT with no signature. Anyone can craft a token with alg: none
+      and arbitrary claims; wherever "none" is accepted it authenticates — a
+      complete auth bypass. Set alg to a real algorithm (e.g. "HS256", "RS256",
+      "EdDSA").'
+    absentCallDetail: No setProtectedHeader call in this scope; this rule does not apply here.
+    absentArgDetail: setProtectedHeader does not set alg to a literal; verify the
+      resolved algorithm is not "none".
+test:
+  kind: none

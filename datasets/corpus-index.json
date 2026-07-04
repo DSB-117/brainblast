@@ -1,33 +1,33 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-04T07:28:33.883Z",
+  "generatedAt": "2026-07-04T07:30:23.083Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 33
+      "count": 36
     }
   ],
   "counts": {
-    "vtis": 33,
-    "unique": 33,
+    "vtis": 36,
+    "unique": 36,
     "duplicates": 0,
-    "sdks": 26,
+    "sdks": 29,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 25,
-    "critical": 7,
+    "high": 26,
+    "critical": 9,
     "medium": 1
   },
   "classDistribution": {
-    "auth-bypass": 16,
+    "auth-bypass": 18,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
-    "missing-verification": 4,
+    "missing-verification": 5,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
     "other": 1
@@ -41,11 +41,13 @@
     "helmet": 1,
     "node:https": 2,
     "Jito (block engine / bundles)": 1,
+    "jose": 1,
     "Jupiter Aggregator API": 1,
     "jsonwebtoken": 4,
     "@metaplex-foundation/mpl-token-metadata": 1,
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
+    "mongodb": 1,
     "mongoose": 1,
     "passport-jwt": 1,
     "playwright": 1,
@@ -58,19 +60,20 @@
     "@solana/web3.js": 2,
     "SPL Token": 1,
     "stripe": 1,
-    "Stripe Node SDK": 1
+    "Stripe Node SDK": 1,
+    "ws": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 33
+    "synthetic-owned": 36
   },
   "quality": {
-    "mean": 50,
+    "mean": 51,
     "median": 48,
     "min": 30,
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 32,
+      "medium": 35,
       "low": 1
     }
   },
@@ -84,9 +87,11 @@
         "express-session": 1,
         "helmet": 1,
         "node:https": 2,
+        "jose": 1,
         "jsonwebtoken": 4,
         "passport-jwt": 1,
-        "express": 1
+        "express": 1,
+        "ws": 1
       },
       "unconfirmed-state": {
         "Jito (block engine / bundles)": 1,
@@ -106,6 +111,7 @@
         "stripe": 1
       },
       "missing-verification": {
+        "mongodb": 1,
         "mongoose": 1,
         "playwright": 1,
         "puppeteer": 1,
@@ -140,11 +146,19 @@
       },
       {
         "class": "auth-bypass",
+        "sdk": "jose"
+      },
+      {
+        "class": "auth-bypass",
         "sdk": "passport-jwt"
       },
       {
         "class": "auth-bypass",
         "sdk": "express"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "ws"
       },
       {
         "class": "unconfirmed-state",
@@ -177,6 +191,10 @@
       {
         "class": "silent-zero-revenue",
         "sdk": "stripe"
+      },
+      {
+        "class": "missing-verification",
+        "sdk": "mongodb"
       },
       {
         "class": "missing-verification",
@@ -310,6 +328,15 @@
       "score": 48
     },
     {
+      "trapId": "jose-sign-alg-none",
+      "sdk": "jose",
+      "class": "auth-bypass",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
+    },
+    {
       "trapId": "jupiter-quote-zero-slippage",
       "sdk": "Jupiter Aggregator API",
       "class": "missing-slippage-guard",
@@ -380,6 +407,15 @@
       "corroborationCount": 0,
       "license": "synthetic-owned",
       "score": 48
+    },
+    {
+      "trapId": "mongodb-client-tls-allow-invalid-certificates",
+      "sdk": "mongodb",
+      "class": "missing-verification",
+      "severity": "critical",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 60
     },
     {
       "trapId": "mongoose-tls-allow-invalid-certificates",
@@ -502,6 +538,15 @@
       "trapId": "stripe-paymentintents-moved",
       "sdk": "Stripe Node SDK",
       "class": "other",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "ws-reject-unauthorized-false",
+      "sdk": "ws",
+      "class": "auth-bypass",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",

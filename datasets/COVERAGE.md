@@ -1,25 +1,25 @@
 # Corpus coverage — Brainblast Verified Traps
 
-_Generated 2026-07-04T07:28:33.883Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
+_Generated 2026-07-04T07:30:23.083Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
 
 ## Summary
-- **33** VTIs (33 unique, 0 duplicate) across **26** SDKs and **9** trap classes.
-- **Quality** (0–100): mean 50, median 48, range 30–60.
-  Buckets — high (≥70): 0, medium (40–69): 32, low (<40): 1.
-- **Lots:** synthetic-owned (33).
+- **36** VTIs (36 unique, 0 duplicate) across **29** SDKs and **9** trap classes.
+- **Quality** (0–100): mean 51, median 48, range 30–60.
+  Buckets — high (≥70): 0, medium (40–69): 35, low (<40): 1.
+- **Lots:** synthetic-owned (36).
 
 ## Coverage heatmap (class × SDK, unique records)
-| class \ sdk | @metaplex-foundation/js | @metaplex-foundation/mpl-token-metadata | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Solana lamports arithmetic | Stripe Node SDK | aws-sdk | cookie-session | cors | express | express-jwt | express-session | helmet | jsonwebtoken | mongoose | node:https | passport-jwt | playwright | puppeteer | python | stripe |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| auth-bypass | · | · | · | · | · | · | · | · | · | · | · | 1 | 2 | 2 | 1 | 1 | 1 | 1 | 4 | · | 2 | 1 | · | · | · | · |
-| immutable-after-deploy | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| missing-slippage-guard | · | · | 1 | 1 | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| missing-verification | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | 1 | · | · | 1 | 1 | · | · |
-| other | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| silent-zero-revenue | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | 1 |
-| unchecked-staleness | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| unconfirmed-state | · | · | · | · | 2 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| wrong-constant | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| class \ sdk | @metaplex-foundation/js | @metaplex-foundation/mpl-token-metadata | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Solana lamports arithmetic | Stripe Node SDK | aws-sdk | cookie-session | cors | express | express-jwt | express-session | helmet | jose | jsonwebtoken | mongodb | mongoose | node:https | passport-jwt | playwright | puppeteer | python | stripe | ws |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| auth-bypass | · | · | · | · | · | · | · | · | · | · | · | 1 | 2 | 2 | 1 | 1 | 1 | 1 | 1 | 4 | · | · | 2 | 1 | · | · | · | · | 1 |
+| immutable-after-deploy | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| missing-slippage-guard | · | · | 1 | 1 | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| missing-verification | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | 1 | 1 | · | · | 1 | 1 | · | · | · |
+| other | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| silent-zero-revenue | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | 1 | · |
+| unchecked-staleness | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| unconfirmed-state | · | · | · | · | 2 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| wrong-constant | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
 
 (`·` = no coverage yet.)
 
@@ -29,8 +29,10 @@ _Generated 2026-07-04T07:28:33.883Z by corpus-report@0.1.0. Source of truth: `da
 - auth-bypass · express-jwt
 - auth-bypass · express-session
 - auth-bypass · helmet
+- auth-bypass · jose
 - auth-bypass · passport-jwt
 - auth-bypass · express
+- auth-bypass · ws
 - unconfirmed-state · Jito (block engine / bundles)
 - missing-slippage-guard · Jupiter Aggregator API
 - missing-slippage-guard · @meteora-ag/dlmm
@@ -39,6 +41,7 @@ _Generated 2026-07-04T07:28:33.883Z by corpus-report@0.1.0. Source of truth: `da
 - silent-zero-revenue · @metaplex-foundation/js
 - silent-zero-revenue · python
 - silent-zero-revenue · stripe
+- missing-verification · mongodb
 - missing-verification · mongoose
 - missing-verification · playwright
 - missing-verification · puppeteer

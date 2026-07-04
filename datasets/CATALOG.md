@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T07:28:33.896Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:30:23.099Z from 1 lot(s): seed-vti.jsonl._
 
-**33 verified trap instances** across **26 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 30–60). Freshness: 2026-07-04T07:28:31.033Z → 2026-07-04T07:28:31.033Z.
+**36 verified trap instances** across **29 SDKs** and **9 trap classes**. Quality score mean 51/100 (range 30–60). Freshness: 2026-07-04T07:30:20.060Z → 2026-07-04T07:30:20.060Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,8 +20,8 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-| auth-bypass | 16 |
-| missing-verification | 4 |
+| auth-bypass | 18 |
+| missing-verification | 5 |
 | unconfirmed-state | 3 |
 | missing-slippage-guard | 3 |
 | silent-zero-revenue | 3 |
@@ -44,10 +44,12 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | express-session | 1 |
 | helmet | 1 |
 | Jito (block engine / bundles) | 1 |
+| jose | 1 |
 | Jupiter Aggregator API | 1 |
 | @metaplex-foundation/mpl-token-metadata | 1 |
 | @metaplex-foundation/js | 1 |
 | @meteora-ag/dlmm | 1 |
+| mongodb | 1 |
 | mongoose | 1 |
 | passport-jwt | 1 |
 | playwright | 1 |
@@ -60,6 +62,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | SPL Token | 1 |
 | stripe | 1 |
 | Stripe Node SDK | 1 |
+| ws | 1 |
 
 ## Sample (receipt-only teasers)
 

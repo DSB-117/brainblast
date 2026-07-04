@@ -1,21 +1,21 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:28:31.033Z",
+  "generatedAt": "2026-07-04T07:30:20.060Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 33,
-    "sdks": 26,
-    "packsScanned": 33
+    "records": 36,
+    "sdks": 29,
+    "packsScanned": 36
   },
   "classDistribution": {
-    "auth-bypass": 16,
+    "auth-bypass": 18,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
-    "missing-verification": 4,
+    "missing-verification": 5,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
     "other": 1
@@ -99,6 +99,13 @@
       "emitted": true
     },
     {
+      "pack": "jose-sign-alg-none",
+      "rule": "jose-sign-alg-none",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "jupiter-quote-zero-slippage",
       "rule": "jupiter-quote-zero-slippage",
       "red": true,
@@ -150,6 +157,13 @@
     {
       "pack": "meteora-dlmm-zero-min-out",
       "rule": "meteora-dlmm-zero-min-out",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "mongodb-client-tls-allow-invalid-certificates",
+      "rule": "mongodb-client-tls-allow-invalid-certificates",
       "red": true,
       "green": true,
       "emitted": true
@@ -248,6 +262,13 @@
     {
       "pack": "stripe-paymentintents-moved",
       "rule": "stripe-paymentintents-moved",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "ws-reject-unauthorized-false",
+      "rule": "ws-reject-unauthorized-false",
       "red": true,
       "green": true,
       "emitted": true

@@ -1,0 +1,5 @@
+id: jose-sign-alg-none
+name: "Jose Sign Alg None"
+version: 0.1.0
+author: brainblast-fleet
+description: "jose SignJWT.setProtectedHeader with alg: \"none\" — the JWT is issued unsigned and forgeable"

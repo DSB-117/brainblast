@@ -1,0 +1,5 @@
+id: ws-reject-unauthorized-false
+name: "Ws Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "new WebSocket with rejectUnauthorized: false — the wss:// connection skips TLS certificate validation (MITM)"

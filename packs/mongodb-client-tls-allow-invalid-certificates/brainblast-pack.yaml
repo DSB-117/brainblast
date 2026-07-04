@@ -1,0 +1,5 @@
+id: mongodb-client-tls-allow-invalid-certificates
+name: "Mongodb Client Tls Allow Invalid Certificates"
+version: 0.1.0
+author: brainblast-fleet
+description: "new MongoClient with tlsAllowInvalidCertificates: true — the database TLS certificate is not validated (MITM)"

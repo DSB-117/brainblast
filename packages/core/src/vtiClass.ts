@@ -63,6 +63,9 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "aws-s3-public-read-acl": "auth-bypass",
   "passport-jwt-ignore-expiration": "auth-bypass",
   "https-agent-reject-unauthorized-false": "auth-bypass",
+  "jose-sign-alg-none": "auth-bypass",
+  "mongodb-client-tls-allow-invalid-certificates": "missing-verification",
+  "ws-reject-unauthorized-false": "auth-bypass",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

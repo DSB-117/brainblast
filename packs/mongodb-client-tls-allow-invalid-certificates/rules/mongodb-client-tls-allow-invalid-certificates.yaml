@@ -1,0 +1,38 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: mongodb-client-tls-allow-invalid-certificates
+severity: critical
+title: "new MongoClient with tlsAllowInvalidCertificates: true — the database
+  TLS certificate is not validated (MITM)"
+component:
+  name: mongodb
+  type: Database
+  version: ">=4.0.0"
+  sourceUrl: https://www.mongodb.com/docs/drivers/node/current/fundamentals/connection/tls/
+detect:
+  modules:
+    - mongodb
+  nameRegex: client|mongo|db|database|connect|conn|MongoClient
+  triggerCalls:
+    - MongoClient
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: MongoClient
+    argIndex: 1
+    propName: tlsAllowInvalidCertificates
+    forbiddenValue: true
+    passDetail: MongoClient validates the server certificate
+      (tlsAllowInvalidCertificates is not true) — the database connection's TLS
+      identity is verified.
+    failDetail: "new MongoClient is created with tlsAllowInvalidCertificates: true,
+      which turns OFF validation of the MongoDB server's TLS certificate. Anyone
+      on the network path can present a forged certificate and man-in-the-middle
+      the database connection — every query, credential, and record is exposed.
+      Remove tlsAllowInvalidCertificates: true; provide the proper CA via
+      tlsCAFile if a private CA is used."
+    absentCallDetail: No MongoClient construction in this scope; this rule does not apply here.
+    absentArgDetail: MongoClient does not set tlsAllowInvalidCertificates; the
+      secure default (validate) applies.
+test:
+  kind: none

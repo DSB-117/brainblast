@@ -1,0 +1,37 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: ws-reject-unauthorized-false
+severity: high
+title: "new WebSocket with rejectUnauthorized: false — the wss:// connection
+  skips TLS certificate validation (MITM)"
+component:
+  name: ws
+  type: Networking
+  version: ">=7.0.0"
+  sourceUrl: https://github.com/websockets/ws/blob/master/doc/ws.md#new-websocketaddress-protocols-options
+detect:
+  modules:
+    - ws
+  nameRegex: socket|ws|client|connect|stream|WebSocket
+  triggerCalls:
+    - WebSocket
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: WebSocket
+    argIndex: 1
+    propName: rejectUnauthorized
+    forbiddenValue: false
+    passDetail: The WebSocket keeps certificate validation on (rejectUnauthorized is
+      not false) — the wss:// server's TLS identity is verified.
+    failDetail: "new WebSocket is created with rejectUnauthorized: false, disabling
+      TLS certificate validation on the wss:// connection. A network attacker
+      can present a forged certificate and man-in-the-middle the real-time
+      channel — reading and injecting messages (auth tokens, trades, commands).
+      Remove rejectUnauthorized: false; pass a proper `ca` if a private CA is
+      required."
+    absentCallDetail: No WebSocket construction in this scope; this rule does not apply here.
+    absentArgDetail: WebSocket does not set rejectUnauthorized; the secure default
+      (true) applies.
+test:
+  kind: none
