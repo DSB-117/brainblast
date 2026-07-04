@@ -1,0 +1,36 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: cookie-session-secure-false
+severity: high
+title: "cookie-session with secure: false — the session cookie is sent over
+  plain HTTP and can be sniffed"
+component:
+  name: cookie-session
+  type: Auth
+  version: ">=2.0.0"
+  sourceUrl: https://github.com/expressjs/cookie-session#cookie-options
+detect:
+  modules:
+    - cookie-session
+  nameRegex: cookie|session|app|server|middleware|index|config
+  triggerCalls:
+    - cookieSession
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: cookieSession
+    argIndex: 0
+    propName: secure
+    forbiddenValue: false
+    passDetail: "cookie-session sets secure: true — the signed session cookie is
+      only ever transmitted over HTTPS."
+    failDetail: "cookie-session is configured with secure: false, so the session
+      cookie is sent over plain HTTP. On any non-TLS hop an attacker can read
+      the signed session and hijack the user's authenticated session. Set
+      secure: true in production (behind `app.set('trust proxy', 1)` if
+      terminating TLS at a proxy)."
+    absentCallDetail: No cookieSession() call in this scope; this rule does not apply here.
+    absentArgDetail: "cookieSession() does not set secure; verify the deployment
+      forces HTTPS-only cookies (secure: true) in production."
+test:
+  kind: none

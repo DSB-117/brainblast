@@ -1,0 +1,44 @@
+{
+  "id": "cookie-session-secure-false",
+  "severity": "high",
+  "title": "cookie-session with secure: false — the session cookie is sent over plain HTTP and can be sniffed",
+  "class": "auth-bypass",
+  "component": {
+    "name": "cookie-session",
+    "type": "Auth",
+    "version": ">=2.0.0",
+    "sourceUrl": "https://github.com/expressjs/cookie-session#cookie-options"
+  },
+  "detect": {
+    "modules": ["cookie-session"],
+    "nameRegex": "cookie|session|app|server|middleware|index|config",
+    "triggerCalls": ["cookieSession"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "cookieSession",
+        "argIndex": 0,
+        "propName": "secure",
+        "forbiddenValue": false,
+        "passDetail": "cookie-session sets secure: true — the signed session cookie is only ever transmitted over HTTPS.",
+        "failDetail": "cookie-session is configured with secure: false, so the session cookie is sent over plain HTTP. On any non-TLS hop an attacker can read the signed session and hijack the user's authenticated session. Set secure: true in production (behind `app.set('trust proxy', 1)` if terminating TLS at a proxy).",
+        "absentCallDetail": "No cookieSession() call in this scope; this rule does not apply here.",
+        "absentArgDetail": "cookieSession() does not set secure; verify the deployment forces HTTPS-only cookies (secure: true) in production."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "session.ts",
+    "vulnerable": "import express from \"express\";\nimport cookieSession from \"cookie-session\";\n\nexport function configureCookieSession(app: express.Express) {\n  // VULNERABLE: secure: false sends the session cookie over plain HTTP — it can be sniffed and replayed.\n  app.use(cookieSession({\n    name: \"session\",\n    keys: [process.env.SESSION_KEY as string],\n    secure: false,\n    httpOnly: true,\n  }));\n  return app;\n}\n",
+    "fixed": "import express from \"express\";\nimport cookieSession from \"cookie-session\";\n\nexport function configureCookieSession(app: express.Express) {\n  // FIXED: secure: true — the session cookie is only sent over HTTPS.\n  app.use(cookieSession({\n    name: \"session\",\n    keys: [process.env.SESSION_KEY as string],\n    secure: true,\n    httpOnly: true,\n  }));\n  return app;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/expressjs/cookie-session#cookie-options",
+    "note": "cookie-session takes cookie flags (secure/httpOnly/sameSite) at the top level of its options. secure: false is a common copy-paste from local-dev config that ships to production and exposes the session over HTTP."
+  }
+}

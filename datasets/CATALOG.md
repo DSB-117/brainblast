@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T07:12:23.304Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:14:02.167Z from 1 lot(s): seed-vti.jsonl._
 
-**19 verified trap instances** across **16 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 48–60). Freshness: 2026-07-04T07:12:20.312Z → 2026-07-04T07:12:20.312Z.
+**21 verified trap instances** across **18 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 48–60). Freshness: 2026-07-04T07:13:59.809Z → 2026-07-04T07:13:59.809Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,14 +20,14 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-| auth-bypass | 7 |
+| auth-bypass | 8 |
 | missing-slippage-guard | 3 |
 | unconfirmed-state | 2 |
 | silent-zero-revenue | 2 |
+| missing-verification | 2 |
 | immutable-after-deploy | 1 |
 | unchecked-staleness | 1 |
 | wrong-constant | 1 |
-| missing-verification | 1 |
 | other | 1 |
 
 ## Coverage by SDK
@@ -36,6 +36,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 |---|---|
 | jsonwebtoken | 3 |
 | cors | 2 |
+| cookie-session | 1 |
 | express-session | 1 |
 | node:https | 1 |
 | Jito (block engine / bundles) | 1 |
@@ -43,6 +44,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | @metaplex-foundation/mpl-token-metadata | 1 |
 | @metaplex-foundation/js | 1 |
 | @meteora-ag/dlmm | 1 |
+| mongoose | 1 |
 | Pyth Network price feeds | 1 |
 | python | 1 |
 | @raydium-io/raydium-sdk-v2 | 1 |
@@ -57,11 +59,11 @@ The open sample tier shows metadata + the RED→GREEN receipt (proof we have it)
 
 | Trap | SDK | Class | Severity | Score | Corroboration | RED→GREEN |
 |---|---|---|---|---|---|---|
+| cookie-session-secure-false | cookie-session | auth-bypass | high | 48 | 0 | ✓/✓ |
 | cors-credentials-reflect-origin-true | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
 | cors-wildcard-origin | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
 | express-session-saveuninitialized-true | express-session | auth-bypass | high | 48 | 0 | ✓/✓ |
 | https-reject-unauthorized-disabled | node:https | auth-bypass | critical | 60 | 0 | ✓/✓ |
-| jito-bundle-zero-tip | Jito (block engine / bundles) | unconfirmed-state | high | 48 | 0 | ✓/✓ |
 
 ---
 

@@ -49,6 +49,8 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "express-session-saveuninitialized-true": "auth-bypass",
   "jwt-sign-algorithm-none": "auth-bypass",
   "cors-credentials-reflect-origin-true": "auth-bypass",
+  "cookie-session-secure-false": "auth-bypass",
+  "mongoose-tls-allow-invalid-certificates": "missing-verification",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {
