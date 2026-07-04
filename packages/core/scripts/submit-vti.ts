@@ -30,7 +30,7 @@ async function main() {
   const file = arg("candidate");
   if (!file) {
     console.error("submit-vti — POST a candidate Finding straight into the corpus (no PR)\n");
-    console.error("  usage: npm run submit:vti -- --candidate fleet/candidates/<id>.json [--consent opt-in:train+eval] [--dry-run]");
+    console.error("  usage: npm run submit:vti -- --candidate fleet/candidates/<id>.json [--consent opt-in:train+eval] [--dry-run] [--verify-provenance]");
     process.exit(2);
   }
   const consentScope = (arg("consent") ?? "opt-in:train+eval") as any;
@@ -49,8 +49,9 @@ async function main() {
   // --dry-run: run the identical gate locally so a contributor can see accept/
   // reject BEFORE sending anything over the wire. (Same code the server runs.)
   if (dryRun) {
-    console.error(`submit-vti — DRY RUN (local gate, nothing sent) · ${id}\n`);
-    const r = await ingestSubmission(finding, { consentScope });
+    const withProvenance = process.argv.includes("--verify-provenance");
+    console.error(`submit-vti — DRY RUN (local gate, nothing sent) · ${id}${withProvenance ? " · +provenance" : ""}\n`);
+    const r = await ingestSubmission(finding, { consentScope, verifyProvenance: withProvenance });
     if (r.accepted) {
       console.error(`  ✓ would ACCEPT ${r.trapId} — proved RED→GREEN via ${r.method} (red=${r.proof?.red}, green=${r.proof?.green})`);
     } else {

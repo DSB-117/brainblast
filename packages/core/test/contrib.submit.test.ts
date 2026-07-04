@@ -82,15 +82,15 @@ describe("ingestSubmission (git-less intake gate)", () => {
 });
 
 describe("JsonlVtiStore (the DB seam)", () => {
-  it("inserts once, is idempotent, and is non-destructive", () => {
+  it("inserts once, is idempotent, and is non-destructive", async () => {
     const path = join(mkdtempSync(join(tmpdir(), "bb-store-")), "vti.jsonl");
     const store = new JsonlVtiStore(path);
-    expect(store.insert({ trapId: "a", title: "first" }).inserted).toBe(true);
-    expect(store.insert({ trapId: "a", title: "retry" }).inserted).toBe(false); // idempotent
-    expect(store.insert({ trapId: "b" }).inserted).toBe(true);
-    expect(store.list().map((r) => r.trapId).sort()).toEqual(["a", "b"]);
-    expect((store.list().find((r) => r.trapId === "a") as any).title).toBe("first"); // non-destructive
-    expect(store.insert({} as any).inserted).toBe(false); // no trapId
+    expect((await store.insert({ trapId: "a", title: "first" })).inserted).toBe(true);
+    expect((await store.insert({ trapId: "a", title: "retry" })).inserted).toBe(false); // idempotent
+    expect((await store.insert({ trapId: "b" })).inserted).toBe(true);
+    expect((await store.list()).map((r) => r.trapId).sort()).toEqual(["a", "b"]);
+    expect(((await store.list()).find((r) => r.trapId === "a") as any).title).toBe("first"); // non-destructive
+    expect((await store.insert({} as any)).inserted).toBe(false); // no trapId
   });
 });
 
@@ -116,7 +116,7 @@ describe("route (POST/GET /api/vti)", () => {
     const res = await route("POST", "/api/vti", { finding: f }, store);
     expect(res.status).toBe(422);
     expect((res.body.reasons as string[]).length).toBeGreaterThan(0);
-    expect(store.list()).toHaveLength(0);
+    expect(await store.list()).toHaveLength(0);
   });
 
   it("GET returns sample-tier teasers without fixtures", async () => {
@@ -136,6 +136,34 @@ describe("route (POST/GET /api/vti)", () => {
     const store = freshStore();
     const res = await route("POST", "/api/vti", { finding: finding() }, store, { authorized: false });
     expect(res.status).toBe(401);
-    expect(store.list()).toHaveLength(0);
+    expect(await store.list()).toHaveLength(0);
+  });
+
+  it("with provenance ON: lands a finding whose cited commit really contains the trap", async () => {
+    const store = freshStore();
+    const f = finding();
+    // Cite an immutable commit; the vulnerable line is `algorithms: ['none']`.
+    f.provenance = { sourceRef: "o/r@abc1234:auth.ts", evidence: "algorithms: ['none']" };
+    const src = "export function verify(t){ return jwt.verify(t, k, { algorithms: ['none'] }); }";
+    const fetchImpl = (async (u: any) =>
+      String(u) === "https://raw.githubusercontent.com/o/r/abc1234/auth.ts"
+        ? ({ ok: true, status: 200, text: async () => src } as Response)
+        : ({ ok: false, status: 404, text: async () => "nf" } as Response)) as unknown as typeof fetch;
+    const res = await route("POST", "/api/vti", { finding: f }, store, { verifyProvenance: true, fetchImpl });
+    expect(res.status).toBe(201);
+    expect(res.body.accepted).toBe(true);
+    expect(await store.has("jwt-verify-algorithm-none")).toBe(true);
+  });
+
+  it("with provenance ON: rejects a fabricated finding (evidence absent from the cited commit)", async () => {
+    const store = freshStore();
+    const f = finding();
+    f.provenance = { sourceRef: "o/r@abc1234:auth.ts", evidence: "algorithms: ['none']" };
+    const realButSafe = "export function verify(t){ return jwt.verify(t, k, { algorithms: ['RS256'] }); }";
+    const fetchImpl = (async () => ({ ok: true, status: 200, text: async () => realButSafe } as Response)) as unknown as typeof fetch;
+    const res = await route("POST", "/api/vti", { finding: f }, store, { verifyProvenance: true, fetchImpl });
+    expect(res.status).toBe(422);
+    expect((res.body.reasons as string[]).join(" ")).toMatch(/fabrication|not found in the cited source/i);
+    expect(await store.list()).toHaveLength(0);
   });
 });

@@ -32,6 +32,7 @@ import { isSafeId } from "../packs.ts";
 import { loadRules } from "../loadRules.ts";
 import { stageFinding } from "../synth/synthesize.ts";
 import { ingestCandidate, type ConsentScope, type SecretHit } from "./ingest.ts";
+import { verifyProvenance } from "./provenance.ts";
 import type { Finding } from "../synth/types.ts";
 
 const SEVERITIES = new Set(["critical", "high", "medium", "low"]);
@@ -56,6 +57,12 @@ export interface SubmitOptions {
   consentScope?: ConsentScope;
   corroborationCount?: number;
   now?: string;
+  /** Run the provenance / anti-fabrication gate (fetches the cited commit).
+   *  Off by default so the local/offline gate stays deterministic; the registry
+   *  server turns it ON. */
+  verifyProvenance?: boolean;
+  /** Injectable fetch for the provenance check (tests). */
+  fetchImpl?: typeof fetch;
 }
 
 function isNonEmptyString(v: unknown): v is string {
@@ -164,6 +171,30 @@ export async function ingestSubmission(raw: unknown, opts: SubmitOptions = {}): 
       corroborationCount: opts.corroborationCount,
       now: opts.now,
     });
+
+    // Gate 4 — provenance / anti-fabrication. Only worth running once the trap
+    // has PROVEN (a non-reproducing submission is already rejected). Confirms the
+    // vulnerable code actually exists at a cited, immutable commit — the check
+    // that replaces human PR review now that a fabricated-but-reproducing fixture
+    // can no longer be caught by eye.
+    if (res.accepted && opts.verifyProvenance) {
+      const prov = await verifyProvenance(finding, { fetchImpl: opts.fetchImpl });
+      if (!prov.ok) {
+        return {
+          accepted: false,
+          status: "rejected",
+          trapId: res.trapId,
+          reasons: prov.reasons,
+          proof: res.proof,
+          method: res.method,
+        };
+      }
+      // Stamp the verified immutable source URL onto the record's provenance.
+      if (res.vti && prov.resolvedUrl) {
+        const p = (res.vti.provenance ?? {}) as Record<string, unknown>;
+        res.vti.provenance = { ...p, verifiedSourceUrl: prov.resolvedUrl, provenanceVerified: true };
+      }
+    }
 
     return {
       accepted: res.accepted,
