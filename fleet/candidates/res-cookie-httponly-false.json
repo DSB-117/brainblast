@@ -1,0 +1,44 @@
+{
+  "id": "res-cookie-httponly-false",
+  "severity": "high",
+  "title": "res.cookie with httpOnly: false — the auth cookie is readable from JavaScript and can be stolen via XSS",
+  "class": "auth-bypass",
+  "component": {
+    "name": "express",
+    "type": "Auth",
+    "version": ">=4.0.0",
+    "sourceUrl": "https://expressjs.com/en/api.html#res.cookie"
+  },
+  "detect": {
+    "modules": ["express"],
+    "nameRegex": "cookie|login|auth|session|handler|route|controller",
+    "triggerCalls": ["cookie"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "cookie",
+        "argIndex": 2,
+        "propName": "httpOnly",
+        "forbiddenValue": false,
+        "passDetail": "res.cookie sets httpOnly: true — the cookie is not exposed to document.cookie, so client-side scripts cannot read the session token.",
+        "failDetail": "res.cookie is called with httpOnly: false, which makes the cookie readable by JavaScript via document.cookie. Any XSS anywhere on the origin can exfiltrate the session/auth token and hijack the account. Set httpOnly: true for authentication cookies.",
+        "absentCallDetail": "No res.cookie call in this scope; this rule does not apply here.",
+        "absentArgDetail": "res.cookie does not set httpOnly; verify auth cookies are created with httpOnly: true."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "login.ts",
+    "vulnerable": "import type { Response } from \"express\";\n\nexport function loginHandler(res: Response, token: string) {\n  // VULNERABLE: httpOnly: false lets client-side JS read the auth cookie — any XSS steals the session.\n  res.cookie(\"token\", token, { httpOnly: false, secure: true, sameSite: \"lax\" });\n  return res.sendStatus(200);\n}\n",
+    "fixed": "import type { Response } from \"express\";\n\nexport function loginHandler(res: Response, token: string) {\n  // FIXED: httpOnly: true keeps the auth cookie out of document.cookie.\n  res.cookie(\"token\", token, { httpOnly: true, secure: true, sameSite: \"lax\" });\n  return res.sendStatus(200);\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://expressjs.com/en/api.html#res.cookie",
+    "note": "httpOnly: false is often set so front-end JS can read the token, trading the single most effective XSS-session-theft mitigation for convenience. It ships silently — the app still works — until an XSS turns it into full account takeover."
+  }
+}

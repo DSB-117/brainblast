@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T07:17:50.059Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:19:42.279Z from 1 lot(s): seed-vti.jsonl._
 
-**24 verified trap instances** across **19 SDKs** and **9 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T07:17:47.532Z → 2026-07-04T07:17:47.532Z.
+**26 verified trap instances** across **21 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 30–60). Freshness: 2026-07-04T07:19:39.875Z → 2026-07-04T07:19:39.875Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,7 +20,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-| auth-bypass | 10 |
+| auth-bypass | 12 |
 | unconfirmed-state | 3 |
 | missing-slippage-guard | 3 |
 | silent-zero-revenue | 2 |
@@ -38,6 +38,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | cors | 2 |
 | @solana/web3.js | 2 |
 | cookie-session | 1 |
+| express-jwt | 1 |
 | express-session | 1 |
 | helmet | 1 |
 | node:https | 1 |
@@ -50,6 +51,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | Pyth Network price feeds | 1 |
 | python | 1 |
 | @raydium-io/raydium-sdk-v2 | 1 |
+| express | 1 |
 | Solana lamports arithmetic | 1 |
 | SPL Token | 1 |
 | Stripe Node SDK | 1 |
@@ -63,8 +65,8 @@ The open sample tier shows metadata + the RED→GREEN receipt (proof we have it)
 | cookie-session-secure-false | cookie-session | auth-bypass | high | 48 | 0 | ✓/✓ |
 | cors-credentials-reflect-origin-true | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
 | cors-wildcard-origin | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
+| express-jwt-credentials-not-required | express-jwt | auth-bypass | critical | 60 | 0 | ✓/✓ |
 | express-session-saveuninitialized-true | express-session | auth-bypass | high | 48 | 0 | ✓/✓ |
-| helmet-hsts-maxage-zero | helmet | auth-bypass | medium | 30 | 0 | ✓/✓ |
 
 ---
 

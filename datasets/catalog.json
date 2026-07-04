@@ -1,20 +1,20 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-04T07:17:50.059Z",
+  "generatedAt": "2026-07-04T07:19:42.279Z",
   "counts": {
-    "total": 24,
-    "proven": 24,
-    "sdks": 19,
+    "total": 26,
+    "proven": 26,
+    "sdks": 21,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 19,
-    "medium": 1,
-    "critical": 4
+    "high": 20,
+    "critical": 5,
+    "medium": 1
   },
   "classDistribution": {
-    "auth-bypass": 10,
+    "auth-bypass": 12,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
@@ -27,6 +27,7 @@
   "sdkDistribution": {
     "cookie-session": 1,
     "cors": 2,
+    "express-jwt": 1,
     "express-session": 1,
     "helmet": 1,
     "node:https": 1,
@@ -40,22 +41,23 @@
     "Pyth Network price feeds": 1,
     "python": 1,
     "@raydium-io/raydium-sdk-v2": 1,
+    "express": 1,
     "Solana lamports arithmetic": 1,
     "@solana/web3.js": 2,
     "SPL Token": 1,
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 24
+    "synthetic-owned": 26
   },
   "quality": {
-    "mean": 49,
+    "mean": 50,
     "min": 30,
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-07-04T07:17:47.532Z",
-    "newest": "2026-07-04T07:17:47.532Z"
+    "oldest": "2026-07-04T07:19:39.875Z",
+    "newest": "2026-07-04T07:19:39.875Z"
   },
   "tiers": [
     {
@@ -99,7 +101,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:17:47.532Z",
+      "capturedAt": "2026-07-04T07:19:39.875Z",
       "sourceUrls": [
         "https://github.com/expressjs/cookie-session#cookie-options"
       ],
@@ -107,7 +109,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:17:47.532Z"
+        "verifiedAt": "2026-07-04T07:19:39.875Z"
       }
     },
     {
@@ -122,7 +124,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:17:47.532Z",
+      "capturedAt": "2026-07-04T07:19:39.875Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -130,7 +132,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:17:47.532Z"
+        "verifiedAt": "2026-07-04T07:19:39.875Z"
       }
     },
     {
@@ -145,7 +147,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:17:47.532Z",
+      "capturedAt": "2026-07-04T07:19:39.875Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -153,7 +155,30 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:17:47.532Z"
+        "verifiedAt": "2026-07-04T07:19:39.875Z"
+      }
+    },
+    {
+      "trapId": "express-jwt-credentials-not-required",
+      "title": "express-jwt with credentialsRequired: false — routes that look protected accept requests with NO token",
+      "sdk": {
+        "name": "express-jwt",
+        "version": ">=7.0.0"
+      },
+      "severity": "critical",
+      "class": "auth-bypass",
+      "score": 60,
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "capturedAt": "2026-07-04T07:19:39.875Z",
+      "sourceUrls": [
+        "https://github.com/auth0/express-jwt#usage"
+      ],
+      "receipt": {
+        "red": true,
+        "green": true,
+        "method": "static-checker",
+        "verifiedAt": "2026-07-04T07:19:39.875Z"
       }
     },
     {
@@ -168,7 +193,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:17:47.532Z",
+      "capturedAt": "2026-07-04T07:19:39.875Z",
       "sourceUrls": [
         "https://www.npmjs.com/package/express-session#saveuninitialized"
       ],
@@ -176,30 +201,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:17:47.532Z"
-      }
-    },
-    {
-      "trapId": "helmet-hsts-maxage-zero",
-      "title": "helmet.hsts with maxAge: 0 — HSTS is disabled, leaving users open to HTTPS-downgrade (SSL-strip) attacks",
-      "sdk": {
-        "name": "helmet",
-        "version": ">=4.0.0"
-      },
-      "severity": "medium",
-      "class": "auth-bypass",
-      "score": 30,
-      "corroborationCount": 0,
-      "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:17:47.532Z",
-      "sourceUrls": [
-        "https://helmetjs.github.io/#strict-transport-security"
-      ],
-      "receipt": {
-        "red": true,
-        "green": true,
-        "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:17:47.532Z"
+        "verifiedAt": "2026-07-04T07:19:39.875Z"
       }
     }
   ]

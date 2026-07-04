@@ -54,6 +54,8 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "solana-send-skip-preflight-true": "unconfirmed-state",
   "helmet-hsts-maxage-zero": "auth-bypass",
   "jwt-sign-allow-insecure-key-sizes-true": "auth-bypass",
+  "res-cookie-httponly-false": "auth-bypass",
+  "express-jwt-credentials-not-required": "auth-bypass",
 };
 
 export function classifyTrap(rule: Rule): TrapClass {

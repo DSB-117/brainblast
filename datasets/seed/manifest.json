@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:17:47.532Z",
+  "generatedAt": "2026-07-04T07:19:39.875Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 24,
-    "sdks": 19,
-    "packsScanned": 24
+    "records": 26,
+    "sdks": 21,
+    "packsScanned": 26
   },
   "classDistribution": {
-    "auth-bypass": 10,
+    "auth-bypass": 12,
     "unconfirmed-state": 3,
     "missing-slippage-guard": 3,
     "immutable-after-deploy": 1,
@@ -38,6 +38,13 @@
     {
       "pack": "cors-wildcard-origin",
       "rule": "cors-wildcard-origin",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "express-jwt-credentials-not-required",
+      "rule": "express-jwt-credentials-not-required",
       "red": true,
       "green": true,
       "emitted": true
@@ -150,6 +157,13 @@
     {
       "pack": "raydium-compute-zero-slippage",
       "rule": "raydium-compute-zero-slippage",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "res-cookie-httponly-false",
+      "rule": "res-cookie-httponly-false",
       "red": true,
       "green": true,
       "emitted": true

@@ -1,0 +1,5 @@
+id: express-jwt-credentials-not-required
+name: "Express Jwt Credentials Not Required"
+version: 0.1.0
+author: brainblast-fleet
+description: "express-jwt with credentialsRequired: false — routes that look protected accept requests with NO token"
