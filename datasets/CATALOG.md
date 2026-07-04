@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T07:16:02.001Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T07:17:50.059Z from 1 lot(s): seed-vti.jsonl._
 
-**22 verified trap instances** across **18 SDKs** and **9 trap classes**. Quality score mean 50/100 (range 48–60). Freshness: 2026-07-04T07:15:59.425Z → 2026-07-04T07:15:59.425Z.
+**24 verified trap instances** across **19 SDKs** and **9 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T07:17:47.532Z → 2026-07-04T07:17:47.532Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,7 +20,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-| auth-bypass | 8 |
+| auth-bypass | 10 |
 | unconfirmed-state | 3 |
 | missing-slippage-guard | 3 |
 | silent-zero-revenue | 2 |
@@ -34,11 +34,12 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | SDK | Count |
 |---|---|
-| jsonwebtoken | 3 |
+| jsonwebtoken | 4 |
 | cors | 2 |
 | @solana/web3.js | 2 |
 | cookie-session | 1 |
 | express-session | 1 |
+| helmet | 1 |
 | node:https | 1 |
 | Jito (block engine / bundles) | 1 |
 | Jupiter Aggregator API | 1 |
@@ -63,7 +64,7 @@ The open sample tier shows metadata + the RED→GREEN receipt (proof we have it)
 | cors-credentials-reflect-origin-true | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
 | cors-wildcard-origin | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
 | express-session-saveuninitialized-true | express-session | auth-bypass | high | 48 | 0 | ✓/✓ |
-| https-reject-unauthorized-disabled | node:https | auth-bypass | critical | 60 | 0 | ✓/✓ |
+| helmet-hsts-maxage-zero | helmet | auth-bypass | medium | 30 | 0 | ✓/✓ |
 
 ---
 

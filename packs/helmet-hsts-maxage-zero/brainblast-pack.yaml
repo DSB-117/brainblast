@@ -1,0 +1,5 @@
+id: helmet-hsts-maxage-zero
+name: "Helmet Hsts Maxage Zero"
+version: 0.1.0
+author: brainblast-fleet
+description: "helmet.hsts with maxAge: 0 — HSTS is disabled, leaving users open to HTTPS-downgrade (SSL-strip) attacks"

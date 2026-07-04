@@ -1,0 +1,44 @@
+{
+  "id": "helmet-hsts-maxage-zero",
+  "severity": "medium",
+  "title": "helmet.hsts with maxAge: 0 — HSTS is disabled, leaving users open to HTTPS-downgrade (SSL-strip) attacks",
+  "class": "auth-bypass",
+  "component": {
+    "name": "helmet",
+    "type": "Networking",
+    "version": ">=4.0.0",
+    "sourceUrl": "https://helmetjs.github.io/#strict-transport-security"
+  },
+  "detect": {
+    "modules": ["helmet"],
+    "nameRegex": "helmet|hsts|security|header|app|server|middleware",
+    "triggerCalls": ["hsts"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "hsts",
+        "argIndex": 0,
+        "propName": "maxAge",
+        "forbiddenValue": 0,
+        "passDetail": "helmet.hsts sets a non-zero maxAge — browsers are told to use HTTPS for the site for that duration, preventing protocol downgrade.",
+        "failDetail": "helmet.hsts is configured with maxAge: 0, which tells browsers to IMMEDIATELY EXPIRE the Strict-Transport-Security policy — HSTS is effectively off. A network attacker can strip TLS and serve the site over plain HTTP (SSL-strip), intercepting credentials and session cookies. Set maxAge to a real duration (e.g. 15552000 seconds = 180 days).",
+        "absentCallDetail": "No helmet.hsts call in this scope; this rule does not apply here.",
+        "absentArgDetail": "helmet.hsts does not set maxAge; the helmet default (a non-zero max-age) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "security.ts",
+    "vulnerable": "import express from \"express\";\nimport helmet from \"helmet\";\n\nexport function applySecurityHeaders(app: express.Express) {\n  // VULNERABLE: maxAge: 0 expires HSTS immediately — the site can be downgraded to HTTP and MITM'd.\n  app.use(helmet.hsts({ maxAge: 0, includeSubDomains: true }));\n  return app;\n}\n",
+    "fixed": "import express from \"express\";\nimport helmet from \"helmet\";\n\nexport function applySecurityHeaders(app: express.Express) {\n  // FIXED: a real max-age keeps browsers pinned to HTTPS for 180 days.\n  app.use(helmet.hsts({ maxAge: 15552000, includeSubDomains: true }));\n  return app;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://helmetjs.github.io/#strict-transport-security",
+    "note": "maxAge: 0 reads as a harmless placeholder but actively tells browsers to forget the HTTPS-only policy. Pasted from a snippet that 'temporarily disables HSTS to test', it ships and reopens the SSL-strip window."
+  }
+}
