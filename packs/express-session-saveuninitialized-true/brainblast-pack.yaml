@@ -1,0 +1,5 @@
+id: express-session-saveuninitialized-true
+name: "Express Session Saveuninitialized True"
+version: 0.1.0
+author: brainblast-fleet
+description: "express-session configured with saveUninitialized: true — empty, unauthenticated sessions are persisted (session fixation + resource exhaustion)"

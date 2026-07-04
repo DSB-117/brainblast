@@ -1,29 +1,30 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-01T20:56:57.143Z",
+  "generatedAt": "2026-07-04T06:50:24.007Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 15
+      "count": 17
     }
   ],
   "counts": {
-    "vtis": 15,
-    "unique": 15,
+    "vtis": 17,
+    "unique": 17,
     "duplicates": 0,
-    "sdks": 14,
-    "classes": 8
+    "sdks": 16,
+    "classes": 9
   },
   "severityDistribution": {
-    "high": 13,
+    "high": 15,
     "critical": 2
   },
   "classDistribution": {
-    "auth-bypass": 4,
+    "auth-bypass": 5,
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
+    "immutable-after-deploy": 1,
     "silent-zero-revenue": 2,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
@@ -32,10 +33,12 @@
   },
   "sdkDistribution": {
     "cors": 1,
+    "express-session": 1,
     "node:https": 1,
     "Jito (block engine / bundles)": 1,
     "Jupiter Aggregator API": 1,
     "jsonwebtoken": 2,
+    "@metaplex-foundation/mpl-token-metadata": 1,
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "Pyth Network price feeds": 1,
@@ -47,16 +50,16 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 15
+    "synthetic-owned": 17
   },
   "quality": {
-    "mean": 50,
+    "mean": 49,
     "median": 48,
     "min": 48,
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 15,
+      "medium": 17,
       "low": 0
     }
   },
@@ -64,6 +67,7 @@
     "matrix": {
       "auth-bypass": {
         "cors": 1,
+        "express-session": 1,
         "node:https": 1,
         "jsonwebtoken": 2
       },
@@ -75,6 +79,9 @@
         "Jupiter Aggregator API": 1,
         "@meteora-ag/dlmm": 1,
         "@raydium-io/raydium-sdk-v2": 1
+      },
+      "immutable-after-deploy": {
+        "@metaplex-foundation/mpl-token-metadata": 1
       },
       "silent-zero-revenue": {
         "@metaplex-foundation/js": 1,
@@ -97,6 +104,10 @@
       {
         "class": "auth-bypass",
         "sdk": "cors"
+      },
+      {
+        "class": "auth-bypass",
+        "sdk": "express-session"
       },
       {
         "class": "auth-bypass",
@@ -123,6 +134,10 @@
         "sdk": "@raydium-io/raydium-sdk-v2"
       },
       {
+        "class": "immutable-after-deploy",
+        "sdk": "@metaplex-foundation/mpl-token-metadata"
+      },
+      {
         "class": "silent-zero-revenue",
         "sdk": "@metaplex-foundation/js"
       },
@@ -147,14 +162,21 @@
         "sdk": "Stripe Node SDK"
       }
     ],
-    "missingClasses": [
-      "immutable-after-deploy"
-    ]
+    "missingClasses": []
   },
   "scored": [
     {
       "trapId": "cors-wildcard-origin",
       "sdk": "cors",
+      "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "express-session-saveuninitialized-true",
+      "sdk": "express-session",
       "class": "auth-bypass",
       "severity": "high",
       "corroborationCount": 0,
@@ -201,6 +223,15 @@
       "trapId": "jwt-verify-ignore-expiration",
       "sdk": "jsonwebtoken",
       "class": "auth-bypass",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "metaplex-ismutable-false-locks-metadata",
+      "sdk": "@metaplex-foundation/mpl-token-metadata",
+      "class": "immutable-after-deploy",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",

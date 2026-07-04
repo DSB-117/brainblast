@@ -1,0 +1,5 @@
+id: metaplex-ismutable-false-locks-metadata
+name: "Metaplex Ismutable False Locks Metadata"
+version: 0.1.0
+author: brainblast-fleet
+description: "isMutable: false on Metaplex NFT metadata permanently locks it — a broken URI or trait can never be fixed"

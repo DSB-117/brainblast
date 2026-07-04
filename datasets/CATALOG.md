@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-03T17:45:41.411Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-04T06:50:24.026Z from 1 lot(s): seed-vti.jsonl._
 
-**15 verified trap instances** across **14 SDKs** and **8 trap classes**. Quality score mean 50/100 (range 48–60). Freshness: 2026-07-01T20:56:54.928Z → 2026-07-01T20:56:54.928Z.
+**17 verified trap instances** across **16 SDKs** and **9 trap classes**. Quality score mean 49/100 (range 48–60). Freshness: 2026-07-04T06:50:22.386Z → 2026-07-04T06:50:22.386Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -20,10 +20,11 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 
 | Class | Count |
 |---|---|
-| auth-bypass | 4 |
+| auth-bypass | 5 |
 | missing-slippage-guard | 3 |
 | unconfirmed-state | 2 |
 | silent-zero-revenue | 2 |
+| immutable-after-deploy | 1 |
 | unchecked-staleness | 1 |
 | wrong-constant | 1 |
 | missing-verification | 1 |
@@ -35,9 +36,11 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 |---|---|
 | jsonwebtoken | 2 |
 | cors | 1 |
+| express-session | 1 |
 | node:https | 1 |
 | Jito (block engine / bundles) | 1 |
 | Jupiter Aggregator API | 1 |
+| @metaplex-foundation/mpl-token-metadata | 1 |
 | @metaplex-foundation/js | 1 |
 | @meteora-ag/dlmm | 1 |
 | Pyth Network price feeds | 1 |
@@ -55,10 +58,10 @@ The open sample tier shows metadata + the RED→GREEN receipt (proof we have it)
 | Trap | SDK | Class | Severity | Score | Corroboration | RED→GREEN |
 |---|---|---|---|---|---|---|
 | cors-wildcard-origin | cors | auth-bypass | high | 48 | 0 | ✓/✓ |
+| express-session-saveuninitialized-true | express-session | auth-bypass | high | 48 | 0 | ✓/✓ |
 | https-reject-unauthorized-disabled | node:https | auth-bypass | critical | 60 | 0 | ✓/✓ |
 | jito-bundle-zero-tip | Jito (block engine / bundles) | unconfirmed-state | high | 48 | 0 | ✓/✓ |
 | jupiter-quote-zero-slippage | Jupiter Aggregator API | missing-slippage-guard | high | 48 | 0 | ✓/✓ |
-| jwt-verify-algorithm-none | jsonwebtoken | auth-bypass | critical | 60 | 0 | ✓/✓ |
 
 ---
 

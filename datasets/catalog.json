@@ -1,21 +1,22 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-03T17:45:41.411Z",
+  "generatedAt": "2026-07-04T06:50:24.026Z",
   "counts": {
-    "total": 15,
-    "proven": 15,
-    "sdks": 14,
-    "classes": 8
+    "total": 17,
+    "proven": 17,
+    "sdks": 16,
+    "classes": 9
   },
   "severityDistribution": {
-    "high": 13,
+    "high": 15,
     "critical": 2
   },
   "classDistribution": {
-    "auth-bypass": 4,
+    "auth-bypass": 5,
     "unconfirmed-state": 2,
     "missing-slippage-guard": 3,
+    "immutable-after-deploy": 1,
     "silent-zero-revenue": 2,
     "unchecked-staleness": 1,
     "wrong-constant": 1,
@@ -24,10 +25,12 @@
   },
   "sdkDistribution": {
     "cors": 1,
+    "express-session": 1,
     "node:https": 1,
     "Jito (block engine / bundles)": 1,
     "Jupiter Aggregator API": 1,
     "jsonwebtoken": 2,
+    "@metaplex-foundation/mpl-token-metadata": 1,
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "Pyth Network price feeds": 1,
@@ -39,16 +42,16 @@
     "Stripe Node SDK": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 15
+    "synthetic-owned": 17
   },
   "quality": {
-    "mean": 50,
+    "mean": 49,
     "min": 48,
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-07-01T20:56:54.928Z",
-    "newest": "2026-07-01T20:56:54.928Z"
+    "oldest": "2026-07-04T06:50:22.386Z",
+    "newest": "2026-07-04T06:50:22.386Z"
   },
   "tiers": [
     {
@@ -92,7 +95,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:56:54.928Z",
+      "capturedAt": "2026-07-04T06:50:22.386Z",
       "sourceUrls": [
         "https://github.com/expressjs/cors#configuration-options"
       ],
@@ -100,7 +103,30 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:56:54.928Z"
+        "verifiedAt": "2026-07-04T06:50:22.386Z"
+      }
+    },
+    {
+      "trapId": "express-session-saveuninitialized-true",
+      "title": "express-session configured with saveUninitialized: true — empty, unauthenticated sessions are persisted (session fixation + resource exhaustion)",
+      "sdk": {
+        "name": "express-session",
+        "version": ">=1.17.0"
+      },
+      "severity": "high",
+      "class": "auth-bypass",
+      "score": 48,
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "capturedAt": "2026-07-04T06:50:22.386Z",
+      "sourceUrls": [
+        "https://www.npmjs.com/package/express-session#saveuninitialized"
+      ],
+      "receipt": {
+        "red": true,
+        "green": true,
+        "method": "static-checker",
+        "verifiedAt": "2026-07-04T06:50:22.386Z"
       }
     },
     {
@@ -115,7 +141,7 @@
       "score": 60,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:56:54.928Z",
+      "capturedAt": "2026-07-04T06:50:22.386Z",
       "sourceUrls": [
         "https://nodejs.org/api/https.html#httpsrequestoptions-callback"
       ],
@@ -123,7 +149,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:56:54.928Z"
+        "verifiedAt": "2026-07-04T06:50:22.386Z"
       }
     },
     {
@@ -138,7 +164,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:56:54.928Z",
+      "capturedAt": "2026-07-04T06:50:22.386Z",
       "sourceUrls": [
         "https://docs.jito.wtf/lowlatencytxnsend/"
       ],
@@ -146,7 +172,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:56:54.928Z"
+        "verifiedAt": "2026-07-04T06:50:22.386Z"
       }
     },
     {
@@ -161,7 +187,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:56:54.928Z",
+      "capturedAt": "2026-07-04T06:50:22.386Z",
       "sourceUrls": [
         "https://station.jup.ag/docs/apis/swap-api"
       ],
@@ -169,30 +195,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:56:54.928Z"
-      }
-    },
-    {
-      "trapId": "jwt-verify-algorithm-none",
-      "title": "jwt.verify accepts the \"none\" algorithm — signature verification can be bypassed",
-      "sdk": {
-        "name": "jsonwebtoken",
-        "version": ">=9.0.0"
-      },
-      "severity": "critical",
-      "class": "auth-bypass",
-      "score": 60,
-      "corroborationCount": 0,
-      "license": "synthetic-owned",
-      "capturedAt": "2026-07-01T20:56:54.928Z",
-      "sourceUrls": [
-        "https://github.com/auth0/node-jsonwebtoken#jwtverifytoken-secretorpublickey-options-callback"
-      ],
-      "receipt": {
-        "red": true,
-        "green": true,
-        "method": "static-checker",
-        "verifiedAt": "2026-07-01T20:56:54.928Z"
+        "verifiedAt": "2026-07-04T06:50:22.386Z"
       }
     }
   ]
