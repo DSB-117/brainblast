@@ -6,6 +6,7 @@ import { feeAllocationShape } from "../src/checkers/feeAllocationShape.ts";
 import { argEqualsConstantIdentifier } from "../src/checkers/argEqualsConstantIdentifier.ts";
 import { objectArgPropertyLiteralEquals } from "../src/checkers/objectArgPropertyLiteralEquals.ts";
 import { objectArgPropertyForbiddenLiteral } from "../src/checkers/objectArgPropertyForbiddenLiteral.ts";
+import { checker as positionalArgForbiddenLiteral } from "../src/checkers/positionalArgForbiddenLiteral.ts";
 import { anchorInitIfNeededGuarded } from "../src/checkers/anchorInitIfNeededGuarded.ts";
 import { envSecretsCommitted } from "../src/checkers/envSecretsCommitted.ts";
 import { taintToSink } from "../src/checkers/taintToSink.ts";
@@ -1194,5 +1195,39 @@ describe("objectArgPropertyForbiddenLiteral (BN(0)-aware, v0.7.6)", () => {
     expect(objectArgPropertyForbiddenLiteral(zeroAmount, P).result).toBe("fail");
     const zeroDecimal = candidate(`export function h(q: any) { return pool.swap({ minOutAmount: new Decimal(0) }); }`, "h");
     expect(objectArgPropertyForbiddenLiteral(zeroDecimal, P).result).toBe("fail");
+  });
+});
+
+describe("positionalArgForbiddenLiteral (positional-arg-forbidden-literal)", () => {
+  const P = { call: "Connection", argIndex: 1, forbiddenValue: "processed" };
+
+  it("FAILS on a forbidden positional literal in a constructor (new Connection(url, 'processed'))", () => {
+    const c = candidate(`export function h(url: string) { return new Connection(url, "processed"); }`, "h");
+    expect(positionalArgForbiddenLiteral(c, P).result).toBe("fail");
+  });
+
+  it("PASSES on a safe positional literal (new Connection(url, 'confirmed'))", () => {
+    const c = candidate(`export function h(url: string) { return new Connection(url, "confirmed"); }`, "h");
+    expect(positionalArgForbiddenLiteral(c, P).result).toBe("pass");
+  });
+
+  it("CANT_TELL when the arg is absent or non-literal", () => {
+    const noArg = candidate(`export function h(url: string) { return new Connection(url); }`, "h");
+    expect(positionalArgForbiddenLiteral(noArg, P).result).toBe("cant_tell");
+    const fromVar = candidate(`export function h(url: string, lvl: any) { return new Connection(url, lvl); }`, "h");
+    expect(positionalArgForbiddenLiteral(fromVar, P).result).toBe("cant_tell");
+  });
+
+  it("CANT_TELL when the call is absent", () => {
+    const c = candidate(`export function h(url: string) { return other(url, "processed"); }`, "h");
+    expect(positionalArgForbiddenLiteral(c, P).result).toBe("cant_tell");
+  });
+
+  it("works on a method call + numeric literal (getBalance(pubkey, 0-th style) / cost factors)", () => {
+    const Q = { call: "createHash", argIndex: 0, forbiddenValue: "md5" };
+    const bad = candidate(`export function h() { return crypto.createHash("md5"); }`, "h");
+    expect(positionalArgForbiddenLiteral(bad, Q).result).toBe("fail");
+    const good = candidate(`export function h() { return crypto.createHash("sha256"); }`, "h");
+    expect(positionalArgForbiddenLiteral(good, Q).result).toBe("pass");
   });
 });
