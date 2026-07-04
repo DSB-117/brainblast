@@ -1,0 +1,37 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: apollo-server-csrf-prevention-false
+severity: high
+title: "new ApolloServer with csrfPrevention: false — the GraphQL API accepts
+  simple-request CSRF"
+component:
+  name: "@apollo/server"
+  type: Auth
+  version: ">=4.0.0"
+  sourceUrl: https://www.apollographql.com/docs/apollo-server/security/cors/#preventing-cross-site-request-forgery-csrf
+detect:
+  modules:
+    - "@apollo/server"
+  nameRegex: apollo|server|graphql|gql|api|schema
+  triggerCalls:
+    - ApolloServer
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: ApolloServer
+    argIndex: 0
+    propName: csrfPrevention
+    forbiddenValue: false
+    passDetail: ApolloServer keeps CSRF prevention on (csrfPrevention is not false)
+      — mutations require a preflighted request, blocking simple-request
+      cross-site forgery.
+    failDetail: "new ApolloServer is created with csrfPrevention: false, disabling
+      the check that requires a non-simple (preflighted) request. A malicious
+      page can now trigger state-changing GraphQL operations using the victim's
+      cookies via a simple cross-site request (CSRF) — no token, no preflight.
+      Leave csrfPrevention enabled (the Apollo Server 4 default)."
+    absentCallDetail: No ApolloServer construction in this scope; this rule does not apply here.
+    absentArgDetail: ApolloServer does not set csrfPrevention; the secure default
+      (enabled) applies.
+test:
+  kind: none

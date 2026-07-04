@@ -1,0 +1,35 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: koa-session-secure-false
+severity: high
+title: "koa-session with secure: false — the session cookie is sent over plain
+  HTTP and can be sniffed"
+component:
+  name: koa-session
+  type: Auth
+  version: ">=6.0.0"
+  sourceUrl: https://github.com/koajs/session#options
+detect:
+  modules:
+    - koa-session
+  nameRegex: session|koa|auth|app|cookie|config
+  triggerCalls:
+    - session
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: session
+    argIndex: 0
+    propName: secure
+    forbiddenValue: false
+    passDetail: "koa-session sets secure: true — the session cookie is only ever
+      transmitted over HTTPS."
+    failDetail: "koa-session is configured with secure: false, so the session cookie
+      is sent over plain HTTP. On any non-TLS hop an attacker can read the
+      session and hijack the authenticated session. Set secure: true in
+      production (with app.proxy = true when TLS terminates at a proxy)."
+    absentCallDetail: No koa-session session() call in this scope; this rule does not apply here.
+    absentArgDetail: "koa-session does not set secure; verify production forces
+      HTTPS-only cookies (secure: true)."
+test:
+  kind: none

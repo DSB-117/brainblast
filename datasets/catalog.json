@@ -1,52 +1,68 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-04T07:55:50.357Z",
+  "generatedAt": "2026-07-04T08:58:47.747Z",
   "counts": {
-    "total": 56,
-    "proven": 56,
-    "sdks": 39,
+    "total": 81,
+    "proven": 81,
+    "sdks": 61,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 39,
-    "critical": 13,
-    "medium": 4
+    "high": 55,
+    "critical": 20,
+    "medium": 6
   },
   "classDistribution": {
-    "auth-bypass": 24,
-    "missing-verification": 14,
+    "missing-verification": 27,
+    "auth-bypass": 34,
+    "other": 4,
     "unconfirmed-state": 7,
     "missing-slippage-guard": 3,
-    "other": 2,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
     "wrong-constant": 1
   },
   "sdkDistribution": {
+    "amqplib": 1,
+    "@apollo/server": 1,
     "aws-sdk": 1,
+    "@aws-sdk/client-s3": 1,
+    "cassandra-driver": 1,
+    "cookie": 1,
     "cookie-session": 2,
     "cors": 2,
+    "@elastic/elasticsearch": 1,
+    "express-fileupload": 1,
     "express-jwt": 2,
     "express-rate-limit": 1,
-    "express-session": 2,
+    "express-session": 3,
+    "@fastify/cors": 1,
     "crypto/tls": 1,
-    "helmet": 3,
+    "got": 1,
+    "helmet": 5,
     "node:https": 2,
     "ioredis": 1,
+    "iron-session": 1,
     "Jito (block engine / bundles)": 1,
     "jose": 1,
     "Jupiter Aggregator API": 1,
     "mongoose": 2,
     "jsonwebtoken": 4,
     "kafkajs": 1,
+    "knex": 1,
+    "koa-session": 1,
+    "ldapjs": 1,
+    "libxmljs2": 1,
     "@metaplex-foundation/mpl-token-metadata": 1,
     "@metaplex-foundation/js": 1,
     "@meteora-ag/dlmm": 1,
     "mongodb": 1,
+    "mqtt": 1,
     "mssql": 1,
     "mysql2": 1,
+    "nats": 1,
     "nodemailer": 1,
     "passport-jwt": 1,
     "pg": 1,
@@ -55,7 +71,10 @@
     "Pyth Network price feeds": 1,
     "python": 1,
     "@raydium-io/raydium-sdk-v2": 1,
+    "redis": 1,
     "express": 1,
+    "sequelize": 1,
+    "socket.io": 1,
     "@solana/web3.js": 6,
     "Solana lamports arithmetic": 1,
     "solidity": 1,
@@ -63,10 +82,13 @@
     "better-auth": 2,
     "stripe": 1,
     "Stripe Node SDK": 1,
+    "tedious": 1,
+    "typeorm": 1,
+    "undici": 1,
     "ws": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 56
+    "synthetic-owned": 81
   },
   "quality": {
     "mean": 50,
@@ -74,8 +96,8 @@
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-07-04T07:55:45.102Z",
-    "newest": "2026-07-04T07:55:45.102Z"
+    "oldest": "2026-07-04T08:58:44.553Z",
+    "newest": "2026-07-04T08:58:44.553Z"
   },
   "tiers": [
     {
@@ -108,6 +130,52 @@
   ],
   "teasers": [
     {
+      "trapId": "amqplib-reject-unauthorized-false",
+      "title": "amqplib connect with rejectUnauthorized: false — the RabbitMQ broker certificate is not validated (MITM)",
+      "sdk": {
+        "name": "amqplib",
+        "version": ">=0.8.0"
+      },
+      "severity": "high",
+      "class": "missing-verification",
+      "score": 48,
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "capturedAt": "2026-07-04T08:58:44.553Z",
+      "sourceUrls": [
+        "https://amqp-node.github.io/amqplib/channel_api.html#connect"
+      ],
+      "receipt": {
+        "red": true,
+        "green": true,
+        "method": "static-checker",
+        "verifiedAt": "2026-07-04T08:58:44.553Z"
+      }
+    },
+    {
+      "trapId": "apollo-server-csrf-prevention-false",
+      "title": "new ApolloServer with csrfPrevention: false — the GraphQL API accepts simple-request CSRF",
+      "sdk": {
+        "name": "@apollo/server",
+        "version": ">=4.0.0"
+      },
+      "severity": "high",
+      "class": "auth-bypass",
+      "score": 48,
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "capturedAt": "2026-07-04T08:58:44.553Z",
+      "sourceUrls": [
+        "https://www.apollographql.com/docs/apollo-server/security/cors/#preventing-cross-site-request-forgery-csrf"
+      ],
+      "receipt": {
+        "red": true,
+        "green": true,
+        "method": "static-checker",
+        "verifiedAt": "2026-07-04T08:58:44.553Z"
+      }
+    },
+    {
       "trapId": "aws-s3-public-read-acl",
       "title": "S3 putObject with ACL: \"public-read\" — every uploaded object is world-readable",
       "sdk": {
@@ -119,7 +187,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:55:45.102Z",
+      "capturedAt": "2026-07-04T08:58:44.553Z",
       "sourceUrls": [
         "https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html#canned-acl"
       ],
@@ -127,99 +195,53 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:55:45.102Z"
+        "verifiedAt": "2026-07-04T08:58:44.553Z"
       }
     },
     {
-      "trapId": "cookie-session-httponly-false",
-      "title": "cookie-session with httpOnly: false — the session cookie is readable from JavaScript (XSS session theft)",
+      "trapId": "aws-s3-v3-public-read-acl",
+      "title": "AWS SDK v3 PutObjectCommand with ACL: \"public-read\" — every uploaded object is world-readable",
       "sdk": {
-        "name": "cookie-session",
-        "version": ">=2.0.0"
+        "name": "@aws-sdk/client-s3",
+        "version": ">=3.0.0"
       },
       "severity": "high",
       "class": "auth-bypass",
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:55:45.102Z",
+      "capturedAt": "2026-07-04T08:58:44.553Z",
       "sourceUrls": [
-        "https://github.com/expressjs/cookie-session#cookie-options"
+        "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-s3/Interface/PutObjectCommandInput/"
       ],
       "receipt": {
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:55:45.102Z"
+        "verifiedAt": "2026-07-04T08:58:44.553Z"
       }
     },
     {
-      "trapId": "cookie-session-secure-false",
-      "title": "cookie-session with secure: false — the session cookie is sent over plain HTTP and can be sniffed",
+      "trapId": "cassandra-ssloptions-reject-unauthorized-false",
+      "title": "new cassandra-driver Client with sslOptions.rejectUnauthorized: false — the Cassandra TLS certificate is not validated (MITM)",
       "sdk": {
-        "name": "cookie-session",
-        "version": ">=2.0.0"
+        "name": "cassandra-driver",
+        "version": ">=4.0.0"
       },
-      "severity": "high",
-      "class": "auth-bypass",
-      "score": 48,
+      "severity": "critical",
+      "class": "missing-verification",
+      "score": 60,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:55:45.102Z",
+      "capturedAt": "2026-07-04T08:58:44.553Z",
       "sourceUrls": [
-        "https://github.com/expressjs/cookie-session#cookie-options"
+        "https://docs.datastax.com/en/developer/nodejs-driver/latest/features/security/ssl/"
       ],
       "receipt": {
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:55:45.102Z"
-      }
-    },
-    {
-      "trapId": "cors-credentials-reflect-origin-true",
-      "title": "cors() with origin: true and credentials — reflects any caller's origin, leaking authenticated responses cross-site",
-      "sdk": {
-        "name": "cors",
-        "version": ">=2.8.0"
-      },
-      "severity": "high",
-      "class": "auth-bypass",
-      "score": 48,
-      "corroborationCount": 0,
-      "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:55:45.102Z",
-      "sourceUrls": [
-        "https://github.com/expressjs/cors#configuration-options"
-      ],
-      "receipt": {
-        "red": true,
-        "green": true,
-        "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:55:45.102Z"
-      }
-    },
-    {
-      "trapId": "cors-wildcard-origin",
-      "title": "cors() configured with origin: \"*\" — any website can call the API with the user's session",
-      "sdk": {
-        "name": "cors",
-        "version": ">=2.8.0"
-      },
-      "severity": "high",
-      "class": "auth-bypass",
-      "score": 48,
-      "corroborationCount": 0,
-      "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T07:55:45.102Z",
-      "sourceUrls": [
-        "https://github.com/expressjs/cors#configuration-options"
-      ],
-      "receipt": {
-        "red": true,
-        "green": true,
-        "method": "static-checker",
-        "verifiedAt": "2026-07-04T07:55:45.102Z"
+        "verifiedAt": "2026-07-04T08:58:44.553Z"
       }
     }
   ]

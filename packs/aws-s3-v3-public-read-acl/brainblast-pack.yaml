@@ -1,0 +1,5 @@
+id: aws-s3-v3-public-read-acl
+name: "Aws S3 V3 Public Read Acl"
+version: 0.1.0
+author: brainblast-fleet
+description: "AWS SDK v3 PutObjectCommand with ACL: \"public-read\" — every uploaded object is world-readable"

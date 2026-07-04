@@ -1,0 +1,44 @@
+{
+  "id": "typeorm-ssl-reject-unauthorized-false",
+  "severity": "critical",
+  "title": "new TypeORM DataSource with ssl.rejectUnauthorized: false — the database TLS certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "typeorm",
+    "type": "Database",
+    "version": ">=0.3.0",
+    "sourceUrl": "https://typeorm.io/data-source-options"
+  },
+  "detect": {
+    "modules": ["typeorm"],
+    "nameRegex": "datasource|typeorm|db|database|connect|conn|orm",
+    "triggerCalls": ["DataSource"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "DataSource",
+        "argIndex": 0,
+        "propName": "ssl.rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "The TypeORM DataSource validates the database server certificate (ssl.rejectUnauthorized is not false) — the connection's TLS identity is verified.",
+        "failDetail": "new DataSource is created with ssl: { rejectUnauthorized: false }, disabling validation of the database server's TLS certificate for every connection in the pool. A network attacker can present a forged certificate and man-in-the-middle the database — exposing every query, credential, and row. Remove rejectUnauthorized: false; provide the provider's CA via ssl.ca.",
+        "absentCallDetail": "No DataSource construction in this scope; this rule does not apply here.",
+        "absentArgDetail": "The DataSource does not set ssl.rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "datasource.ts",
+    "vulnerable": "import { DataSource } from \"typeorm\";\n\nexport function makeDataSource(url: string) {\n  // VULNERABLE: ssl.rejectUnauthorized: false — the DB certificate is not validated.\n  return new DataSource({ type: \"postgres\", url, ssl: { rejectUnauthorized: false } });\n}\n",
+    "fixed": "import { DataSource } from \"typeorm\";\n\nexport function makeDataSource(url: string, ca: string) {\n  // FIXED: certificate validation enforced; trust the provider's CA explicitly.\n  return new DataSource({ type: \"postgres\", url, ssl: { rejectUnauthorized: true, ca } });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://typeorm.io/data-source-options",
+    "note": "ssl: { rejectUnauthorized: false } is pasted into a TypeORM DataSource to connect to a managed Postgres/MySQL without the CA. It ships and disables MITM protection on the database."
+  }
+}

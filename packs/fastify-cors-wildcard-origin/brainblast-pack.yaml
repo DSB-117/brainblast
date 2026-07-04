@@ -1,0 +1,5 @@
+id: fastify-cors-wildcard-origin
+name: "Fastify Cors Wildcard Origin"
+version: 0.1.0
+author: brainblast-fleet
+description: "@fastify/cors registered with origin: \"*\" — any website can call the API with the user's session"

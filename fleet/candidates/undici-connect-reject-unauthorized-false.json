@@ -1,0 +1,44 @@
+{
+  "id": "undici-connect-reject-unauthorized-false",
+  "severity": "high",
+  "title": "new undici Agent with connect.rejectUnauthorized: false — the HTTP client skips TLS certificate validation (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "undici",
+    "type": "Networking",
+    "version": ">=5.0.0",
+    "sourceUrl": "https://undici.nodejs.org/#/docs/api/Client?id=parameter-connectoptions"
+  },
+  "detect": {
+    "modules": ["undici"],
+    "nameRegex": "agent|client|undici|http|fetch|dispatcher|pool",
+    "triggerCalls": ["Agent", "Pool", "Client"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "Agent",
+        "argIndex": 0,
+        "propName": "connect.rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "The undici Agent validates server certificates (connect.rejectUnauthorized is not false) — TLS identity is verified for every request it dispatches.",
+        "failDetail": "new undici Agent is created with connect: { rejectUnauthorized: false }, disabling TLS certificate validation for every request routed through it. When set as the global dispatcher (a common way to 'fix' cert errors for fetch/undici), the whole HTTP client silently trusts forged certificates and can be man-in-the-middled. Remove rejectUnauthorized: false; pass a trusted CA via connect.ca if a private CA is required.",
+        "absentCallDetail": "No undici Agent construction in this scope; this rule does not apply here.",
+        "absentArgDetail": "The undici Agent does not set connect.rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "agent.ts",
+    "vulnerable": "import { Agent } from \"undici\";\n\nexport function makeAgent() {\n  // VULNERABLE: connect.rejectUnauthorized: false disables TLS validation for every request through this agent.\n  return new Agent({ connect: { rejectUnauthorized: false }, keepAliveTimeout: 10000 });\n}\n",
+    "fixed": "import { Agent } from \"undici\";\n\nexport function makeAgent(ca: string) {\n  // FIXED: certificate validation enforced; trust a private CA explicitly if needed.\n  return new Agent({ connect: { rejectUnauthorized: true, ca }, keepAliveTimeout: 10000 });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://undici.nodejs.org/#/docs/api/Client?id=parameter-connectoptions",
+    "note": "connect: { rejectUnauthorized: false } on a shared undici Agent (often installed as the global dispatcher) disables MITM protection for the whole process's fetch/undici traffic. Pasted to silence a self-signed-cert error, it ships everywhere."
+  }
+}

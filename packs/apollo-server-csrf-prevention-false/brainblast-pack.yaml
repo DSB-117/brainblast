@@ -1,0 +1,5 @@
+id: apollo-server-csrf-prevention-false
+name: "Apollo Server Csrf Prevention False"
+version: 0.1.0
+author: brainblast-fleet
+description: "new ApolloServer with csrfPrevention: false — the GraphQL API accepts simple-request CSRF"

@@ -1,0 +1,44 @@
+{
+  "id": "helmet-hsts-disabled",
+  "severity": "medium",
+  "title": "helmet({ hsts: false }) — Strict-Transport-Security is off, allowing HTTPS-downgrade attacks",
+  "class": "auth-bypass",
+  "component": {
+    "name": "helmet",
+    "type": "Networking",
+    "version": ">=4.0.0",
+    "sourceUrl": "https://helmetjs.github.io/#strict-transport-security"
+  },
+  "detect": {
+    "modules": ["helmet"],
+    "nameRegex": "helmet|security|header|app|server|middleware",
+    "triggerCalls": ["helmet"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "helmet",
+        "argIndex": 0,
+        "propName": "hsts",
+        "forbiddenValue": false,
+        "passDetail": "helmet keeps HSTS on (hsts is not false) — a Strict-Transport-Security header pins browsers to HTTPS.",
+        "failDetail": "helmet is configured with hsts: false, removing the Strict-Transport-Security header entirely. Browsers are no longer told to use HTTPS-only, so a network attacker can strip TLS and serve the site over plain HTTP (SSL-strip), intercepting credentials and session cookies. Leave HSTS enabled (helmet's default) with a real max-age.",
+        "absentCallDetail": "No helmet() call in this scope; this rule does not apply here.",
+        "absentArgDetail": "helmet() does not set hsts; the default (HSTS enabled) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "hsts.ts",
+    "vulnerable": "import express from \"express\";\nimport helmet from \"helmet\";\n\nexport function applyHsts(app: express.Express) {\n  // VULNERABLE: hsts: false removes Strict-Transport-Security — the site can be downgraded to HTTP.\n  app.use(helmet({ hsts: false }));\n  return app;\n}\n",
+    "fixed": "import express from \"express\";\nimport helmet from \"helmet\";\n\nexport function applyHsts(app: express.Express) {\n  // FIXED: HSTS stays enabled (helmet's secure default).\n  app.use(helmet({ hsts: true }));\n  return app;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://helmetjs.github.io/#strict-transport-security",
+    "note": "hsts: false is set to test the site over plain HTTP and left in, reopening the SSL-strip window. Distinct from the maxAge: 0 variant — this removes the header outright."
+  }
+}

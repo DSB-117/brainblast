@@ -1,0 +1,38 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: express-fileupload-safe-file-names-false
+severity: high
+title: "express-fileupload with safeFileNames: false — uploaded filenames keep
+  path/special characters (traversal)"
+component:
+  name: express-fileupload
+  type: Storage
+  version: ">=1.0.0"
+  sourceUrl: https://github.com/richardgirges/express-fileupload#available-options
+detect:
+  modules:
+    - express-fileupload
+  nameRegex: upload|file|fileupload|middleware|app|multipart
+  triggerCalls:
+    - fileUpload
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: fileUpload
+    argIndex: 0
+    propName: safeFileNames
+    forbiddenValue: false
+    passDetail: express-fileupload sanitizes uploaded filenames (safeFileNames is
+      not false) — path separators and special characters are stripped before
+      the name is used.
+    failDetail: "express-fileupload is configured with safeFileNames: false, so an
+      uploaded file's name is used as-is — including `../`, path separators, and
+      null bytes. If that name is passed to mv()/a filesystem path, an attacker
+      can traverse out of the upload directory and overwrite arbitrary files
+      (e.g. a config or a served script). Set safeFileNames: true (ideally with
+      a regex) and never build a path from an untrusted filename."
+    absentCallDetail: No fileUpload() call in this scope; this rule does not apply here.
+    absentArgDetail: fileUpload() does not set safeFileNames; note
+      express-fileupload defaults it to false — set it to true explicitly.
+test:
+  kind: none

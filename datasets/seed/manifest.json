@@ -1,20 +1,20 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T07:55:45.102Z",
+  "generatedAt": "2026-07-04T08:58:44.553Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 56,
-    "sdks": 39,
-    "packsScanned": 56
+    "records": 81,
+    "sdks": 61,
+    "packsScanned": 81
   },
   "classDistribution": {
-    "auth-bypass": 24,
-    "missing-verification": 14,
+    "missing-verification": 27,
+    "auth-bypass": 34,
+    "other": 4,
     "unconfirmed-state": 7,
     "missing-slippage-guard": 3,
-    "other": 2,
     "immutable-after-deploy": 1,
     "silent-zero-revenue": 3,
     "unchecked-staleness": 1,
@@ -22,8 +22,43 @@
   },
   "proof": [
     {
+      "pack": "amqplib-reject-unauthorized-false",
+      "rule": "amqplib-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "apollo-server-csrf-prevention-false",
+      "rule": "apollo-server-csrf-prevention-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "aws-s3-public-read-acl",
       "rule": "aws-s3-public-read-acl",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "aws-s3-v3-public-read-acl",
+      "rule": "aws-s3-v3-public-read-acl",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "cassandra-ssloptions-reject-unauthorized-false",
+      "rule": "cassandra-ssloptions-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "cookie-serialize-httponly-false",
+      "rule": "cookie-serialize-httponly-false",
       "red": true,
       "green": true,
       "emitted": true
@@ -57,6 +92,20 @@
       "emitted": true
     },
     {
+      "pack": "elasticsearch-tls-reject-unauthorized-false",
+      "rule": "elasticsearch-tls-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "express-fileupload-safe-file-names-false",
+      "rule": "express-fileupload-safe-file-names-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "express-jwt-credentials-not-required",
       "rule": "express-jwt-credentials-not-required",
       "red": true,
@@ -66,6 +115,13 @@
     {
       "pack": "express-rate-limit-max-zero",
       "rule": "express-rate-limit-max-zero",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "express-session-cookie-samesite-none",
+      "rule": "express-session-cookie-samesite-none",
       "red": true,
       "green": true,
       "emitted": true
@@ -85,8 +141,22 @@
       "emitted": true
     },
     {
+      "pack": "fastify-cors-wildcard-origin",
+      "rule": "fastify-cors-wildcard-origin",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "go-tls-insecureskipverify",
       "rule": "go-tls-insecureskipverify",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "got-https-reject-unauthorized-false",
+      "rule": "got-https-reject-unauthorized-false",
       "red": true,
       "green": true,
       "emitted": true
@@ -106,8 +176,22 @@
       "emitted": true
     },
     {
+      "pack": "helmet-hsts-disabled",
+      "rule": "helmet-hsts-disabled",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "helmet-hsts-maxage-zero",
       "rule": "helmet-hsts-maxage-zero",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "helmet-nosniff-disabled",
+      "rule": "helmet-nosniff-disabled",
       "red": true,
       "green": true,
       "emitted": true
@@ -129,6 +213,13 @@
     {
       "pack": "ioredis-tls-reject-unauthorized-false",
       "rule": "ioredis-tls-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "iron-session-cookie-secure-false",
+      "rule": "iron-session-cookie-secure-false",
       "red": true,
       "green": true,
       "emitted": true
@@ -204,6 +295,34 @@
       "emitted": true
     },
     {
+      "pack": "knex-connection-ssl-reject-unauthorized-false",
+      "rule": "knex-connection-ssl-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "koa-session-secure-false",
+      "rule": "koa-session-secure-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "ldapjs-tls-reject-unauthorized-false",
+      "rule": "ldapjs-tls-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "libxmljs-noent-true",
+      "rule": "libxmljs-noent-true",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "metaplex-ismutable-false-locks-metadata",
       "rule": "metaplex-ismutable-false-locks-metadata",
       "red": true,
@@ -239,6 +358,13 @@
       "emitted": true
     },
     {
+      "pack": "mqtt-reject-unauthorized-false",
+      "rule": "mqtt-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "mssql-trust-server-certificate-true",
       "rule": "mssql-trust-server-certificate-true",
       "red": true,
@@ -248,6 +374,13 @@
     {
       "pack": "mysql2-ssl-reject-unauthorized-false",
       "rule": "mysql2-ssl-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "nats-tls-reject-unauthorized-false",
+      "rule": "nats-tls-reject-unauthorized-false",
       "red": true,
       "green": true,
       "emitted": true
@@ -309,8 +442,29 @@
       "emitted": true
     },
     {
+      "pack": "redis-socket-reject-unauthorized-false",
+      "rule": "redis-socket-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
       "pack": "res-cookie-httponly-false",
       "rule": "res-cookie-httponly-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "sequelize-dialectoptions-ssl-reject-unauthorized-false",
+      "rule": "sequelize-dialectoptions-ssl-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "socketio-cors-wildcard-origin",
+      "rule": "socketio-cors-wildcard-origin",
       "red": true,
       "green": true,
       "emitted": true
@@ -402,6 +556,27 @@
     {
       "pack": "stripe-paymentintents-moved",
       "rule": "stripe-paymentintents-moved",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "tedious-trust-server-certificate-true",
+      "rule": "tedious-trust-server-certificate-true",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "typeorm-ssl-reject-unauthorized-false",
+      "rule": "typeorm-ssl-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "undici-connect-reject-unauthorized-false",
+      "rule": "undici-connect-reject-unauthorized-false",
       "red": true,
       "green": true,
       "emitted": true

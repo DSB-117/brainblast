@@ -1,0 +1,5 @@
+id: redis-socket-reject-unauthorized-false
+name: "Redis Socket Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "node-redis createClient with socket.rejectUnauthorized: false — the Redis TLS certificate is not validated (MITM)"

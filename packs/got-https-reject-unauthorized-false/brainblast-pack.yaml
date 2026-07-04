@@ -1,0 +1,5 @@
+id: got-https-reject-unauthorized-false
+name: "Got Https Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "got() with https.rejectUnauthorized: false — the HTTP client skips TLS certificate validation (MITM)"

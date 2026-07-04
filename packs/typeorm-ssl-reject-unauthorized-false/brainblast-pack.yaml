@@ -1,0 +1,5 @@
+id: typeorm-ssl-reject-unauthorized-false
+name: "Typeorm Ssl Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "new TypeORM DataSource with ssl.rejectUnauthorized: false — the database TLS certificate is not validated (MITM)"

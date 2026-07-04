@@ -1,0 +1,44 @@
+{
+  "id": "amqplib-reject-unauthorized-false",
+  "severity": "high",
+  "title": "amqplib connect with rejectUnauthorized: false — the RabbitMQ broker certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "amqplib",
+    "type": "Networking",
+    "version": ">=0.8.0",
+    "sourceUrl": "https://amqp-node.github.io/amqplib/channel_api.html#connect"
+  },
+  "detect": {
+    "modules": ["amqplib"],
+    "nameRegex": "amqp|connect|rabbit|broker|queue|mq",
+    "triggerCalls": ["connect"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "connect",
+        "argIndex": 1,
+        "propName": "rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "The amqplib connection validates the broker certificate (rejectUnauthorized is not false) — the amqps:// connection's TLS identity is verified.",
+        "failDetail": "amqplib connect is called with rejectUnauthorized: false in its socket options, disabling validation of the RabbitMQ broker's TLS certificate. A network attacker can present a forged certificate and man-in-the-middle the connection — reading and injecting messages on every queue (jobs, events, credentials). Remove rejectUnauthorized: false; trust the broker CA via the `ca` socket option.",
+        "absentCallDetail": "No amqplib connect call in this scope; this rule does not apply here.",
+        "absentArgDetail": "amqplib connect does not set rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "amqp.ts",
+    "vulnerable": "import amqp from \"amqplib\";\n\nexport function connectBroker(url: string) {\n  // VULNERABLE: rejectUnauthorized: false — the RabbitMQ broker certificate is not validated.\n  return amqp.connect(url, { rejectUnauthorized: false });\n}\n",
+    "fixed": "import amqp from \"amqplib\";\n\nexport function connectBroker(url: string, ca: string) {\n  // FIXED: certificate validation enforced; trust the broker CA explicitly.\n  return amqp.connect(url, { rejectUnauthorized: true, ca: [ca] });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://amqp-node.github.io/amqplib/channel_api.html#connect",
+    "note": "rejectUnauthorized: false is pasted to connect to a RabbitMQ broker with a self-signed cert and ships, exposing the job/event bus to MITM."
+  }
+}

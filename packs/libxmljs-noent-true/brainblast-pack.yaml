@@ -1,0 +1,5 @@
+id: libxmljs-noent-true
+name: "Libxmljs Noent True"
+version: 0.1.0
+author: brainblast-fleet
+description: "libxmljs parseXml with noent: true — external entities are expanded, enabling XXE"

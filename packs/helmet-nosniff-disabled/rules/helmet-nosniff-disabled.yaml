@@ -1,0 +1,36 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: helmet-nosniff-disabled
+severity: medium
+title: "helmet({ noSniff: false }) — X-Content-Type-Options is off, allowing
+  MIME-sniffing attacks"
+component:
+  name: helmet
+  type: Networking
+  version: ">=4.0.0"
+  sourceUrl: https://helmetjs.github.io/#x-content-type-options
+detect:
+  modules:
+    - helmet
+  nameRegex: helmet|security|header|app|server|middleware
+  triggerCalls:
+    - helmet
+check:
+  kind: object-arg-property-forbidden-literal
+  params:
+    call: helmet
+    argIndex: 0
+    propName: noSniff
+    forbiddenValue: false
+    passDetail: "helmet keeps noSniff on (noSniff is not false) — the
+      X-Content-Type-Options: nosniff header stops browsers from MIME-sniffing
+      responses."
+    failDetail: "helmet is configured with noSniff: false, removing the
+      X-Content-Type-Options: nosniff header. Browsers may now MIME-sniff a
+      response and execute a user-uploaded file (or a text/plain endpoint
+      reflecting user input) as HTML/JavaScript — turning a benign-looking
+      upload or API into stored XSS. Leave noSniff enabled (helmet's default)."
+    absentCallDetail: No helmet() call in this scope; this rule does not apply here.
+    absentArgDetail: helmet() does not set noSniff; the default (nosniff enabled) applies.
+test:
+  kind: none

@@ -1,0 +1,5 @@
+id: socketio-cors-wildcard-origin
+name: "Socketio Cors Wildcard Origin"
+version: 0.1.0
+author: brainblast-fleet
+description: "socket.io Server with cors.origin: \"*\" — any website can open an authenticated socket to the API"

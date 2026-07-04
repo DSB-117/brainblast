@@ -1,0 +1,5 @@
+id: elasticsearch-tls-reject-unauthorized-false
+name: "Elasticsearch Tls Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "new elasticsearch Client with tls.rejectUnauthorized: false — the search cluster certificate is not validated (MITM)"

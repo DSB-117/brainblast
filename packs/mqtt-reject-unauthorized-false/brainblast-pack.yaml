@@ -1,0 +1,5 @@
+id: mqtt-reject-unauthorized-false
+name: "Mqtt Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "mqtt.connect with rejectUnauthorized: false — the MQTT broker certificate is not validated (MITM)"

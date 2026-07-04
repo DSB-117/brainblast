@@ -1,0 +1,5 @@
+id: cassandra-ssloptions-reject-unauthorized-false
+name: "Cassandra Ssloptions Reject Unauthorized False"
+version: 0.1.0
+author: brainblast-fleet
+description: "new cassandra-driver Client with sslOptions.rejectUnauthorized: false — the Cassandra TLS certificate is not validated (MITM)"

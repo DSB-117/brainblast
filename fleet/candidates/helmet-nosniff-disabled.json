@@ -1,0 +1,44 @@
+{
+  "id": "helmet-nosniff-disabled",
+  "severity": "medium",
+  "title": "helmet({ noSniff: false }) — X-Content-Type-Options is off, allowing MIME-sniffing attacks",
+  "class": "auth-bypass",
+  "component": {
+    "name": "helmet",
+    "type": "Networking",
+    "version": ">=4.0.0",
+    "sourceUrl": "https://helmetjs.github.io/#x-content-type-options"
+  },
+  "detect": {
+    "modules": ["helmet"],
+    "nameRegex": "helmet|security|header|app|server|middleware",
+    "triggerCalls": ["helmet"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "helmet",
+        "argIndex": 0,
+        "propName": "noSniff",
+        "forbiddenValue": false,
+        "passDetail": "helmet keeps noSniff on (noSniff is not false) — the X-Content-Type-Options: nosniff header stops browsers from MIME-sniffing responses.",
+        "failDetail": "helmet is configured with noSniff: false, removing the X-Content-Type-Options: nosniff header. Browsers may now MIME-sniff a response and execute a user-uploaded file (or a text/plain endpoint reflecting user input) as HTML/JavaScript — turning a benign-looking upload or API into stored XSS. Leave noSniff enabled (helmet's default).",
+        "absentCallDetail": "No helmet() call in this scope; this rule does not apply here.",
+        "absentArgDetail": "helmet() does not set noSniff; the default (nosniff enabled) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "headers.ts",
+    "vulnerable": "import express from \"express\";\nimport helmet from \"helmet\";\n\nexport function applyHeaders(app: express.Express) {\n  // VULNERABLE: noSniff: false lets browsers MIME-sniff responses into executable HTML/JS.\n  app.use(helmet({ noSniff: false }));\n  return app;\n}\n",
+    "fixed": "import express from \"express\";\nimport helmet from \"helmet\";\n\nexport function applyHeaders(app: express.Express) {\n  // FIXED: noSniff stays enabled (helmet's secure default).\n  app.use(helmet({ noSniff: true }));\n  return app;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://helmetjs.github.io/#x-content-type-options",
+    "note": "noSniff: false is set to serve a file with a loose content type and left in globally, reopening MIME-sniffing XSS on user-controlled responses. Nothing visibly breaks, so it ships."
+  }
+}

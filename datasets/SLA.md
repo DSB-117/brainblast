@@ -1,17 +1,17 @@
 # Corpus SLA — Brainblast Verified Traps
 
-_Generated 2026-07-04T07:55:51.632Z by corpus-sla@0.1.0. Source of truth: `datasets/sla.json`._
+_Generated 2026-07-04T08:59:00.110Z by corpus-sla@0.1.0. Source of truth: `datasets/sla.json`._
 
 ## Headline
-- **Reproduction rate: 100.0%** (54/54 verifiable VTIs still go RED→GREEN).
-- **Schema-valid: 100.0%** (56/56).
+- **Reproduction rate: 100.0%** (79/79 verifiable VTIs still go RED→GREEN).
+- **Schema-valid: 100.0%** (81/81).
 - **Packaging:** v0.1.0 full lot matches seed.
 - **Integrity gate:** ✅ PASS.
 
 ## Per-lot
 | lot | total | schema-valid | reproduced | unverifiable | age median (d) | age max (d) |
 |---|---|---|---|---|---|---|
-| synthetic-owned | 56 | 56 | 54 | 2 | 0 | 0 |
+| synthetic-owned | 81 | 81 | 79 | 2 | 0 | 0 |
 
 _No failures._
 

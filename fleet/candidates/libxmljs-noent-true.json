@@ -1,0 +1,44 @@
+{
+  "id": "libxmljs-noent-true",
+  "severity": "critical",
+  "title": "libxmljs parseXml with noent: true — external entities are expanded, enabling XXE",
+  "class": "other",
+  "component": {
+    "name": "libxmljs2",
+    "type": "Networking",
+    "version": ">=0.30.0",
+    "sourceUrl": "https://github.com/marudor/libxmljs2"
+  },
+  "detect": {
+    "modules": ["libxmljs2", "libxmljs"],
+    "nameRegex": "xml|parse|libxml|document|entity",
+    "triggerCalls": ["parseXml", "parseXmlString"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "parseXml",
+        "argIndex": 1,
+        "propName": "noent",
+        "forbiddenValue": true,
+        "passDetail": "parseXml leaves entity substitution off (noent is not true) — external/general entities are not expanded, so XXE cannot read files or reach internal hosts.",
+        "failDetail": "parseXml is called with noent: true, which turns ON entity substitution. A document with a DOCTYPE that declares an external entity (e.g. SYSTEM \"file:///etc/passwd\" or an http:// URL) will have it EXPANDED during parsing — a classic XML External Entity (XXE) attack that leaks local files and enables SSRF against internal services. Remove noent: true; never enable entity substitution on untrusted XML.",
+        "absentCallDetail": "No parseXml call in this scope; this rule does not apply here.",
+        "absentArgDetail": "parseXml does not set noent; the safe default (no entity substitution) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "parse.ts",
+    "vulnerable": "import { parseXml } from \"libxmljs2\";\n\nexport function parseUpload(xml: string) {\n  // VULNERABLE: noent: true expands external entities — untrusted XML can read local files (XXE).\n  return parseXml(xml, { noent: true, dtdload: true });\n}\n",
+    "fixed": "import { parseXml } from \"libxmljs2\";\n\nexport function parseUpload(xml: string) {\n  // FIXED: entity substitution stays off — external entities are not expanded.\n  return parseXml(xml, { noent: false, dtdload: false });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/marudor/libxmljs2",
+    "note": "noent: true is enabled to make a legitimate internal entity resolve, but on any untrusted XML input it opens XXE — one of the highest-impact parser footguns. Nothing errors on well-formed input, so it ships."
+  }
+}

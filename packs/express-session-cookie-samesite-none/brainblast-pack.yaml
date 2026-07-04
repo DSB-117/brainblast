@@ -1,0 +1,5 @@
+id: express-session-cookie-samesite-none
+name: "Express Session Cookie Samesite None"
+version: 0.1.0
+author: brainblast-fleet
+description: "express-session with cookie.sameSite: \"none\" — the session cookie is sent on cross-site requests (CSRF)"

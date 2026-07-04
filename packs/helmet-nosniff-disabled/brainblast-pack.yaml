@@ -1,0 +1,5 @@
+id: helmet-nosniff-disabled
+name: "Helmet Nosniff Disabled"
+version: 0.1.0
+author: brainblast-fleet
+description: "helmet({ noSniff: false }) — X-Content-Type-Options is off, allowing MIME-sniffing attacks"

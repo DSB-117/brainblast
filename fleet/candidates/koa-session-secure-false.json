@@ -1,0 +1,44 @@
+{
+  "id": "koa-session-secure-false",
+  "severity": "high",
+  "title": "koa-session with secure: false — the session cookie is sent over plain HTTP and can be sniffed",
+  "class": "auth-bypass",
+  "component": {
+    "name": "koa-session",
+    "type": "Auth",
+    "version": ">=6.0.0",
+    "sourceUrl": "https://github.com/koajs/session#options"
+  },
+  "detect": {
+    "modules": ["koa-session"],
+    "nameRegex": "session|koa|auth|app|cookie|config",
+    "triggerCalls": ["session"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "session",
+        "argIndex": 0,
+        "propName": "secure",
+        "forbiddenValue": false,
+        "passDetail": "koa-session sets secure: true — the session cookie is only ever transmitted over HTTPS.",
+        "failDetail": "koa-session is configured with secure: false, so the session cookie is sent over plain HTTP. On any non-TLS hop an attacker can read the session and hijack the authenticated session. Set secure: true in production (with app.proxy = true when TLS terminates at a proxy).",
+        "absentCallDetail": "No koa-session session() call in this scope; this rule does not apply here.",
+        "absentArgDetail": "koa-session does not set secure; verify production forces HTTPS-only cookies (secure: true)."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "session.ts",
+    "vulnerable": "import session from \"koa-session\";\nimport type Koa from \"koa\";\n\nexport function useSession(app: Koa) {\n  // VULNERABLE: secure: false sends the session cookie over plain HTTP — it can be sniffed.\n  app.use(session({ key: \"koa.sess\", secure: false, httpOnly: true }, app));\n  return app;\n}\n",
+    "fixed": "import session from \"koa-session\";\nimport type Koa from \"koa\";\n\nexport function useSession(app: Koa) {\n  // FIXED: secure: true — the session cookie is only sent over HTTPS.\n  app.use(session({ key: \"koa.sess\", secure: true, httpOnly: true }, app));\n  return app;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/koajs/session#options",
+    "note": "secure: false is copied from local-dev config (no HTTPS) into production, sending the koa session cookie in the clear where it can be sniffed and replayed."
+  }
+}

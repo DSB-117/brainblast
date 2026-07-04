@@ -1,0 +1,44 @@
+{
+  "id": "redis-socket-reject-unauthorized-false",
+  "severity": "high",
+  "title": "node-redis createClient with socket.rejectUnauthorized: false — the Redis TLS certificate is not validated (MITM)",
+  "class": "missing-verification",
+  "component": {
+    "name": "redis",
+    "type": "Database",
+    "version": ">=4.0.0",
+    "sourceUrl": "https://github.com/redis/node-redis/blob/master/docs/client-configuration.md"
+  },
+  "detect": {
+    "modules": ["redis"],
+    "nameRegex": "redis|cache|client|createClient|store|connect",
+    "triggerCalls": ["createClient"]
+  },
+  "binding": {
+    "check": {
+      "kind": "object-arg-property-forbidden-literal",
+      "params": {
+        "call": "createClient",
+        "argIndex": 0,
+        "propName": "socket.rejectUnauthorized",
+        "forbiddenValue": false,
+        "passDetail": "The node-redis client validates the server certificate (socket.rejectUnauthorized is not false) — the rediss:// connection's TLS identity is verified.",
+        "failDetail": "createClient is configured with socket: { rejectUnauthorized: false }, disabling validation of the Redis server's TLS certificate. A network attacker can present a forged certificate and man-in-the-middle the connection — reading and tampering with cached sessions, rate-limit counters, and queues. Remove rejectUnauthorized: false; trust the provider's CA via socket.ca.",
+        "absentCallDetail": "No node-redis createClient call in this scope; this rule does not apply here.",
+        "absentArgDetail": "createClient does not set socket.rejectUnauthorized; the secure default (validate) applies."
+      }
+    },
+    "test": {
+      "kind": "none"
+    }
+  },
+  "fixtures": {
+    "filename": "redis.ts",
+    "vulnerable": "import { createClient } from \"redis\";\n\nexport function makeRedis(url: string) {\n  // VULNERABLE: socket.rejectUnauthorized: false — the Redis server certificate is not validated.\n  return createClient({ url, socket: { tls: true, rejectUnauthorized: false } });\n}\n",
+    "fixed": "import { createClient } from \"redis\";\n\nexport function makeRedis(url: string, ca: string) {\n  // FIXED: certificate validation enforced; trust the provider's CA explicitly.\n  return createClient({ url, socket: { tls: true, rejectUnauthorized: true, ca } });\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://github.com/redis/node-redis/blob/master/docs/client-configuration.md",
+    "note": "The node-redis (v4) twin of the ioredis footgun. socket: { rejectUnauthorized: false } is pasted to connect to a managed Redis whose CA isn't configured locally, and ships — disabling MITM protection on the store that often holds session state."
+  }
+}
