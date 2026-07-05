@@ -18,17 +18,23 @@ export interface TierEntitlement {
   tier: FeedTier;
   maxRecords: number | null; // null = unlimited
   includeFixtures: boolean; // the trainable payload (vulnerable/fixed/test)
-  // Firehose gets the freshest records; lower tiers hold back the newest delta
-  // by this many hours (freshness is the moat — sell the edge).
+  // Sample (the free teaser) holds back the newest delta by this many hours so
+  // the paid product isn't given away. Paid access has NO holdback: the moat is
+  // breadth (which curated lots) + all future lots, not a time delay.
   freshnessHoldbackHours: number;
 }
 
-// The access ladder. Sample is the open teaser: metadata + the RED→GREEN receipt
-// (proof we have it), but NOT the fixtures (the actual trainable code). Paid
-// tiers unlock the payload and the freshness edge.
+// The access ladder. `sample` is the open teaser: metadata + the RED→GREEN
+// receipt (proof we have it), but NOT the fixtures (the trainable code) and with
+// a freshness holdback. Paid access is lot-scoped (à-la-carte via the grant's
+// `lots`): `standard` = one or more curated lots; `firehose` = Scale (every lot
+// + all future lots). Both paid tiers get full fixtures, 0 holdback, and every
+// record IN SCOPE — the product axis is which lots the grant names, not volume
+// or freshness. (Enum ids are kept stable for the published CLI; `firehose` is
+// surfaced to buyers as "Scale".)
 export const TIER_ENTITLEMENTS: Record<FeedTier, TierEntitlement> = {
   sample: { tier: "sample", maxRecords: 5, includeFixtures: false, freshnessHoldbackHours: 168 },
-  standard: { tier: "standard", maxRecords: 100, includeFixtures: true, freshnessHoldbackHours: 24 },
+  standard: { tier: "standard", maxRecords: null, includeFixtures: true, freshnessHoldbackHours: 0 },
   firehose: { tier: "firehose", maxRecords: null, includeFixtures: true, freshnessHoldbackHours: 0 },
 };
 
