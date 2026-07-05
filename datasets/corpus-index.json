@@ -1,23 +1,23 @@
 {
   "schemaVersion": "1.0",
   "generator": "corpus-report@0.1.0",
-  "generatedAt": "2026-07-04T16:41:52.182Z",
+  "generatedAt": "2026-07-05T02:14:54.129Z",
   "lots": [
     {
       "path": "datasets/seed/seed-vti.jsonl",
       "license": "synthetic-owned",
-      "count": 89
+      "count": 90
     }
   ],
   "counts": {
-    "vtis": 89,
-    "unique": 89,
+    "vtis": 90,
+    "unique": 90,
     "duplicates": 0,
-    "sdks": 62,
+    "sdks": 63,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 58,
+    "high": 59,
     "critical": 23,
     "medium": 8
   },
@@ -26,7 +26,7 @@
     "auth-bypass": 35,
     "other": 8,
     "silent-zero-revenue": 4,
-    "unconfirmed-state": 7,
+    "unconfirmed-state": 8,
     "missing-slippage-guard": 4,
     "immutable-after-deploy": 1,
     "unchecked-staleness": 1,
@@ -94,10 +94,11 @@
     "tedious": 1,
     "typeorm": 1,
     "undici": 1,
+    "viem": 1,
     "ws": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 89
+    "synthetic-owned": 90
   },
   "quality": {
     "mean": 49,
@@ -106,7 +107,7 @@
     "max": 60,
     "buckets": {
       "high": 0,
-      "medium": 81,
+      "medium": 82,
       "low": 8
     }
   },
@@ -180,7 +181,8 @@
       },
       "unconfirmed-state": {
         "Jito (block engine / bundles)": 1,
-        "@solana/web3.js": 6
+        "@solana/web3.js": 6,
+        "viem": 1
       },
       "missing-slippage-guard": {
         "Jupiter Aggregator API": 1,
@@ -403,6 +405,10 @@
       {
         "class": "unconfirmed-state",
         "sdk": "Jito (block engine / bundles)"
+      },
+      {
+        "class": "unconfirmed-state",
+        "sdk": "viem"
       },
       {
         "class": "missing-slippage-guard",
@@ -1227,6 +1233,15 @@
       "trapId": "undici-connect-reject-unauthorized-false",
       "sdk": "undici",
       "class": "missing-verification",
+      "severity": "high",
+      "corroborationCount": 0,
+      "license": "synthetic-owned",
+      "score": 48
+    },
+    {
+      "trapId": "viem-send-transaction-unconfirmed",
+      "sdk": "viem",
+      "class": "unconfirmed-state",
       "severity": "high",
       "corroborationCount": 0,
       "license": "synthetic-owned",

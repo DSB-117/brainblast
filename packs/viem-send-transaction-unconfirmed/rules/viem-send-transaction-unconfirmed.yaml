@@ -1,0 +1,40 @@
+# Auto-synthesized from a research Finding (proof-as-classifier loop).
+# Pure data — every kind below resolves to a HUMAN-VETTED template in core.
+id: viem-send-transaction-unconfirmed
+severity: high
+title: sendTransaction result used without waitForTransactionReceipt — the hash
+  is returned as if the transaction were mined
+component:
+  name: viem
+  type: Blockchain
+  version: ">=1.0.0"
+  sourceUrl: https://viem.sh/docs/actions/public/waitForTransactionReceipt
+detect:
+  modules:
+    - viem
+  nameRegex: send|transfer|submit|write|execute|swap|mint|deposit|withdraw|pay
+  triggerCalls:
+    - sendTransaction
+    - writeContract
+  requiresImport: true
+check:
+  kind: required-followup-call-missing
+  params:
+    triggerCall: sendTransaction
+    requiredCalls:
+      - waitForTransactionReceipt
+    passDetail: sendTransaction is followed by waitForTransactionReceipt in the same
+      scope — the code blocks until the transaction is mined and can act on the
+      receipt (status, revert, logs) instead of a bare hash.
+    failDetail: sendTransaction returns a transaction HASH the moment the tx is
+      broadcast — it is NOT a confirmation that the transaction was mined or
+      that it succeeded. This scope never calls waitForTransactionReceipt, so
+      the hash is handed back as if the transfer had settled. If the tx is
+      dropped from the mempool, reverts, or is replaced, downstream logic
+      (crediting a balance, marking an order paid, releasing goods) proceeds on
+      a transaction that never landed. Await
+      publicClient.waitForTransactionReceipt({ hash }) and check receipt.status
+      === "success" before treating the send as final.
+    absentTriggerDetail: No sendTransaction call in this scope; this rule does not apply here.
+test:
+  kind: none

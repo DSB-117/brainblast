@@ -1,0 +1,5 @@
+id: viem-send-transaction-unconfirmed
+name: "Viem Send Transaction Unconfirmed"
+version: 0.1.0
+author: brainblast-fleet
+description: "sendTransaction result used without waitForTransactionReceipt — the hash is returned as if the transaction were mined"

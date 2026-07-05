@@ -1,6 +1,6 @@
 # Datasheet — Brainblast Verified Traps v0.1.0
 
-_Generated 2026-07-04T16:41:52.155Z by pack-dataset@0.1.0. Records conform to [`schema/vti.schema.json`](../../schema/vti.schema.json)._
+_Generated 2026-07-05T02:14:26.180Z by pack-dataset@0.1.0. Records conform to [`schema/vti.schema.json`](../../schema/vti.schema.json)._
 
 ## Motivation
 A corpus of **machine-verified `error → fix → proof` records** for real SDK
@@ -9,10 +9,10 @@ checker fails (RED) on the vulnerable code and passes (GREEN) on the fix. This i
 the property scraped bug data lacks. See [`ROADMAP-TRAINING-DATA.md`](../../ROADMAP-TRAINING-DATA.md).
 
 ## Composition
-- **Records:** 89 (full lot), 3 (open sample).
-- **SDKs covered (62):** @apollo/server, @aws-sdk/client-s3, @elastic/elasticsearch, @fastify/cors, @metaplex-foundation/js, @metaplex-foundation/mpl-token-metadata, @meteora-ag/dlmm, @raydium-io/raydium-sdk-v2, @solana/web3.js, Jito (block engine / bundles), Jupiter Aggregator API, Pyth Network price feeds, SPL Token, Solana lamports arithmetic, Stripe Node SDK, amqplib, aws-sdk, better-auth, cassandra-driver, cookie, cookie-session, cors, crypto/tls, express, express-fileupload, express-jwt, express-rate-limit, express-session, got, helmet, ioredis, iron-session, jose, jsonwebtoken, kafkajs, knex, koa-session, ldapjs, libxmljs2, mongodb, mongoose, mqtt, mssql, mysql2, nats, node:https, nodemailer, passport-jwt, pg, playwright, puppeteer, python, redis, sequelize, socket.io, solidity, stripe, tedious, typeorm, typescript, undici, ws.
-- **Class distribution:** missing-verification=27, auth-bypass=35, other=8, silent-zero-revenue=4, unconfirmed-state=7, missing-slippage-guard=4, immutable-after-deploy=1, unchecked-staleness=1, wrong-constant=2.
-- **Severity distribution:** high=58, critical=23, medium=8.
+- **Records:** 90 (full lot), 3 (open sample).
+- **SDKs covered (63):** @apollo/server, @aws-sdk/client-s3, @elastic/elasticsearch, @fastify/cors, @metaplex-foundation/js, @metaplex-foundation/mpl-token-metadata, @meteora-ag/dlmm, @raydium-io/raydium-sdk-v2, @solana/web3.js, Jito (block engine / bundles), Jupiter Aggregator API, Pyth Network price feeds, SPL Token, Solana lamports arithmetic, Stripe Node SDK, amqplib, aws-sdk, better-auth, cassandra-driver, cookie, cookie-session, cors, crypto/tls, express, express-fileupload, express-jwt, express-rate-limit, express-session, got, helmet, ioredis, iron-session, jose, jsonwebtoken, kafkajs, knex, koa-session, ldapjs, libxmljs2, mongodb, mongoose, mqtt, mssql, mysql2, nats, node:https, nodemailer, passport-jwt, pg, playwright, puppeteer, python, redis, sequelize, socket.io, solidity, stripe, tedious, typeorm, typescript, undici, viem, ws.
+- **Class distribution:** missing-verification=27, auth-bypass=35, other=8, silent-zero-revenue=4, unconfirmed-state=8, missing-slippage-guard=4, immutable-after-deploy=1, unchecked-staleness=1, wrong-constant=2.
+- **Severity distribution:** high=59, critical=23, medium=8.
 - Each record carries: vulnerable + fixed snippet, checker fail/pass detail,
   RED→GREEN proof, source-doc URL, producing pack, severity, and trap class.
 

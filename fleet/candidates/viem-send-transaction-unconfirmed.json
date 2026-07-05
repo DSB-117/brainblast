@@ -1,0 +1,40 @@
+{
+  "id": "viem-send-transaction-unconfirmed",
+  "severity": "high",
+  "title": "sendTransaction result used without waitForTransactionReceipt — the hash is returned as if the transaction were mined",
+  "class": "unconfirmed-state",
+  "component": {
+    "name": "viem",
+    "type": "Blockchain",
+    "version": ">=1.0.0",
+    "sourceUrl": "https://viem.sh/docs/actions/public/waitForTransactionReceipt"
+  },
+  "detect": {
+    "modules": ["viem"],
+    "nameRegex": "send|transfer|submit|write|execute|swap|mint|deposit|withdraw|pay",
+    "triggerCalls": ["sendTransaction", "writeContract"],
+    "requiresImport": true
+  },
+  "binding": {
+    "check": {
+      "kind": "required-followup-call-missing",
+      "params": {
+        "triggerCall": "sendTransaction",
+        "requiredCalls": ["waitForTransactionReceipt"],
+        "passDetail": "sendTransaction is followed by waitForTransactionReceipt in the same scope — the code blocks until the transaction is mined and can act on the receipt (status, revert, logs) instead of a bare hash.",
+        "failDetail": "sendTransaction returns a transaction HASH the moment the tx is broadcast — it is NOT a confirmation that the transaction was mined or that it succeeded. This scope never calls waitForTransactionReceipt, so the hash is handed back as if the transfer had settled. If the tx is dropped from the mempool, reverts, or is replaced, downstream logic (crediting a balance, marking an order paid, releasing goods) proceeds on a transaction that never landed. Await publicClient.waitForTransactionReceipt({ hash }) and check receipt.status === \"success\" before treating the send as final.",
+        "absentTriggerDetail": "No sendTransaction call in this scope; this rule does not apply here."
+      }
+    },
+    "test": { "kind": "none" }
+  },
+  "fixtures": {
+    "filename": "transfer.ts",
+    "vulnerable": "import { createWalletClient, http, type Account, type Hex } from \"viem\";\n\nexport async function submitTransfer(\n  client: ReturnType<typeof createWalletClient>,\n  account: Account,\n  to: Hex,\n  value: bigint,\n): Promise<Hex> {\n  // VULNERABLE: fire-and-forget. sendTransaction resolves to a HASH the instant\n  // the tx is broadcast — not a mined receipt. We hand it back as if it settled.\n  const hash = await client.sendTransaction({ account, to, value });\n  return hash;\n}\n",
+    "fixed": "import { createWalletClient, createPublicClient, http, type Account, type Hex } from \"viem\";\n\nexport async function submitTransfer(\n  client: ReturnType<typeof createWalletClient>,\n  publicClient: ReturnType<typeof createPublicClient>,\n  account: Account,\n  to: Hex,\n  value: bigint,\n) {\n  // FIXED: block until the transaction is mined, then act on the receipt.\n  const hash = await client.sendTransaction({ account, to, value });\n  const receipt = await publicClient.waitForTransactionReceipt({ hash });\n  return receipt;\n}\n"
+  },
+  "provenance": {
+    "sourceUrl": "https://viem.sh/docs/actions/wallet/sendTransaction",
+    "note": "viem's sendTransaction/writeContract resolve to a transaction hash at broadcast time, not at inclusion — the docs point every caller to waitForTransactionReceipt for confirmation. Handlers that skip it treat an unlanded tx as settled. This is an ABSENCE footgun (a required follow-up call is missing) that no presence-based checker could ever see; it is exactly the seam required-followup-call-missing opens."
+  }
+}

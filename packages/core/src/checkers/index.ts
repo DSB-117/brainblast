@@ -1,5 +1,6 @@
 import { checker as arrayPropertyContainsForbiddenLiteral } from "./arrayPropertyContainsForbiddenLiteral.ts";
 import { checker as positionalArgForbiddenLiteral } from "./positionalArgForbiddenLiteral.ts";
+import { checker as requiredFollowupCallMissing } from "./requiredFollowupCallMissing.ts";
 import { positionalArgIdentity } from "./positionalArgIdentity.ts";
 import { requiredCallWithOptions } from "./requiredCallWithOptions.ts";
 import { feeAllocationShape } from "./feeAllocationShape.ts";
@@ -55,6 +56,12 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker | CstChecke
   // constructor whose POSITIONAL arg is a forbidden literal — new Connection(url,
   // "processed"), createHash("md5"), etc. Handles CallExpression and NewExpression.
   "positional-arg-forbidden-literal": positionalArgForbiddenLiteral as Checker,
+  // ABSENCE modality (mirror of every presence-checker above): a trigger call
+  // establishes an obligation and the scope is only correct if a required
+  // follow-up call is discharged in it — sendTransaction without
+  // waitForTransactionReceipt (viem), send without .wait() (ethers). Fires when
+  // the follow-up is missing; the fix ADDS it, so the fixed side is a real GREEN.
+  "required-followup-call-missing": requiredFollowupCallMissing as Checker,
   // Multi-language static AST (tree-sitter). Go: struct/composite-literal field set
   // to a forbidden literal (e.g. tls.Config{InsecureSkipVerify: true}). Solidity:
   // a forbidden object.property member access (e.g. tx.origin auth).

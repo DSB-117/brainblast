@@ -7,6 +7,7 @@ import { argEqualsConstantIdentifier } from "../src/checkers/argEqualsConstantId
 import { objectArgPropertyLiteralEquals } from "../src/checkers/objectArgPropertyLiteralEquals.ts";
 import { objectArgPropertyForbiddenLiteral } from "../src/checkers/objectArgPropertyForbiddenLiteral.ts";
 import { checker as positionalArgForbiddenLiteral } from "../src/checkers/positionalArgForbiddenLiteral.ts";
+import { checker as requiredFollowupCallMissing } from "../src/checkers/requiredFollowupCallMissing.ts";
 import { anchorInitIfNeededGuarded } from "../src/checkers/anchorInitIfNeededGuarded.ts";
 import { envSecretsCommitted } from "../src/checkers/envSecretsCommitted.ts";
 import { taintToSink } from "../src/checkers/taintToSink.ts";
@@ -1229,5 +1230,67 @@ describe("positionalArgForbiddenLiteral (positional-arg-forbidden-literal)", () 
     expect(positionalArgForbiddenLiteral(bad, Q).result).toBe("fail");
     const good = candidate(`export function h() { return crypto.createHash("sha256"); }`, "h");
     expect(positionalArgForbiddenLiteral(good, Q).result).toBe("pass");
+  });
+});
+
+describe("requiredFollowupCallMissing (required-followup-call-missing — ABSENCE modality)", () => {
+  const V = {
+    triggerCall: "sendTransaction",
+    requiredCalls: ["waitForTransactionReceipt"],
+  };
+
+  it("FAILS when the trigger fires but no required follow-up is in scope (fire-and-forget)", () => {
+    const c = candidate(
+      `export async function h(client: any, req: any) { const hash = await client.sendTransaction(req); return hash; }`,
+      "h",
+    );
+    expect(requiredFollowupCallMissing(c, V).result).toBe("fail");
+  });
+
+  it("PASSES when the required follow-up is called in the same scope", () => {
+    const c = candidate(
+      `export async function h(client: any, pub: any, req: any) {
+         const hash = await client.sendTransaction(req);
+         return pub.waitForTransactionReceipt({ hash });
+       }`,
+      "h",
+    );
+    expect(requiredFollowupCallMissing(c, V).result).toBe("pass");
+  });
+
+  it("PASSES when the follow-up lives in a nested continuation (all descendants counted)", () => {
+    const c = candidate(
+      `export async function h(client: any, pub: any, req: any) {
+         const hash = await client.sendTransaction(req);
+         return Promise.resolve(hash).then((x) => pub.waitForTransactionReceipt({ hash: x }));
+       }`,
+      "h",
+    );
+    expect(requiredFollowupCallMissing(c, V).result).toBe("pass");
+  });
+
+  it("CANT_TELL (abstains) when the trigger never fires — the obligation never arose", () => {
+    const c = candidate(
+      `export async function h(pub: any, hash: any) { return pub.getTransactionReceipt({ hash }); }`,
+      "h",
+    );
+    expect(requiredFollowupCallMissing(c, V).result).toBe("cant_tell");
+  });
+
+  it("accepts ANY of several required follow-ups (requiredCalls set) and a single requiredCall string", () => {
+    const multi = { triggerCall: "sendTransaction", requiredCalls: ["waitForTransactionReceipt", "wait"] };
+    const ethersStyle = candidate(
+      `export async function h(signer: any, req: any) { const tx = await signer.sendTransaction(req); await tx.wait(); return tx; }`,
+      "h",
+    );
+    expect(requiredFollowupCallMissing(ethersStyle, multi).result).toBe("pass");
+
+    const single = { triggerCall: "sendTransaction", requiredCall: "wait" };
+    expect(requiredFollowupCallMissing(ethersStyle, single).result).toBe("pass");
+    const dropped = candidate(
+      `export async function h(signer: any, req: any) { const tx = await signer.sendTransaction(req); return tx; }`,
+      "h",
+    );
+    expect(requiredFollowupCallMissing(dropped, single).result).toBe("fail");
   });
 });

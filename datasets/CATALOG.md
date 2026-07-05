@@ -1,8 +1,8 @@
 # brainblast-verified-traps — catalog
 
-_Generated 2026-07-04T16:41:52.196Z from 1 lot(s): seed-vti.jsonl._
+_Generated 2026-07-05T02:14:38.139Z from 1 lot(s): seed-vti.jsonl._
 
-**89 verified trap instances** across **62 SDKs** and **9 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-04T16:41:42.902Z → 2026-07-04T16:41:42.902Z.
+**90 verified trap instances** across **63 SDKs** and **9 trap classes**. Quality score mean 49/100 (range 30–60). Freshness: 2026-07-05T02:14:22.750Z → 2026-07-05T02:14:22.750Z.
 
 Every record is RED→GREEN-proven and ships its reproducibility receipt — the credibility scraped data can't offer.
 
@@ -23,7 +23,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | auth-bypass | 35 |
 | missing-verification | 27 |
 | other | 8 |
-| unconfirmed-state | 7 |
+| unconfirmed-state | 8 |
 | silent-zero-revenue | 4 |
 | missing-slippage-guard | 4 |
 | wrong-constant | 2 |
@@ -95,6 +95,7 @@ Every record is RED→GREEN-proven and ships its reproducibility receipt — the
 | tedious | 1 |
 | typeorm | 1 |
 | undici | 1 |
+| viem | 1 |
 | ws | 1 |
 
 ## Sample (receipt-only teasers)

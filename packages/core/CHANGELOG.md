@@ -2,6 +2,29 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.9.12 — 2026-07-04
+
+**A new checker MODALITY: absence detection.** Every checker before this asserted
+on a node that is PRESENT (a forbidden literal, a wrong positional arg, a struct
+field). `required-followup-call-missing` is the mirror image — it fires when a
+call that creates an obligation (`triggerCall`) is not discharged by a required
+follow-up (`requiredCalls`) anywhere in the same function scope. This is the shape
+behind the unconfirmed-state / staleness classes that presence-checkers
+structurally cannot see. Vetted through the Move-2 checker-gate (purity, RED→GREEN,
+zero false positives across 90 known-good dirs, determinism).
+
+- New checker **`required-followup-call-missing`**. Because the fix *adds* the
+  follow-up (the trigger stays put), the fixed fixture is a genuine GREEN pass, so
+  an absence check proves RED→GREEN through the same static oracle as everything
+  else. First binding: viem `sendTransaction`/`writeContract` used without
+  `waitForTransactionReceipt` (the hash is returned as if the tx were mined) —
+  class `unconfirmed-state`. Generalizes to ethers `sendTransaction`→`.wait()` and
+  any trigger/confirm pair. Ships with the `viem-send-transaction-unconfirmed` VTI
+  (corpus SLA 100%).
+- `fleet:checker-gate --wire` now inserts the registry line *after* the
+  `differential-io` landmark instead of assuming it is the last entry, so
+  auto-wiring keeps working as the registry grows.
+
 ## 0.9.11 — 2026-07-04
 
 **Broader static coverage — two checker capabilities that unlock footgun seams the

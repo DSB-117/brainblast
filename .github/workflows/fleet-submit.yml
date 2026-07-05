@@ -1,0 +1,37 @@
+# Fleet bulk-submit: generate provenance-backed VTI candidates from Sourcegraph
+# (zero GitHub-search-API use) and submit them to the open registry with the
+# operator token (bypasses the anonymous per-IP cap; the server still gates every
+# record on provenance + RED→GREEN re-proof). Manually dispatched.
+name: fleet-submit
+
+on:
+  workflow_dispatch:
+    inputs:
+      seams:
+        description: "Seam names (space-separated), or 'all' for every seam"
+        required: false
+        default: "all"
+
+concurrency:
+  group: fleet-submit
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Generate candidates (Sourcegraph, commit-pinned provenance)
+        run: |
+          if [ "${{ inputs.seams }}" = "all" ] || [ -z "${{ inputs.seams }}" ]; then
+            python3 fleet/scripts/sg_scout.py --all
+          else
+            python3 fleet/scripts/sg_scout.py ${{ inputs.seams }}
+          fi
+      - name: Bulk submit (operator token — cap-exempt)
+        env:
+          BRAINBLAST_INGEST_TOKEN: ${{ secrets.BRAINBLAST_REPROVE_TOKEN }}
+        run: python3 fleet/scripts/sg_submit.py

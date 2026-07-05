@@ -171,9 +171,12 @@ const indexPath = join(checkersDir, "index.ts");
 let index = readFileSync(indexPath, "utf8");
 const importLine = `import { checker as ${camel} } from "./${camel}.ts";\n`;
 if (!index.includes(importLine)) index = importLine + index;
-const anchor = `"differential-io": differentialIo,\n};`;
+// Insert right AFTER the differential-io line (a stable landmark), not before the
+// closing brace — the registry keeps growing, so `};` is no longer immediately
+// after differential-io.
+const anchor = `"differential-io": differentialIo,`;
 if (!index.includes(anchor)) reject("could not find the registry insertion point in index.ts — wire it manually");
-index = index.replace(anchor, `"differential-io": differentialIo,\n  "${kind}": ${camel} as Checker,\n};`);
+index = index.replace(anchor, `${anchor}\n  "${kind}": ${camel} as Checker,`);
 writeFileSync(indexPath, index);
 console.log(`  → wrote src/checkers/${camel}.ts and registered "${kind}" in index.ts.`);
 console.log(`  Review \`git diff packages/core/src/checkers/\`, then commit to ratify.\n`);
