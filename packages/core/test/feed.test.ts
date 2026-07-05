@@ -121,14 +121,16 @@ describe("VTI feed — freshness is the moat (holdback by tier)", () => {
   const old = vti({ trapId: "old", capturedAt: "2026-01-01T00:00:00.000Z" });
   const corpus = [old, fresh];
 
-  it("firehose gets the freshest record immediately (0h holdback)", () => {
-    const r = selectFeed(corpus, { now: NOW }, "firehose");
-    expect(r.records.map((x) => x.trapId).sort()).toEqual(["fresh", "old"]);
-    expect(r.counts.heldBackFreshness).toBe(0);
+  it("paid tiers get the freshest record immediately (0h holdback)", () => {
+    for (const tier of ["standard", "firehose"] as const) {
+      const r = selectFeed(corpus, { now: NOW }, tier);
+      expect(r.records.map((x) => x.trapId).sort()).toEqual(["fresh", "old"]);
+      expect(r.counts.heldBackFreshness).toBe(0);
+    }
   });
 
-  it("lower tiers hold back the too-fresh record (and count it)", () => {
-    const r = selectFeed(corpus, { now: NOW }, "standard"); // 24h holdback
+  it("the free sample tier holds back the too-fresh record (and counts it)", () => {
+    const r = selectFeed(corpus, { now: NOW }, "sample"); // 168h holdback
     expect(r.records.map((x) => x.trapId)).toEqual(["old"]);
     expect(r.counts.heldBackFreshness).toBe(1);
     expect(r.counts.matchedQuery).toBe(2);
