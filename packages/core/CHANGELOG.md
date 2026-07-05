@@ -2,6 +2,24 @@
 
 All notable changes to the `brainblast` npm package are documented here.
 
+## 0.9.11 — 2026-07-04
+
+**Broader static coverage — two checker capabilities that unlock footgun seams the
+fleet scouts kept finding but couldn't bind.** Both are additive and precise (no
+new false positives across the known-good corpus); publishing them lets the
+registry ingest accept VTIs that use them.
+
+- `object-arg-property-forbidden-literal` now recognizes **zero-valued numeric /
+  percentage wrapper calls** — `slippage: Percentage.fromFraction(0, 100)`,
+  `sellerFeeBasisPoints: percentAmount(0)`, `new Decimal(0)` — generalizing the
+  existing `new BN(0)` handling. A determinable non-zero wrapper passes so fixed
+  fixtures still reach GREEN. (#61)
+- New checker **`positional-arg-forbidden-literal`** — a call or constructor whose
+  POSITIONAL argument is a forbidden string/number/boolean literal:
+  `new Connection(url, "processed")`, `getBalance(pubkey, "processed")`,
+  `createHash("md5")`. Handles CallExpression and NewExpression; vetted through the
+  Move-2 checker-gate (purity, RED→GREEN, zero false positives, determinism). (#62)
+
 ## 0.9.6 — 2026-06-29
 
 **The public, multi-party marketplace.** Takes the local marketplace public with
