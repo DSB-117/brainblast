@@ -38,6 +38,7 @@ export const CLASS_BY_RULE: Record<string, TrapClass> = {
   "pyth-price-unchecked-staleness": "unchecked-staleness",
   "raydium-compute-zero-slippage": "missing-slippage-guard",
   "solana-sendtx-unconfirmed": "unconfirmed-state",
+  "viem-send-transaction-unconfirmed": "unconfirmed-state",
   "spl-transfer-not-checked-in-payout": "missing-verification",
   // Fleet-sourced (R7) — explicit so the keyword heuristic can't mis-bucket them
   // (e.g. "expiration" would otherwise read as unchecked-staleness).

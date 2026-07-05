@@ -1,25 +1,25 @@
 # Corpus coverage — Brainblast Verified Traps
 
-_Generated 2026-07-04T16:41:52.182Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
+_Generated 2026-07-05T02:14:54.129Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
 
 ## Summary
-- **89** VTIs (89 unique, 0 duplicate) across **62** SDKs and **9** trap classes.
+- **90** VTIs (90 unique, 0 duplicate) across **63** SDKs and **9** trap classes.
 - **Quality** (0–100): mean 49, median 48, range 30–60.
-  Buckets — high (≥70): 0, medium (40–69): 81, low (<40): 8.
-- **Lots:** synthetic-owned (89).
+  Buckets — high (≥70): 0, medium (40–69): 82, low (<40): 8.
+- **Lots:** synthetic-owned (90).
 
 ## Coverage heatmap (class × SDK, unique records)
-| class \ sdk | @apollo/server | @aws-sdk/client-s3 | @elastic/elasticsearch | @fastify/cors | @metaplex-foundation/js | @metaplex-foundation/mpl-token-metadata | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Solana lamports arithmetic | Stripe Node SDK | amqplib | aws-sdk | better-auth | cassandra-driver | cookie | cookie-session | cors | crypto/tls | express | express-fileupload | express-jwt | express-rate-limit | express-session | got | helmet | ioredis | iron-session | jose | jsonwebtoken | kafkajs | knex | koa-session | ldapjs | libxmljs2 | mongodb | mongoose | mqtt | mssql | mysql2 | nats | node:https | nodemailer | passport-jwt | pg | playwright | puppeteer | python | redis | sequelize | socket.io | solidity | stripe | tedious | typeorm | typescript | undici | ws |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| auth-bypass | 1 | 1 | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | 1 | 2 | 2 | 1 | 1 | · | 1 | 1 | 3 | · | 5 | · | 1 | 1 | 4 | · | · | 1 | · | · | · | · | · | · | · | · | 2 | · | 1 | · | · | · | · | · | · | 1 | 1 | · | · | · | 1 | · | 1 |
-| immutable-after-deploy | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| missing-slippage-guard | · | · | · | · | · | · | 1 | 1 | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · |
-| missing-verification | · | · | 1 | · | · | · | · | · | · | · | · | · | 1 | · | · | 1 | · | 2 | 1 | · | · | · | · | · | · | 1 | · | · | 1 | · | 1 | · | · | · | 1 | 1 | · | 1 | · | 1 | 1 | 1 | 1 | 1 | 1 | · | 1 | · | 1 | 1 | 1 | · | 1 | 1 | · | · | · | 1 | 1 | · | 1 | · |
-| other | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 4 | · | · |
-| silent-zero-revenue | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | 1 | · | · | 1 | · | · |
-| unchecked-staleness | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| unconfirmed-state | · | · | · | · | · | · | · | · | 6 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| wrong-constant | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · |
+| class \ sdk | @apollo/server | @aws-sdk/client-s3 | @elastic/elasticsearch | @fastify/cors | @metaplex-foundation/js | @metaplex-foundation/mpl-token-metadata | @meteora-ag/dlmm | @raydium-io/raydium-sdk-v2 | @solana/web3.js | Jito (block engine / bundles) | Jupiter Aggregator API | Pyth Network price feeds | SPL Token | Solana lamports arithmetic | Stripe Node SDK | amqplib | aws-sdk | better-auth | cassandra-driver | cookie | cookie-session | cors | crypto/tls | express | express-fileupload | express-jwt | express-rate-limit | express-session | got | helmet | ioredis | iron-session | jose | jsonwebtoken | kafkajs | knex | koa-session | ldapjs | libxmljs2 | mongodb | mongoose | mqtt | mssql | mysql2 | nats | node:https | nodemailer | passport-jwt | pg | playwright | puppeteer | python | redis | sequelize | socket.io | solidity | stripe | tedious | typeorm | typescript | undici | viem | ws |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| auth-bypass | 1 | 1 | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | 1 | 2 | 2 | 1 | 1 | · | 1 | 1 | 3 | · | 5 | · | 1 | 1 | 4 | · | · | 1 | · | · | · | · | · | · | · | · | 2 | · | 1 | · | · | · | · | · | · | 1 | 1 | · | · | · | 1 | · | · | 1 |
+| immutable-after-deploy | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| missing-slippage-guard | · | · | · | · | · | · | 1 | 1 | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · |
+| missing-verification | · | · | 1 | · | · | · | · | · | · | · | · | · | 1 | · | · | 1 | · | 2 | 1 | · | · | · | · | · | · | 1 | · | · | 1 | · | 1 | · | · | · | 1 | 1 | · | 1 | · | 1 | 1 | 1 | 1 | 1 | 1 | · | 1 | · | 1 | 1 | 1 | · | 1 | 1 | · | · | · | 1 | 1 | · | 1 | · | · |
+| other | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 4 | · | · | · |
+| silent-zero-revenue | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | 1 | · | · | 1 | · | · | · |
+| unchecked-staleness | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| unconfirmed-state | · | · | · | · | · | · | · | · | 6 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · |
+| wrong-constant | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · |
 
 (`·` = no coverage yet.)
 
@@ -76,6 +76,7 @@ _Generated 2026-07-04T16:41:52.182Z by corpus-report@0.1.0. Source of truth: `da
 - silent-zero-revenue · python
 - silent-zero-revenue · stripe
 - unconfirmed-state · Jito (block engine / bundles)
+- unconfirmed-state · viem
 - missing-slippage-guard · Jupiter Aggregator API
 - missing-slippage-guard · @meteora-ag/dlmm
 - missing-slippage-guard · @raydium-io/raydium-sdk-v2

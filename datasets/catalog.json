@@ -1,15 +1,15 @@
 {
   "schemaVersion": "1.0",
   "dataset": "brainblast-verified-traps",
-  "generatedAt": "2026-07-04T16:41:52.196Z",
+  "generatedAt": "2026-07-05T02:14:38.139Z",
   "counts": {
-    "total": 89,
-    "proven": 89,
-    "sdks": 62,
+    "total": 90,
+    "proven": 90,
+    "sdks": 63,
     "classes": 9
   },
   "severityDistribution": {
-    "high": 58,
+    "high": 59,
     "critical": 23,
     "medium": 8
   },
@@ -18,7 +18,7 @@
     "auth-bypass": 35,
     "other": 8,
     "silent-zero-revenue": 4,
-    "unconfirmed-state": 7,
+    "unconfirmed-state": 8,
     "missing-slippage-guard": 4,
     "immutable-after-deploy": 1,
     "unchecked-staleness": 1,
@@ -86,10 +86,11 @@
     "tedious": 1,
     "typeorm": 1,
     "undici": 1,
+    "viem": 1,
     "ws": 1
   },
   "licenseDistribution": {
-    "synthetic-owned": 89
+    "synthetic-owned": 90
   },
   "quality": {
     "mean": 49,
@@ -97,8 +98,8 @@
     "max": 60
   },
   "freshness": {
-    "oldest": "2026-07-04T16:41:42.902Z",
-    "newest": "2026-07-04T16:41:42.902Z"
+    "oldest": "2026-07-05T02:14:22.750Z",
+    "newest": "2026-07-05T02:14:22.750Z"
   },
   "tiers": [
     {
@@ -142,7 +143,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T16:41:42.902Z",
+      "capturedAt": "2026-07-05T02:14:22.750Z",
       "sourceUrls": [
         "https://amqp-node.github.io/amqplib/channel_api.html#connect"
       ],
@@ -150,7 +151,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T16:41:42.902Z"
+        "verifiedAt": "2026-07-05T02:14:22.750Z"
       }
     },
     {
@@ -165,7 +166,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T16:41:42.902Z",
+      "capturedAt": "2026-07-05T02:14:22.750Z",
       "sourceUrls": [
         "https://www.apollographql.com/docs/apollo-server/security/cors/#preventing-cross-site-request-forgery-csrf"
       ],
@@ -173,7 +174,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T16:41:42.902Z"
+        "verifiedAt": "2026-07-05T02:14:22.750Z"
       }
     },
     {
@@ -188,7 +189,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T16:41:42.902Z",
+      "capturedAt": "2026-07-05T02:14:22.750Z",
       "sourceUrls": [
         "https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html#canned-acl"
       ],
@@ -196,7 +197,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T16:41:42.902Z"
+        "verifiedAt": "2026-07-05T02:14:22.750Z"
       }
     },
     {
@@ -211,7 +212,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T16:41:42.902Z",
+      "capturedAt": "2026-07-05T02:14:22.750Z",
       "sourceUrls": [
         "https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-s3/Interface/PutObjectCommandInput/"
       ],
@@ -219,7 +220,7 @@
         "red": true,
         "green": true,
         "method": "static-checker",
-        "verifiedAt": "2026-07-04T16:41:42.902Z"
+        "verifiedAt": "2026-07-05T02:14:22.750Z"
       }
     },
     {
@@ -234,7 +235,7 @@
       "score": 48,
       "corroborationCount": 0,
       "license": "synthetic-owned",
-      "capturedAt": "2026-07-04T16:41:42.902Z",
+      "capturedAt": "2026-07-05T02:14:22.750Z",
       "sourceUrls": [
         "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER"
       ],
@@ -242,7 +243,7 @@
         "red": true,
         "green": true,
         "method": "differential",
-        "verifiedAt": "2026-07-04T16:41:42.902Z"
+        "verifiedAt": "2026-07-05T02:14:22.750Z"
       }
     }
   ]

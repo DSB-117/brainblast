@@ -1,20 +1,20 @@
 {
   "schemaVersion": "1.1",
   "generator": "gen-vti@0.2.0",
-  "generatedAt": "2026-07-04T16:41:42.902Z",
+  "generatedAt": "2026-07-05T02:14:22.750Z",
   "license": "synthetic-owned",
   "consentScope": "owned",
   "counts": {
-    "records": 89,
-    "sdks": 62,
-    "packsScanned": 89
+    "records": 90,
+    "sdks": 63,
+    "packsScanned": 90
   },
   "classDistribution": {
     "missing-verification": 27,
     "auth-bypass": 35,
     "other": 8,
     "silent-zero-revenue": 4,
-    "unconfirmed-state": 7,
+    "unconfirmed-state": 8,
     "missing-slippage-guard": 4,
     "immutable-after-deploy": 1,
     "unchecked-staleness": 1,
@@ -633,6 +633,13 @@
     {
       "pack": "undici-connect-reject-unauthorized-false",
       "rule": "undici-connect-reject-unauthorized-false",
+      "red": true,
+      "green": true,
+      "emitted": true
+    },
+    {
+      "pack": "viem-send-transaction-unconfirmed",
+      "rule": "viem-send-transaction-unconfirmed",
       "red": true,
       "green": true,
       "emitted": true
