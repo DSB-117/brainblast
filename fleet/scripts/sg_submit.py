@@ -11,10 +11,14 @@ import json, os, sys, urllib.request, urllib.error
 CANDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "candidates"))
 URL = "https://registry.brainblast.tech/api/vti"
 
+TOKEN = os.environ.get("BRAINBLAST_INGEST_TOKEN") or os.environ.get("BRAINBLAST_REPROVE_TOKEN")
+
 def post(finding):
     body = json.dumps({"finding": finding, "consentScope": "opt-in:train+eval"}).encode()
-    req = urllib.request.Request(URL, data=body, method="POST",
-                                 headers={"content-type": "application/json", "User-Agent": "curl/8.4.0"})
+    headers = {"content-type": "application/json", "User-Agent": "curl/8.4.0"}
+    if TOKEN:  # operator bulk load — bypasses the per-IP cap (server still gates on provenance + reproof)
+        headers["authorization"] = f"Bearer {TOKEN}"
+    req = urllib.request.Request(URL, data=body, method="POST", headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
             return r.status, json.load(r)
