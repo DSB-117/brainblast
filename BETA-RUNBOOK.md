@@ -28,10 +28,10 @@ A grant is defined by two things: which **lots** it names, and its **tier**
 | SKU | Price/yr | Grant `tier` | Grant `lots` |
 |---|---|---|---|
 | Curated lot (à-la-carte) | $2,500 each ($2,250 in $BRAIN) | `standard` | the lot(s) bought, e.g. `solana` |
-| Scale | $10,000 ($9,000 in $BRAIN) | `firehose` | all lots: `solana evm-defi web-backend other` |
+| Scale | $10,000 ($9,000 in $BRAIN) | `firehose` | all lots: `solana evm web-backend other` |
 | Sample (free) | — | anonymous, no grant | receipts-only teaser |
 
-Lot names: **`solana`**, **`evm-defi`**, **`web-backend`** (sellable) + `other`
+Lot names: **`solana`**, **`evm`**, **`web-backend`** (sellable) + `other`
 (Scale-only). Both paid tiers get full fixtures, **0 holdback**, and every record
 **in the granted lots** — the product axis is lot-scope, not volume or freshness.
 
@@ -44,7 +44,7 @@ npx tsx src/cli.ts grant issue \
   --buyer acme-labs \
   --tier standard \
   --lot solana \
-  --lot evm-defi \
+  --lot evm \
   --ttl-days 365 \
   --out acme-grant.json
 ```
@@ -54,7 +54,7 @@ npx tsx src/cli.ts grant issue \
 BRAINBLAST_MARKET_KEY=$(jq -r .secretKey distributor-keys.json) \
 npx tsx src/cli.ts grant issue \
   --buyer acme-labs --tier firehose \
-  --lot solana --lot evm-defi --lot web-backend --lot other \
+  --lot solana --lot evm --lot web-backend --lot other \
   --ttl-days 365 --out acme-scale.json
 ```
 
