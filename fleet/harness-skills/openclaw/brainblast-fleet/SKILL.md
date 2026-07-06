@@ -1,6 +1,6 @@
 ---
 name: brainblast-fleet
-description: Autonomously source verified SDK-footgun VTIs — sweep seams, prove RED→GREEN, submit to the registry, and run on a cron.
+description: Autonomous, scheduled agent that finds real, proven security footguns in popular SDKs and submits them to the open Brainblast corpus.
 version: 0.1.0
 emoji: "🦞"
 homepage: https://registry.brainblast.tech
@@ -26,24 +26,50 @@ metadata:
 
 # Brainblast Fleet (OpenClaw)
 
-Autonomous VTI sourcing for OpenClaw. A **VTI** (Verified Trap Instance) is a
-real, RED→GREEN-proven SDK footgun mined from public code — an insecure-default
-flag, a zeroed fee, a skipped verification. This skill grows the brainblast
-corpus at [registry.brainblast.tech](https://registry.brainblast.tech) without
-supervision.
+**What this is.** [Brainblast](https://registry.brainblast.tech) is an open,
+verified corpus of real security footguns in popular SDKs — code that compiles
+and runs but silently does the wrong thing (TLS certificate checks disabled, a
+zeroed marketplace fee, an unconfirmed blockchain transaction, a skipped
+signature verification). This skill is the **fleet**: an autonomous agent that
+discovers new footguns in public code, proves each one is real, and submits it to
+the corpus — on its own, on a schedule, unattended.
 
-**The non-negotiable invariant:** only traps that prove RED→GREEN through the
-real checkers ever land. The deterministic engine proves; you orchestrate. You
-never hand-edit a fixture to force a pass — a non-reproducing candidate is a
-DRAFT, full stop.
+Each entry is a **VTI** (Verified Trap Instance): a footgun proven to reproduce
+**RED→GREEN** — the checker fires on the vulnerable code and passes on the fixed
+code. Only proven traps ever land; the deterministic engine decides, and a
+candidate that doesn't reproduce is discarded, never forced through.
 
-The heavy lifting is one bundled script, `{baseDir}/scripts/run-fleet.sh`, which
-runs a whole cycle deterministically: sweep → prove (gate) → SLA (gate) → submit
-only the newly-proven. It clones/updates a **managed** engine checkout itself
-(resetting it to the committed baseline each run so cost stays bounded), needs no
-GitHub quota, holds a single-run lock, and is safe to run unattended. Your job is
-to pick seams, run it, read the scoreboard, optionally deepen with sub-agents,
-and report.
+Install it if you want an OpenClaw agent that continuously grows this shared
+security-training corpus in the background.
+
+## What you need
+
+- `git`, `node` (20+), `npm`, and `python3` on `PATH`. **No API keys.**
+- ~1 GB of disk for the engine checkout the skill manages at `~/.brainblast/repo`.
+- Discovery uses Sourcegraph's **public** code search — no GitHub token or quota.
+- *Optional:* `BRAINBLAST_INGEST_TOKEN`, only if you run your own Brainblast
+  registry and want to lift its 60/hour per-IP submit cap. Not needed otherwise.
+
+## Install
+
+```bash
+openclaw skills search brainblast          # find it on ClawHub
+openclaw skills install brainblast-fleet   # (or the scoped @publisher/brainblast-fleet slug shown)
+openclaw skills list                       # confirm it loaded
+```
+
+## What it does on your machine (and what it doesn't)
+
+- **Clones/updates** the Brainblast engine into a *managed* checkout
+  (`~/.brainblast/repo`) and resets it to a clean baseline each run. It is
+  sentinel-guarded — it never touches any other repo on your machine.
+- **Reads public code only.** It searches Sourcegraph and fetches candidate files
+  read-only to prove them locally. It never executes any scanned code.
+- **Submits to the public registry** at `registry.brainblast.tech`, which
+  re-proves every submission server-side — so installing and running this
+  contributes findings to the shared, open Brainblast corpus.
+- Holds a single-instance lock, so scheduled runs can never overlap or corrupt
+  the checkout.
 
 ## When to use
 

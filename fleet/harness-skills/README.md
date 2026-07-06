@@ -70,6 +70,34 @@ hermes skills install <hub-slug>                # or copy hermes/brainblast-flee
 # pure deterministic → ${HERMES_SKILL_DIR}/scripts/install-cron.sh   (--no-agent --script job)
 ```
 
+## Publishing to the hubs
+
+Each folder is a self-contained, publishable skill bundle (`SKILL.md` + `scripts/`),
+so users can discover and one-command install them. Publish from the repo root:
+
+**ClawHub** (OpenClaw's registry — [clawhub.ai](https://clawhub.ai)):
+```bash
+clawhub login
+clawhub skill publish openclaw/brainblast-fleet \
+  --slug brainblast-fleet --name "Brainblast Fleet" --version 0.1.0 \
+  --tags security,automation,training-data
+# users then: openclaw skills install brainblast-fleet
+```
+
+**Skills Hub** (Hermes — [agentskills.io](https://agentskills.io)):
+```bash
+hermes skills publish hermes/brainblast-fleet --to github --repo <owner>/brainblast-fleet
+# or expose your repo as a tap so users can search/install from it:
+hermes skills tap add <owner>/brainblast-fleet
+# users then: hermes skills install <owner>/brainblast-fleet
+```
+
+Both registries run a security scan on publish. The `SKILL.md` frontmatter already
+declares the runtime requirements each scanner checks (`requires.bins` for OpenClaw,
+`requires_toolsets` + `required_environment_variables` for Hermes), so keep those in
+sync with the scripts if you change dependencies. Bump `version` in the frontmatter
+on each publish.
+
 ## Keeping the vendored pipeline in sync
 
 `shared/run-fleet.sh` is the source of truth. After editing it:
