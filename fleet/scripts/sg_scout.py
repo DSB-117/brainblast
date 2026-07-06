@@ -264,6 +264,39 @@ SEAMS = {
    'import { chromium } from "playwright";',
    'return a.newContext({ ignoreHTTPSErrors: true });', 'return a.newContext({ ignoreHTTPSErrors: false });'),
 
+ # ---- wave 4: more distinct patterns across lots ----
+ "express-jwt-credentials-required-false": OBJ(r"credentialsRequired:\s*false", "express-jwt","Auth",">=6.0.0",
+   "https://github.com/auth0/express-jwt","auth-bypass","high",
+   "expressjwt",0,"credentialsRequired",False,True,"jwt|auth|middleware|expressjwt|use|guard|protect",
+   "credentialsRequired: false lets express-jwt pass requests carrying NO token — a route meant to require auth silently accepts anonymous callers.",
+   "credentialsRequired: false makes express-jwt allow requests with no JWT at all, so an endpoint you intended to protect serves unauthenticated callers. Remove it (default true) unless the route is deliberately mixed and you check req.auth yourself.",
+   'import { expressjwt } from "express-jwt";',
+   'return a.use(expressjwt({ secret: b, credentialsRequired: false }));', 'return a.use(expressjwt({ secret: b, credentialsRequired: true }));'),
+
+ "helmet-hsts-false": OBJ(r"hsts:\s*false", "helmet","Security",">=4.0.0",
+   "https://helmetjs.github.io/","other","medium",
+   "helmet",0,"hsts",False,True,"helmet|app|use|security|middleware",
+   "hsts: false removes the Strict-Transport-Security header — a browser can be downgraded from HTTPS to plaintext by an SSL-strip MITM.",
+   "hsts: false disables the HTTP Strict-Transport-Security header, so browsers no longer pin HTTPS and a man-in-the-middle can strip TLS. Leave HSTS enabled with an appropriate max-age.",
+   'import helmet from "helmet";',
+   'return a.use(helmet({ hsts: false }));', 'return a.use(helmet({ hsts: true }));'),
+
+ "tls-min-version-tls-v1": OBJ(r"minVersion:\s*[\"']TLSv1[\"']", "node:tls","Networking",">=10.0.0",
+   "https://nodejs.org/api/tls.html#tlsconnectoptions-callback","missing-verification","high",
+   "connect",0,"minVersion","TLSv1","TLSv1.2","connect|tls|client|socket|secure|https",
+   "minVersion: 'TLSv1' permits obsolete TLS 1.0 — a deprecated protocol open to downgrade and cipher attacks (BEAST, weak MACs).",
+   "minVersion: 'TLSv1' allows negotiating TLS 1.0, which is deprecated and vulnerable to downgrade/cipher attacks. Set minVersion to 'TLSv1.2' or 'TLSv1.3'.",
+   'import tls from "node:tls";',
+   'return a.connect({ host: b, minVersion: "TLSv1" });', 'return a.connect({ host: b, minVersion: "TLSv1.2" });'),
+
+ "solana-preflight-commitment-processed": OBJ(r"preflightCommitment:\s*[\"']processed[\"']", "@solana/web3.js","Blockchain",">=1.0.0",
+   "https://solana-labs.github.io/solana-web3.js/","unconfirmed-state","medium",
+   "sendRawTransaction",1,"preflightCommitment","processed","confirmed","send|submit|transaction|raw|execute|swap",
+   "preflightCommitment: 'processed' simulates the send against an un-rooted slot — preflight can approve state that is later rolled back.",
+   "preflightCommitment: 'processed' runs the pre-send simulation against the most-recent, un-confirmed slot, so a doomed transaction can pass preflight on state that reverts. Use 'confirmed' or 'finalized'.",
+   'import { Connection } from "@solana/web3.js";',
+   'return a.sendRawTransaction(b, { preflightCommitment: "processed" });', 'return a.sendRawTransaction(b, { preflightCommitment: "confirmed" });'),
+
  # ---- positional-arg seams ----
  "crypto-md5": POS(r"createHash\(\s*[\"']md5[\"']\s*\)", "node:crypto","Crypto",">=0.10.0",
    "https://nodejs.org/api/crypto.html#cryptocreatehashalgorithm-options","missing-verification","high",
@@ -280,6 +313,14 @@ SEAMS = {
    "createHash('sha1') selects SHA-1, which has practical collision attacks and must not be used for signatures or integrity. Use sha256 or stronger.",
    'import { createHash } from "node:crypto";',
    'return createHash("sha1").update(a).digest("hex");', 'return createHash("sha256").update(a).digest("hex");'),
+
+ "crypto-createcipheriv-ecb": POS(r"createCipheriv\(\s*[\"']aes-256-ecb[\"']", "node:crypto","Crypto",">=0.10.0",
+   "https://nodejs.org/api/crypto.html#cryptocreatecipherivalgorithm-key-iv-options","missing-verification","high",
+   "createCipheriv",0,"aes-256-ecb","aes-256-gcm","encrypt|cipher|seal|protect|secret|token",
+   "createCipheriv('aes-256-ecb') uses ECB mode — identical plaintext blocks encrypt to identical ciphertext, leaking structure and allowing block reordering.",
+   "createCipheriv with 'aes-256-ecb' selects ECB, which encrypts each block independently so repeated plaintext is visible in the ciphertext and blocks can be reordered or replayed. Use an authenticated mode such as aes-256-gcm with a fresh IV.",
+   'import { createCipheriv } from "node:crypto";',
+   'return createCipheriv("aes-256-ecb", a, b);', 'return createCipheriv("aes-256-gcm", a, b);'),
 
  # ---- absence-modality seams (viem) ----
  "viem-send-tx-no-receipt": ABS(r"\.sendTransaction\(", "viem",
