@@ -19,42 +19,59 @@ npx tsx src/cli.ts grant keygen --out distributor-keys.json
 - On the hosted registry, set `BRAINBLAST_MARKET_PUBKEY=<address>` so `/api/feed`
   verifies buyer grants.
 
-## 1. The product — lots + Scale
+## 1. The product — lots, packages, Scale
 
-The corpus is sold as **curated lots** (à-la-carte) or **Scale** (everything).
-A grant is defined by two things: which **lots** it names, and its **tier**
-(entitlement mechanics). Sample is the free anonymous teaser.
+The corpus is sold three ways, all lot-scoped: individual **curated lots** (à la
+carte), **packages** (bundles of lots at a discount), or **Scale** (everything +
+all future lots). A grant names the lots it covers; packages and Scale expand to
+their member lots at issue time, so the grant itself only ever carries lot names.
+Sample is the free anonymous teaser.
 
-| SKU | Price/yr | Grant `tier` | Grant `lots` |
-|---|---|---|---|
-| Curated lot (à-la-carte) | $2,500 each ($2,250 in $BRAIN) | `standard` | the lot(s) bought, e.g. `solana` |
-| Scale | $10,000 ($9,000 in $BRAIN) | `firehose` | all lots: `solana evm web-backend other` |
-| Sample (free) | — | anonymous, no grant | receipts-only teaser |
+**Prices are derived from live coverage** (distinct footgun patterns × SDKs per
+lot, quality-weighted), snapped to clean tiers — read the current numbers off the
+pricing page (`registry.brainblast.tech/pricing`). A lot's price moves only when
+it gains a new *pattern or SDK*, never from raw instance volume.
 
-Lot names: **`solana`**, **`evm`**, **`web-backend`** (sellable) + `other`
-(Scale-only). Both paid tiers get full fixtures, **0 holdback**, and every record
-**in the granted lots** — the product axis is lot-scope, not volume or freshness.
+| SKU | Grant scope | Notes |
+|---|---|---|
+| **Lot** (à la carte) | `--lot <name>` | one curated lot · ~$1,500–$3,500/yr by coverage |
+| **Package** | `--package web3\|appsec` | web3 = solana + evm · appsec = the 6 web/infra lots (~20–30% off à la carte) |
+| **Scale** | `--package scale` | every lot + all future lots · best value |
+| **Sample** (free) | anonymous, no grant | receipts-only teaser |
+
+The 8 sellable lots: **`solana`**, **`evm`**, **`auth-sessions`**,
+**`transport-tls`**, **`web-hardening`**, **`cloud-storage`**, **`crypto`**,
+**`browser-desktop`** (+ `other`, Scale-only). Every paid grant gets full
+fixtures, **0 holdback**, and every record in its lot scope — the product axis is
+lot-scope, not volume or freshness.
 
 ## 2. Issue a grant for a paying customer
 
-**À-la-carte (one or more lots):**
+`--package` expands to its member lots and defaults the tier to `firehose` (full
+access); combine with `--lot` for extras — all values de-dup.
+
+**À la carte (one or more lots):**
 ```bash
 BRAINBLAST_MARKET_KEY=$(jq -r .secretKey distributor-keys.json) \
 npx tsx src/cli.ts grant issue \
   --buyer acme-labs \
-  --tier standard \
-  --lot solana \
-  --lot evm \
-  --ttl-days 365 \
-  --out acme-grant.json
+  --lot solana --lot auth-sessions \
+  --ttl-days 365 --out acme-grant.json
+```
+
+**Package (Web3 = Solana + EVM):**
+```bash
+BRAINBLAST_MARKET_KEY=$(jq -r .secretKey distributor-keys.json) \
+npx tsx src/cli.ts grant issue \
+  --buyer acme-labs --package web3 \
+  --ttl-days 365 --out acme-web3.json
 ```
 
 **Scale (whole corpus + all future lots):**
 ```bash
 BRAINBLAST_MARKET_KEY=$(jq -r .secretKey distributor-keys.json) \
 npx tsx src/cli.ts grant issue \
-  --buyer acme-labs --tier firehose \
-  --lot solana --lot evm --lot web-backend --lot other \
+  --buyer acme-labs --package scale \
   --ttl-days 365 --out acme-scale.json
 ```
 

@@ -24,6 +24,7 @@ import { listBundledPacks, resolveBundledPackToken } from "./bundledPacks.ts";
 import { isTelemetryEnabled, recordGraduationEvents, telemetryFilePath, submitTelemetry } from "./telemetry.ts";
 import { isContributeEnabled, contributeConsentScope, contribStagingDir, stageContribution } from "./contrib/capture.ts";
 import type { FeedTier, FeedQuery } from "./feed.ts";
+import { expandLots, PACKAGES } from "./lots.ts";
 
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
@@ -1794,7 +1795,7 @@ async function runGrant(argv: string[]): Promise<void> {
     console.error("usage: brainblast grant <keygen|issue|verify|quote> [opts]");
     console.error("  keygen [--out FILE]");
     console.error("         generate a distributor identity (ed25519). Publish the address; keep secretKey.");
-    console.error("  issue  --buyer ID (--tier T | --for-brain N | --wallet) [--lot NAME]... [--ttl-days N] [--out FILE]");
+    console.error("  issue  --buyer ID [--lot NAME]... [--package web3|appsec|scale] [--tier T | --for-brain N | --wallet] [--ttl-days N] [--out FILE]");
     console.error("         sign an access grant. Tier is explicit (--tier) or SIZED from $BRAIN held");
     console.error("         (--for-brain N, or --wallet to read the active wallet). ed25519 (recommended):");
     console.error("         BRAINBLAST_MARKET_KEY=<secretKey> (or --key / --key-file). Legacy hmac: --secret.");
@@ -1837,8 +1838,20 @@ async function runGrant(argv: string[]): Promise<void> {
       tier = mp.accessQuote(held).tier;
       console.error(`grant: wallet holds ${held} $BRAIN → tier ${tier}`);
     }
+    // Lot scope: explicit --lot names plus any --package bundle (web3|appsec|scale),
+    // expanded to member lots and de-duplicated so the grant carries only lot names.
+    let lots: string[];
+    try {
+      lots = expandLots(allVals("--lot"), allVals("--package"));
+    } catch (e: any) {
+      console.error(`grant issue: ${e?.message ?? e}`);
+      process.exit(2);
+    }
+    // A lot/package purchase implies full access to those lots — default to the
+    // firehose entitlement (fixtures, zero holdback, unlimited within scope).
+    if (!tier && lots.length) tier = "firehose";
     if (!buyer || !tier || !["sample", "standard", "firehose"].includes(tier)) {
-      console.error("grant issue: --buyer ID and a tier are required — pass --tier T, or size it from $BRAIN with --for-brain N / --wallet");
+      console.error("grant issue: --buyer ID and a tier/scope are required — pass --tier T, or --lot/--package (implies firehose), or size from $BRAIN with --for-brain N / --wallet");
       process.exit(2);
     }
     const keyFile = val("--key-file");
@@ -1856,7 +1869,7 @@ async function runGrant(argv: string[]): Promise<void> {
     const ttlRaw = val("--ttl-days");
     let grant: import("./marketplace.ts").Grant;
     try {
-      grant = mp.issueGrant({ buyer, tier, lots: allVals("--lot"), signer, ttlDays: ttlRaw != null ? Number(ttlRaw) : null, now: val("--now") });
+      grant = mp.issueGrant({ buyer, tier, lots, signer, ttlDays: ttlRaw != null ? Number(ttlRaw) : null, now: val("--now") });
     } catch (e: any) {
       console.error(`grant issue: bad signing key (${e?.message ?? e})`);
       process.exit(2);
