@@ -23,6 +23,7 @@ import { compilesAgainstSdk } from "./compilesAgainstSdk.ts";
 import { differentialIo } from "./differentialIo.ts";
 import { cstStructFieldForbiddenLiteral } from "./cstStructFieldForbiddenLiteral.ts";
 import { cstMemberAccessForbidden } from "./cstMemberAccessForbidden.ts";
+import { cstCallForbidden } from "./cstCallForbidden.ts";
 import type { Candidate, RustCandidate, ConfigCandidate, CstCandidate, CheckOutcome, Checker, RustChecker, ConfigChecker, CstChecker } from "../types.ts";
 
 // Registry of human-vetted checker templates. Rules bind to these by `kind`.
@@ -67,6 +68,10 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker | CstChecke
   // a forbidden object.property member access (e.g. tx.origin auth).
   "cst-struct-field-forbidden-literal": cstStructFieldForbiddenLiteral as CstChecker,
   "cst-member-access-forbidden": cstMemberAccessForbidden as CstChecker,
+  // Solidity: a forbidden function CALL by name — bare (selfdestruct(x)) or method
+  // (addr.delegatecall(data)) — regardless of receiver. Complements member-access:
+  // catches low-level footguns where the receiver is a variable, not a fixed global.
+  "cst-call-forbidden": cstCallForbidden as CstChecker,
 };
 
 // Move 2 — self-extending checkers. The meta-gate (scripts/fleet-checker-gate.ts)

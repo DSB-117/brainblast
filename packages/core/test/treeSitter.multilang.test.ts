@@ -68,6 +68,50 @@ describe("Solidity static AST — cst-member-access-forbidden", () => {
   });
 });
 
+const SOL_CALL_RULE: Rule = {
+  id: "sol-selfdestruct", severity: "high", title: "selfdestruct present",
+  component: { name: "solidity", type: "SmartContract" },
+  detect: { modules: ["solidity"], nameRegex: "close|destroy|kill|handler", triggerCalls: ["selfdestruct"], lang: "solidity" },
+  check: { kind: "cst-call-forbidden", params: { forbiddenCalls: ["selfdestruct"] } },
+  test: { kind: "none" },
+};
+
+const SOL_DELEGATECALL_RULE: Rule = {
+  id: "sol-delegatecall", severity: "high", title: "delegatecall present",
+  component: { name: "solidity", type: "SmartContract" },
+  detect: { modules: ["solidity"], nameRegex: "exec|proxy|forward|handler", triggerCalls: ["delegatecall"], lang: "solidity" },
+  check: { kind: "cst-call-forbidden", params: { forbiddenCalls: ["delegatecall"] } },
+  test: { kind: "none" },
+};
+
+const solSelfdestruct = `pragma solidity ^0.8.0;
+contract C { function kill(address payable a) public { selfdestruct(a); } }
+`;
+const solNoSelfdestruct = `pragma solidity ^0.8.0;
+contract C { function kill(address payable a) public { a.transfer(address(this).balance); } }
+`;
+const solDelegatecall = `pragma solidity ^0.8.0;
+contract P { function forward(address a, bytes memory d) public { a.delegatecall(d); } }
+`;
+
+describe("Solidity static AST — cst-call-forbidden", () => {
+  it("flags a bare selfdestruct(...) call (RED)", () => {
+    const r = scan("solidity", "C.sol", solSelfdestruct, SOL_CALL_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("fail");
+  });
+  it("clears a scope with no selfdestruct (GREEN)", () => {
+    const r = scan("solidity", "C.sol", solNoSelfdestruct, SOL_CALL_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("pass");
+  });
+  it("flags a method-call callee regardless of receiver — a.delegatecall(d) (RED)", () => {
+    const r = scan("solidity", "P.sol", solDelegatecall, SOL_DELEGATECALL_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("fail");
+  });
+});
+
 describe("finder scoping", () => {
   it("does not consider a Go function that neither matches nameRegex nor calls the trigger", () => {
     const src = `package other
