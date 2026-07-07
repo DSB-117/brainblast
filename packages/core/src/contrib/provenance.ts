@@ -116,9 +116,15 @@ export async function verifyProvenance(finding: Finding, opts: VerifyProvenanceO
 
   // Evidence must mention the trap's own forbidden property/call — otherwise a
   // citation could point at any real line, unrelated to the submitted trap.
+  // Nested/dotted propNames (e.g. `images.dangerouslyAllowSVG`, `ssl.rejectUnauthorized`)
+  // never appear as a literal dotted string in real code — the property sits on its own
+  // line under a parent object. Match on the LAST path segment (the real identifier at
+  // the footgun site); this keeps the anti-fabrication guarantee (the cited line must
+  // still contain the actual footgun property/call) while unlocking nested-config traps.
   const token = expectedToken(finding);
-  if (token && !evidence.includes(token)) {
-    reasons.push(`provenance.evidence must contain the trap's target '${token}' (the cited line must be the actual footgun)`);
+  const evidenceToken = token && token.includes(".") ? token.slice(token.lastIndexOf(".") + 1) : token;
+  if (evidenceToken && !evidence.includes(evidenceToken)) {
+    reasons.push(`provenance.evidence must contain the trap's target '${evidenceToken}' (the cited line must be the actual footgun)`);
   }
 
   // Fetch the exact file at the exact commit and confirm the evidence is in it.
