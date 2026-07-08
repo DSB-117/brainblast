@@ -2889,7 +2889,7 @@ async function runBatch(argv: string[]): Promise<void> {
 }
 
 // ── HiveMind — the shared second brain for AI agents ─────────────────────────
-// `brainblast hive sync|status|brief|link|unlink`. The hive is a machine-global
+// `brainblast hive sync|status|brief|link|unlink|hook`. The hive is a machine-global
 // knowledge store every agent shares: VTIs synced from the live feed, public
 // rule packs mirrored at a pinned commit, linked repos' dependency indexes, and
 // (later phases) cross-repo experience. See src/hive/.
@@ -2923,8 +2923,13 @@ async function runHive(argv: string[]): Promise<void> {
     console.error("             --json            machine-readable brief");
     console.error("  link     register a repo (path + dependency index) with the hive  [dir]");
     console.error("  unlink   remove a repo from the hive                              [dir]");
+    console.error("  hook     write-time enforcement — the Claude Code PostToolUse entrypoint:");
+    console.error("           checks each file the agent writes against the live hive rules and");
+    console.error("           feeds proven-trap hits straight back into the agent's context.");
+    console.error("           `hive hook install` prints the settings.json snippet.");
     console.error("");
     console.error(`  Hive root: $${"BRAINBLAST_HIVE_DIR"} or ~/.brainblast/hive`);
+    console.error("  Audits load the hive's mirrored packs automatically (BRAINBLAST_NO_HIVE=1 opts out).");
     console.error("  An empty hive means no verified traps are on file — not that your stack is safe.");
     process.exit(2);
   };
@@ -2961,6 +2966,10 @@ async function runHive(argv: string[]): Promise<void> {
             `hive: feed ${feed.remote}${tierNote} — ${feed.fetched} streamed: +${feed.added} new, ${feed.updated} enriched, ${feed.unchanged} already known · brain holds ${feed.total} VTIs`,
           );
           for (const w of feed.warnings) console.error(`hive: ⚠ ${w}`);
+          if (feed.outbreaks.length) {
+            const { renderOutbreakText } = await import("./hive/outbreak.ts");
+            for (const o of feed.outbreaks) console.error(`hive: ${renderOutbreakText(o)}`);
+          }
         }
       } catch (e: any) {
         failed = true;
@@ -3076,6 +3085,67 @@ async function runHive(argv: string[]): Promise<void> {
     const removed = unlinkRepo(root, dir);
     console.log(removed ? `hive: unlinked ${dir}` : `hive: ${dir} was not linked`);
     process.exit(removed ? 0 : 1);
+  }
+
+  if (sub === "hook") {
+    if (rest[0] === "install") {
+      const snippet = {
+        hooks: {
+          PostToolUse: [
+            {
+              matcher: "Write|Edit|MultiEdit|NotebookEdit",
+              hooks: [{ type: "command", command: "npx brainblast hive hook" }],
+            },
+          ],
+        },
+      };
+      console.log("Add this to your Claude Code settings.json (~/.claude/settings.json) to arm write-time enforcement:");
+      console.log("");
+      console.log(JSON.stringify(snippet, null, 2));
+      console.log("");
+      console.log("Every file the agent writes is then checked against the live hive rules the moment it lands;");
+      console.log("a proven-trap hit is fed straight back into the agent's context so it self-corrects mid-task.");
+      console.log("Keep the hive fresh with `brainblast hive sync` (cron or a shell alias both work).");
+      process.exit(0);
+    }
+
+    // The Claude Code PostToolUse entrypoint: stdin JSON in, feedback out.
+    // Silent (exit 0, no output) unless a written file matches a proven trap —
+    // a hook that talks on every edit trains the agent to ignore it.
+    const chunks: Buffer[] = [];
+    for await (const c of process.stdin) chunks.push(c as Buffer);
+    let payload: any = {};
+    try {
+      payload = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+    } catch {
+      process.exit(0); // not our payload — never interfere
+    }
+    const toolName = payload.tool_name;
+    const input = payload.tool_input || {};
+    const filePath: unknown = input.file_path ?? input.notebook_path;
+    if (
+      !["Write", "Edit", "MultiEdit", "NotebookEdit"].includes(toolName) ||
+      typeof filePath !== "string"
+    ) {
+      process.exit(0);
+    }
+    try {
+      const { checkWrittenFile, renderWriteFeedback } = await import("./hive/enforce.ts");
+      const cwd = typeof payload.cwd === "string" ? payload.cwd : process.cwd();
+      const result = checkWrittenFile(filePath as string, cwd);
+      if (!result.checked || result.failures.length === 0) process.exit(0);
+      console.log(
+        JSON.stringify({
+          hookSpecificOutput: {
+            hookEventName: "PostToolUse",
+            additionalContext: renderWriteFeedback(result),
+          },
+        }),
+      );
+    } catch {
+      // Enforcement must never break an edit; the audit/CI gate still stands.
+    }
+    process.exit(0);
   }
 
   console.error(`hive: unknown subcommand '${sub}'`);
