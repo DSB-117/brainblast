@@ -2889,7 +2889,7 @@ async function runBatch(argv: string[]): Promise<void> {
 }
 
 // ── HiveMind — the shared second brain for AI agents ─────────────────────────
-// `brainblast hive sync|status|link|unlink|watch`. The hive is a machine-global
+// `brainblast hive sync|status|brief|link|unlink`. The hive is a machine-global
 // knowledge store every agent shares: VTIs synced from the live feed, public
 // rule packs mirrored at a pinned commit, linked repos' dependency indexes, and
 // (later phases) cross-repo experience. See src/hive/.
@@ -2913,6 +2913,14 @@ async function runHive(argv: string[]): Promise<void> {
     console.error("             --force           re-mirror packs even when the sha is unchanged");
     console.error("             --json            machine-readable report");
     console.error("  status   what the brain knows, how fresh it is, what it protects  [--json]");
+    console.error("  brief    proven traps for a repo's dependencies, ranked + budgeted [dir]");
+    console.error("             --sdk NAME        focus on one dependency");
+    console.error("             --severity LEVEL  minimum severity and above");
+    console.error("             --limit N         max traps (default 12)");
+    console.error("             --inject          write the briefing into the repo's CLAUDE.md/AGENTS.md");
+    console.error("                               (idempotent marker-delimited block; re-run to refresh)");
+    console.error("             --remove          remove a previously injected briefing block");
+    console.error("             --json            machine-readable brief");
     console.error("  link     register a repo (path + dependency index) with the hive  [dir]");
     console.error("  unlink   remove a repo from the hive                              [dir]");
     console.error("");
@@ -2995,6 +3003,53 @@ async function runHive(argv: string[]): Promise<void> {
     const s = hiveStatus(root);
     if (jsonOut) console.log(JSON.stringify(s, null, 2));
     else console.log(renderHiveStatusText(s));
+    process.exit(0);
+  }
+
+  if (sub === "brief") {
+    const { loadHiveLot, loadCursor } = await import("./hive/store.ts");
+    const { extractNpmDeps } = await import("./hive/repos.ts");
+    const { assembleBrief, renderBriefText, renderBriefMarkdown } = await import("./hive/brief.ts");
+    const { agentInstructionFile, injectBlock, removeBlock } = await import("./hive/inject.ts");
+
+    const dir = rest.find((a, i) => !a.startsWith("--") && !["--sdk", "--severity", "--limit"].includes(rest[i - 1])) ?? process.cwd();
+
+    if (rest.includes("--remove")) {
+      const file = agentInstructionFile(dir);
+      const removed = removeBlock(file);
+      console.log(removed ? `hive: briefing block removed from ${file}` : `hive: no briefing block in ${file}`);
+      process.exit(0);
+    }
+
+    const sev = val("--severity");
+    if (sev && !["critical", "high", "medium", "low"].includes(sev)) {
+      console.error("hive brief: --severity must be critical|high|medium|low");
+      process.exit(2);
+    }
+    const { deps } = extractNpmDeps(dir);
+    const vtis = loadHiveLot(root);
+    const cursor = loadCursor(root);
+    const brief = assembleBrief({
+      deps,
+      vtis,
+      sdk: val("--sdk"),
+      minSeverity: sev as any,
+      maxRecords: val("--limit") ? parseInt(val("--limit")!, 10) : undefined,
+    });
+
+    if (vtis.length === 0) console.error("hive: ⚠ the hive is empty — run `brainblast hive sync` first");
+    if (Object.keys(deps).length === 0) console.error(`hive: ⚠ no package.json dependencies found under ${dir}`);
+
+    if (rest.includes("--inject")) {
+      const file = agentInstructionFile(dir);
+      const md = renderBriefMarkdown(brief, { syncedAt: cursor.lastSyncAt, tier: cursor.tier });
+      const action = injectBlock(file, md);
+      console.log(`hive: briefing ${action} in ${file} (${brief.entries.length} traps for ${brief.matchedDeps.length} deps) — the next agent session starts pre-immunized`);
+      process.exit(0);
+    }
+
+    if (jsonOut) console.log(JSON.stringify({ dir, hive: root, lastSyncAt: cursor.lastSyncAt, tier: cursor.tier, ...brief }, null, 2));
+    else console.log(renderBriefText(brief));
     process.exit(0);
   }
 
