@@ -408,6 +408,7 @@ export async function startMcpServer(): Promise<void> {
         const { hiveRoot, loadHiveLot, loadCursor } = await import("./hive/store.ts");
         const { extractNpmDeps } = await import("./hive/repos.ts");
         const { assembleBrief, renderBriefText } = await import("./hive/brief.ts");
+        const { loadExperience } = await import("./hive/experience.ts");
         const dir = a.dir ?? process.cwd();
         const root = hiveRoot();
         const { deps } = extractNpmDeps(dir);
@@ -419,6 +420,7 @@ export async function startMcpServer(): Promise<void> {
           sdk: a.sdk,
           minSeverity: a.min_severity as any,
           maxRecords: a.limit,
+          experience: loadExperience(root),
         });
         const hints: string[] = [];
         if (vtis.length === 0) hints.push("The hive is empty — run `brainblast hive sync` to pull the live corpus.");

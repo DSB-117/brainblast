@@ -15,6 +15,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { audit } from "../audit.ts";
 import { resolveRules } from "../resolveRules.ts";
+import { hiveRoot } from "./store.ts";
+import { crossRepoPrecedent, loadExperience } from "./experience.ts";
 import type { ChangedRanges } from "../gitDiff.ts";
 import type { CheckResult } from "../types.ts";
 
@@ -42,10 +44,26 @@ export function checkWrittenFile(filePath: string, repoDir: string): WriteCheckR
   const ranges: ChangedRanges = new Map([[abs, [[1, Math.max(1, lineCount)]]]]);
   const rules = resolveRules(repoDir);
   const { checks } = audit(repoDir, rules, ranges);
+  const failures = checks.filter((c) => c.result === "fail");
+
+  // Cross-repo experience: if an agent on this machine already fixed one of
+  // these traps in another repo, say so — the fastest path to the right fix.
+  try {
+    const experience = loadExperience(hiveRoot());
+    for (const f of failures) {
+      if (!f.precedent) {
+        const p = crossRepoPrecedent(experience, f.ruleId, resolve(repoDir));
+        if (p) f.precedent = p;
+      }
+    }
+  } catch {
+    // experience is advisory — never fail the check over it
+  }
+
   return {
     file: abs,
     checked: true,
-    failures: checks.filter((c) => c.result === "fail"),
+    failures,
     rulesLoaded: rules.length,
   };
 }

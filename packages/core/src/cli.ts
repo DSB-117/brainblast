@@ -25,6 +25,9 @@ import { isTelemetryEnabled, recordGraduationEvents, telemetryFilePath, submitTe
 import { isContributeEnabled, contributeConsentScope, contribStagingDir, stageContribution } from "./contrib/capture.ts";
 import type { FeedTier, FeedQuery } from "./feed.ts";
 import { expandLots, PACKAGES } from "./lots.ts";
+import { hiveRoot, HIVE_DISABLE_ENV } from "./hive/store.ts";
+import { loadExperience, recordFixEvents, crossRepoPrecedent } from "./hive/experience.ts";
+import { extractNpmDeps } from "./hive/repos.ts";
 
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
@@ -359,6 +362,11 @@ if (!changedRanges) {
     if (p) rc.precedent = p;
   }
   saveMemory(targetDir, nextMemory);
+  // HiveMind experience: promote this run's NEW fix events into the machine-
+  // global log (so other repos' audits can cite them), and for fails with no
+  // local precedent, cite a fix from another repo. Fail-open — the hive layer
+  // must never break an audit.
+  applyHiveExperience(targetDir, checks, report, nextMemory.fixHistory.slice(memory.fixHistory.length));
 } else {
   // Still surface precedents (read-only) against the existing snapshot.
   const memory = loadMemory(targetDir);
@@ -371,6 +379,7 @@ if (!changedRanges) {
     const p = precedents.get(precedentKey(rc as { ruleId: string; file: string }));
     if (p) rc.precedent = p;
   }
+  applyHiveExperience(targetDir, checks, report, []); // read-only in --since mode
 }
 
 const costReport = analyzeCosts(targetDir);
@@ -2888,6 +2897,38 @@ async function runBatch(argv: string[]): Promise<void> {
   }
 }
 
+// HiveMind experience (phase 4): after an audit, (a) promote the run's new fix
+// events into the machine-global log, (b) for fails with no LOCAL precedent,
+// cite the most recent fix of the same rule from ANOTHER repo — knowledge
+// crossing repo and agent boundaries. Fail-open: the hive never breaks audits.
+function applyHiveExperience(
+  targetDir: string,
+  checks: import("./types.ts").CheckResult[],
+  report: { checks: unknown },
+  newFixEvents: { ruleId: string; file: string; exportName: string; fixedAt: string; detail: string }[],
+): void {
+  if (process.env[HIVE_DISABLE_ENV]) return;
+  try {
+    const root = hiveRoot();
+    if (newFixEvents.length) {
+      const { name } = extractNpmDeps(targetDir);
+      recordFixEvents(root, { path: targetDir, name: name ?? undefined }, newFixEvents);
+    }
+    const experience = loadExperience(root);
+    if (experience.length === 0) return;
+    const fill = (c: { ruleId: string; result?: string; precedent?: unknown }) => {
+      if (c.precedent) return; // a local (same-repo) precedent always wins
+      if ((c as any).result !== "fail") return;
+      const p = crossRepoPrecedent(experience, c.ruleId, targetDir);
+      if (p) c.precedent = p;
+    };
+    for (const c of checks) fill(c);
+    for (const rc of report.checks as Array<{ ruleId: string; result?: string; precedent?: unknown }>) fill(rc);
+  } catch {
+    // never let the experience layer break an audit
+  }
+}
+
 // ── HiveMind — the shared second brain for AI agents ─────────────────────────
 // `brainblast hive sync|status|brief|link|unlink|hook`. The hive is a machine-global
 // knowledge store every agent shares: VTIs synced from the live feed, public
@@ -3044,6 +3085,7 @@ async function runHive(argv: string[]): Promise<void> {
       sdk: val("--sdk"),
       minSeverity: sev as any,
       maxRecords: val("--limit") ? parseInt(val("--limit")!, 10) : undefined,
+      experience: loadExperience(root),
     });
 
     if (vtis.length === 0) console.error("hive: ⚠ the hive is empty — run `brainblast hive sync` first");
