@@ -24,10 +24,12 @@ import {
   feedRecordToVti,
   hivePaths,
   loadCursor,
+  loadRepos,
   saveCursor,
   upsertVtis,
   type UpsertResult,
 } from "./store.ts";
+import { detectOutbreaks, type Outbreak } from "./outbreak.ts";
 
 export const DEFAULT_HIVE_REMOTE = `${DEFAULT_REGISTRY_URL}/api`;
 export const DEFAULT_PACKS_REPO = "DSB-117/brainblast";
@@ -60,6 +62,9 @@ export interface SyncFeedReport {
   total: number; // hive lot size after the sync
   cursor: string | null;
   warnings: string[];
+  // Newly-landed high/critical traps that bind to a linked repo's dependency
+  // index — the hive telling you a repo you maintain just became exposed.
+  outbreaks: Outbreak[];
 }
 
 export async function syncFeed(opts: SyncFeedOpts): Promise<SyncFeedReport> {
@@ -139,6 +144,7 @@ export async function syncFeed(opts: SyncFeedOpts): Promise<SyncFeedReport> {
     total: upsert.total,
     cursor: loadCursor(opts.root).cursor,
     warnings,
+    outbreaks: detectOutbreaks(upsert.addedRecords, loadRepos(opts.root).repos),
   };
 }
 
