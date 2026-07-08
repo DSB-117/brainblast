@@ -433,7 +433,7 @@ Add to `claude.json`:
 }
 ```
 
-Tools exposed: `brainblast_audit(dir)`, `brainblast_diff(ecosystem, package, from_version, to_version)`, `brainblast_osv_check(ecosystem, package, version)`, `brainblast_verify(dir, trapId?, oracle?)`, and `brainblast_recall(sdk?, class?, min_severity?, since?, lots?)` — recall the verified traps (with their RED→GREEN receipts and fixes) for an SDK **before** writing the integration, straight from the agent's tools.
+Tools exposed: `brainblast_audit(dir)`, `brainblast_diff(ecosystem, package, from_version, to_version)`, `brainblast_osv_check(ecosystem, package, version)`, `brainblast_verify(dir, trapId?, oracle?)`, `brainblast_recall(sdk?, class?, min_severity?, since?, lots?)` — recall the verified traps (with their RED→GREEN receipts and fixes) for an SDK **before** writing the integration, straight from the agent's tools (reads the machine-global hive lot by default) — and `hive_brief(dir?, sdk?, min_severity?, limit?)` — the HiveMind briefing: call at session start to pre-immunize against the proven traps for exactly the repo's dependencies (v0.10.0).
 
 ## Upgrade risk diff (v0.6.0)
 

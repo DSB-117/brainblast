@@ -1,6 +1,6 @@
 # Brainblast → AI Training-Data Platform: Roadmap
 
-**Last updated:** 2026-07-02 · anchored at **v0.9.10** (pre-launch fixes on top of v0.9.8, "the maximally-capable fleet")
+**Last updated:** 2026-07-08 · anchored at **v0.10.0** ("HiveMind" — the shared second brain for AI agents, on top of v0.9.10's pre-launch fixes)
 **Current state:** Stage 0 shipped · Stages 1–4 engineering substantially landed —
 **every no-spend core now exists**, including the Stage 4 marketplace surface
 (catalog + signed-grant entitlement + metered usage ledger) and, as of v0.9.8, a
@@ -107,6 +107,7 @@ we execute against.**
 | **Distribution endpoint (R3)** — reference server + deployed into the registry | `brainblast serve` + `feed --remote`; `brainblast/distribution` subpath; `registry.brainblast.tech` `/api/catalog` + `/api/feed` + `/api/healthz` (brainblast-registry#14) | 4.2→4.3 |
 | **Self-serve access sizing (R4 core)** — `$BRAIN` held → tier | `accessQuote`, `grant quote` / `grant issue --for-brain\|--wallet` | 4.3 |
 | **Scout fleet (R7)** — autonomous: discover → subagent-scout → prove → promote → ledger; proof gate is the **generalized oracle** (static/compiler/executed/differential), the fleet can **propose its own checkers** (soundness meta-gate + human ratification), and proves **multi-language** (Python) behavioral traps | `npm run fleet[:discover\|:ledger\|:checker-gate]`, `brainblast-fleet` skill, `proveFinding`→`proveWithBest`, Supabase `fleet_ledger`; corpus 9→12→**15** | 3.1 |
+| **HiveMind (v0.10.0)** — the consumption-side flywheel: the VTI stream flows BACK into every user's agents. Machine-global hive (feed-delta sync + blob-verified public-pack mirror), session-start briefs (`hive_brief` MCP + CLAUDE.md injection), write-time correction hook, hive-loaded audits, outbreak alerts, cross-repo experience, anonymized demand signal → fleet work-orders (`npm run corpus`), contribute conveyor | `brainblast hive sync\|status\|brief\|link\|stats\|contribute\|hook`, `src/hive/`, PRs #77–#81 | 4.5 / 5.5 (Compound) |
 
 ### ☐ REMAINING (nothing below is half-built — these have not started)
 
