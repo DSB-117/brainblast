@@ -19,6 +19,7 @@
 //   brainblast_osv_check   — query OSV.dev for advisories on one version
 //   brainblast_verify      — PROVE a fix: re-run a pack's RED→GREEN through the oracle
 //   brainblast_recall      — recall verified traps (VTIs) for an SDK before you code
+//   hive_brief             — the HiveMind briefing: proven traps for THIS repo's dependencies
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -145,9 +146,10 @@ const TOOLS: Tool[] = [
       "(VTIs) you should avoid. Each is a proven error→fix→test record pinned to an SDK, carrying its " +
       "RED→GREEN reproducibility receipt (independently re-runnable — no secret answer key). Returns the " +
       "vulnerable pattern, the fix, and the proof, so you write the correct integration the first time. " +
-      "Filter by sdk / class / severity. Reads local VTI lots you possess (full visibility) — pass `lots` " +
-      "or run where datasets/ exists. An empty result means no verified trap is on file for that filter, " +
-      "not that the SDK is safe.",
+      "Filter by sdk / class / severity. Reads local VTI lots you possess (full visibility) — pass `lots`, " +
+      "run where datasets/ exists, or rely on the machine-global HiveMind lot (kept fresh by `brainblast " +
+      "hive sync`), which is included by default. An empty result means no verified trap is on file for " +
+      "that filter, not that the SDK is safe.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -165,8 +167,31 @@ const TOOLS: Tool[] = [
         lots: {
           type: "array",
           items: { type: "string" },
-          description: "Absolute paths to .jsonl VTI lot files. Defaults to the repo's datasets/ lots if present.",
+          description: "Absolute paths to .jsonl VTI lot files. Defaults to the repo's datasets/ lots plus the machine-global hive lot.",
         },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "hive_brief",
+    description:
+      "The HiveMind briefing — call this at the START of a coding session (or before integrating a new " +
+      "package). Reads the repo's package.json dependencies, matches them against the machine-global hive " +
+      "of RED→GREEN-proven traps (kept fresh from the live feed by `brainblast hive sync`), and returns a " +
+      "ranked, context-budgeted briefing: for each dependency you are about to code against, the proven " +
+      "mistakes to avoid and the correct form to write, with proof receipts and sources. An empty briefing " +
+      "means no verified trap is on file for these dependencies — not that they are safe.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        dir: {
+          type: "string",
+          description: "Absolute path to the repo to brief on (its package.json is read). Defaults to the current working directory.",
+        },
+        sdk: { type: "string", description: "Focus the briefing on one dependency, e.g. 'stripe'." },
+        min_severity: { type: "string", description: "Minimum severity and above: critical | high | medium | low." },
+        limit: { type: "number", description: "Max traps in the briefing (default 12, ranked by score)." },
       },
       required: [],
     },
@@ -372,6 +397,58 @@ export async function startMcpServer(): Promise<void> {
       } catch (e: unknown) {
         return {
           content: [{ type: "text" as const, text: `Recall failed: ${(e as Error).message ?? String(e)}` }],
+          isError: true,
+        };
+      }
+    }
+
+    if (name === "hive_brief") {
+      const a = args as { dir?: string; sdk?: string; min_severity?: string; limit?: number };
+      try {
+        const { hiveRoot, loadHiveLot, loadCursor } = await import("./hive/store.ts");
+        const { extractNpmDeps } = await import("./hive/repos.ts");
+        const { assembleBrief, renderBriefText } = await import("./hive/brief.ts");
+        const dir = a.dir ?? process.cwd();
+        const root = hiveRoot();
+        const { deps } = extractNpmDeps(dir);
+        const vtis = loadHiveLot(root);
+        const cursor = loadCursor(root);
+        const brief = assembleBrief({
+          deps,
+          vtis,
+          sdk: a.sdk,
+          minSeverity: a.min_severity as any,
+          maxRecords: a.limit,
+        });
+        const hints: string[] = [];
+        if (vtis.length === 0) hints.push("The hive is empty — run `brainblast hive sync` to pull the live corpus.");
+        if (Object.keys(deps).length === 0) hints.push(`No package.json dependencies found under ${dir} — nothing to match on.`);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(
+                {
+                  dir,
+                  hive: root,
+                  hiveVtis: vtis.length,
+                  lastSyncAt: cursor.lastSyncAt,
+                  tier: cursor.tier,
+                  briefing: renderBriefText(brief),
+                  entries: brief.entries,
+                  totalMatched: brief.totalMatched,
+                  truncated: brief.truncated,
+                  ...(hints.length ? { hints } : {}),
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      } catch (e: unknown) {
+        return {
+          content: [{ type: "text" as const, text: `Brief failed: ${(e as Error).message ?? String(e)}` }],
           isError: true,
         };
       }

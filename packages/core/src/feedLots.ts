@@ -5,6 +5,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import type { CorpusVti } from "./corpus.ts";
 import { selectFeed, type FeedQuery, type FeedResult } from "./feed.ts";
+import { hivePaths, hiveRoot, vtiKey } from "./hive/store.ts";
 
 // The repo's default lots (owned seed + the git-ignored contributor lot). In an
 // installed context these won't exist — the caller passes explicit lot paths.
@@ -13,6 +14,39 @@ export const DEFAULT_LOT_PATHS = ["datasets/seed/seed-vti.jsonl", "datasets/cont
 export function resolveLotPaths(explicit: string[]): string[] {
   if (explicit.length) return explicit;
   return DEFAULT_LOT_PATHS.filter((p) => existsSync(p));
+}
+
+// Recall's default lots additionally include the HIVE lot — the machine-global
+// brain synced from the live feed — so an agent recalls everything it knows,
+// not just what this repo happens to hold. (The `feed` CLI keeps the repo-only
+// default: distribution serves lots YOU produce, recall reads lots you KNOW.)
+export function resolveRecallLotPaths(explicit: string[]): string[] {
+  if (explicit.length) return explicit;
+  const paths = DEFAULT_LOT_PATHS.filter((p) => existsSync(p));
+  const hiveLot = hivePaths(hiveRoot()).feedLot;
+  if (existsSync(hiveLot)) paths.push(hiveLot);
+  return paths;
+}
+
+// The same trap can legitimately appear in a repo lot AND the hive (the hive
+// syncs the published corpus). Keep the richer copy: fixtures beat none,
+// higher corroboration beats lower.
+export function dedupeVtis(vtis: CorpusVti[]): CorpusVti[] {
+  const byKey = new Map<string, CorpusVti>();
+  for (const v of vtis) {
+    const key = vtiKey(v);
+    const held = byKey.get(key);
+    if (!held) {
+      byKey.set(key, v);
+      continue;
+    }
+    const heldFixtures = Boolean((held as any).vulnerable?.snippet || (held as any).fixed?.snippet);
+    const vFixtures = Boolean((v as any).vulnerable?.snippet || (v as any).fixed?.snippet);
+    if ((vFixtures && !heldFixtures) || (vFixtures === heldFixtures && (v.corroborationCount ?? 0) > (held.corroborationCount ?? 0))) {
+      byKey.set(key, v);
+    }
+  }
+  return [...byKey.values()];
 }
 
 export function readLots(paths: string[]): { vtis: CorpusVti[]; errors: string[] } {
@@ -48,8 +82,8 @@ export interface RecallResult {
 // entitlement: receipts + the trainable fixtures). The gate is which lots you
 // hold, not a local read.
 export function recallFeed(args: { lots?: string[] } & FeedQuery): RecallResult {
-  const lots = resolveLotPaths(args.lots ?? []);
+  const lots = resolveRecallLotPaths(args.lots ?? []);
   const { vtis, errors } = readLots(lots);
-  const result = selectFeed(vtis, args, "firehose");
+  const result = selectFeed(dedupeVtis(vtis), args, "firehose");
   return { lots, result, errors };
 }
