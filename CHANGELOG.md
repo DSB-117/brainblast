@@ -2,6 +2,60 @@
 
 ## Unreleased
 
+## v0.10.0 — 2026-07-08 — HiveMind: the shared second brain for AI agents
+
+One machine-global brain at `~/.brainblast/hive` that every coding agent
+shares — synced in near-real-time from the live VTI feed, mirrored from the
+public rule packs at a pinned commit, enriched by every agent's own fixes,
+and (opt-in) feeding verified knowledge back upstream. Nothing enters shared
+memory without a RED→GREEN proof. Shipped across five phases (#77–#81):
+
+**Phase 1 — store + sync (`src/hive/{store,sync,repos,status}.ts`).**
+`brainblast hive sync` pulls the VTI delta via the feed's existing `since`
+cursor (anonymous → sample tier; `<hive>/grant.json` unlocks fixtures;
+fail-closed cursor discipline) and mirrors the public packs at a resolved
+commit sha with git-blob hash verification of every file. `hive link`
+registers a repo + its npm dependency index; `hive status` shows knowledge,
+freshness, enforcement, and protection at a glance. Upserts only ever
+enrich — a sample-tier corroboration bump can never strip fixtures a paid
+sync delivered.
+
+**Phase 2 — the briefing surface (`src/hive/{brief,inject}.ts`).**
+`hive brief` / the `hive_brief` MCP tool: exact dep↔SDK matching (never
+substring), score-ranked, context-budgeted avoid/instead briefings from the
+hive's knowledge; `--inject` maintains an idempotent marker-delimited block
+in `CLAUDE.md`/`AGENTS.md` so the next session starts pre-immunized.
+`brainblast_recall` now reads the hive lot by default. Every surface carries
+the honesty line: an empty brief means nothing on file, not safe.
+
+**Phase 3 — live enforcement (`src/hive/{enforce,outbreak}.ts`).**
+`resolveRules` loads the hive's mirrored packs last (explicit/project packs
+win collisions; corrupt packs degrade to a warning; `BRAINBLAST_NO_HIVE=1`
+opts out; CI without a hive is unchanged) — audits carry knowledge merged
+upstream minutes ago. `hive hook` (Claude Code PostToolUse) checks each
+just-written file via the auditor's ChangedRanges mechanism and feeds
+proven-trap hits back into the agent's context. Outbreak alerts cross each
+sync's new high/critical traps with linked repos' dependency indexes.
+
+**Phase 4 — cross-repo experience (`src/hive/experience.ts`).**
+Confirmed fixes promote from each repo's `.agent-research/memory.json` into
+the machine-global experience log; audits, write-time hooks, and briefs cite
+them across repos and agents ("you fixed this exact trap in repo-a on
+2026-07-08"), and personally-shipped traps outrank everything in briefs.
+
+**Phase 5 — the flywheel (`src/hive/stats.ts`).** `hive stats` aggregates
+anonymized fix-event counts (rule/class/SDK — no code, no paths) into
+`<hive>/stats.json`; `npm run corpus` folds it into `COVERAGE.md`'s scout
+work-orders so fleet effort follows observed failure. `hive contribute`
+surveys staged fix captures across linked repos and names each drain path
+through the existing consent gates.
+
+56 new tests across the five phases; suite at 977 green. Verified live
+end-to-end: 90 packs blob-verified from GitHub, granted feed sync with
+cursor resume, a demo repo briefed/injected, the write-time hook correcting
+a vulnerable `express-session` write, outbreak alerts on sync, and a fix in
+repo-a cited to repo-b at write time.
+
 ## v0.9.10 — 2026-07-02
 
 Found by a systematic clean-slate functional pass over every shipped surface

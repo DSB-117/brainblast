@@ -201,6 +201,32 @@ $ brainblast feed --lot my-lot.jsonl --sdk web3.js --severity high --since 2026-
 - **Reproducibility receipts** on every record — the `red`/`green`/`method` proof + `sourceUrls`, so a buyer can independently verify reward-gradability. Only RED→GREEN-proven records are emitted.
 - **Honest client/server split** — the local feed computes tier *eligibility* and formats the delta from lots you hold; **real entitlement is enforced at distribution** (the marketplace + on-chain settlement are server-side).
 
+## HiveMind — the shared second brain for AI agents (v0.10.0)
+
+Every coding agent on your machine — Claude Code, Codex, Cursor, whatever comes next — shares **one brain** at `~/.brainblast/hive`, kept current from the live VTI feed and enriched by every agent's own fixes. One agent's mistake anywhere becomes every agent's immunity everywhere, and nothing enters shared memory without a RED→GREEN proof — the immune system that keeps a wrong lesson from ever propagating.
+
+```sh
+brainblast hive sync            # pull the VTI delta + mirror the public rule packs (pinned commit, blob-verified)
+brainblast hive link            # register this repo (dep index) for briefs + outbreak alerts
+brainblast hive brief --inject  # write the briefing into CLAUDE.md — the next session starts pre-immunized
+brainblast hive hook install    # arm write-time enforcement (Claude Code PostToolUse)
+brainblast hive status          # what the brain knows, how fresh, what it protects
+```
+
+Three moments of protection, one knowledge source:
+
+- **Before code — the briefing.** `hive brief` (CLI, or the `hive_brief` MCP tool at session start) reads the repo's dependencies and returns the proven traps for exactly that stack, ranked (severity × proof × corroboration — and traps *you personally shipped before* rank first), with avoid/instead snippets. `--inject` maintains an idempotent, marker-delimited block in `CLAUDE.md`/`AGENTS.md`.
+- **During code — the write-time hook.** The moment an agent writes a file, `hive hook` checks just that file against the live rules and feeds hits straight back into the agent's context — *"the line you just wrote is a proven trap; here's the fixed form, and you fixed this same trap in repo-a last month"*. Silent unless something hits; never blocks an edit.
+- **At the gate — live audits.** `npx brainblast .` automatically loads the hive's mirrored packs, so a trap the fleet proved this morning fails your build this afternoon — no version bump. Bundled/project/explicit packs always win collisions; `BRAINBLAST_NO_HIVE=1` opts out; CI without a hive is unchanged.
+
+And the hive is proactive and recursive:
+
+- **Outbreak alerts** — every sync crosses newly-landed high/critical traps against your linked repos' dependency indexes: *"⚠ OUTBREAK: new CRITICAL in `jsonwebtoken` affects repos X and Y."*
+- **Cross-repo experience** — confirmed fixes promote from each repo's living memory into the machine-global log; audits, hooks, and briefs cite them across repos and agents.
+- **Demand signal** — `hive stats` aggregates anonymized fix-event *counts* (no code, no paths); `npm run corpus` folds them into the fleet's work-orders, so scouting digs where real agents actually fail. `hive contribute` surveys staged fix captures across linked repos and names each one's consent-gated drain path.
+
+Anonymous sync gets the free protection layer (public packs + sample-tier metadata); a grant in `<hive>/grant.json` unlocks full fixtures for richer briefs. An empty hive means no verified trap is on file — never that your stack is safe.
+
 ## Prerequisites
 
 Brainblast is a workflow that runs *inside* a host agent. It needs a browser engine to fetch live docs.

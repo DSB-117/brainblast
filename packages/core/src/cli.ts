@@ -2964,6 +2964,12 @@ async function runHive(argv: string[]): Promise<void> {
     console.error("             --json            machine-readable brief");
     console.error("  link     register a repo (path + dependency index) with the hive  [dir]");
     console.error("  unlink   remove a repo from the hive                              [dir]");
+    console.error("  stats    anonymized demand signal (fix-event counts by rule/class/sdk);");
+    console.error("           writes <hive>/stats.json — `npm run corpus` folds it into the");
+    console.error("           fleet's work-orders so scouting follows observed failure  [--json]");
+    console.error("  contribute  survey staged fix captures across linked repos + this dir and");
+    console.error("           print each one's drain path (gates: secret-scan → RED→GREEN →");
+    console.error("           consent; commit-pinned provenance for the public API)     [--json]");
     console.error("  hook     write-time enforcement — the Claude Code PostToolUse entrypoint:");
     console.error("           checks each file the agent writes against the live hive rules and");
     console.error("           feeds proven-trap hits straight back into the agent's context.");
@@ -3127,6 +3133,74 @@ async function runHive(argv: string[]): Promise<void> {
     const removed = unlinkRepo(root, dir);
     console.log(removed ? `hive: unlinked ${dir}` : `hive: ${dir} was not linked`);
     process.exit(removed ? 0 : 1);
+  }
+
+  if (sub === "stats") {
+    const { loadExperience } = await import("./hive/experience.ts");
+    const { loadHiveLot } = await import("./hive/store.ts");
+    const { buildDemandSignal, writeDemandSignal, renderDemandText } = await import("./hive/stats.ts");
+    const signal = buildDemandSignal(loadExperience(root), loadHiveLot(root), new Date().toISOString());
+    const out = writeDemandSignal(root, signal);
+    if (jsonOut) console.log(JSON.stringify(signal, null, 2));
+    else {
+      console.log(renderDemandText(signal));
+      console.log(`  → ${out} (read by \`npm run corpus\` to demand-weight the fleet's work-orders)`);
+    }
+    process.exit(0);
+  }
+
+  if (sub === "contribute") {
+    // The conveyor's mouth: find every staged capture (BRAINBLAST_CONTRIBUTE=1
+    // fixes, already secret-pre-scanned at staging time) across this dir and
+    // all linked repos, and name the exact drain path for each. The gates
+    // themselves (secret scan, RED→GREEN re-proof, consent stamp, provenance)
+    // stay in the ingest tooling — one gate implementation, never two.
+    const { listStagedContributions } = await import("./contrib/capture.ts");
+    const { loadRepos } = await import("./hive/store.ts");
+    const dirArg = rest.find((a) => !a.startsWith("--"));
+    const dirs = new Map<string, string>(); // path → label
+    const cwd = dirArg ?? process.cwd();
+    dirs.set(cwd, "here");
+    for (const r of loadRepos(root).repos) if (!dirs.has(r.path)) dirs.set(r.path, r.name);
+
+    const found: { repo: string; path: string; staged: { path: string; ruleId: string; consentScope: string; capturedAt: string }[] }[] = [];
+    for (const [dir, label] of dirs) {
+      try {
+        const staged = listStagedContributions(dir).map(({ path, rec }) => ({
+          path,
+          ruleId: rec.ruleId,
+          consentScope: rec.consentScope,
+          capturedAt: rec.capturedAt,
+        }));
+        if (staged.length) found.push({ repo: label, path: dir, staged });
+      } catch {
+        // an unreadable staging dir in one repo never blocks the survey
+      }
+    }
+
+    if (jsonOut) {
+      console.log(JSON.stringify({ hive: root, surveyed: dirs.size, repos: found }, null, 2));
+      process.exit(0);
+    }
+    if (found.length === 0) {
+      console.log(`hive: no staged contributions across ${dirs.size} repo${dirs.size === 1 ? "" : "s"} surveyed.`);
+      console.log("  Capture is opt-in: set BRAINBLAST_CONTRIBUTE=1 (or .agent-research/config.json {\"contribute\":true})");
+      console.log("  and confirmed `brainblast fix --apply` RED→GREEN fixes stage themselves for contribution.");
+      process.exit(0);
+    }
+    let total = 0;
+    for (const f of found) {
+      console.log(`\n${f.repo} (${f.path}) — ${f.staged.length} staged capture${f.staged.length === 1 ? "" : "s"}:`);
+      for (const s of f.staged) {
+        total++;
+        console.log(`  ${s.ruleId}  (consent: ${s.consentScope}, captured ${s.capturedAt})`);
+      }
+      console.log(`  drain:  npm run ingest:vti -- --from-staging ${join(f.path, ".agent-research", "contrib-staging")}`);
+    }
+    console.log(`\n${total} staged in total. Each drain runs the full gates (secret scan → RED→GREEN re-proof → consent`);
+    console.log("stamp) into the consent-separated contributor lot; provenance-verifiable finds can then go git-less");
+    console.log("via `npm run submit:vti` (commit-pinned public source required — the anti-fabrication gate).");
+    process.exit(0);
   }
 
   if (sub === "hook") {
