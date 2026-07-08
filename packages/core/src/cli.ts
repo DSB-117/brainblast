@@ -25,6 +25,9 @@ import { isTelemetryEnabled, recordGraduationEvents, telemetryFilePath, submitTe
 import { isContributeEnabled, contributeConsentScope, contribStagingDir, stageContribution } from "./contrib/capture.ts";
 import type { FeedTier, FeedQuery } from "./feed.ts";
 import { expandLots, PACKAGES } from "./lots.ts";
+import { hiveRoot, HIVE_DISABLE_ENV } from "./hive/store.ts";
+import { loadExperience, recordFixEvents, crossRepoPrecedent } from "./hive/experience.ts";
+import { extractNpmDeps } from "./hive/repos.ts";
 
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
@@ -359,6 +362,11 @@ if (!changedRanges) {
     if (p) rc.precedent = p;
   }
   saveMemory(targetDir, nextMemory);
+  // HiveMind experience: promote this run's NEW fix events into the machine-
+  // global log (so other repos' audits can cite them), and for fails with no
+  // local precedent, cite a fix from another repo. Fail-open — the hive layer
+  // must never break an audit.
+  applyHiveExperience(targetDir, checks, report, nextMemory.fixHistory.slice(memory.fixHistory.length));
 } else {
   // Still surface precedents (read-only) against the existing snapshot.
   const memory = loadMemory(targetDir);
@@ -371,6 +379,7 @@ if (!changedRanges) {
     const p = precedents.get(precedentKey(rc as { ruleId: string; file: string }));
     if (p) rc.precedent = p;
   }
+  applyHiveExperience(targetDir, checks, report, []); // read-only in --since mode
 }
 
 const costReport = analyzeCosts(targetDir);
@@ -2888,8 +2897,40 @@ async function runBatch(argv: string[]): Promise<void> {
   }
 }
 
+// HiveMind experience (phase 4): after an audit, (a) promote the run's new fix
+// events into the machine-global log, (b) for fails with no LOCAL precedent,
+// cite the most recent fix of the same rule from ANOTHER repo — knowledge
+// crossing repo and agent boundaries. Fail-open: the hive never breaks audits.
+function applyHiveExperience(
+  targetDir: string,
+  checks: import("./types.ts").CheckResult[],
+  report: { checks: unknown },
+  newFixEvents: { ruleId: string; file: string; exportName: string; fixedAt: string; detail: string }[],
+): void {
+  if (process.env[HIVE_DISABLE_ENV]) return;
+  try {
+    const root = hiveRoot();
+    if (newFixEvents.length) {
+      const { name } = extractNpmDeps(targetDir);
+      recordFixEvents(root, { path: targetDir, name: name ?? undefined }, newFixEvents);
+    }
+    const experience = loadExperience(root);
+    if (experience.length === 0) return;
+    const fill = (c: { ruleId: string; result?: string; precedent?: unknown }) => {
+      if (c.precedent) return; // a local (same-repo) precedent always wins
+      if ((c as any).result !== "fail") return;
+      const p = crossRepoPrecedent(experience, c.ruleId, targetDir);
+      if (p) c.precedent = p;
+    };
+    for (const c of checks) fill(c);
+    for (const rc of report.checks as Array<{ ruleId: string; result?: string; precedent?: unknown }>) fill(rc);
+  } catch {
+    // never let the experience layer break an audit
+  }
+}
+
 // ── HiveMind — the shared second brain for AI agents ─────────────────────────
-// `brainblast hive sync|status|brief|link|unlink`. The hive is a machine-global
+// `brainblast hive sync|status|brief|link|unlink|hook`. The hive is a machine-global
 // knowledge store every agent shares: VTIs synced from the live feed, public
 // rule packs mirrored at a pinned commit, linked repos' dependency indexes, and
 // (later phases) cross-repo experience. See src/hive/.
@@ -2923,8 +2964,19 @@ async function runHive(argv: string[]): Promise<void> {
     console.error("             --json            machine-readable brief");
     console.error("  link     register a repo (path + dependency index) with the hive  [dir]");
     console.error("  unlink   remove a repo from the hive                              [dir]");
+    console.error("  stats    anonymized demand signal (fix-event counts by rule/class/sdk);");
+    console.error("           writes <hive>/stats.json — `npm run corpus` folds it into the");
+    console.error("           fleet's work-orders so scouting follows observed failure  [--json]");
+    console.error("  contribute  survey staged fix captures across linked repos + this dir and");
+    console.error("           print each one's drain path (gates: secret-scan → RED→GREEN →");
+    console.error("           consent; commit-pinned provenance for the public API)     [--json]");
+    console.error("  hook     write-time enforcement — the Claude Code PostToolUse entrypoint:");
+    console.error("           checks each file the agent writes against the live hive rules and");
+    console.error("           feeds proven-trap hits straight back into the agent's context.");
+    console.error("           `hive hook install` prints the settings.json snippet.");
     console.error("");
     console.error(`  Hive root: $${"BRAINBLAST_HIVE_DIR"} or ~/.brainblast/hive`);
+    console.error("  Audits load the hive's mirrored packs automatically (BRAINBLAST_NO_HIVE=1 opts out).");
     console.error("  An empty hive means no verified traps are on file — not that your stack is safe.");
     process.exit(2);
   };
@@ -2961,6 +3013,10 @@ async function runHive(argv: string[]): Promise<void> {
             `hive: feed ${feed.remote}${tierNote} — ${feed.fetched} streamed: +${feed.added} new, ${feed.updated} enriched, ${feed.unchanged} already known · brain holds ${feed.total} VTIs`,
           );
           for (const w of feed.warnings) console.error(`hive: ⚠ ${w}`);
+          if (feed.outbreaks.length) {
+            const { renderOutbreakText } = await import("./hive/outbreak.ts");
+            for (const o of feed.outbreaks) console.error(`hive: ${renderOutbreakText(o)}`);
+          }
         }
       } catch (e: any) {
         failed = true;
@@ -3035,6 +3091,7 @@ async function runHive(argv: string[]): Promise<void> {
       sdk: val("--sdk"),
       minSeverity: sev as any,
       maxRecords: val("--limit") ? parseInt(val("--limit")!, 10) : undefined,
+      experience: loadExperience(root),
     });
 
     if (vtis.length === 0) console.error("hive: ⚠ the hive is empty — run `brainblast hive sync` first");
@@ -3076,6 +3133,135 @@ async function runHive(argv: string[]): Promise<void> {
     const removed = unlinkRepo(root, dir);
     console.log(removed ? `hive: unlinked ${dir}` : `hive: ${dir} was not linked`);
     process.exit(removed ? 0 : 1);
+  }
+
+  if (sub === "stats") {
+    const { loadExperience } = await import("./hive/experience.ts");
+    const { loadHiveLot } = await import("./hive/store.ts");
+    const { buildDemandSignal, writeDemandSignal, renderDemandText } = await import("./hive/stats.ts");
+    const signal = buildDemandSignal(loadExperience(root), loadHiveLot(root), new Date().toISOString());
+    const out = writeDemandSignal(root, signal);
+    if (jsonOut) console.log(JSON.stringify(signal, null, 2));
+    else {
+      console.log(renderDemandText(signal));
+      console.log(`  → ${out} (read by \`npm run corpus\` to demand-weight the fleet's work-orders)`);
+    }
+    process.exit(0);
+  }
+
+  if (sub === "contribute") {
+    // The conveyor's mouth: find every staged capture (BRAINBLAST_CONTRIBUTE=1
+    // fixes, already secret-pre-scanned at staging time) across this dir and
+    // all linked repos, and name the exact drain path for each. The gates
+    // themselves (secret scan, RED→GREEN re-proof, consent stamp, provenance)
+    // stay in the ingest tooling — one gate implementation, never two.
+    const { listStagedContributions } = await import("./contrib/capture.ts");
+    const { loadRepos } = await import("./hive/store.ts");
+    const dirArg = rest.find((a) => !a.startsWith("--"));
+    const dirs = new Map<string, string>(); // path → label
+    const cwd = dirArg ?? process.cwd();
+    dirs.set(cwd, "here");
+    for (const r of loadRepos(root).repos) if (!dirs.has(r.path)) dirs.set(r.path, r.name);
+
+    const found: { repo: string; path: string; staged: { path: string; ruleId: string; consentScope: string; capturedAt: string }[] }[] = [];
+    for (const [dir, label] of dirs) {
+      try {
+        const staged = listStagedContributions(dir).map(({ path, rec }) => ({
+          path,
+          ruleId: rec.ruleId,
+          consentScope: rec.consentScope,
+          capturedAt: rec.capturedAt,
+        }));
+        if (staged.length) found.push({ repo: label, path: dir, staged });
+      } catch {
+        // an unreadable staging dir in one repo never blocks the survey
+      }
+    }
+
+    if (jsonOut) {
+      console.log(JSON.stringify({ hive: root, surveyed: dirs.size, repos: found }, null, 2));
+      process.exit(0);
+    }
+    if (found.length === 0) {
+      console.log(`hive: no staged contributions across ${dirs.size} repo${dirs.size === 1 ? "" : "s"} surveyed.`);
+      console.log("  Capture is opt-in: set BRAINBLAST_CONTRIBUTE=1 (or .agent-research/config.json {\"contribute\":true})");
+      console.log("  and confirmed `brainblast fix --apply` RED→GREEN fixes stage themselves for contribution.");
+      process.exit(0);
+    }
+    let total = 0;
+    for (const f of found) {
+      console.log(`\n${f.repo} (${f.path}) — ${f.staged.length} staged capture${f.staged.length === 1 ? "" : "s"}:`);
+      for (const s of f.staged) {
+        total++;
+        console.log(`  ${s.ruleId}  (consent: ${s.consentScope}, captured ${s.capturedAt})`);
+      }
+      console.log(`  drain:  npm run ingest:vti -- --from-staging ${join(f.path, ".agent-research", "contrib-staging")}`);
+    }
+    console.log(`\n${total} staged in total. Each drain runs the full gates (secret scan → RED→GREEN re-proof → consent`);
+    console.log("stamp) into the consent-separated contributor lot; provenance-verifiable finds can then go git-less");
+    console.log("via `npm run submit:vti` (commit-pinned public source required — the anti-fabrication gate).");
+    process.exit(0);
+  }
+
+  if (sub === "hook") {
+    if (rest[0] === "install") {
+      const snippet = {
+        hooks: {
+          PostToolUse: [
+            {
+              matcher: "Write|Edit|MultiEdit|NotebookEdit",
+              hooks: [{ type: "command", command: "npx brainblast hive hook" }],
+            },
+          ],
+        },
+      };
+      console.log("Add this to your Claude Code settings.json (~/.claude/settings.json) to arm write-time enforcement:");
+      console.log("");
+      console.log(JSON.stringify(snippet, null, 2));
+      console.log("");
+      console.log("Every file the agent writes is then checked against the live hive rules the moment it lands;");
+      console.log("a proven-trap hit is fed straight back into the agent's context so it self-corrects mid-task.");
+      console.log("Keep the hive fresh with `brainblast hive sync` (cron or a shell alias both work).");
+      process.exit(0);
+    }
+
+    // The Claude Code PostToolUse entrypoint: stdin JSON in, feedback out.
+    // Silent (exit 0, no output) unless a written file matches a proven trap —
+    // a hook that talks on every edit trains the agent to ignore it.
+    const chunks: Buffer[] = [];
+    for await (const c of process.stdin) chunks.push(c as Buffer);
+    let payload: any = {};
+    try {
+      payload = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+    } catch {
+      process.exit(0); // not our payload — never interfere
+    }
+    const toolName = payload.tool_name;
+    const input = payload.tool_input || {};
+    const filePath: unknown = input.file_path ?? input.notebook_path;
+    if (
+      !["Write", "Edit", "MultiEdit", "NotebookEdit"].includes(toolName) ||
+      typeof filePath !== "string"
+    ) {
+      process.exit(0);
+    }
+    try {
+      const { checkWrittenFile, renderWriteFeedback } = await import("./hive/enforce.ts");
+      const cwd = typeof payload.cwd === "string" ? payload.cwd : process.cwd();
+      const result = checkWrittenFile(filePath as string, cwd);
+      if (!result.checked || result.failures.length === 0) process.exit(0);
+      console.log(
+        JSON.stringify({
+          hookSpecificOutput: {
+            hookEventName: "PostToolUse",
+            additionalContext: renderWriteFeedback(result),
+          },
+        }),
+      );
+    } catch {
+      // Enforcement must never break an edit; the audit/CI gate still stands.
+    }
+    process.exit(0);
   }
 
   console.error(`hive: unknown subcommand '${sub}'`);

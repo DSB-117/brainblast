@@ -9,6 +9,7 @@
 // injection) do the reading; renderers below produce the three surfaces.
 
 import { scoreVti, type CorpusVti } from "../corpus.ts";
+import { personallyFixedRules, type ExperienceEvent } from "./experience.ts";
 
 export interface BriefEntry {
   trapId: string;
@@ -27,6 +28,9 @@ export interface BriefEntry {
   // i.e. synced at a paid tier or generated locally).
   avoid?: string; // vulnerable snippet, trimmed
   instead?: string; // fixed snippet, trimmed
+  // Set when an agent on this machine already fixed this exact trap somewhere:
+  // the strongest possible signal that it WILL be shipped here without a brief.
+  personallyFixed?: { repoName: string; fixedAt: string };
 }
 
 export interface HiveBrief {
@@ -47,6 +51,9 @@ export interface BriefOptions {
   maxRecords?: number; // default 12
   maxSnippetChars?: number; // default 400 per snippet
   minSeverity?: "critical" | "high" | "medium" | "low";
+  // The machine's cross-repo fix history (hive experience log): traps an agent
+  // here already shipped-and-fixed rank above everything else.
+  experience?: ExperienceEvent[];
 }
 
 const SEVERITY_ORDER: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
@@ -77,6 +84,7 @@ export function assembleBrief(opts: BriefOptions): HiveBrief {
     ? Object.fromEntries(Object.entries(opts.deps).filter(([k]) => k.toLowerCase() === opts.sdk!.toLowerCase()))
     : opts.deps;
 
+  const fixedByMe = personallyFixedRules(opts.experience ?? []);
   const matched: BriefEntry[] = [];
   const matchedDeps = new Set<string>();
   for (const v of opts.vtis) {
@@ -86,7 +94,9 @@ export function assembleBrief(opts: BriefOptions): HiveBrief {
     const dep = matchDep(deps, v.sdk?.name ?? "");
     if (!dep) continue;
     matchedDeps.add(dep);
+    const personal = fixedByMe.get(v.trapId);
     matched.push({
+      ...(personal ? { personallyFixed: { repoName: personal.repoName, fixedAt: personal.fixedAt } } : {}),
       trapId: v.trapId,
       title: typeof (v as any).title === "string" ? (v as any).title : undefined,
       matchedDep: dep,
@@ -104,10 +114,12 @@ export function assembleBrief(opts: BriefOptions): HiveBrief {
     });
   }
 
-  // Rank: what hurts most first — score (severity × proof × corroboration),
-  // then severity, then freshest capture.
+  // Rank: personally-shipped mistakes first (an agent here has already proven
+  // it makes this one), then score (severity × proof × corroboration), then
+  // severity, then freshest capture.
   matched.sort(
     (a, b) =>
+      Number(Boolean(b.personallyFixed)) - Number(Boolean(a.personallyFixed)) ||
       b.score - a.score ||
       (SEVERITY_ORDER[b.severity] ?? 0) - (SEVERITY_ORDER[a.severity] ?? 0) ||
       String(b.capturedAt ?? "").localeCompare(String(a.capturedAt ?? "")),
@@ -130,7 +142,8 @@ const HONESTY_LINE =
 function entryHeadline(e: BriefEntry): string {
   const corr = e.corroborationCount > 0 ? `, corroborated in ${e.corroborationCount} repo${e.corroborationCount === 1 ? "" : "s"}` : "";
   const proof = e.proofMethod ? ` (proof: ${e.proofMethod}${corr})` : corr ? ` (${corr.slice(2)})` : "";
-  return `[${e.severity.toUpperCase()}] ${e.trapId} — ${e.title ?? e.class}${proof}`;
+  const personal = e.personallyFixed ? ` ⚑ you fixed this exact trap in ${e.personallyFixed.repoName} on ${e.personallyFixed.fixedAt}` : "";
+  return `[${e.severity.toUpperCase()}] ${e.trapId} — ${e.title ?? e.class}${proof}${personal}`;
 }
 
 export function renderBriefText(b: HiveBrief): string {

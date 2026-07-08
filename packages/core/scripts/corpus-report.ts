@@ -11,6 +11,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildCorpusIndex, type CorpusVti } from "../src/corpus.ts";
+import { hiveRoot } from "../src/hive/store.ts";
+import { statsPath, type DemandSignal } from "../src/hive/stats.ts";
 
 const GENERATOR = "corpus-report@0.1.0";
 const repoRoot = join(fileURLToPath(new URL(".", import.meta.url)), "..", "..", "..");
@@ -47,9 +49,31 @@ if (vtis.length === 0) {
 const index = buildCorpusIndex(vtis);
 const now = new Date().toISOString();
 
+// HiveMind demand signal (optional): `brainblast hive stats` writes anonymized
+// fix-event counts — where agents on real machines ACTUALLY shipped a trap and
+// fixed it. When present, work-orders below are demand-weighted: a thin cell
+// real agents keep hitting outranks a thin cell nobody has hit.
+let demand: DemandSignal | undefined;
+try {
+  const p = statsPath(hiveRoot());
+  if (existsSync(p)) {
+    const parsed = JSON.parse(readFileSync(p, "utf8"));
+    if (parsed?.schemaVersion === "1.0" && parsed.totalFixEvents > 0) demand = parsed as DemandSignal;
+  }
+} catch {
+  // demand weighting is advisory — a bad stats file never breaks the report
+}
+
 // ── corpus-index.json ───────────────────────────────────────────────────────────
 const { schemaVersion, ...indexRest } = index;
-const indexOut = { schemaVersion, generator: GENERATOR, generatedAt: now, lots: lotsPresent, ...indexRest };
+const indexOut = {
+  schemaVersion,
+  generator: GENERATOR,
+  generatedAt: now,
+  lots: lotsPresent,
+  ...indexRest,
+  ...(demand ? { fieldDemand: demand } : {}),
+};
 const outDir = join(repoRoot, "datasets");
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, "corpus-index.json"), JSON.stringify(indexOut, null, 2) + "\n");
@@ -85,9 +109,27 @@ ${rows.join("\n")}
 (\`·\` = no coverage yet.)
 
 ## Scout work-orders (where to dig next)
-${index.coverage.thinCells.length === 0 ? "_No thin cells._" : "**Thin cells** (only one instance — corroborate or broaden):\n" + index.coverage.thinCells.map((c) => `- ${c.class} · ${c.sdk}`).join("\n")}
+${index.coverage.thinCells.length === 0 ? "_No thin cells._" : "**Thin cells** (only one instance — corroborate or broaden):\n" + index.coverage.thinCells
+  .map((c) => {
+    const hits = (demand?.byClass[c.class] ?? 0) + (demand?.bySdk[c.sdk] ?? 0);
+    return { c, hits };
+  })
+  .sort((a, b) => b.hits - a.hits)
+  .map(({ c, hits }) => `- ${c.class} · ${c.sdk}${hits > 0 ? `  ⚑ field demand: ${hits} observed fix event${hits === 1 ? "" : "s"}` : ""}`)
+  .join("\n")}
 
 ${index.coverage.missingClasses.length === 0 ? "_All trap classes have at least one instance._" : "**Uncovered trap classes** (no instance yet):\n" + index.coverage.missingClasses.map((c) => `- ${c}`).join("\n")}
+${
+  demand
+    ? `\n## Field demand (HiveMind, anonymized)\n_${demand.totalFixEvents} observed fix events across ${demand.repos} repos (counts only — \`brainblast hive stats\`). Where real agents actually shipped a trap and fixed it; weight scout effort accordingly._\n${Object.entries(
+        demand.byRule,
+      )
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 15)
+        .map(([rule, n]) => `- ${rule} ×${n}`)
+        .join("\n")}\n`
+    : ""
+}
 
 ## $BRAIN curation
 The per-record \`score\` in \`corpus-index.json\` is what pricing and the curation

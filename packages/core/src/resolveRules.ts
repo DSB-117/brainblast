@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { loadRules } from "./loadRules.ts";
 import { loadPack, loadPacksFromDir } from "./packs.ts";
+import { hivePackDirs } from "./hive/store.ts";
 import { rules as bundled } from "../rules/index.ts";
 import type { Rule } from "./types.ts";
 
@@ -23,10 +24,15 @@ export function resolveRules(targetDir: string, extraPackDirs: string[] = []): R
   const all: Rule[] = [...bundled];
   const seen = new Set(all.map((r) => r.id));
 
-  const addRules = (rules: Rule[], sourceLabel: string) => {
+  const addRules = (rules: Rule[], sourceLabel: string, opts: { quietShadow?: boolean } = {}) => {
     for (const r of rules) {
       if (seen.has(r.id)) {
-        console.warn(`brainblast: rule '${r.id}' from ${sourceLabel} shadows an existing rule; keeping the first one loaded.`);
+        // A hive-mirrored pack shadowing an already-loaded copy of itself is
+        // the EXPECTED case (same pack passed via --packs or bundled) — only
+        // an unexpected collision deserves a warning.
+        if (!opts.quietShadow) {
+          console.warn(`brainblast: rule '${r.id}' from ${sourceLabel} shadows an existing rule; keeping the first one loaded.`);
+        }
         continue;
       }
       all.push(r);
@@ -46,6 +52,21 @@ export function resolveRules(targetDir: string, extraPackDirs: string[] = []): R
   for (const dir of extraPackDirs) {
     const { manifest, rules } = loadPack(dir);
     addRules(rules, `pack '${manifest.id}' (${dir})`);
+  }
+
+  // The machine-global HiveMind pack mirror (`brainblast hive sync`) — live
+  // enforcement: an audit carries knowledge merged upstream minutes ago, no
+  // version bump or reinstall. Loaded LAST so bundled, project, and explicit
+  // packs all win an id collision, and fail-open per pack: a corrupt mirrored
+  // pack degrades to a warning, never a broken audit. A machine without a hive
+  // (e.g. CI) resolves exactly as before; BRAINBLAST_NO_HIVE=1 opts out.
+  for (const dir of hivePackDirs()) {
+    try {
+      const { manifest, rules } = loadPack(dir);
+      addRules(rules, `hive pack '${manifest.id}'`, { quietShadow: true });
+    } catch (e: any) {
+      console.warn(`brainblast: skipping unreadable hive pack at ${dir}: ${e?.message ?? String(e)}`);
+    }
   }
 
   return all;

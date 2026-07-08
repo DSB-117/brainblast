@@ -16,13 +16,14 @@
 // account, no daemon required, JSONL + JSON on disk. The network side lives in
 // hive/sync.ts; this module is layout + state + lot upsert only.
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { CorpusVti } from "../corpus.ts";
 import type { FeedRecord } from "../feed.ts";
 
 export const HIVE_DIR_ENV = "BRAINBLAST_HIVE_DIR";
+export const HIVE_DISABLE_ENV = "BRAINBLAST_NO_HIVE";
 
 // The hive root: env override (tests, multi-hive setups) or the user-global
 // default. Deliberately user-scoped, not repo-scoped — the whole point is that
@@ -53,6 +54,28 @@ export function hivePaths(root: string): HivePaths {
     reposFile: join(root, "repos.json"),
     grantFile: join(root, "grant.json"),
   };
+}
+
+// The hive's mirrored pack directories — the enforcement layer's rule source
+// (resolveRules loads these LAST, so bundled/project/explicit packs always win
+// an id collision). `BRAINBLAST_NO_HIVE=1` opts an audit out entirely; a
+// machine with no hive gets an empty list, so CI without a hive is unchanged.
+export function hivePackDirs(env: NodeJS.ProcessEnv = process.env): string[] {
+  if (env[HIVE_DISABLE_ENV]) return [];
+  const dir = hivePaths(hiveRoot(env)).packsDir;
+  if (!existsSync(dir)) return [];
+  const out: string[] = [];
+  for (const entry of readdirSync(dir).sort()) {
+    const packDir = join(dir, entry);
+    try {
+      if (statSync(packDir).isDirectory() && existsSync(join(packDir, "brainblast-pack.yaml"))) {
+        out.push(packDir);
+      }
+    } catch {
+      // an unreadable entry never breaks rule resolution
+    }
+  }
+  return out;
 }
 
 // ── Sync state ───────────────────────────────────────────────────────────────
@@ -189,6 +212,7 @@ export interface UpsertResult {
   updated: number;
   unchanged: number;
   total: number; // records in the lot after the upsert
+  addedRecords: CorpusVti[]; // the records new to this hive (outbreak input)
 }
 
 // Does the incoming copy of an already-held record carry anything new? Two real
@@ -234,6 +258,7 @@ export function upsertVtis(root: string, incoming: CorpusVti[]): UpsertResult {
   let added = 0;
   let updated = 0;
   let unchanged = 0;
+  const addedRecords: CorpusVti[] = [];
   for (const vti of incoming) {
     if (!vti || typeof vti.trapId !== "string") continue;
     const key = vtiKey(vti);
@@ -241,6 +266,7 @@ export function upsertVtis(root: string, incoming: CorpusVti[]): UpsertResult {
     if (!stored) {
       byKey.set(key, vti);
       added++;
+      addedRecords.push(vti);
     } else if (isRicher(vti, stored)) {
       byKey.set(key, mergeVti(vti, stored));
       updated++;
@@ -255,5 +281,5 @@ export function upsertVtis(root: string, incoming: CorpusVti[]): UpsertResult {
   records.sort((a, b) => String(a.capturedAt ?? "").localeCompare(String(b.capturedAt ?? "")));
   writeFileSync(paths.feedLot, records.map((r) => JSON.stringify(r)).join("\n") + (records.length ? "\n" : ""));
 
-  return { added, updated, unchanged, total: records.length };
+  return { added, updated, unchanged, total: records.length, addedRecords };
 }
