@@ -302,6 +302,11 @@ if (args[0] === "fix") {
   process.exit(0);
 }
 
+if (args[0] === "hive") {
+  await runHive(args.slice(1));
+  process.exit(0);
+}
+
 const ci = args.includes("--ci");
 const strict = args.includes("--strict");
 const failOnWallet = args.includes("--fail-on-wallet");
@@ -2881,4 +2886,143 @@ async function runBatch(argv: string[]): Promise<void> {
   if (result.summary.impersonators > 0 || result.summary.highRisk > 0) {
     process.exit(1);
   }
+}
+
+// ── HiveMind — the shared second brain for AI agents ─────────────────────────
+// `brainblast hive sync|status|link|unlink|watch`. The hive is a machine-global
+// knowledge store every agent shares: VTIs synced from the live feed, public
+// rule packs mirrored at a pinned commit, linked repos' dependency indexes, and
+// (later phases) cross-repo experience. See src/hive/.
+async function runHive(argv: string[]): Promise<void> {
+  const sub = argv[0];
+  const rest = argv.slice(1);
+  const help = argv.includes("--help") || argv.includes("-h");
+
+  const usage = () => {
+    console.error("usage: brainblast hive <command>");
+    console.error("");
+    console.error("  sync     pull the VTI delta from the hosted feed + mirror the public rule");
+    console.error("           packs at a pinned commit (the hive's two supply lines)");
+    console.error("             --remote URL      feed endpoint base (default: hosted registry API)");
+    console.error("             --grant FILE      signed grant (default: <hive>/grant.json if present)");
+    console.error("             --fresh           ignore the stored cursor; re-pull everything");
+    console.error("             --feed-only       skip the pack mirror");
+    console.error("             --packs-only      skip the feed pull");
+    console.error("             --repo OWNER/NAME pack source repo (default: DSB-117/brainblast)");
+    console.error("             --ref REF         pack source branch/tag (default: main)");
+    console.error("             --force           re-mirror packs even when the sha is unchanged");
+    console.error("             --json            machine-readable report");
+    console.error("  status   what the brain knows, how fresh it is, what it protects  [--json]");
+    console.error("  link     register a repo (path + dependency index) with the hive  [dir]");
+    console.error("  unlink   remove a repo from the hive                              [dir]");
+    console.error("");
+    console.error(`  Hive root: $${"BRAINBLAST_HIVE_DIR"} or ~/.brainblast/hive`);
+    console.error("  An empty hive means no verified traps are on file — not that your stack is safe.");
+    process.exit(2);
+  };
+
+  if (!sub || help) usage();
+
+  const { hiveRoot } = await import("./hive/store.ts");
+  const root = hiveRoot();
+  const val = (flag: string): string | undefined => {
+    const i = rest.indexOf(flag);
+    return i >= 0 ? rest[i + 1] : undefined;
+  };
+  const jsonOut = rest.includes("--json");
+
+  if (sub === "sync") {
+    const { syncFeed, syncPacks } = await import("./hive/sync.ts");
+    const feedOnly = rest.includes("--feed-only");
+    const packsOnly = rest.includes("--packs-only");
+    const out: Record<string, unknown> = { root };
+    let failed = false;
+
+    if (!packsOnly) {
+      try {
+        const feed = await syncFeed({
+          root,
+          remote: val("--remote"),
+          grantPath: val("--grant"),
+          fresh: rest.includes("--fresh"),
+        });
+        out.feed = feed;
+        if (!jsonOut) {
+          const tierNote = feed.tier ? ` (tier ${feed.tier}${feed.granted ? ", granted" : ", anonymous"})` : "";
+          console.log(
+            `hive: feed ${feed.remote}${tierNote} — ${feed.fetched} streamed: +${feed.added} new, ${feed.updated} enriched, ${feed.unchanged} already known · brain holds ${feed.total} VTIs`,
+          );
+          for (const w of feed.warnings) console.error(`hive: ⚠ ${w}`);
+        }
+      } catch (e: any) {
+        failed = true;
+        out.feedError = e?.message ?? String(e);
+        console.error(`hive: feed sync failed: ${out.feedError}`);
+      }
+    }
+
+    if (!feedOnly) {
+      try {
+        const packs = await syncPacks({
+          root,
+          repo: val("--repo"),
+          ref: val("--ref"),
+          force: rest.includes("--force"),
+        });
+        out.packs = packs;
+        if (!jsonOut) {
+          if (packs.skipped) {
+            console.log(`hive: packs already mirror ${packs.repo}@${packs.sha.slice(0, 12)} (${packs.packs} packs) — nothing to do`);
+          } else {
+            const removed = packs.removedPacks.length ? `, removed ${packs.removedPacks.join(", ")}` : "";
+            console.log(`hive: packs mirrored ${packs.repo}@${packs.sha.slice(0, 12)} — ${packs.packs} packs, ${packs.filesFetched} files verified${removed}`);
+          }
+          for (const w of packs.warnings) console.error(`hive: ⚠ ${w}`);
+        }
+      } catch (e: any) {
+        failed = true;
+        out.packsError = e?.message ?? String(e);
+        console.error(`hive: pack sync failed: ${out.packsError}`);
+      }
+    }
+
+    if (jsonOut) console.log(JSON.stringify(out, null, 2));
+    process.exit(failed ? 1 : 0);
+  }
+
+  if (sub === "status") {
+    const { hiveStatus, renderHiveStatusText } = await import("./hive/status.ts");
+    const s = hiveStatus(root);
+    if (jsonOut) console.log(JSON.stringify(s, null, 2));
+    else console.log(renderHiveStatusText(s));
+    process.exit(0);
+  }
+
+  if (sub === "link") {
+    const { linkRepo } = await import("./hive/repos.ts");
+    const dir = rest.find((a) => !a.startsWith("--")) ?? process.cwd();
+    try {
+      const r = linkRepo(root, dir);
+      if (jsonOut) console.log(JSON.stringify(r, null, 2));
+      else {
+        console.log(`hive: ${r.relinked ? "re-linked" : "linked"} ${r.repo.name} (${r.depCount} deps) — the hive now briefs and watches this repo`);
+        if (r.depCount === 0) console.error("hive: ⚠ no package.json dependencies found — briefs will have nothing to match on yet");
+      }
+    } catch (e: any) {
+      console.error(e?.message ?? String(e));
+      process.exit(1);
+    }
+    process.exit(0);
+  }
+
+  if (sub === "unlink") {
+    const { unlinkRepo } = await import("./hive/repos.ts");
+    const dir = rest.find((a) => !a.startsWith("--")) ?? process.cwd();
+    const removed = unlinkRepo(root, dir);
+    console.log(removed ? `hive: unlinked ${dir}` : `hive: ${dir} was not linked`);
+    process.exit(removed ? 0 : 1);
+  }
+
+  console.error(`hive: unknown subcommand '${sub}'`);
+  usage();
 }
