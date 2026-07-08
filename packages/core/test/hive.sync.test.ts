@@ -247,3 +247,63 @@ describe("hive pack sync", () => {
     expect(gitBlobSha1("hello")).toBe("b6fc4c620b67d95f953a5c1c1230aaab5db5a1b0");
   });
 });
+
+describe("hive pack sync — CDN fallback on rate limit", () => {
+  let root: string;
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), "hive-cdn-"));
+  });
+  afterEach(() => rmSync(root, { recursive: true, force: true }));
+
+  const SHA = "b".repeat(40);
+  const manifest = "id: demo-pack\nname: Demo\nversion: 1.0.0\nauthor: brainblast\n";
+
+  it("falls back to jsDelivr when raw.githubusercontent 429s, still blob-verified", async () => {
+    const { impl, calls } = mockFetch({
+      "https://api.github.com/repos/o/r/commits/main": { body: JSON.stringify({ sha: SHA }) },
+      [`https://api.github.com/repos/o/r/git/trees/${SHA}?recursive=1`]: {
+        body: JSON.stringify({
+          truncated: false,
+          tree: [{ type: "blob", path: "packs/demo-pack/brainblast-pack.yaml", sha: gitBlobSha1(manifest) }],
+        }),
+      },
+      [`https://raw.githubusercontent.com/o/r/${SHA}/packs/demo-pack/brainblast-pack.yaml`]: { status: 429, body: "rate limited" },
+      [`https://cdn.jsdelivr.net/gh/o/r@${SHA}/packs/demo-pack/brainblast-pack.yaml`]: { body: manifest },
+    });
+    const report = await syncPacks({ root, repo: "o/r", fetchImpl: impl });
+    expect(report.filesFetched).toBe(1);
+    expect(report.warnings.some((w) => w.includes("jsDelivr"))).toBe(true);
+    expect(readFileSync(join(hivePaths(root).packsDir, "demo-pack", "brainblast-pack.yaml"), "utf8")).toBe(manifest);
+    expect(calls.some((c) => c.url.includes("cdn.jsdelivr.net"))).toBe(true);
+  });
+
+  it("a tampered CDN response still aborts on the blob hash", async () => {
+    const { impl } = mockFetch({
+      "https://api.github.com/repos/o/r/commits/main": { body: JSON.stringify({ sha: SHA }) },
+      [`https://api.github.com/repos/o/r/git/trees/${SHA}?recursive=1`]: {
+        body: JSON.stringify({
+          truncated: false,
+          tree: [{ type: "blob", path: "packs/demo-pack/brainblast-pack.yaml", sha: gitBlobSha1(manifest) }],
+        }),
+      },
+      [`https://raw.githubusercontent.com/o/r/${SHA}/packs/demo-pack/brainblast-pack.yaml`]: { status: 429, body: "rate limited" },
+      [`https://cdn.jsdelivr.net/gh/o/r@${SHA}/packs/demo-pack/brainblast-pack.yaml`]: { body: "id: tampered\n" },
+    });
+    await expect(syncPacks({ root, repo: "o/r", fetchImpl: impl })).rejects.toThrow(/hash mismatch/);
+  });
+
+  it("both transports failing surfaces the CDN status", async () => {
+    const { impl } = mockFetch({
+      "https://api.github.com/repos/o/r/commits/main": { body: JSON.stringify({ sha: SHA }) },
+      [`https://api.github.com/repos/o/r/git/trees/${SHA}?recursive=1`]: {
+        body: JSON.stringify({
+          truncated: false,
+          tree: [{ type: "blob", path: "packs/demo-pack/brainblast-pack.yaml", sha: gitBlobSha1(manifest) }],
+        }),
+      },
+      [`https://raw.githubusercontent.com/o/r/${SHA}/packs/demo-pack/brainblast-pack.yaml`]: { status: 429, body: "rate limited" },
+      [`https://cdn.jsdelivr.net/gh/o/r@${SHA}/packs/demo-pack/brainblast-pack.yaml`]: { status: 500, body: "boom" },
+    });
+    await expect(syncPacks({ root, repo: "o/r", fetchImpl: impl })).rejects.toThrow(/500/);
+  });
+});

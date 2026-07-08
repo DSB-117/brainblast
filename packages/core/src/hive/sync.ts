@@ -224,15 +224,27 @@ export async function syncPacks(opts: SyncPacksOpts): Promise<SyncPacksReport> {
   // Mirror exactly: fetch every rule/manifest at the pinned sha, verify each
   // blob hash, then drop local packs that no longer exist upstream (a withdrawn
   // pack must vanish from the enforcement path too).
+  //
+  // Transport is untrusted either way — the git-blob hash check below is what
+  // guarantees integrity — so when raw.githubusercontent.com rate-limits a
+  // full mirror (429; ~180 files on a cold sync), fall back to the jsDelivr
+  // CDN at the SAME pinned commit rather than failing the sync.
   let filesFetched = 0;
+  let fellBack = false;
   const upstreamPacks = new Set<string>();
   for (const entry of entries) {
     upstreamPacks.add(entry.path.split("/")[1]);
-    const raw = await fetchImpl(`https://raw.githubusercontent.com/${repo}/${sha}/${entry.path}`, {
+    let res = await fetchImpl(`https://raw.githubusercontent.com/${repo}/${sha}/${entry.path}`, {
       headers: { "user-agent": "brainblast-hive" },
     });
-    const content = await raw.text();
-    if (raw.status !== 200) throw new Error(`hive sync: fetching ${entry.path} returned ${raw.status}`);
+    if (res.status === 429 || res.status === 403) {
+      res = await fetchImpl(`https://cdn.jsdelivr.net/gh/${repo}@${sha}/${entry.path}`, {
+        headers: { "user-agent": "brainblast-hive" },
+      });
+      fellBack = true;
+    }
+    const content = await res.text();
+    if (res.status !== 200) throw new Error(`hive sync: fetching ${entry.path} returned ${res.status}`);
     if (gitBlobSha1(content) !== entry.sha) {
       throw new Error(`hive sync: blob hash mismatch for ${entry.path} — transfer tampered or truncated, aborting`);
     }
@@ -241,6 +253,7 @@ export async function syncPacks(opts: SyncPacksOpts): Promise<SyncPacksReport> {
     writeFileSync(dest, content);
     filesFetched++;
   }
+  if (fellBack) warnings.push("raw.githubusercontent.com rate-limited; some files were mirrored via the jsDelivr CDN (same pinned commit, blob-verified)");
 
   const removedPacks: string[] = [];
   if (existsSync(paths.packsDir)) {
