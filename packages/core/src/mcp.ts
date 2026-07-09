@@ -406,12 +406,12 @@ export async function startMcpServer(): Promise<void> {
       const a = args as { dir?: string; sdk?: string; min_severity?: string; limit?: number };
       try {
         const { hiveRoot, loadHiveLot, loadCursor } = await import("./hive/store.ts");
-        const { extractNpmDeps } = await import("./hive/repos.ts");
+        const { extractRepoDeps } = await import("./hive/repos.ts");
         const { assembleBrief, renderBriefText } = await import("./hive/brief.ts");
         const { loadExperience } = await import("./hive/experience.ts");
         const dir = a.dir ?? process.cwd();
         const root = hiveRoot();
-        const { deps } = extractNpmDeps(dir);
+        const { deps } = extractRepoDeps(dir);
         const vtis = loadHiveLot(root);
         const cursor = loadCursor(root);
         const brief = assembleBrief({

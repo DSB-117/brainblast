@@ -17,7 +17,7 @@ import {
   renderExploitDetailText,
 } from "./exploitPatterns.ts";
 import { startWatch } from "./watch.ts";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { applyDiffToFile, parseDiff } from "./fixers/applyDiff.ts";
 import { initPack, validatePack } from "./pack.ts";
 import { listBundledPacks, resolveBundledPackToken } from "./bundledPacks.ts";
@@ -27,7 +27,7 @@ import type { FeedTier, FeedQuery } from "./feed.ts";
 import { expandLots, PACKAGES } from "./lots.ts";
 import { hiveRoot, HIVE_DISABLE_ENV } from "./hive/store.ts";
 import { loadExperience, recordFixEvents, crossRepoPrecedent } from "./hive/experience.ts";
-import { extractNpmDeps } from "./hive/repos.ts";
+import { extractRepoDeps, linkRepo } from "./hive/repos.ts";
 
 // Usage:
 //   brainblast <targetDir> [--ci] [--strict] [--since <ref>]
@@ -2951,8 +2951,17 @@ function applyHiveExperience(
   if (process.env[HIVE_DISABLE_ENV]) return;
   try {
     const root = hiveRoot();
+    // Auto-link: every audited repo registers itself (path + dep index), so
+    // briefs, watch-driven re-injection, and outbreak alerts cover the repos
+    // you actually work in — no manual `hive link` required. Refreshes the
+    // dep index on every full audit; fail-open like the rest of this layer.
+    try {
+      linkRepo(root, targetDir);
+    } catch {
+      /* advisory */
+    }
     if (newFixEvents.length) {
-      const { name } = extractNpmDeps(targetDir);
+      const { name } = extractRepoDeps(targetDir);
       recordFixEvents(root, { path: targetDir, name: name ?? undefined }, newFixEvents);
     }
     const experience = loadExperience(root);
@@ -2983,8 +2992,14 @@ async function runHive(argv: string[]): Promise<void> {
   const usage = () => {
     console.error("usage: brainblast hive <command>");
     console.error("");
-    console.error("  sync     pull the VTI delta from the hosted feed, mirror the public rule packs");
-    console.error("           at a pinned commit, and federate experience with every joined space");
+    console.error("  sync     one round-trip: pull the VTI delta, mirror the public rule packs at a");
+    console.error("           pinned commit, and federate experience with every joined space");
+    console.error("  watch    REAL-TIME daemon: continuous sync + outbreak alerts + live refresh of");
+    console.error("           injected briefings across all linked repos");
+    console.error("             --interval SECS       feed/federation cadence (default 60)");
+    console.error("             --packs-interval SECS pack mirror cadence (default 900)");
+    console.error("  check    check ONE just-written file against the live rules (any agent/editor;");
+    console.error("           exit 1 on a proven trap)                              <file> [--dir D]");
     console.error("             --remote URL      feed endpoint base (default: hosted registry API)");
     console.error("             --grant FILE      signed grant (default: <hive>/grant.json if present)");
     console.error("             --fresh           ignore the stored cursor; re-pull everything");
@@ -3012,6 +3027,8 @@ async function runHive(argv: string[]): Promise<void> {
     console.error("             space join <hs_id> [--name N] [--remote URL]");
     console.error("             space list [--json]      joined spaces (ids are secrets — mind your terminal)");
     console.error("             space leave <hs_id>      stop syncing (already-pulled events remain)");
+    console.error("             space rotate <hs_id>     revoke a leaked id: mint + join a replacement");
+    console.error("             space block <address>    mute an author (drop + purge their events)");
     console.error("  stats    anonymized demand signal (fix-event counts by rule/class/sdk);");
     console.error("           writes <hive>/stats.json — `npm run corpus` folds it into the");
     console.error("           fleet's work-orders so scouting follows observed failure  [--json]");
@@ -3182,6 +3199,43 @@ async function runHive(argv: string[]): Promise<void> {
       process.exit(left ? 0 : 1);
     }
 
+    if (action === "rotate") {
+      const id = rest[1];
+      if (!id) {
+        console.error("usage: brainblast hive space rotate <hs_id>");
+        process.exit(2);
+      }
+      const { rotateSpace } = await import("./hive/spaces.ts");
+      try {
+        const { old, next } = rotateSpace(root, id);
+        console.log(`hive: rotated ${old.id.slice(0, 12)}…${old.name ? ` (${old.name})` : ""} → NEW id below. Share it with everyone you still trust; the old id is now abandoned here.`);
+        console.log(`  id:     ${next.id}`);
+        console.log(`  remote: ${next.remote}`);
+        console.log("  (already-pulled events are kept; teammates run `brainblast hive space join <new id>`)");
+      } catch (e: any) {
+        console.error(e?.message ?? String(e));
+        process.exit(1);
+      }
+      process.exit(0);
+    }
+
+    if (action === "block" || action === "unblock") {
+      const address = rest[1];
+      if (!address) {
+        console.error(`usage: brainblast hive space ${action} <hive-address>`);
+        process.exit(2);
+      }
+      const { blockAuthor, unblockAuthor } = await import("./hive/spaces.ts");
+      if (action === "block") {
+        const { purged } = blockAuthor(root, address);
+        console.log(`hive: blocked ${address.slice(0, 12)}… — future pulls drop their events; ${purged} existing shared event${purged === 1 ? "" : "s"} purged`);
+      } else {
+        const removed = unblockAuthor(root, address);
+        console.log(removed ? `hive: unblocked ${address.slice(0, 12)}…` : `hive: ${address.slice(0, 12)}… was not blocked`);
+      }
+      process.exit(0);
+    }
+
     if (action === "list" || action === undefined) {
       const state = loadSpaces(root);
       if (jsonOut) console.log(JSON.stringify(state, null, 2));
@@ -3196,7 +3250,7 @@ async function runHive(argv: string[]): Promise<void> {
       process.exit(0);
     }
 
-    console.error(`hive space: unknown action '${action}' (create|join|list|leave)`);
+    console.error(`hive space: unknown action '${action}' (create|join|list|leave|rotate|block|unblock)`);
     process.exit(2);
   }
 
@@ -3228,7 +3282,7 @@ async function runHive(argv: string[]): Promise<void> {
       console.error("hive brief: --severity must be critical|high|medium|low");
       process.exit(2);
     }
-    const { deps } = extractNpmDeps(dir);
+    const { deps } = extractRepoDeps(dir);
     const vtis = loadHiveLot(root);
     const cursor = loadCursor(root);
     const brief = assembleBrief({
@@ -3349,10 +3403,58 @@ async function runHive(argv: string[]): Promise<void> {
     process.exit(0);
   }
 
+  if (sub === "watch") {
+    const { startHiveWatch } = await import("./hive/watch.ts");
+    const intervalMs = val("--interval") ? Math.round(parseFloat(val("--interval")!) * 1000) : undefined;
+    const packsIntervalMs = val("--packs-interval") ? Math.round(parseFloat(val("--packs-interval")!) * 1000) : undefined;
+    console.error(`hive watch: real-time mode — feed + federation every ${(intervalMs ?? 60_000) / 1000}s, pack mirror every ${(packsIntervalMs ?? 900_000) / 1000}s (Ctrl-C to stop)`);
+    const handle = startHiveWatch({
+      root,
+      remote: val("--remote"),
+      grantPath: val("--grant"),
+      intervalMs,
+      packsIntervalMs,
+    });
+    process.on("SIGINT", () => {
+      handle.stop();
+      process.exit(0);
+    });
+    process.on("SIGTERM", () => {
+      handle.stop();
+      process.exit(0);
+    });
+    await new Promise(() => {});
+  }
+
+  if (sub === "check") {
+    // Generic write-time entrypoint for ANY agent/editor (not just Claude
+    // Code's hook contract): check one file, print findings, exit 1 on a hit.
+    const file = rest.find((a) => !a.startsWith("--"));
+    if (!file) {
+      console.error("usage: brainblast hive check <file> [--dir REPO] [--json]");
+      console.error("  Check a single just-written file against the live hive rules (bundled +");
+      console.error("  project + hive packs). Exit 1 when a proven trap is present.");
+      process.exit(2);
+    }
+    const { checkWrittenFile, renderWriteFeedback } = await import("./hive/enforce.ts");
+    const result = checkWrittenFile(file, val("--dir") ?? process.cwd());
+    if (jsonOut) console.log(JSON.stringify(result, null, 2));
+    else if (!result.checked) console.log(`hive check: ${file} — not a checkable file type (skipped)`);
+    else if (result.failures.length === 0) console.log(`hive check: ${file} — clean against ${result.rulesLoaded} live rules`);
+    else console.log(renderWriteFeedback(result));
+    process.exit(result.failures.length ? 1 : 0);
+  }
+
   if (sub === "hook") {
     if (rest[0] === "install") {
       const snippet = {
         hooks: {
+          SessionStart: [
+            {
+              matcher: "startup|resume|clear",
+              hooks: [{ type: "command", command: "npx brainblast hive hook" }],
+            },
+          ],
           PostToolUse: [
             {
               matcher: "Write|Edit|MultiEdit|NotebookEdit",
@@ -3361,19 +3463,22 @@ async function runHive(argv: string[]): Promise<void> {
           ],
         },
       };
-      console.log("Add this to your Claude Code settings.json (~/.claude/settings.json) to arm write-time enforcement:");
+      console.log("Add this to your Claude Code settings.json (~/.claude/settings.json) to arm HiveMind:");
       console.log("");
       console.log(JSON.stringify(snippet, null, 2));
       console.log("");
-      console.log("Every file the agent writes is then checked against the live hive rules the moment it lands;");
-      console.log("a proven-trap hit is fed straight back into the agent's context so it self-corrects mid-task.");
-      console.log("Keep the hive fresh with `brainblast hive sync` (cron or a shell alias both work).");
+      console.log("SessionStart: every session begins pre-immunized — the briefing for the repo's actual");
+      console.log("dependencies is injected as context automatically. PostToolUse: every file the agent");
+      console.log("writes is checked the moment it lands, and proven-trap hits feed back so it self-corrects.");
+      console.log("Both self-freshen: a stale hive kicks off a background sync (BRAINBLAST_HIVE_MAX_AGE_S,");
+      console.log("default 600). For continuous real-time, run `brainblast hive watch` (daemon).");
       process.exit(0);
     }
 
-    // The Claude Code PostToolUse entrypoint: stdin JSON in, feedback out.
-    // Silent (exit 0, no output) unless a written file matches a proven trap —
-    // a hook that talks on every edit trains the agent to ignore it.
+    // Hook entrypoints (stdin JSON in): SessionStart → the briefing as
+    // context; PostToolUse → write-time check. Silent unless there's
+    // something to say — a hook that talks on every event trains the agent
+    // to ignore it. Both legs self-freshen the hive in the background.
     const chunks: Buffer[] = [];
     for await (const c of process.stdin) chunks.push(c as Buffer);
     let payload: any = {};
@@ -3382,6 +3487,33 @@ async function runHive(argv: string[]): Promise<void> {
     } catch {
       process.exit(0); // not our payload — never interfere
     }
+    const cwd = typeof payload.cwd === "string" ? payload.cwd : process.cwd();
+    maybeFreshenHive(root); // real-time without a daemon: agent activity keeps the brain current
+
+    if (payload.hook_event_name === "SessionStart") {
+      try {
+        const { loadHiveLot, loadCursor } = await import("./hive/store.ts");
+        const { loadExperience } = await import("./hive/experience.ts");
+        const { extractRepoDeps: extract } = await import("./hive/repos.ts");
+        const { assembleBrief, renderBriefText } = await import("./hive/brief.ts");
+        const { deps } = extract(cwd);
+        if (Object.keys(deps).length === 0) process.exit(0);
+        const brief = assembleBrief({ deps, vtis: loadHiveLot(root), experience: loadExperience(root) });
+        if (brief.entries.length === 0) process.exit(0);
+        console.log(
+          JSON.stringify({
+            hookSpecificOutput: {
+              hookEventName: "SessionStart",
+              additionalContext: renderBriefText(brief),
+            },
+          }),
+        );
+      } catch {
+        // a brief must never break a session start
+      }
+      process.exit(0);
+    }
+
     const toolName = payload.tool_name;
     const input = payload.tool_input || {};
     const filePath: unknown = input.file_path ?? input.notebook_path;
@@ -3393,7 +3525,6 @@ async function runHive(argv: string[]): Promise<void> {
     }
     try {
       const { checkWrittenFile, renderWriteFeedback } = await import("./hive/enforce.ts");
-      const cwd = typeof payload.cwd === "string" ? payload.cwd : process.cwd();
       const result = checkWrittenFile(filePath as string, cwd);
       if (!result.checked || result.failures.length === 0) process.exit(0);
       console.log(
@@ -3412,4 +3543,41 @@ async function runHive(argv: string[]): Promise<void> {
 
   console.error(`hive: unknown subcommand '${sub}'`);
   usage();
+}
+
+// Self-freshening: when agent activity touches the hive and the last sync is
+// older than BRAINBLAST_HIVE_MAX_AGE_S (default 600s), kick off a DETACHED
+// background `hive sync`. A lock file debounces stampedes (hooks fire on every
+// edit); failures are silent — freshness is best-effort, enforcement is not.
+function maybeFreshenHive(root: string): void {
+  try {
+    if (process.env.BRAINBLAST_NO_HIVE || process.env.BRAINBLAST_HIVE_NO_FRESHEN) return;
+    const maxAgeMs = (parseInt(process.env.BRAINBLAST_HIVE_MAX_AGE_S ?? "600", 10) || 600) * 1000;
+    const cursorPath = join(root, "cursor.json");
+    let lastSyncAt = 0;
+    if (existsSync(cursorPath)) {
+      try {
+        lastSyncAt = Date.parse(JSON.parse(readFileSync(cursorPath, "utf8")).lastSyncAt ?? "") || 0;
+      } catch {
+        /* treat as never-synced */
+      }
+    }
+    if (Date.now() - lastSyncAt < maxAgeMs) return;
+
+    const lockPath = join(root, "sync.lock");
+    if (existsSync(lockPath)) {
+      const age = Date.now() - Date.parse(readFileSync(lockPath, "utf8") || "0");
+      if (Number.isFinite(age) && age < 120_000) return; // someone else is on it
+    }
+    mkdirSync(root, { recursive: true });
+    writeFileSync(lockPath, new Date().toISOString());
+
+    const child = spawn(process.execPath, [process.argv[1], "hive", "sync"], {
+      detached: true,
+      stdio: "ignore",
+    });
+    child.unref();
+  } catch {
+    // best-effort only
+  }
 }

@@ -2,6 +2,50 @@
 
 ## Unreleased
 
+## v0.12.0 — 2026-07-09 — HiveMind goes real-time
+
+Every limitation on the v0.11.0 honest list, addressed. The hive is now a
+real-time updating second brain, not a snapshot you remember to refresh.
+
+**Real-time.**
+- **Sample tier: no record cap, no freshness holdback.** The anonymous feed
+  streams every proven record's metadata + RED→GREEN receipt the moment it
+  lands. Previously the 168h holdback + 5-record cap starved anonymous
+  HiveMind of the entire live corpus. Fixtures (the trainable payload) and
+  lot licensing remain the paid boundary — North Star #1 applied literally.
+- **`brainblast hive watch`** — the always-on daemon: feed delta +
+  federation every interval (default 60s), pack mirror on a slower cadence,
+  outbreak alerts as traps land, and live re-injection of the
+  CLAUDE.md/AGENTS.md briefing in every linked repo that carries one.
+  Overlap-safe awaitable ticks; every leg fail-open.
+- **Self-freshening hooks** — any hook fire on a hive older than
+  `BRAINBLAST_HIVE_MAX_AGE_S` (default 600s) spawns a detached background
+  sync, lock-debounced. Agent activity keeps the brain current, daemon or no.
+- **SessionStart hook** — sessions begin pre-immunized automatically: the
+  briefing for the repo's dependencies arrives as context. `hive hook
+  install` prints both hooks.
+
+**Breadth.**
+- Dependency extraction for **Rust** (Cargo.toml incl. table deps), **Go**
+  (go.mod), and **Python** (pyproject with bracket-aware extras parsing,
+  poetry, requirements.txt), unioned with npm everywhere deps are read.
+- **`hive check <file>`** — generic single-file write-time check for any
+  agent/editor (exit 1 on a proven trap).
+- **Auto-linking** — every audited repo registers itself + its dep index;
+  brief/outbreak/watch coverage grows to wherever you actually work.
+
+**Federation hardening.**
+- Chunked pushes — a fix log of any size converges (750-event test).
+- `hive space rotate` — capability revocation done right: mint + join a
+  replacement with the same name/remote.
+- `hive space block|unblock <address>` — local moderation: a junk author's
+  events are dropped on pull and purged from the shared log.
+
+10 new tests; suite 1004 green. Live-smoked: SessionStart briefing,
+`hive check` RED/GREEN, `hive watch` against the hosted registry.
+Registry half: brainblast-registry#58 (re-vendored feed + daily audit-table
+pruning cron).
+
 ## v0.11.0 — 2026-07-09 — HiveMind federation: cross-machine + team hives
 
 HiveMind phase 2, completing the design: the hive no longer stops at one

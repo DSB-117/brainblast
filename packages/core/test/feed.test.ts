@@ -72,14 +72,18 @@ describe("VTI feed — what gets emitted", () => {
     }
   });
 
-  it("caps the record count at the tier limit", () => {
+  it("sample has no record cap since v0.12.0 (discovery is free-flowing); an explicit query limit still caps", () => {
     const many = Array.from({ length: 20 }, (_, i) =>
       vti({ trapId: `t${i}`, capturedAt: `2026-01-${String(i + 1).padStart(2, "0")}T00:00:00.000Z` }),
     );
-    const sampleCap = TIER_ENTITLEMENTS.sample.maxRecords as number;
-    const r = selectFeed(many, { now: NOW }, "sample");
-    expect(r.records).toHaveLength(sampleCap);
-    expect(r.counts.capped).toBe(20 - sampleCap);
+    expect(TIER_ENTITLEMENTS.sample.maxRecords).toBeNull();
+    const all = selectFeed(many, { now: NOW }, "sample");
+    expect(all.records).toHaveLength(20);
+    expect(all.counts.capped).toBe(0);
+
+    const limited = selectFeed(many, { now: NOW, limit: 5 }, "sample");
+    expect(limited.records).toHaveLength(5);
+    expect(limited.counts.capped).toBe(15);
   });
 });
 
@@ -129,10 +133,11 @@ describe("VTI feed — freshness is the moat (holdback by tier)", () => {
     }
   });
 
-  it("the free sample tier holds back the too-fresh record (and counts it)", () => {
-    const r = selectFeed(corpus, { now: NOW }, "sample"); // 168h holdback
-    expect(r.records.map((x) => x.trapId)).toEqual(["old"]);
-    expect(r.counts.heldBackFreshness).toBe(1);
+  it("sample has no freshness holdback since v0.12.0 — the newest record streams immediately", () => {
+    expect(TIER_ENTITLEMENTS.sample.freshnessHoldbackHours).toBe(0);
+    const r = selectFeed(corpus, { now: NOW }, "sample");
+    expect(r.records.map((x) => x.trapId)).toEqual(["old", "fresh"]);
+    expect(r.counts.heldBackFreshness).toBe(0);
     expect(r.counts.matchedQuery).toBe(2);
   });
 });

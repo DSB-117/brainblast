@@ -35,6 +35,10 @@ export interface JoinedSpace {
 export interface HiveSpaces {
   schemaVersion: "1.0";
   spaces: JoinedSpace[];
+  // Local moderation: hive addresses whose events are dropped on pull and
+  // purged from the shared log. A capability model can't stop a leaked space
+  // id from contributing junk — but junk is attributed, so it can be muted.
+  blockedAuthors: string[];
 }
 
 export function spacesPath(root: string): string {
@@ -43,15 +47,16 @@ export function spacesPath(root: string): string {
 
 export function loadSpaces(root: string): HiveSpaces {
   const p = spacesPath(root);
-  if (!existsSync(p)) return { schemaVersion: "1.0", spaces: [] };
+  if (!existsSync(p)) return { schemaVersion: "1.0", spaces: [], blockedAuthors: [] };
   try {
     const parsed = JSON.parse(readFileSync(p, "utf8"));
     return {
       schemaVersion: "1.0",
       spaces: Array.isArray(parsed.spaces) ? parsed.spaces.filter((s: any) => isSpaceId(s?.id)) : [],
+      blockedAuthors: Array.isArray(parsed.blockedAuthors) ? parsed.blockedAuthors.filter((a: any) => typeof a === "string") : [],
     };
   } catch {
-    return { schemaVersion: "1.0", spaces: [] };
+    return { schemaVersion: "1.0", spaces: [], blockedAuthors: [] };
   }
 }
 
@@ -101,14 +106,52 @@ export function leaveSpace(root: string, id: string): boolean {
   return true;
 }
 
+// Rotation for a leaked/compromised space id: leave the old space and mint a
+// fresh one with the same name + remote. Capability semantics make this the
+// ONLY true revocation — everyone you still trust re-joins with the new id;
+// whoever leaked doesn't get it. Events already pulled locally are kept.
+export function rotateSpace(root: string, id: string): { old: JoinedSpace; next: JoinedSpace } {
+  const state = loadSpaces(root);
+  const old = state.spaces.find((s) => s.id === id);
+  if (!old) throw new Error(`hive space rotate: not a member of ${id}`);
+  leaveSpace(root, id);
+  const next = createSpace(root, { name: old.name, remote: old.remote });
+  return { old, next };
+}
+
+// Local moderation: mute an author. Future pulls drop their events; existing
+// shared events from them are purged in one rewrite.
+export function blockAuthor(root: string, address: string): { purged: number } {
+  const state = loadSpaces(root);
+  if (!state.blockedAuthors.includes(address)) {
+    state.blockedAuthors.push(address);
+    saveSpaces(root, state);
+  }
+  const kept = loadSharedExperience(root).filter((e) => e.author !== address);
+  const before = loadSharedExperience(root).length;
+  writeFileSync(sharedExperiencePath(root), kept.map((e) => JSON.stringify(e)).join("\n") + (kept.length ? "\n" : ""));
+  return { purged: before - kept.length };
+}
+
+export function unblockAuthor(root: string, address: string): boolean {
+  const state = loadSpaces(root);
+  const before = state.blockedAuthors.length;
+  state.blockedAuthors = state.blockedAuthors.filter((a) => a !== address);
+  if (state.blockedAuthors.length === before) return false;
+  saveSpaces(root, state);
+  return true;
+}
+
 // ── The shared experience log (what pull merges into) ────────────────────────
 
 export function mergeSharedEvents(root: string, incoming: StoredExperienceEvent[], selfAddress: string): number {
   const existing = loadSharedExperience(root);
+  const blocked = new Set(loadSpaces(root).blockedAuthors);
   const seen = new Set(existing.map((e) => `${e.author ?? ""}::${experienceEventKey(e)}`));
   const fresh: (ExperienceEvent & { author: string })[] = [];
   for (const e of incoming) {
     if (e.author === selfAddress) continue; // our own events already live in experience.jsonl
+    if (blocked.has(e.author)) continue; // locally muted
     const { seq, ...rest } = e;
     const key = `${e.author}::${experienceEventKey(e)}`;
     if (seen.has(key)) continue;
@@ -220,8 +263,11 @@ export async function syncSpace(
     cursor: space.cursor,
   };
 
-  if (localEvents.length) {
-    const batch: ExperienceBatch = makeBatch(identity.secretKey, identity.address, space.id, localEvents.slice(0, 500));
+  // Chunked push: the whole local log goes up in protocol-sized batches, so a
+  // long-lived machine with thousands of fix events still converges fully.
+  for (let offset = 0; offset < localEvents.length; offset += 500) {
+    const chunk = localEvents.slice(offset, offset + 500);
+    const batch: ExperienceBatch = makeBatch(identity.secretKey, identity.address, space.id, chunk);
     const res = await fetchImpl(`${base}/hive/experience`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-brainblast-space": space.id },
@@ -230,8 +276,8 @@ export async function syncSpace(
     const body = await res.text();
     if (res.status !== 200) throw new Error(`push to ${base} returned ${res.status}: ${body.trim().slice(0, 200)}`);
     const parsed = JSON.parse(body);
-    report.pushed = parsed.accepted ?? 0;
-    report.pushDuplicates = parsed.duplicates ?? 0;
+    report.pushed += parsed.accepted ?? 0;
+    report.pushDuplicates += parsed.duplicates ?? 0;
   }
 
   const res = await fetchImpl(`${base}/hive/experience?since=${space.cursor}`, {
