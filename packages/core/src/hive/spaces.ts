@@ -12,9 +12,12 @@ import {
   isSpaceId,
   makeBatch,
   newSpaceId,
+  makePolicy,
   type ExperienceBatch,
   type HiveExperienceStore,
   type HiveStoreAppendResult,
+  type SpacePolicy,
+  type SpacePolicyBody,
   type StoredExperienceEvent,
 } from "./federation.ts";
 import { loadOrCreateIdentity } from "./identity.ts";
@@ -222,6 +225,24 @@ export class JsonlHiveStore implements HiveExperienceStore {
     const events = rows.map((r) => ({ ...r.event, author: r.author, seq: r.seq }));
     return { events, cursor: events.length ? events[events.length - 1].seq : sinceSeq };
   }
+
+  // Policies live beside the event log as one JSON file per space.
+  private policyFile(space: string): string {
+    return `${this.file}.policy-${space}.json`;
+  }
+  getPolicy(space: string): SpacePolicy | null {
+    const p = this.policyFile(space);
+    if (!existsSync(p)) return null;
+    try {
+      return JSON.parse(readFileSync(p, "utf8")) as SpacePolicy;
+    } catch {
+      return null;
+    }
+  }
+  setPolicy(space: string, policy: SpacePolicy): void {
+    mkdirSync(join(this.file, ".."), { recursive: true });
+    writeFileSync(this.policyFile(space), JSON.stringify(policy, null, 2));
+  }
 }
 
 // ── Push / pull client ───────────────────────────────────────────────────────
@@ -242,17 +263,30 @@ export interface SpaceSyncReport {
   error?: string;
 }
 
+export interface SyncSpaceOpts {
+  fetchImpl?: FetchImpl;
+  waitSec?: number; // push transport: hold the pull up to this long for new events (0 = immediate)
+}
+
 // One space, one round-trip each way. Push is fully idempotent (the server
 // dedups by author+eventKey), so we always push the complete local log — no
-// client-side "what have I pushed" bookkeeping to corrupt.
+// client-side "what have I pushed" bookkeeping to corrupt. With waitSec > 0 the
+// pull long-polls: it returns the instant a teammate's event lands, cutting the
+// swarm-wide latency from the poll interval to ~immediate.
 export async function syncSpace(
   root: string,
   space: JoinedSpace,
   localEvents: ExperienceEvent[],
-  fetchImpl: FetchImpl = fetch as unknown as FetchImpl,
+  opts: FetchImpl | SyncSpaceOpts = {},
 ): Promise<SpaceSyncReport> {
+  // Back-compat: a bare fetchImpl was the old 4th arg.
+  const o: SyncSpaceOpts = typeof opts === "function" ? { fetchImpl: opts } : opts;
+  const fetchImpl = o.fetchImpl ?? (fetch as unknown as FetchImpl);
   const identity = loadOrCreateIdentity(root);
   const base = space.remote.replace(/\/+$/, "");
+  // A read-restricted space needs us to identify to be served; harmless on
+  // open spaces (the server ignores it when readMode is "capability").
+  const authHeaders = { "x-brainblast-space": space.id, "x-brainblast-reader": identity.address };
   const report: SpaceSyncReport = {
     space: space.id,
     ...(space.name ? { name: space.name } : {}),
@@ -270,7 +304,7 @@ export async function syncSpace(
     const batch: ExperienceBatch = makeBatch(identity.secretKey, identity.address, space.id, chunk);
     const res = await fetchImpl(`${base}/hive/experience`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-brainblast-space": space.id },
+      headers: { "content-type": "application/json", ...authHeaders },
       body: JSON.stringify(batch),
     });
     const body = await res.text();
@@ -280,9 +314,8 @@ export async function syncSpace(
     report.pushDuplicates += parsed.duplicates ?? 0;
   }
 
-  const res = await fetchImpl(`${base}/hive/experience?since=${space.cursor}`, {
-    headers: { "x-brainblast-space": space.id },
-  });
+  const waitQ = o.waitSec && o.waitSec > 0 ? `&wait=${Math.min(30, Math.floor(o.waitSec))}` : "";
+  const res = await fetchImpl(`${base}/hive/experience?since=${space.cursor}${waitQ}`, { headers: authHeaders });
   const body = await res.text();
   if (res.status !== 200) throw new Error(`pull from ${base} returned ${res.status}: ${body.trim().slice(0, 200)}`);
   const parsed = JSON.parse(body) as { events: StoredExperienceEvent[]; cursor: number };
@@ -303,12 +336,12 @@ export async function syncSpace(
 export async function syncAllSpaces(
   root: string,
   localEvents: ExperienceEvent[],
-  fetchImpl: FetchImpl = fetch as unknown as FetchImpl,
+  opts: FetchImpl | SyncSpaceOpts = {},
 ): Promise<SpaceSyncReport[]> {
   const reports: SpaceSyncReport[] = [];
   for (const space of loadSpaces(root).spaces) {
     try {
-      reports.push(await syncSpace(root, space, localEvents, fetchImpl));
+      reports.push(await syncSpace(root, space, localEvents, opts));
     } catch (e: any) {
       reports.push({
         space: space.id,
@@ -323,4 +356,73 @@ export async function syncAllSpaces(
     }
   }
   return reports;
+}
+
+// ── Policy (ACL) client — fetch and publish a signed space policy ────────────
+
+export async function fetchSpacePolicy(
+  space: JoinedSpace,
+  fetchImpl: FetchImpl = fetch as unknown as FetchImpl,
+): Promise<SpacePolicy | null> {
+  const base = space.remote.replace(/\/+$/, "");
+  const res = await fetchImpl(`${base}/hive/policy`, { headers: { "x-brainblast-space": space.id } });
+  const body = await res.text();
+  if (res.status !== 200) throw new Error(`policy fetch from ${base} returned ${res.status}: ${body.trim().slice(0, 200)}`);
+  return (JSON.parse(body).policy ?? null) as SpacePolicy | null;
+}
+
+export async function publishSpacePolicy(
+  space: JoinedSpace,
+  policy: SpacePolicy,
+  fetchImpl: FetchImpl = fetch as unknown as FetchImpl,
+): Promise<{ version: number }> {
+  const base = space.remote.replace(/\/+$/, "");
+  const res = await fetchImpl(`${base}/hive/policy`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-brainblast-space": space.id },
+    body: JSON.stringify(policy),
+  });
+  const body = await res.text();
+  if (res.status !== 200) throw new Error(`policy publish to ${base} returned ${res.status}: ${body.trim().slice(0, 200)}`);
+  return JSON.parse(body);
+}
+
+// Read-modify-write a space's policy under THIS machine's identity: fetch the
+// current one, apply `mutate`, bump the version, sign, and publish. The server
+// rejects it unless we're an admin (or it's the first, TOFU policy) — so the
+// caller must have run `space admin` (or created the space) first.
+export async function updateSpacePolicy(
+  root: string,
+  space: JoinedSpace,
+  mutate: (draft: SpacePolicyBody) => void,
+  fetchImpl: FetchImpl = fetch as unknown as FetchImpl,
+): Promise<{ version: number; policy: SpacePolicy }> {
+  const identity = loadOrCreateIdentity(root);
+  const current = await fetchSpacePolicy(space, fetchImpl);
+  // Drop the previous policy's own signature before re-signing — it is NOT part
+  // of the signed body, so carrying it forward would corrupt the new signature.
+  const currentBody = current ? (({ sig, ...body }) => body)(current) : null;
+  const draft: SpacePolicyBody = currentBody
+    ? { ...currentBody, version: currentBody.version + 1, updatedBy: identity.address, updatedAt: new Date().toISOString() }
+    : {
+        policyVersion: "1.0",
+        space: space.id,
+        version: 1,
+        admins: [identity.address],
+        writeMode: "open",
+        readMode: "capability",
+        allowedWriters: [],
+        allowedReaders: [],
+        updatedBy: identity.address,
+        updatedAt: new Date().toISOString(),
+      };
+  mutate(draft);
+  // De-dup the address lists for tidiness.
+  draft.admins = [...new Set(draft.admins)];
+  draft.allowedWriters = [...new Set(draft.allowedWriters)];
+  draft.allowedReaders = [...new Set(draft.allowedReaders)];
+  const { updatedBy, ...rest } = draft;
+  const policy = makePolicy(identity.secretKey, identity.address, rest);
+  const r = await publishSpacePolicy(space, policy, fetchImpl);
+  return { version: r.version, policy };
 }

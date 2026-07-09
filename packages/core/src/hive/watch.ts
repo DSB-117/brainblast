@@ -30,6 +30,8 @@ export interface HiveWatchOptions {
   grantPath?: string;
   intervalMs?: number; // feed + federation cadence (default 60s)
   packsIntervalMs?: number; // pack mirror cadence (default 15min)
+  longPollSec?: number; // push-transport hold per space (default 25s; 0 disables)
+  disablePushLoop?: boolean; // tests drive ticks by hand
   log?: (line: string) => void;
   fetchImpl?: any; // injectable for tests (threaded to sync/spaces)
 }
@@ -103,12 +105,15 @@ export function startHiveWatch(opts: HiveWatchOptions): HiveWatchHandle {
         log(`hive watch: feed sync failed (will retry): ${e?.message ?? e}`);
       }
 
-      // Federation — push our fixes, pull the swarm's.
+      // Federation on the interval loop pushes our fixes + does a quick
+      // (non-blocking) pull. The near-INSTANT team delivery happens on the
+      // separate long-poll loop below; this leg guarantees our own new fix
+      // events reach the swarm each interval even if the long-poll is mid-hold.
       if (loadSpaces(opts.root).spaces.length) {
         const reports: SpaceSyncReport[] = await syncAllSpaces(
           opts.root,
           loadLocalExperience(opts.root),
-          ...(opts.fetchImpl ? [opts.fetchImpl] : []),
+          opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {},
         );
         for (const r of reports) {
           if (r.error) log(`hive watch: space ${r.name ?? r.space.slice(0, 12) + "…"} failed (will retry): ${r.error}`);
@@ -138,8 +143,43 @@ export function startHiveWatch(opts: HiveWatchOptions): HiveWatchHandle {
     }
   }
 
+  // The push-transport loop: long-poll each joined space back-to-back, so a
+  // teammate's fix lands here within ~a second of them running sync — not on
+  // the next interval tick. Runs independently of the feed/packs cadence.
+  const waitSec = Math.max(0, Math.min(30, opts.longPollSec ?? 25));
+  async function pushLoop(): Promise<void> {
+    while (!stopped && waitSec > 0) {
+      const spaces = loadSpaces(opts.root).spaces;
+      if (spaces.length === 0) {
+        await new Promise((r) => setTimeout(r, intervalMs));
+        continue;
+      }
+      try {
+        const reports = await syncAllSpaces(opts.root, loadLocalExperience(opts.root), {
+          ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}),
+          waitSec,
+        });
+        let pulled = 0;
+        for (const r of reports) {
+          if (r.error) {
+            // back off a beat on error so a down remote doesn't hot-loop
+            await new Promise((res) => setTimeout(res, Math.min(intervalMs, 5000)));
+          } else if (r.pulled) {
+            pulled += r.pulled;
+            log(`hive watch: space ${r.name ?? r.space.slice(0, 12) + "…"} — pulled ${r.pulled} (push)`);
+          }
+        }
+        if (pulled) refreshInjectedBriefs(opts.root, log);
+      } catch (e: any) {
+        log(`hive watch: push loop error (will retry): ${e?.message ?? e}`);
+        await new Promise((res) => setTimeout(res, Math.min(intervalMs, 5000)));
+      }
+    }
+  }
+
   const timer = setInterval(() => void tick(), intervalMs);
   void tick(); // first cycle immediately — a watcher that waits a minute to start isn't real-time
+  if (waitSec > 0 && !opts.disablePushLoop) void pushLoop();
   return {
     stop() {
       stopped = true;
