@@ -249,3 +249,36 @@ describe("JsonlHiveStore policy persistence (serve parity)", () => {
     }
   });
 });
+
+describe("ACL resilience — a missing/erroring policy store must not break federation", () => {
+  class ThrowingPolicyStore extends MemoryHiveStore {
+    getPolicy(): never {
+      throw new Error('relation "hive_space_policy" does not exist');
+    }
+  }
+  it("experience GET/POST fall open (treat as no policy) when getPolicy throws", async () => {
+    const store = new ThrowingPolicyStore();
+    const space = newSpaceId();
+    const id = loadOrCreateIdentity(mkdtempSync(join(tmpdir(), "resil-")));
+    const { makeBatch } = await import("../src/hive/federation.ts");
+    const batch = makeBatch(id.secretKey, id.address, space, [ev()]);
+
+    const post = await handleRequest(
+      { method: "POST", path: "/hive/experience", query: {}, space, body: JSON.stringify(batch) },
+      { lots: [], hiveStore: store },
+    );
+    expect(post.status).toBe(200); // NOT 500 — federation survives a missing policy table
+    expect(JSON.parse(post.body).accepted).toBe(1);
+
+    const get = await handleRequest(
+      { method: "GET", path: "/hive/experience", query: { since: "0" }, space },
+      { lots: [], hiveStore: store },
+    );
+    expect(get.status).toBe(200);
+    expect(JSON.parse(get.body).events).toHaveLength(1);
+
+    const pol = await handleRequest({ method: "GET", path: "/hive/policy", query: {}, space }, { lots: [], hiveStore: store });
+    expect(pol.status).toBe(200);
+    expect(JSON.parse(pol.body).policy).toBeNull();
+  });
+});

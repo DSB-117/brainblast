@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.13.1 — 2026-07-09 — hotfix: federation must not depend on the policy table
+
+v0.13.0's ACL layer fetched a space's policy on EVERY `/hive/experience`
+request, and the store's `getPolicy` throws when the `hive_space_policy`
+table hasn't been migrated yet — so federation itself 500'd on a registry
+that had deployed the code but not applied the migration. Fixed: policy
+reads now fail OPEN (a missing/erroring policy store = "no policy = open",
+the documented default until a space is restricted). A regression test
+drives a store whose `getPolicy` throws and asserts experience GET/POST and
+the policy GET all still return 200. Suite 1016 green.
+
+
 ## v0.13.0 — 2026-07-09 — HiveMind at team scale
 
 Three capabilities for orgs that outgrow bare capability ids — dashboard,
