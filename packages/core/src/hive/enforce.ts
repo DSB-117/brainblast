@@ -79,7 +79,7 @@ export function renderWriteFeedback(result: WriteCheckResult, maxFindings = 5): 
     lines.push(`- [${(f.severity ?? "").toUpperCase()}] ${f.ruleId}: ${f.detail}${f.line ? ` (${f.file}:${f.line})` : ` (${f.file})`}`);
     if (f.fix?.summary) lines.push(`  fix: ${f.fix.summary}`);
     if (f.fix?.suggestion) lines.push(`       ${f.fix.suggestion}`);
-    if (f.precedent) lines.push(`  precedent: you fixed this exact trap in ${f.precedent.file} on ${f.precedent.fixedAt}`);
+    if (f.precedent) lines.push(`  precedent: this exact trap was already fixed in ${f.precedent.file} on ${f.precedent.fixedAt}`);
   }
   if (result.failures.length > shown.length) {
     lines.push(`…and ${result.failures.length - shown.length} more — run \`npx brainblast .\` for the full report.`);
