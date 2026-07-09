@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+## v0.13.0 — 2026-07-09 — HiveMind at team scale
+
+Three capabilities for orgs that outgrow bare capability ids — dashboard,
+push transport, and per-space ACLs — all keeping the identity-not-accounts
+model (the signature is the authority; experience never enters the proven
+corpus or enforcement).
+
+**Team dashboard.** `brainblast hive dashboard` aggregates shared experience
+into a picture a lead reads: most-recurring traps (per-source-repo instances
+collapsed), by repo, by contributor, activity timeline. Text or a
+self-contained HTML page (`--html`). Aggregated LOCALLY — the space id (a
+secret) never leaves the machine to produce it.
+
+**Push transport (long-poll).** GET `/hive/experience?wait=<sec>` holds the
+request until an event newer than `since` lands or the budget elapses
+(bounded, serverless-safe). `hive watch` runs an independent push loop that
+long-polls each space, so a teammate's fix arrives in ~1s instead of on the
+next 60s tick. Live-measured ~1s delivery.
+
+**Per-space ACLs (signed policies).** A `SpacePolicy` is ed25519-signed and
+TOFU-bootstrapped, then only admins sign monotonic updates (verifyPolicy
+rejects stale-version / not-admin / self-not-admin / forged sig).
+`writeMode open|allowlist` and `readMode capability|allowlist` are enforced
+in the shared handler — a leaked space id can no longer inject junk into a
+restricted space, and reads can be gated too. CLI: `hive space
+admin|allow|disallow|mode|read-mode|policy`. Store seam gains
+getPolicy/setPolicy (Memory + JSONL + Supabase).
+
+Two real bugs the new tests caught pre-merge: a signature-corruption in
+policy re-signing (the previous sig must be stripped from the body first),
+and the serve binding aborting every long-poll immediately because it
+watched the request-body 'close' instead of client disconnect. 18 new
+tests; suite 1015 green. Registry half: brainblast-registry#59.
+
+
 ## v0.12.1 — 2026-07-09 — fleet-scale briefs: pattern-duplicate collapse
 
 Found in v0.12.0 final acceptance: with the real-time sample tier live, a

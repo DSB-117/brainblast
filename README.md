@@ -225,6 +225,12 @@ And the hive is proactive and recursive:
 - **Cross-repo experience** — confirmed fixes promote from each repo's living memory into the machine-global log; audits, hooks, and briefs cite them across repos and agents.
 - **Demand signal** — `hive stats` aggregates anonymized fix-event *counts* (no code, no paths); `npm run corpus` folds them into the fleet's work-orders, so scouting digs where real agents actually fail. `hive contribute` surveys staged fix captures across linked repos and names each one's consent-gated drain path.
 
+### Team scale — dashboard, push transport, ACLs (v0.13.0)
+
+- **`brainblast hive dashboard`** — the team view over shared experience: who fixed what, the org's most-recurring traps (per-source-repo instances collapsed), by repo, by contributor, activity over time. Renders in the terminal or as a self-contained HTML page (`--html`). Aggregated locally, so a space id never leaves the machine to produce it.
+- **Push transport (long-poll)** — `brainblast hive watch` now delivers a teammate's fix in **~1 second** instead of on the next interval: it long-polls each space (`?wait=`), and the server holds the request until an event lands. Works over plain HTTP, serverless-safe.
+- **Per-space ACLs** — for orgs that outgrow a bare capability id. A signed `SpacePolicy` (no accounts — the admin key is the authority) can restrict who contributes (`hive space mode allowlist` + `hive space allow <address>`) and who reads (`hive space read-mode allowlist`). `hive space admin` claims admin (trust-on-first-use, then only admins sign changes); `hive space policy` shows the current one. A leaked id can no longer inject junk into a restricted space.
+
 ### Real-time (v0.12.0)
 
 The hive keeps itself current — this is what makes it a *second brain* rather than a snapshot:
