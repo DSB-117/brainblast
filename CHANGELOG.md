@@ -2,6 +2,48 @@
 
 ## Unreleased
 
+## v0.11.0 — 2026-07-09 — HiveMind federation: cross-machine + team hives
+
+HiveMind phase 2, completing the design: the hive no longer stops at one
+machine. Plus the v0.10.0 post-release pack-mirror fix (#83).
+
+**Federation.** A **space** (`hs_…`) is a shared experience channel whose id
+is an unguessable 192-bit capability — share it like a private invite link;
+no accounts, no tokens. Each hive holds a local ed25519 **identity**
+(`hive id`); every pushed batch is signed, so a space id grants read +
+attributed write but never impersonation, and a batch signed for one space
+cannot be replayed into another (the space is bound into the signature).
+`brainblast hive space create|join|list|leave` manages membership;
+`hive sync` gains a federation leg (push local fix events, pull the swarm's,
+per-space failures isolated); `hive status` shows identity + spaces.
+Federated events flow into every existing surface — cross-repo precedents,
+write-time hook hints, brief ranking, the demand signal — with team-neutral
+phrasing ("already fixed once in repo-a"), and are kept in a separate
+shared log so self-events never round-trip. Trust boundary documented
+in-code and in the README: experience is advisory context; it never enters
+the RED→GREEN-gated corpus or the enforcement rule set.
+
+**Server.** `handleRequest` (the pure distribution handler) is now async
+and serves GET/POST `/hive/experience` when a `HiveExperienceStore` is
+injected: signature + space-binding verification, idempotent append
+(unique per space+author+event), `since`-cursor pulls. `brainblast serve`
+hosts it out of the box (`--hive-experience`, bounded bodies); the hosted
+registry runs the same vendored handler at
+`registry.brainblast.tech/api/hive/experience` (brainblast-registry#57,
+Supabase-backed with a per-IP hourly cap).
+
+**Fix (v0.10.1 material, folded in):** the hive pack mirror falls back to
+the jsDelivr CDN when raw.githubusercontent.com rate-limits (#83) — the
+git-blob hash check remains the integrity anchor on either transport.
+
+36 new tests (identity, protocol tamper/replay matrix, store-semantics
+parity across Memory/JSONL/Supabase-mocked, end-to-end two-machine sync
+through the pure handler); suite 994 green. Verified live over real HTTP:
+machine A's fix pushed signed → machine B joined by space id, pulled it
+attributed, and B's write-time hook cited A's precedent on the same trap.
+
+## v0.10.0 — 2026-07-08 — HiveMind: the shared second brain for AI agents
+
 ## v0.10.0 — 2026-07-08 — HiveMind: the shared second brain for AI agents
 
 One machine-global brain at `~/.brainblast/hive` that every coding agent

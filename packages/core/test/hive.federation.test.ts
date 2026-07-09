@@ -264,3 +264,64 @@ describe("federation end-to-end through the pure server handler", () => {
     expect(loadSharedExperience(rootA)).toHaveLength(1);
   });
 });
+
+describe("SupabaseHiveStore — PostgREST wire contract (mocked)", () => {
+  it("append upserts with ignore-duplicates on the unique key and reports totals", async () => {
+    const calls: { url: string; init?: any }[] = [];
+    const fetchImpl = (async (url: string, init?: any) => {
+      calls.push({ url, init });
+      if (init?.method === "POST") {
+        return { ok: true, status: 201, json: async () => [{ seq: 1 }], text: async () => "", headers: new Map() as any };
+      }
+      // HEAD count request
+      return {
+        ok: true,
+        status: 200,
+        json: async () => [],
+        text: async () => "",
+        headers: { get: (k: string) => (k === "content-range" ? "0-0/3" : null) },
+      };
+    }) as unknown as typeof fetch;
+
+    const { SupabaseHiveStore } = await import("../src/hive/federation.ts");
+    const store = new SupabaseHiveStore("https://sb.test", "service-key", fetchImpl);
+    const space = newSpaceId();
+    const r = await store.append(space, "authorA", [event(), event({ ruleId: "dup" })]);
+    expect(r).toMatchObject({ accepted: 1, duplicates: 1, total: 3 });
+
+    const post = calls[0];
+    expect(post.url).toContain("/rest/v1/hive_experience?on_conflict=space,author,event_key");
+    expect(post.init.headers.prefer).toContain("ignore-duplicates");
+    expect(post.init.headers.authorization).toBe("Bearer service-key");
+    const rows = JSON.parse(post.init.body);
+    expect(rows[0]).toMatchObject({ space, author: "authorA" });
+    expect(rows[0].event_key).toContain("stripe-webhook-raw-body");
+  });
+
+  it("list pulls the space's delta ordered by seq and maps rows to attributed events", async () => {
+    const fetchImpl = (async (url: string) => {
+      expect(url).toContain("seq=gt.5");
+      expect(url).toContain("order=seq.asc");
+      return {
+        ok: true,
+        status: 200,
+        json: async () => [{ seq: 6, author: "authorB", event: event({ ruleId: "pulled" }) }],
+        text: async () => "",
+      };
+    }) as unknown as typeof fetch;
+
+    const { SupabaseHiveStore } = await import("../src/hive/federation.ts");
+    const store = new SupabaseHiveStore("https://sb.test", "service-key", fetchImpl);
+    const r = await store.list(newSpaceId(), 5);
+    expect(r.cursor).toBe(6);
+    expect(r.events[0]).toMatchObject({ ruleId: "pulled", author: "authorB", seq: 6 });
+  });
+
+  it("surfaces backend failures loudly", async () => {
+    const fetchImpl = (async () => ({ ok: false, status: 500, text: async () => "boom", json: async () => ({}) })) as unknown as typeof fetch;
+    const { SupabaseHiveStore } = await import("../src/hive/federation.ts");
+    const store = new SupabaseHiveStore("https://sb.test", "k", fetchImpl);
+    await expect(store.append(newSpaceId(), "a", [event()])).rejects.toThrow(/append failed/);
+    await expect(store.list(newSpaceId())).rejects.toThrow(/list failed/);
+  });
+});

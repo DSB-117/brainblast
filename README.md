@@ -227,6 +227,20 @@ And the hive is proactive and recursive:
 
 Anonymous sync gets the free protection layer (public packs + sample-tier metadata); a grant in `<hive>/grant.json` unlocks full fixtures for richer briefs. An empty hive means no verified trap is on file — never that your stack is safe.
 
+### Federation — cross-machine and team hives (v0.11.0)
+
+The hive doesn't stop at one machine. A **space** is a shared experience channel: create one, share its id with your other machines (or your team) like a private invite link, and every `hive sync` converges everyone on one fix history — your laptop's mistake becomes your CI runner's precedent, and a teammate's fix becomes your write-time hint.
+
+```sh
+brainblast hive space create --name my-team   # mint an unguessable hs_… capability id
+brainblast hive space join hs_…               # on the other machine / a teammate's
+brainblast hive sync                          # now also pushes + pulls experience
+```
+
+- **Identity, not accounts.** Each hive generates a local ed25519 identity (`hive id`); every pushed batch is signed, so events are attributable and a space id can never impersonate a member. No signup, no tokens — the space id is membership, the signature is attribution, the server validates both (the same open-endpoint posture as the fleet ledger).
+- **Trust boundary, stated plainly:** anyone holding a space id can read that space's fix metadata (rule ids, repo names, relative file paths) and contribute under their own identity. Share it accordingly. Federated experience is advisory agent context — it **never** enters the RED→GREEN-gated corpus or the enforcement rule set.
+- Works against the hosted registry (`/api/hive/experience`) or any self-hosted `brainblast serve`.
+
 ## Prerequisites
 
 Brainblast is a workflow that runs *inside* a host agent. It needs a browser engine to fetch live docs.
