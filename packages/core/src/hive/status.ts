@@ -4,6 +4,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { loadPacksFromDir } from "../packs.ts";
 import { hivePaths, loadCursor, loadHiveLot, loadRepos, type HiveCursor } from "./store.ts";
+import { loadIdentity } from "./identity.ts";
+import { loadSharedExperience } from "./experience.ts";
+import { loadSpaces } from "./spaces.ts";
 
 export interface HiveStatus {
   root: string;
@@ -19,7 +22,10 @@ export interface HiveStatus {
   ruleCount: number;
   packWarnings: string[];
   linkedRepos: { name: string; path: string; depCount: number }[];
-  experienceCount: number;
+  experienceCount: number; // this machine's own fix events
+  sharedExperienceCount: number; // events federated in from spaces
+  identity: string | null; // federated address (null until first use)
+  spaces: { id: string; name?: string; cursor: number }[];
   cursor: HiveCursor;
 }
 
@@ -61,6 +67,8 @@ export function hiveStatus(root: string): HiveStatus {
   }
 
   const repos = loadRepos(root);
+  const identity = loadIdentity(root);
+  const spaces = loadSpaces(root);
   return {
     root,
     exists: existsSync(root),
@@ -76,6 +84,9 @@ export function hiveStatus(root: string): HiveStatus {
     packWarnings,
     linkedRepos: repos.repos.map((r) => ({ name: r.name, path: r.path, depCount: Object.keys(r.deps).length })),
     experienceCount,
+    sharedExperienceCount: loadSharedExperience(root).length,
+    identity: identity?.address ?? null,
+    spaces: spaces.spaces.map((s) => ({ id: s.id, ...(s.name ? { name: s.name } : {}), cursor: s.cursor })),
     cursor: loadCursor(root),
   };
 }
@@ -111,7 +122,12 @@ export function renderHiveStatusText(s: HiveStatus, nowIso: string = new Date().
   if (classes) lines.push(`  classes     ${classes}`);
   lines.push(`  enforcement ${s.packCount} packs / ${s.ruleCount} rules${s.cursor.packsSha ? ` @ ${s.cursor.packsSha.slice(0, 12)} (${ago(s.cursor.packsSyncedAt, nowIso)})` : " (not yet synced)"}`);
   lines.push(`  freshness   feed synced ${ago(s.cursor.lastSyncAt, nowIso)}${s.cursor.tier ? ` at tier ${s.cursor.tier}` : ""}${s.newestCapturedAt ? `, newest trap captured ${ago(s.newestCapturedAt, nowIso)}` : ""}`);
-  lines.push(`  experience  ${s.experienceCount} cross-repo fix events`);
+  lines.push(`  experience  ${s.experienceCount} local fix events + ${s.sharedExperienceCount} federated from the swarm`);
+  if (s.spaces.length) {
+    lines.push(`  federation  ${s.identity ? `identity ${s.identity.slice(0, 12)}…, ` : ""}${s.spaces.length} space${s.spaces.length === 1 ? "" : "s"}: ${s.spaces.map((sp) => sp.name ?? `${sp.id.slice(0, 12)}…`).join(", ")}`);
+  } else {
+    lines.push("  federation  no spaces — `brainblast hive space create` links your machines (or team)");
+  }
   if (s.linkedRepos.length) {
     lines.push(`  protecting  ${s.linkedRepos.length} linked repo${s.linkedRepos.length === 1 ? "" : "s"}:`);
     for (const r of s.linkedRepos) lines.push(`    ${r.name}  (${r.depCount} deps)  ${r.path}`);

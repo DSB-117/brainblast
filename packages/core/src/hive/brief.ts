@@ -142,7 +142,7 @@ const HONESTY_LINE =
 function entryHeadline(e: BriefEntry): string {
   const corr = e.corroborationCount > 0 ? `, corroborated in ${e.corroborationCount} repo${e.corroborationCount === 1 ? "" : "s"}` : "";
   const proof = e.proofMethod ? ` (proof: ${e.proofMethod}${corr})` : corr ? ` (${corr.slice(2)})` : "";
-  const personal = e.personallyFixed ? ` ⚑ you fixed this exact trap in ${e.personallyFixed.repoName} on ${e.personallyFixed.fixedAt}` : "";
+  const personal = e.personallyFixed ? ` ⚑ already fixed once in ${e.personallyFixed.repoName} on ${e.personallyFixed.fixedAt} — do not ship it again` : "";
   return `[${e.severity.toUpperCase()}] ${e.trapId} — ${e.title ?? e.class}${proof}${personal}`;
 }
 

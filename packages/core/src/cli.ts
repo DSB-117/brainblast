@@ -2071,7 +2071,10 @@ async function runServe(argv: string[]): Promise<void> {
     console.error("    GET /feed      anonymous → sample tier; with a grant header → the entitled tier");
     console.error("                   query: ?sdk=&class=&severity=&min_corroboration=&since=&limit=");
     console.error("                   grant header: 'x-brainblast-grant: <base64 grant JSON>'");
+    console.error("    GET/POST /hive/experience   HiveMind federation: signed cross-machine/team");
+    console.error("                   experience sync. Space capability header: 'x-brainblast-space: hs_…'");
     console.error("  --port N        listen port (default 8787)");
+    console.error("  --hive-experience FILE  federation store (default datasets/hive-experience.jsonl)");
     console.error("  --lot FILE      a VTI lot to serve (repeatable). Default: datasets/seed + contrib.");
     console.error("  --pubkey ADDR   trusted distributor ed25519 address (or BRAINBLAST_MARKET_PUBKEY)");
     console.error("                  — verifies ed25519 grants with NO shared secret (R2).");
@@ -2111,6 +2114,12 @@ async function runServe(argv: string[]): Promise<void> {
     writeFileSync(ledgerPath, [...prior, entry].map((e) => JSON.stringify(e)).join("\n") + "\n");
   };
 
+  // HiveMind federation store (v0.11.0): signed cross-machine / team experience
+  // sync at /hive/experience, persisted as JSONL beside the usage ledger.
+  const { JsonlHiveStore } = await import("./hive/spaces.ts");
+  const hiveStorePath = val("--hive-experience") ?? "datasets/hive-experience.jsonl";
+  const hiveStore = new JsonlHiveStore(hiveStorePath);
+
   const totalVtis = lots.reduce((n, l) => n + l.vtis.length, 0);
   const server = http.createServer((httpReq, httpRes) => {
     const url = new URL(httpReq.url ?? "/", `http://localhost:${port}`);
@@ -2129,16 +2138,48 @@ async function runServe(argv: string[]): Promise<void> {
         return;
       }
     }
+    const spaceHdr = httpReq.headers["x-brainblast-space"];
+    const space = typeof spaceHdr === "string" && spaceHdr.length ? spaceHdr : undefined;
 
-    let resp;
-    try {
-      resp = handleRequest({ method: httpReq.method ?? "GET", path: url.pathname, query, grant }, { lots, trustedDistributor, hmacSecret, meter });
-    } catch (e: any) {
-      resp = { status: 500, contentType: "application/json", body: JSON.stringify({ error: "internal", detail: e?.message ?? String(e) }) };
-    }
-    console.error(`serve: ${httpReq.method} ${url.pathname}${url.search} → ${resp.status}`);
-    httpRes.writeHead(resp.status, { "content-type": resp.contentType });
-    httpRes.end(resp.body);
+    // Collect the body (bounded — a federation batch is small by protocol).
+    const chunks: Buffer[] = [];
+    let bodySize = 0;
+    let aborted = false;
+    httpReq.on("data", (c: Buffer) => {
+      bodySize += c.length;
+      if (bodySize > 2_000_000) {
+        aborted = true;
+        httpRes.writeHead(413, { "content-type": "application/json" });
+        httpRes.end(JSON.stringify({ error: "body too large" }));
+        httpReq.destroy();
+        return;
+      }
+      chunks.push(c);
+    });
+    httpReq.on("end", async () => {
+      if (aborted) return;
+      let resp;
+      try {
+        resp = await handleRequest(
+          {
+            method: httpReq.method ?? "GET",
+            path: url.pathname,
+            query,
+            grant,
+            space,
+            body: chunks.length ? Buffer.concat(chunks).toString("utf8") : undefined,
+          },
+          { lots, trustedDistributor, hmacSecret, meter, hiveStore },
+        );
+      } catch (e: any) {
+        resp = { status: 500, contentType: "application/json", body: JSON.stringify({ error: "internal", detail: e?.message ?? String(e) }) };
+      }
+      console.error(`serve: ${httpReq.method} ${url.pathname}${url.search} → ${resp.status}`);
+      if (!httpRes.headersSent) {
+        httpRes.writeHead(resp.status, { "content-type": resp.contentType });
+        httpRes.end(resp.body);
+      }
+    });
   });
 
   return await new Promise<void>((resolve) => {
@@ -2942,8 +2983,8 @@ async function runHive(argv: string[]): Promise<void> {
   const usage = () => {
     console.error("usage: brainblast hive <command>");
     console.error("");
-    console.error("  sync     pull the VTI delta from the hosted feed + mirror the public rule");
-    console.error("           packs at a pinned commit (the hive's two supply lines)");
+    console.error("  sync     pull the VTI delta from the hosted feed, mirror the public rule packs");
+    console.error("           at a pinned commit, and federate experience with every joined space");
     console.error("             --remote URL      feed endpoint base (default: hosted registry API)");
     console.error("             --grant FILE      signed grant (default: <hive>/grant.json if present)");
     console.error("             --fresh           ignore the stored cursor; re-pull everything");
@@ -2964,6 +3005,13 @@ async function runHive(argv: string[]): Promise<void> {
     console.error("             --json            machine-readable brief");
     console.error("  link     register a repo (path + dependency index) with the hive  [dir]");
     console.error("  unlink   remove a repo from the hive                              [dir]");
+    console.error("  id       this hive's federated identity (ed25519; created on first use) [--json]");
+    console.error("  space    cross-machine + team hives — a space is a shared experience channel;");
+    console.error("           its id is an unguessable capability (share it like a private invite link):");
+    console.error("             space create [--name N] [--remote URL]   mint + join a new space");
+    console.error("             space join <hs_id> [--name N] [--remote URL]");
+    console.error("             space list [--json]      joined spaces (ids are secrets — mind your terminal)");
+    console.error("             space leave <hs_id>      stop syncing (already-pulled events remain)");
     console.error("  stats    anonymized demand signal (fix-event counts by rule/class/sdk);");
     console.error("           writes <hive>/stats.json — `npm run corpus` folds it into the");
     console.error("           fleet's work-orders so scouting follows observed failure  [--json]");
@@ -3050,8 +3098,106 @@ async function runHive(argv: string[]): Promise<void> {
       }
     }
 
+    // Federation leg: push this machine's fix events to every joined space and
+    // pull everyone else's. Per-space failures are isolated — one unreachable
+    // remote never blocks the feed/pack legs or the other spaces.
+    {
+      const { loadSpaces, syncAllSpaces } = await import("./hive/spaces.ts");
+      const { loadLocalExperience } = await import("./hive/experience.ts");
+      if (loadSpaces(root).spaces.length) {
+        const reports = await syncAllSpaces(root, loadLocalExperience(root));
+        out.federation = reports;
+        for (const r of reports) {
+          const label = r.name ? `${r.name} (${r.space.slice(0, 12)}…)` : `${r.space.slice(0, 12)}…`;
+          if (r.error) {
+            failed = true;
+            console.error(`hive: space ${label} sync failed: ${r.error}`);
+          } else if (!jsonOut) {
+            console.log(`hive: space ${label} — pushed ${r.pushed} new fix event${r.pushed === 1 ? "" : "s"}, pulled ${r.pulled} from the swarm`);
+          }
+        }
+      }
+    }
+
     if (jsonOut) console.log(JSON.stringify(out, null, 2));
     process.exit(failed ? 1 : 0);
+  }
+
+  if (sub === "id") {
+    const { loadOrCreateIdentity } = await import("./hive/identity.ts");
+    const identity = loadOrCreateIdentity(root);
+    if (jsonOut) console.log(JSON.stringify({ address: identity.address, createdAt: identity.createdAt }, null, 2));
+    else {
+      console.log(`hive identity: ${identity.address}`);
+      console.log("  (ed25519 — signs your federated experience batches; the secret key never leaves this machine)");
+    }
+    process.exit(0);
+  }
+
+  if (sub === "space") {
+    const { createSpace, joinSpace, leaveSpace, loadSpaces } = await import("./hive/spaces.ts");
+    const action = rest[0];
+
+    if (action === "create") {
+      const space = createSpace(root, { name: val("--name"), remote: val("--remote") });
+      if (jsonOut) console.log(JSON.stringify(space, null, 2));
+      else {
+        console.log(`hive: space created and joined${space.name ? ` — ${space.name}` : ""}`);
+        console.log(`  id:     ${space.id}`);
+        console.log(`  remote: ${space.remote}`);
+        console.log("");
+        console.log("  The id IS the membership: share it with your other machines / teammates like a");
+        console.log("  private invite link (`brainblast hive space join <id>` there). Everyone holding");
+        console.log("  it can read this space's fix metadata (rule ids, repo names, file paths) and");
+        console.log("  contribute under their own identity. `brainblast hive sync` federates it.");
+      }
+      process.exit(0);
+    }
+
+    if (action === "join") {
+      const id = rest[1];
+      if (!id) {
+        console.error("usage: brainblast hive space join <hs_id> [--name N] [--remote URL]");
+        process.exit(2);
+      }
+      try {
+        const space = joinSpace(root, id, { name: val("--name"), remote: val("--remote") });
+        if (jsonOut) console.log(JSON.stringify(space, null, 2));
+        else console.log(`hive: joined space ${space.id.slice(0, 12)}…${space.name ? ` (${space.name})` : ""} — \`brainblast hive sync\` federates it`);
+      } catch (e: any) {
+        console.error(e?.message ?? String(e));
+        process.exit(2);
+      }
+      process.exit(0);
+    }
+
+    if (action === "leave") {
+      const id = rest[1];
+      if (!id) {
+        console.error("usage: brainblast hive space leave <hs_id>");
+        process.exit(2);
+      }
+      const left = leaveSpace(root, id);
+      console.log(left ? `hive: left space ${id.slice(0, 12)}… (already-pulled events remain in the shared log)` : `hive: not a member of ${id.slice(0, 12)}…`);
+      process.exit(left ? 0 : 1);
+    }
+
+    if (action === "list" || action === undefined) {
+      const state = loadSpaces(root);
+      if (jsonOut) console.log(JSON.stringify(state, null, 2));
+      else if (state.spaces.length === 0) {
+        console.log("hive: no spaces joined — `brainblast hive space create` starts one (cross-machine or team)");
+      } else {
+        for (const s of state.spaces) {
+          console.log(`${s.id}  ${s.name ?? ""}  remote=${s.remote}  cursor=${s.cursor}`);
+        }
+        console.error("(space ids are capabilities — treat this output as secret)");
+      }
+      process.exit(0);
+    }
+
+    console.error(`hive space: unknown action '${action}' (create|join|list|leave)`);
+    process.exit(2);
   }
 
   if (sub === "status") {

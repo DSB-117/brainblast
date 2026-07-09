@@ -165,9 +165,11 @@ they change the product's nature and should be a conscious decision, not a drift
   so the corpus — and every catch — compounds across the whole community. This is the real,
   copy-proof moat (a data network effect a retrieval tool can't bolt on) and the natural business
   surface. Needs hosting, curation, and a trust/abuse model. Rung 5's local intel packs are the
-  on-ramp to exactly this. *Partially realized by HiveMind (v0.10.0): the trap-knowledge half
-  already pools through the registry feed and back down into every subscriber's agents; what
-  remains here is the research-intel half and per-user identity (cross-machine hive sync).*
+  on-ramp to exactly this. *Substantially realized by HiveMind: v0.10.0 pools the
+  trap-knowledge half through the registry feed and back down into every subscriber's agents;
+  v0.11.0 adds federated identity + spaces (cross-machine and team hives syncing signed
+  experience through `/api/hive/experience`). What remains here is the research-intel half
+  (per-`name@version` component intel packs pooling the /brainblast research itself).*
 - **MCP server for reports.** Expose `report.json` over MCP so Cursor, Copilot, and other agents query
   a project's research without reading files — distribution into the tools teams already use.
 - **Portfolio view.** For an org, one dashboard of unaddressed CRITICALs across every service — sells

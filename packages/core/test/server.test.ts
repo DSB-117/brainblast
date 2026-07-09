@@ -39,22 +39,22 @@ function ndjsonLines(body: string): any[] {
 }
 
 describe("server — public, anonymous surfaces", () => {
-  it("GET /healthz reports lot + vti counts", () => {
-    const r = get("/healthz");
+  it("GET /healthz reports lot + vti counts", async () => {
+    const r = await get("/healthz");
     expect(r.status).toBe(200);
     expect(JSON.parse(r.body)).toMatchObject({ status: "ok", lots: 2, vtis: 3 });
   });
 
-  it("GET /catalog is public — no grant — and lists tiers", () => {
-    const r = get("/catalog");
+  it("GET /catalog is public — no grant — and lists tiers", async () => {
+    const r = await get("/catalog");
     expect(r.status).toBe(200);
     const cat = JSON.parse(r.body);
     expect(cat.counts.proven).toBe(3);
     expect(cat.tiers.map((t: any) => t.tier)).toEqual(["sample", "standard", "firehose"]);
   });
 
-  it("GET /feed with no grant serves the anonymous SAMPLE tier — receipt only, no fixtures", () => {
-    const r = get("/feed");
+  it("GET /feed with no grant serves the anonymous SAMPLE tier — receipt only, no fixtures", async () => {
+    const r = await get("/feed");
     expect(r.status).toBe(200);
     const lines = ndjsonLines(r.body);
     expect(lines[0]).toMatchObject({ type: "feed_meta", tier: "sample", access: "anonymous" });
@@ -65,10 +65,10 @@ describe("server — public, anonymous surfaces", () => {
 });
 
 describe("server — gated feed (entitlement enforced at distribution)", () => {
-  it("a valid ed25519 grant unlocks the entitled tier + fixtures, and is metered", () => {
+  it("a valid ed25519 grant unlocks the entitled tier + fixtures, and is metered", async () => {
     const metered: UsageRecord[] = [];
     const g = issueGrant({ buyer: "acme", tier: "firehose", lots: [], signer: { alg: "ed25519", secretKey: dist.secretKey }, ttlDays: 30, now: NOW });
-    const r = get("/feed", {}, g, deps({ meter: (rec) => metered.push(rec) }));
+    const r = await get("/feed", {}, g, deps({ meter: (rec) => metered.push(rec) }));
     expect(r.status).toBe(200);
     const lines = ndjsonLines(r.body);
     expect(lines[0]).toMatchObject({ type: "feed_meta", tier: "firehose", access: "granted", buyer: "acme" });
@@ -80,51 +80,51 @@ describe("server — gated feed (entitlement enforced at distribution)", () => {
     expect(metered[0]).toMatchObject({ buyer: "acme", tier: "firehose", recordsServed: 3 });
   });
 
-  it("rejects a forged tier (tampered body) with 403", () => {
+  it("rejects a forged tier (tampered body) with 403", async () => {
     const g = issueGrant({ buyer: "acme", tier: "sample", lots: [], signer: { alg: "ed25519", secretKey: dist.secretKey }, ttlDays: 30, now: NOW });
-    const r = get("/feed", {}, { ...g, tier: "firehose" });
+    const r = await get("/feed", {}, { ...g, tier: "firehose" });
     expect(r.status).toBe(403);
     expect(JSON.parse(r.body).reason).toBe("bad-signature");
   });
 
-  it("rejects a grant from an untrusted distributor with 403", () => {
+  it("rejects a grant from an untrusted distributor with 403", async () => {
     const other = generateDistributorKeypair();
     const g = issueGrant({ buyer: "evil", tier: "firehose", lots: [], signer: { alg: "ed25519", secretKey: other.secretKey }, ttlDays: 30, now: NOW });
-    const r = get("/feed", {}, g);
+    const r = await get("/feed", {}, g);
     expect(r.status).toBe(403);
     expect(JSON.parse(r.body).reason).toBe("untrusted-signer");
   });
 
-  it("does NOT meter a rejected pull", () => {
+  it("does NOT meter a rejected pull", async () => {
     const metered: UsageRecord[] = [];
     const other = generateDistributorKeypair();
     const g = issueGrant({ buyer: "evil", tier: "firehose", lots: [], signer: { alg: "ed25519", secretKey: other.secretKey }, ttlDays: 30, now: NOW });
-    const r = get("/feed", {}, g, deps({ meter: (rec) => metered.push(rec) }));
+    const r = await get("/feed", {}, g, deps({ meter: (rec) => metered.push(rec) }));
     expect(r.status).toBe(403);
     expect(metered.length).toBe(0);
   });
 
-  it("enforces lot-scope: a grant naming one lot only serves that lot", () => {
+  it("enforces lot-scope: a grant naming one lot only serves that lot", async () => {
     // Grant scoped to contrib.jsonl (which holds only trap "c" / Pyth).
     const g = issueGrant({ buyer: "acme", tier: "firehose", lots: ["contrib.jsonl"], signer: { alg: "ed25519", secretKey: dist.secretKey }, ttlDays: 30, now: NOW });
-    const r = get("/feed", {}, g);
+    const r = await get("/feed", {}, g);
     const vtis = ndjsonLines(r.body).filter((l) => l.type === "vti");
     expect(vtis.map((v) => v.trapId)).toEqual(["c"]);
   });
 
-  it("respects query filters on the gated feed", () => {
+  it("respects query filters on the gated feed", async () => {
     const g = issueGrant({ buyer: "acme", tier: "firehose", lots: [], signer: { alg: "ed25519", secretKey: dist.secretKey }, ttlDays: 30, now: NOW });
-    const r = get("/feed", { sdk: "meteora" }, g);
+    const r = await get("/feed", { sdk: "meteora" }, g);
     const vtis = ndjsonLines(r.body).filter((l) => l.type === "vti");
     expect(vtis.map((v) => v.trapId)).toEqual(["b"]);
   });
 });
 
 describe("server — routing", () => {
-  it("404 for unknown paths", () => {
-    expect(get("/nope").status).toBe(404);
+  it("404 for unknown paths", async () => {
+    expect((await get("/nope")).status).toBe(404);
   });
-  it("405 for non-GET", () => {
-    expect(handleRequest({ method: "POST", path: "/feed", query: {} }, deps()).status).toBe(405);
+  it("405 for non-GET", async () => {
+    expect((await handleRequest({ method: "POST", path: "/feed", query: {} }, deps())).status).toBe(405);
   });
 });

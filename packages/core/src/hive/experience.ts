@@ -11,7 +11,7 @@
 // experience log must never break an audit.
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
-import { basename, isAbsolute, relative } from "node:path";
+import { basename, isAbsolute, join, relative } from "node:path";
 import type { Precedent } from "../types.ts";
 import { hivePaths } from "./store.ts";
 
@@ -23,12 +23,14 @@ export interface ExperienceEvent {
   exportName: string;
   fixedAt: string;
   detail: string;
+  // Present on events that arrived through a federated space: the base58 hive
+  // address of the member whose machine recorded the fix. Absent on local events.
+  author?: string;
 }
 
 const eventKey = (e: ExperienceEvent) => `${e.ruleId}::${e.repoPath}::${e.file}::${e.exportName}::${e.fixedAt}`;
 
-export function loadExperience(root: string): ExperienceEvent[] {
-  const p = hivePaths(root).experienceLog;
+function readEventLog(p: string): ExperienceEvent[] {
   if (!existsSync(p)) return [];
   const out: ExperienceEvent[] = [];
   for (const line of readFileSync(p, "utf8").split("\n")) {
@@ -44,6 +46,28 @@ export function loadExperience(root: string): ExperienceEvent[] {
   return out;
 }
 
+// Federated events live in a separate log so pushing "everything local" stays
+// trivially correct — your own events never round-trip back in as duplicates.
+export function sharedExperiencePath(root: string): string {
+  return join(root, "experience-shared.jsonl");
+}
+
+// THIS machine's own fix events — what federation pushes upstream.
+export function loadLocalExperience(root: string): ExperienceEvent[] {
+  return readEventLog(hivePaths(root).experienceLog);
+}
+
+// Events pulled from federated spaces (other machines / teammates).
+export function loadSharedExperience(root: string): ExperienceEvent[] {
+  return readEventLog(sharedExperiencePath(root));
+}
+
+// Everything the hive knows — local + federated. This is what precedents,
+// briefs, and the demand signal consume.
+export function loadExperience(root: string): ExperienceEvent[] {
+  return [...loadLocalExperience(root), ...loadSharedExperience(root)];
+}
+
 export interface RecordResult {
   added: number;
   total: number;
@@ -57,7 +81,9 @@ export function recordFixEvents(
   repo: { path: string; name?: string },
   events: { ruleId: string; file: string; exportName: string; fixedAt: string; detail: string }[],
 ): RecordResult {
-  const existing = loadExperience(root);
+  // Dedup against the LOCAL log only — federated copies of this machine's own
+  // events (or a teammate's fix of the same rule) must not block recording.
+  const existing = loadLocalExperience(root);
   if (events.length === 0) return { added: 0, total: existing.length };
   const seen = new Set(existing.map(eventKey));
   const repoName = repo.name || basename(repo.path);

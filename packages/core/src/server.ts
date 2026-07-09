@@ -20,6 +20,7 @@ import { buildCatalog, verifyGrant, type Grant, type GrantVerifier, type UsageRe
 import { selectFeed, type FeedQuery, type FeedTier } from "./feed.ts";
 import type { CorpusVti } from "./corpus.ts";
 import { TRAP_CLASSES, type TrapClass } from "./vtiClass.ts";
+import { isSpaceId, verifyBatch, type ExperienceBatch, type HiveExperienceStore } from "./hive/federation.ts";
 
 // A lot the server holds, kept named so a grant's lot-scope can be enforced.
 export interface ServerLot {
@@ -35,6 +36,9 @@ export interface ServerDeps {
   // Called once on a successful GATED feed pull — the server's authoritative
   // metering. Throwing aborts the response with 500 (fail-closed accounting).
   meter?: (rec: UsageRecord) => void;
+  // HiveMind federation (v0.11.0): when present, /hive/experience serves
+  // signed cross-machine / team experience sync. Absent ⇒ 404 (opt-in).
+  hiveStore?: HiveExperienceStore;
 }
 
 export interface ServerRequest {
@@ -42,6 +46,8 @@ export interface ServerRequest {
   path: string;
   query: Record<string, string>;
   grant?: Grant; // parsed by the binding from the grant header, if present
+  space?: string; // x-brainblast-space header — the federation capability
+  body?: string; // raw request body (POST routes)
 }
 
 export interface ServerResponse {
@@ -85,7 +91,42 @@ function verifierFor(grant: Grant, deps: ServerDeps): GrantVerifier | { error: s
   return { alg: "hmac-sha256", secret: deps.hmacSecret };
 }
 
-export function handleRequest(req: ServerRequest, deps: ServerDeps): ServerResponse {
+export async function handleRequest(req: ServerRequest, deps: ServerDeps): Promise<ServerResponse> {
+  // HiveMind federation: signed experience sync for cross-machine and team
+  // hives. The space id (an unguessable capability, sent as a header so it
+  // stays out of URL logs) is the membership check; the ed25519 signature on
+  // every pushed batch is the attribution check. Reads and writes both
+  // require the space id; nothing here ever enters the RED→GREEN-gated
+  // corpus — experience is advisory context.
+  if (req.path === "/hive/experience") {
+    if (!deps.hiveStore) return json(404, { error: "federation not enabled on this endpoint" });
+    if (!isSpaceId(req.space)) return json(400, { error: "missing or malformed x-brainblast-space header" });
+
+    if (req.method === "POST") {
+      let batch: ExperienceBatch;
+      try {
+        batch = JSON.parse(req.body ?? "");
+      } catch {
+        return json(400, { error: "malformed JSON body" });
+      }
+      const v = verifyBatch(batch);
+      if (!v.valid) return json(403, { error: "batch rejected", reason: v.reason });
+      // The transport capability and the signed payload must agree — a batch
+      // signed for one space cannot be replayed into another.
+      if (batch.space !== req.space) return json(403, { error: "batch rejected", reason: "space-mismatch" });
+      const result = await deps.hiveStore.append(batch.space, batch.author, batch.events);
+      return json(200, result);
+    }
+
+    if (req.method === "GET") {
+      const since = req.query.since != null ? Number(req.query.since) : 0;
+      const result = await deps.hiveStore.list(req.space!, Number.isFinite(since) ? since : 0);
+      return json(200, result);
+    }
+
+    return json(405, { error: "method not allowed" });
+  }
+
   if (req.method !== "GET") return json(405, { error: "method not allowed" });
 
   if (req.path === "/healthz") {

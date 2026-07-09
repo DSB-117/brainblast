@@ -59,3 +59,28 @@ export {
 export { scoreVti, dedupKey, buildCorpusIndex, type CorpusVti, type ScoredVti, type CorpusIndex } from "./corpus.ts";
 export { TRAP_CLASSES, classifyTrap, CLASS_BY_RULE, type TrapClass } from "./vtiClass.ts";
 export { base58Encode, base58Decode } from "./base58.ts";
+
+// HiveMind federation (v0.11.0) — the wire protocol + Supabase store the
+// registry's /api/hive/experience route runs on. hive/federation.ts is PURE
+// (node:crypto only); the ExperienceEvent export is type-only, so nothing
+// fs-bound leaks into a serverless bundle.
+export {
+  verifyBatch,
+  makeBatch,
+  signBody,
+  verifyBody,
+  isSpaceId,
+  newSpaceId,
+  experienceEventKey,
+  MemoryHiveStore,
+  SupabaseHiveStore,
+  BATCH_MAX_EVENTS,
+  EVENT_FIELD_MAX,
+  type ExperienceBatch,
+  type ExperienceBatchBody,
+  type BatchVerification,
+  type HiveExperienceStore,
+  type HiveStoreAppendResult,
+  type StoredExperienceEvent,
+} from "./hive/federation.ts";
+export type { ExperienceEvent } from "./hive/experience.ts";

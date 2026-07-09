@@ -104,7 +104,7 @@ describe("experience-aware briefs", () => {
     });
     expect(brief.entries[0].trapId).toBe("stripe-webhook-raw-body");
     expect(brief.entries[0].personallyFixed).toMatchObject({ repoName: "app-a" });
-    expect(renderBriefText(brief)).toContain("you fixed this exact trap in app-a");
+    expect(renderBriefText(brief)).toContain("already fixed once in app-a");
   });
 
   it("without experience the ranking is score-driven and unflagged", () => {
