@@ -56,9 +56,9 @@ describe("hive brief assembly", () => {
     const brief = assembleBrief({
       deps: DEPS,
       vtis: [
-        vti({ trapId: "low-corr", corroborationCount: 0, severity: "high" }),
-        vti({ trapId: "hot", corroborationCount: 9, severity: "critical" }),
-        vti({ trapId: "mid", corroborationCount: 1, severity: "high" }),
+        vti({ trapId: "low-corr", title: "trap A", corroborationCount: 0, severity: "high" }),
+        vti({ trapId: "hot", title: "trap B", corroborationCount: 9, severity: "critical" }),
+        vti({ trapId: "mid", title: "trap C", corroborationCount: 1, severity: "high" }),
       ],
       maxRecords: 2,
     });
@@ -188,5 +188,36 @@ describe("recall reads the hive by default", () => {
     const bumped = dedupeVtis([rich, vti({ corroborationCount: 9 })]);
     expect(bumped).toHaveLength(1);
     expect(bumped[0].corroborationCount).toBe(9);
+  });
+});
+
+describe("fleet-scale briefs — pattern-duplicate collapse (v0.12.0)", () => {
+  it("collapses same-SDK same-title instances into one entry carrying breadth", () => {
+    const instances = ["parabol", "gravitee", "fallow", "borg-ui"].map((repo, i) =>
+      vti({
+        trapId: `${repo}-algorithm-none`,
+        title: 'jwt.sign with algorithm "none" issues unsigned tokens',
+        sdk: { name: "jsonwebtoken" },
+        corroborationCount: i, // best corroboration must win
+      }),
+    );
+    const distinct = vti({
+      trapId: "jwt-verify-algorithm-none",
+      title: "jwt.verify accepts the none algorithm",
+      sdk: { name: "jsonwebtoken" },
+    });
+    const brief = assembleBrief({ deps: { jsonwebtoken: "^9" }, vtis: [...instances, distinct] });
+    expect(brief.totalMatched).toBe(2); // 4 instances → 1 group, plus the distinct trap
+    const group = brief.entries.find((e) => e.instances === 4)!;
+    expect(group.corroborationCount).toBe(3);
+    expect(renderBriefText(brief)).toContain("pattern found in 4 real repos");
+  });
+
+  it("keeps the richest representative: fixtures from any instance survive the collapse", () => {
+    const bare = vti({ trapId: "a-x", title: "same trap", vulnerable: undefined, fixed: undefined });
+    const rich = vti({ trapId: "b-x", title: "same trap" });
+    const brief = assembleBrief({ deps: { stripe: "^17" }, vtis: [bare, rich] });
+    expect(brief.entries).toHaveLength(1);
+    expect(brief.entries[0].avoid).toBeDefined();
   });
 });
