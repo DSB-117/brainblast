@@ -72,6 +72,10 @@ export {
   isSpaceId,
   newSpaceId,
   experienceEventKey,
+  makePolicy,
+  verifyPolicy,
+  policyAllowsWrite,
+  policyAllowsRead,
   MemoryHiveStore,
   SupabaseHiveStore,
   BATCH_MAX_EVENTS,
@@ -82,5 +86,10 @@ export {
   type HiveExperienceStore,
   type HiveStoreAppendResult,
   type StoredExperienceEvent,
+  type SpacePolicy,
+  type SpacePolicyBody,
+  type PolicyVerification,
+  type WriteMode,
+  type ReadMode,
 } from "./hive/federation.ts";
 export type { ExperienceEvent } from "./hive/experience.ts";

@@ -140,9 +140,95 @@ export interface HiveStoreAppendResult {
   total: number; // events in the space after the append
 }
 
+// ── Per-space access policy (ACL) — for orgs that outgrow bare capability ids ──
+//
+// A bare space id is a pure capability: anyone holding it can read AND
+// contribute. That's perfect for a personal fleet or a small trusted team. An
+// org that shares an id widely wants more: "only these members may contribute"
+// (so a leaked id can't be used to inject junk), and eventually "only these
+// members may read". A **policy** provides that — WITHOUT accounts, staying
+// true to the identity-not-accounts model: the policy is an ed25519-signed
+// document, and the signature is the authority.
+//
+// Trust bootstrap is trust-on-first-use, exactly like the capability itself:
+// the FIRST policy for a space may be set by anyone (they name themselves an
+// admin); after that, only a current admin can sign a change. `version` is a
+// monotonic counter so a stale policy can't be replayed over a newer one.
+export type WriteMode = "open" | "allowlist";
+export type ReadMode = "capability" | "allowlist";
+
+export interface SpacePolicyBody {
+  policyVersion: "1.0";
+  space: string; // bound into the signature
+  version: number; // monotonic; a new policy must exceed the stored one
+  admins: string[]; // ed25519 addresses that may change this policy
+  writeMode: WriteMode; // "allowlist" ⇒ only admins + allowedWriters may POST events
+  readMode: ReadMode; // "allowlist" ⇒ only admins + allowedReaders may GET (enforced at the edge)
+  allowedWriters: string[];
+  allowedReaders: string[];
+  updatedBy: string; // the admin address that signed this version
+  updatedAt: string;
+}
+
+export interface SpacePolicy extends SpacePolicyBody {
+  sig: string; // ed25519 over canonicalJson(body-without-sig)
+}
+
+export function makePolicy(secretKeyB58: string, updatedBy: string, body: Omit<SpacePolicyBody, "updatedBy">): SpacePolicy {
+  const full: SpacePolicyBody = { ...body, updatedBy };
+  return { ...full, sig: signBody(secretKeyB58, full) };
+}
+
+export interface PolicyVerification {
+  valid: boolean;
+  reason?: "malformed" | "bad-space" | "bad-signature" | "not-admin" | "stale-version" | "self-not-admin";
+}
+
+// Verify a candidate policy against the currently-stored one (or none). The
+// signature must verify against `updatedBy`, `updatedBy` must be listed in the
+// candidate's own `admins`, and:
+//   - no current policy  → TOFU: accepted as-is (bootstrap).
+//   - current policy     → signer must be a CURRENT admin AND version must rise.
+export function verifyPolicy(candidate: SpacePolicy, current: SpacePolicy | null): PolicyVerification {
+  if (!candidate || typeof candidate !== "object" || typeof candidate.sig !== "string") return { valid: false, reason: "malformed" };
+  if (candidate.policyVersion !== "1.0" || typeof candidate.updatedBy !== "string" || typeof candidate.version !== "number") {
+    return { valid: false, reason: "malformed" };
+  }
+  if (!isSpaceId(candidate.space)) return { valid: false, reason: "bad-space" };
+  if (!Array.isArray(candidate.admins) || !candidate.admins.every((a) => typeof a === "string") || candidate.admins.length === 0) {
+    return { valid: false, reason: "malformed" };
+  }
+  const { sig, ...body } = candidate;
+  if (!verifyBody(candidate.updatedBy, body, sig)) return { valid: false, reason: "bad-signature" };
+  // A signer must place themselves in the admin set they are declaring —
+  // otherwise they'd lock themselves out (and it signals intent).
+  if (!candidate.admins.includes(candidate.updatedBy)) return { valid: false, reason: "self-not-admin" };
+  if (current) {
+    if (candidate.version <= current.version) return { valid: false, reason: "stale-version" };
+    if (!current.admins.includes(candidate.updatedBy)) return { valid: false, reason: "not-admin" };
+  }
+  return { valid: true };
+}
+
+// The write gate the server applies to an event batch. Open ⇒ anyone with the
+// id. Allowlist ⇒ admins + explicitly allowed writers only.
+export function policyAllowsWrite(policy: SpacePolicy | null, author: string): boolean {
+  if (!policy || policy.writeMode === "open") return true;
+  return policy.admins.includes(author) || policy.allowedWriters.includes(author);
+}
+
+export function policyAllowsRead(policy: SpacePolicy | null, reader: string | undefined): boolean {
+  if (!policy || policy.readMode === "capability") return true;
+  if (!reader) return false;
+  return policy.admins.includes(reader) || policy.allowedReaders.includes(reader);
+}
+
 export interface HiveExperienceStore {
   append(space: string, author: string, events: ExperienceEvent[]): HiveStoreAppendResult | Promise<HiveStoreAppendResult>;
   list(space: string, sinceSeq?: number): { events: StoredExperienceEvent[]; cursor: number } | Promise<{ events: StoredExperienceEvent[]; cursor: number }>;
+  // ACL (optional — a store without policy support behaves as always-open).
+  getPolicy?(space: string): SpacePolicy | null | Promise<SpacePolicy | null>;
+  setPolicy?(space: string, policy: SpacePolicy): void | Promise<void>;
 }
 
 // In-memory store: the reference implementation of the merge semantics
@@ -150,6 +236,14 @@ export interface HiveExperienceStore {
 // executable spec the JSONL (serve) and Supabase (registry) stores mirror.
 export class MemoryHiveStore implements HiveExperienceStore {
   private spaces = new Map<string, { seq: number; byKey: Map<string, StoredExperienceEvent> }>();
+  private policies = new Map<string, SpacePolicy>();
+
+  getPolicy(space: string): SpacePolicy | null {
+    return this.policies.get(space) ?? null;
+  }
+  setPolicy(space: string, policy: SpacePolicy): void {
+    this.policies.set(space, policy);
+  }
 
   append(space: string, author: string, events: ExperienceEvent[]): HiveStoreAppendResult {
     const s = this.spaces.get(space) ?? { seq: 0, byKey: new Map() };
@@ -234,5 +328,28 @@ export class SupabaseHiveStore implements HiveExperienceStore {
     const rows = (await res.json()) as { seq: number; author: string; event: ExperienceEvent }[];
     const events = rows.map((r) => ({ ...r.event, author: r.author, seq: r.seq }));
     return { events, cursor: events.length ? events[events.length - 1].seq : sinceSeq };
+  }
+
+  // Policy row: `create table hive_space_policy (space text primary key,
+  // policy jsonb not null, version int not null, updated_at timestamptz
+  // default now());` — one current policy per space, replaced on a valid
+  // signed update (the handler runs verifyPolicy before calling setPolicy).
+  async getPolicy(space: string): Promise<SpacePolicy | null> {
+    const res = await this.fetchImpl(
+      `${this.url}/rest/v1/hive_space_policy?space=eq.${encodeURIComponent(space)}&select=policy&limit=1`,
+      { headers: this.headers() },
+    );
+    if (!res.ok) throw new Error(`hive policy get failed: ${res.status}`);
+    const rows = (await res.json()) as { policy: SpacePolicy }[];
+    return rows[0]?.policy ?? null;
+  }
+
+  async setPolicy(space: string, policy: SpacePolicy): Promise<void> {
+    const res = await this.fetchImpl(`${this.url}/rest/v1/hive_space_policy?on_conflict=space`, {
+      method: "POST",
+      headers: this.headers({ prefer: "resolution=merge-duplicates,return=minimal" }),
+      body: JSON.stringify([{ space, policy, version: policy.version }]),
+    });
+    if (!res.ok) throw new Error(`hive policy set failed: ${res.status} ${await res.text().then((t) => t.slice(0, 200))}`);
   }
 }

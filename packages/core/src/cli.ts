@@ -2140,6 +2140,15 @@ async function runServe(argv: string[]): Promise<void> {
     }
     const spaceHdr = httpReq.headers["x-brainblast-space"];
     const space = typeof spaceHdr === "string" && spaceHdr.length ? spaceHdr : undefined;
+    const readerHdr = httpReq.headers["x-brainblast-reader"];
+    const reader = typeof readerHdr === "string" && readerHdr.length ? readerHdr : undefined;
+    // Track CLIENT DISCONNECT (not request-body end) so a long-poll hold is
+    // cut short only when the caller actually goes away. The response 'close'
+    // fires on a dropped connection during the hold; after res.end() it's moot.
+    let clientGone = false;
+    httpRes.on("close", () => {
+      if (!httpRes.writableFinished) clientGone = true;
+    });
 
     // Collect the body (bounded — a federation batch is small by protocol).
     const chunks: Buffer[] = [];
@@ -2167,9 +2176,10 @@ async function runServe(argv: string[]): Promise<void> {
             query,
             grant,
             space,
+            reader,
             body: chunks.length ? Buffer.concat(chunks).toString("utf8") : undefined,
           },
-          { lots, trustedDistributor, hmacSecret, meter, hiveStore },
+          { lots, trustedDistributor, hmacSecret, meter, hiveStore, abortLongPoll: () => clientGone },
         );
       } catch (e: any) {
         resp = { status: 500, contentType: "application/json", body: JSON.stringify({ error: "internal", detail: e?.message ?? String(e) }) };
@@ -2980,7 +2990,7 @@ function applyHiveExperience(
 }
 
 // ── HiveMind — the shared second brain for AI agents ─────────────────────────
-// `brainblast hive sync|status|brief|link|unlink|hook`. The hive is a machine-global
+// `brainblast hive sync|watch|status|brief|dashboard|link|space|hook`. The hive is a machine-global
 // knowledge store every agent shares: VTIs synced from the live feed, public
 // rule packs mirrored at a pinned commit, linked repos' dependency indexes, and
 // (later phases) cross-repo experience. See src/hive/.
@@ -2994,10 +3004,11 @@ async function runHive(argv: string[]): Promise<void> {
     console.error("");
     console.error("  sync     one round-trip: pull the VTI delta, mirror the public rule packs at a");
     console.error("           pinned commit, and federate experience with every joined space");
-    console.error("  watch    REAL-TIME daemon: continuous sync + outbreak alerts + live refresh of");
-    console.error("           injected briefings across all linked repos");
-    console.error("             --interval SECS       feed/federation cadence (default 60)");
+    console.error("  watch    REAL-TIME daemon: continuous sync + PUSH delivery (long-poll: a");
+    console.error("           teammate's fix lands in ~1s) + outbreak alerts + live brief refresh");
+    console.error("             --interval SECS       feed/pack-check cadence (default 60)");
     console.error("             --packs-interval SECS pack mirror cadence (default 900)");
+    console.error("             --long-poll SECS      push hold per space (default 25; --no-push disables)");
     console.error("  check    check ONE just-written file against the live rules (any agent/editor;");
     console.error("           exit 1 on a proven trap)                              <file> [--dir D]");
     console.error("             --remote URL      feed endpoint base (default: hosted registry API)");
@@ -3029,6 +3040,14 @@ async function runHive(argv: string[]): Promise<void> {
     console.error("             space leave <hs_id>      stop syncing (already-pulled events remain)");
     console.error("             space rotate <hs_id>     revoke a leaked id: mint + join a replacement");
     console.error("             space block <address>    mute an author (drop + purge their events)");
+    console.error("           team ACL (signed policies — no accounts; the admin key is the authority):");
+    console.error("             space admin [addr] [hs_id]     make yourself (or addr) an admin");
+    console.error("             space allow <addr> [hs_id]     allowlist a writer (→ write:allowlist)");
+    console.error("             space mode <open|allowlist>    who may contribute");
+    console.error("             space read-mode <capability|allowlist>   who may read");
+    console.error("             space policy [hs_id]           show the current policy  [--json]");
+    console.error("  dashboard  team view over shared experience (who fixed what, recurring traps)");
+    console.error("             --html FILE   write a self-contained dashboard page   [--json]");
     console.error("  stats    anonymized demand signal (fix-event counts by rule/class/sdk);");
     console.error("           writes <hive>/stats.json — `npm run corpus` folds it into the");
     console.error("           fleet's work-orders so scouting follows observed failure  [--json]");
@@ -3236,6 +3255,72 @@ async function runHive(argv: string[]): Promise<void> {
       process.exit(0);
     }
 
+    // ── ACL: signed per-space policies (admin / allowlist / read-restrict) ──
+    if (["admin", "allow", "disallow", "mode", "read-mode", "policy"].includes(action ?? "")) {
+      const { loadSpaces, updateSpacePolicy, fetchSpacePolicy } = await import("./hive/spaces.ts");
+      const { loadOrCreateIdentity } = await import("./hive/identity.ts");
+      const spaceId = rest[1] && rest[1].startsWith("hs_") ? rest[1] : undefined;
+      const arg = rest.slice(1).find((a) => a && !a.startsWith("hs_") && !a.startsWith("--"));
+      const space = loadSpaces(root).spaces.find((s) => (spaceId ? s.id === spaceId : true));
+      if (!space) {
+        console.error("hive space: no matching joined space — pass the hs_ id, or join one first");
+        process.exit(2);
+      }
+      const me = loadOrCreateIdentity(root).address;
+
+      if (action === "policy") {
+        try {
+          const policy = await fetchSpacePolicy(space);
+          if (jsonOut) console.log(JSON.stringify(policy, null, 2));
+          else if (!policy) console.log(`hive: space ${space.name ?? space.id.slice(0, 12) + "…"} is OPEN (no policy) — any id-holder can read + contribute`);
+          else {
+            console.log(`hive: policy v${policy.version} for ${space.name ?? space.id.slice(0, 12) + "…"}`);
+            console.log(`  write:   ${policy.writeMode}${policy.writeMode === "allowlist" ? ` (${policy.allowedWriters.length} allowed writers)` : ""}`);
+            console.log(`  read:    ${policy.readMode}${policy.readMode === "allowlist" ? ` (${policy.allowedReaders.length} allowed readers)` : ""}`);
+            console.log(`  admins:  ${policy.admins.map((a) => a.slice(0, 12) + "…").join(", ")}`);
+            console.log(`  you are ${policy.admins.includes(me) ? "an ADMIN" : "not an admin"}.`);
+          }
+        } catch (e: any) {
+          console.error(e?.message ?? String(e));
+          process.exit(1);
+        }
+        process.exit(0);
+      }
+
+      try {
+        const mutate = (draft: any) => {
+          if (action === "admin") {
+            const target = arg ?? me;
+            if (!draft.admins.includes(target)) draft.admins.push(target);
+          } else if (action === "allow") {
+            if (!arg) throw new Error("usage: hive space allow <address> [hs_id]");
+            if (!draft.allowedWriters.includes(arg)) draft.allowedWriters.push(arg);
+            if (draft.writeMode === "open") draft.writeMode = "allowlist"; // allow implies restrict
+          } else if (action === "disallow") {
+            if (!arg) throw new Error("usage: hive space disallow <address> [hs_id]");
+            draft.allowedWriters = draft.allowedWriters.filter((a: string) => a !== arg);
+          } else if (action === "mode") {
+            if (arg !== "open" && arg !== "allowlist") throw new Error("usage: hive space mode <open|allowlist> [hs_id]");
+            draft.writeMode = arg;
+          } else if (action === "read-mode") {
+            if (arg !== "capability" && arg !== "allowlist") throw new Error("usage: hive space read-mode <capability|allowlist> [hs_id]");
+            draft.readMode = arg;
+          }
+        };
+        const { version, policy } = await updateSpacePolicy(root, space, mutate);
+        if (jsonOut) console.log(JSON.stringify(policy, null, 2));
+        else {
+          console.log(`hive: policy v${version} published for ${space.name ?? space.id.slice(0, 12) + "…"} — write:${policy.writeMode}, read:${policy.readMode}, ${policy.admins.length} admin(s), ${policy.allowedWriters.length} writer(s)`);
+          if (action === "admin" && !arg) console.log("  you are now an admin of this space — you can `allow`, `mode`, and `read-mode` it.");
+        }
+      } catch (e: any) {
+        const msg = e?.message ?? String(e);
+        console.error(msg.includes("not-admin") ? `hive space: rejected — you are not an admin of this space (ask an admin to \`hive space admin ${me}\`)` : msg);
+        process.exit(1);
+      }
+      process.exit(0);
+    }
+
     if (action === "list" || action === undefined) {
       const state = loadSpaces(root);
       if (jsonOut) console.log(JSON.stringify(state, null, 2));
@@ -3250,8 +3335,26 @@ async function runHive(argv: string[]): Promise<void> {
       process.exit(0);
     }
 
-    console.error(`hive space: unknown action '${action}' (create|join|list|leave|rotate|block|unblock)`);
+    console.error(`hive space: unknown action '${action}' (create|join|list|leave|rotate|block|unblock|admin|allow|disallow|mode|read-mode|policy)`);
     process.exit(2);
+  }
+
+  if (sub === "dashboard") {
+    // The team view over shared experience — aggregated LOCALLY, so the space
+    // id (a secret) never leaves the machine to produce it.
+    const { loadExperience, loadSharedExperience } = await import("./hive/experience.ts");
+    const { buildDashboard, renderDashboardText, renderDashboardHtml } = await import("./hive/dashboard.ts");
+    const events = rest.includes("--shared-only") ? loadSharedExperience(root) : loadExperience(root);
+    const stats = buildDashboard(events);
+    const htmlPath = val("--html");
+    if (htmlPath) {
+      writeFileSync(htmlPath, renderDashboardHtml(stats));
+      console.log(`hive: dashboard written to ${htmlPath} (${stats.totalEvents} events) — open it in a browser`);
+      process.exit(0);
+    }
+    if (jsonOut) console.log(JSON.stringify(stats, null, 2));
+    else console.log(renderDashboardText(stats));
+    process.exit(0);
   }
 
   if (sub === "status") {
@@ -3407,13 +3510,15 @@ async function runHive(argv: string[]): Promise<void> {
     const { startHiveWatch } = await import("./hive/watch.ts");
     const intervalMs = val("--interval") ? Math.round(parseFloat(val("--interval")!) * 1000) : undefined;
     const packsIntervalMs = val("--packs-interval") ? Math.round(parseFloat(val("--packs-interval")!) * 1000) : undefined;
-    console.error(`hive watch: real-time mode — feed + federation every ${(intervalMs ?? 60_000) / 1000}s, pack mirror every ${(packsIntervalMs ?? 900_000) / 1000}s (Ctrl-C to stop)`);
+    const longPollSec = rest.includes("--no-push") ? 0 : val("--long-poll") ? parseFloat(val("--long-poll")!) : undefined;
+    console.error(`hive watch: real-time mode — feed + federation every ${(intervalMs ?? 60_000) / 1000}s, pack mirror every ${(packsIntervalMs ?? 900_000) / 1000}s${longPollSec === 0 ? "" : `, push (long-poll) delivery ~instant`} (Ctrl-C to stop)`);
     const handle = startHiveWatch({
       root,
       remote: val("--remote"),
       grantPath: val("--grant"),
       intervalMs,
       packsIntervalMs,
+      longPollSec,
     });
     process.on("SIGINT", () => {
       handle.stop();
