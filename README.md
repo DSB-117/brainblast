@@ -215,8 +215,8 @@ brainblast hive status          # what the brain knows, how fresh, what it prote
 
 Three moments of protection, one knowledge source:
 
-- **Before code — the briefing.** `hive brief` (CLI, or the `hive_brief` MCP tool at session start) reads the repo's dependencies and returns the proven traps for exactly that stack, ranked (severity × proof × corroboration — and traps *you personally shipped before* rank first), with avoid/instead snippets. `--inject` maintains an idempotent, marker-delimited block in `CLAUDE.md`/`AGENTS.md`.
-- **During code — the write-time hook.** The moment an agent writes a file, `hive hook` checks just that file against the live rules and feeds hits straight back into the agent's context — *"the line you just wrote is a proven trap; here's the fixed form, and you fixed this same trap in repo-a last month"*. Silent unless something hits; never blocks an edit.
+- **Before code — the briefing.** `hive brief` (CLI, or the `hive_brief` MCP tool) reads the repo's dependencies — npm, Cargo, go.mod, and Python manifests — and returns the proven traps for exactly that stack, ranked (severity × proof × corroboration — and traps *someone here already shipped* rank first), with avoid/instead snippets. `--inject` maintains an idempotent, marker-delimited block in `CLAUDE.md`/`AGENTS.md`; with the SessionStart hook installed (v0.12.0), the briefing arrives as session context automatically.
+- **During code — the write-time hook.** The moment an agent writes a file, `hive hook` checks just that file against the live rules and feeds hits straight back into the agent's context — *"the line you just wrote is a proven trap; here's the fixed form, and this same trap was already fixed in repo-a last month"*. Silent unless something hits; never blocks an edit. Any other agent or editor gets the same check via `brainblast hive check <file>` (exit 1 on a hit).
 - **At the gate — live audits.** `npx brainblast .` automatically loads the hive's mirrored packs, so a trap the fleet proved this morning fails your build this afternoon — no version bump. Bundled/project/explicit packs always win collisions; `BRAINBLAST_NO_HIVE=1` opts out; CI without a hive is unchanged.
 
 And the hive is proactive and recursive:
@@ -225,7 +225,14 @@ And the hive is proactive and recursive:
 - **Cross-repo experience** — confirmed fixes promote from each repo's living memory into the machine-global log; audits, hooks, and briefs cite them across repos and agents.
 - **Demand signal** — `hive stats` aggregates anonymized fix-event *counts* (no code, no paths); `npm run corpus` folds them into the fleet's work-orders, so scouting digs where real agents actually fail. `hive contribute` surveys staged fix captures across linked repos and names each one's consent-gated drain path.
 
-Anonymous sync gets the free protection layer (public packs + sample-tier metadata); a grant in `<hive>/grant.json` unlocks full fixtures for richer briefs. An empty hive means no verified trap is on file — never that your stack is safe.
+### Real-time (v0.12.0)
+
+The hive keeps itself current — this is what makes it a *second brain* rather than a snapshot:
+
+- **`brainblast hive watch`** — the always-on daemon: feed delta + federation every interval (default 60s, `--interval`), pack mirror on a slower cadence, **outbreak alerts the moment a new trap lands** that touches a repo you work in, and **live re-injection** of the briefing block in every linked repo that carries one — the next session anywhere on the machine starts with knowledge that arrived seconds ago.
+- **Self-freshening hooks** — no daemon required: any hook fire (session start, file write) on a hive older than `BRAINBLAST_HIVE_MAX_AGE_S` (default 600s) kicks off a detached background sync. Agent activity itself keeps the brain current.
+- **Auto-linking** — every audited repo registers itself + its dependency index, so brief/outbreak/watch coverage grows to wherever you actually work, zero setup.
+- **Sample tier is real-time too**: since v0.12.0 the anonymous feed streams *every* proven record's metadata + receipt immediately (no cap, no holdback). Fixtures — the trainable payload — remain what a grant in `<hive>/grant.json` unlocks. An empty hive means no verified trap is on file — never that your stack is safe.
 
 ### Federation — cross-machine and team hives (v0.11.0)
 
@@ -238,6 +245,7 @@ brainblast hive sync                          # now also pushes + pulls experien
 ```
 
 - **Identity, not accounts.** Each hive generates a local ed25519 identity (`hive id`); every pushed batch is signed, so events are attributable and a space id can never impersonate a member. No signup, no tokens — the space id is membership, the signature is attribution, the server validates both (the same open-endpoint posture as the fleet ledger).
+- **Moderation + rotation (v0.12.0).** `hive space rotate <id>` revokes a leaked capability (mints + joins a replacement — share the new id with everyone you still trust); `hive space block <address>` mutes a junk author locally (future pulls dropped, existing events purged). Pushes are chunked, so a fix log of any size converges.
 - **Trust boundary, stated plainly:** anyone holding a space id can read that space's fix metadata (rule ids, repo names, relative file paths) and contribute under their own identity. Share it accordingly. Federated experience is advisory agent context — it **never** enters the RED→GREEN-gated corpus or the enforcement rule set.
 - Works against the hosted registry (`/api/hive/experience`) or any self-hosted `brainblast serve`.
 
