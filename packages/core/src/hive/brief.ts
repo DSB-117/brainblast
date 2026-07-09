@@ -31,6 +31,10 @@ export interface BriefEntry {
   // Set when an agent on this machine already fixed this exact trap somewhere:
   // the strongest possible signal that it WILL be shipped here without a brief.
   personallyFixed?: { repoName: string; fixedAt: string };
+  // Fleet-scale corpora hold one VTI per SOURCE REPO of the same pattern
+  // (e.g. thirty `<repo>-algorithm-none` records). The brief collapses them:
+  // this entry represents `instances` records, and breadth is itself signal.
+  instances?: number;
 }
 
 export interface HiveBrief {
@@ -125,13 +129,40 @@ export function assembleBrief(opts: BriefOptions): HiveBrief {
       String(b.capturedAt ?? "").localeCompare(String(a.capturedAt ?? "")),
   );
 
-  const entries = matched.slice(0, maxRecords);
+  // Collapse pattern-duplicates: the fleet lands one VTI per source repo of
+  // the same footgun, and a brief that spends its budget on thirty copies of
+  // "algorithm: none" teaches one lesson thirty times. Group by SDK + title
+  // (fleet instances share exact titles), keep the richest representative,
+  // and carry the group size — breadth across repos is a commonness signal.
+  const groups = new Map<string, BriefEntry>();
+  for (const e of matched) {
+    const key = `${e.sdkName.toLowerCase()}::${(e.title ?? e.class).toLowerCase()}`;
+    const held = groups.get(key);
+    if (!held) {
+      groups.set(key, { ...e, instances: 1 });
+      continue;
+    }
+    held.instances = (held.instances ?? 1) + 1;
+    held.corroborationCount = Math.max(held.corroborationCount, e.corroborationCount);
+    // Prefer a representative that carries the teach-the-agent payload.
+    if (!held.avoid && e.avoid) held.avoid = e.avoid;
+    if (!held.instead && e.instead) held.instead = e.instead;
+    if (!held.personallyFixed && e.personallyFixed) held.personallyFixed = e.personallyFixed;
+  }
+  const collapsed = [...groups.values()].sort(
+    (a, b) =>
+      Number(Boolean(b.personallyFixed)) - Number(Boolean(a.personallyFixed)) ||
+      b.score + Math.min((b.instances ?? 1) - 1, 20) - (a.score + Math.min((a.instances ?? 1) - 1, 20)) ||
+      String(b.capturedAt ?? "").localeCompare(String(a.capturedAt ?? "")),
+  );
+
+  const entries = collapsed.slice(0, maxRecords);
   return {
     depCount: Object.keys(deps).length,
     matchedDeps: [...matchedDeps].sort(),
     entries,
-    totalMatched: matched.length,
-    truncated: matched.length - entries.length,
+    totalMatched: collapsed.length,
+    truncated: collapsed.length - entries.length,
     unmatchedDepCount: Object.keys(deps).length - matchedDeps.size,
   };
 }
@@ -143,7 +174,8 @@ function entryHeadline(e: BriefEntry): string {
   const corr = e.corroborationCount > 0 ? `, corroborated in ${e.corroborationCount} repo${e.corroborationCount === 1 ? "" : "s"}` : "";
   const proof = e.proofMethod ? ` (proof: ${e.proofMethod}${corr})` : corr ? ` (${corr.slice(2)})` : "";
   const personal = e.personallyFixed ? ` ⚑ already fixed once in ${e.personallyFixed.repoName} on ${e.personallyFixed.fixedAt} — do not ship it again` : "";
-  return `[${e.severity.toUpperCase()}] ${e.trapId} — ${e.title ?? e.class}${proof}${personal}`;
+  const breadth = (e.instances ?? 1) > 1 ? ` · pattern found in ${e.instances} real repos` : "";
+  return `[${e.severity.toUpperCase()}] ${e.trapId} — ${e.title ?? e.class}${proof}${breadth}${personal}`;
 }
 
 export function renderBriefText(b: HiveBrief): string {

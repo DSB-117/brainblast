@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v0.12.1 — 2026-07-09 — fleet-scale briefs: pattern-duplicate collapse
+
+Found in v0.12.0 final acceptance: with the real-time sample tier live, a
+brief against the full 4k corpus matched 291 traps for 3 dependencies —
+most of them per-source-repo INSTANCES of the same pattern (the fleet lands
+one VTI per repo it finds a footgun in). A brief that spends its budget on
+thirty copies of "algorithm: none" teaches one lesson thirty times.
+
+Briefs now collapse same-SDK same-title instances into one entry carrying
+the group size — and breadth is itself signal: "pattern found in 70 real
+repos" ranks above a singleton and tells the agent how commonly this
+mistake actually ships. The richest representative wins (fixtures from any
+instance survive; best corroboration kept). Live: 291 matches → 20
+distinct patterns. 2 new tests; suite 1006 green.
+
+
 ## v0.12.0 — 2026-07-09 — HiveMind goes real-time
 
 Every limitation on the v0.11.0 honest list, addressed. The hive is now a
