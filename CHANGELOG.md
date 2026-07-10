@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+## v1.0.0 — 2026-07-10 — Brainblast 1.0
+
+Brainblast reaches 1.0. The product is stable and complete across its two
+halves — **catch the trap, then keep every agent immune to it**:
+
+- **The auditor** — `npx brainblast .`, an offline static scanner (no network,
+  no LLM) with 90+ open rule packs across TS/JS, Rust/Anchor, Go, Solidity, and
+  config; `report.json` contract, CI gate, GitHub Action, MCP server.
+- **HiveMind** — the shared, real-time second brain for AI agents: sync the live
+  proven-trap corpus, brief agents on their exact stack, correct them at write
+  time, enforce at the gate, learn across repos, and federate across machines and
+  teams (signed spaces, per-space ACLs) — with a dashboard over shared
+  experience. Nothing enters shared memory without a reproducible RED→GREEN proof.
+- **The data engine** — an autonomous fleet that manufactures Verified Trap
+  Instances, packaged and streamed through `registry.brainblast.tech` (free
+  real-time sample tier; lot-licensed fixtures).
+
+**Stability commitment.** As of 1.0, these contracts are stable and change only
+under semver: the `brainblast` CLI surface (including `hive`), `report.json`
+(`schemaVersion 1.0`), the VTI schema, ed25519 grants, and the federation wire
+protocol (signed experience batches + space policies).
+
+**Polish in this release:** corrected the `brainblast hive` help so each
+command's flags render under it (sync's flags no longer appear under `check`);
+refreshed all documentation version references to 1.0.0; regenerated
+SHA256SUMS. No behavioral changes to the shipped surfaces. Suite green.
+
+
+
 ## v0.13.1 — 2026-07-09 — hotfix: federation must not depend on the policy table
 
 v0.13.0's ACL layer fetched a space's policy on EVERY `/hive/experience`

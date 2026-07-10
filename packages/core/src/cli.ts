@@ -3004,13 +3004,6 @@ async function runHive(argv: string[]): Promise<void> {
     console.error("");
     console.error("  sync     one round-trip: pull the VTI delta, mirror the public rule packs at a");
     console.error("           pinned commit, and federate experience with every joined space");
-    console.error("  watch    REAL-TIME daemon: continuous sync + PUSH delivery (long-poll: a");
-    console.error("           teammate's fix lands in ~1s) + outbreak alerts + live brief refresh");
-    console.error("             --interval SECS       feed/pack-check cadence (default 60)");
-    console.error("             --packs-interval SECS pack mirror cadence (default 900)");
-    console.error("             --long-poll SECS      push hold per space (default 25; --no-push disables)");
-    console.error("  check    check ONE just-written file against the live rules (any agent/editor;");
-    console.error("           exit 1 on a proven trap)                              <file> [--dir D]");
     console.error("             --remote URL      feed endpoint base (default: hosted registry API)");
     console.error("             --grant FILE      signed grant (default: <hive>/grant.json if present)");
     console.error("             --fresh           ignore the stored cursor; re-pull everything");
@@ -3020,6 +3013,13 @@ async function runHive(argv: string[]): Promise<void> {
     console.error("             --ref REF         pack source branch/tag (default: main)");
     console.error("             --force           re-mirror packs even when the sha is unchanged");
     console.error("             --json            machine-readable report");
+    console.error("  watch    REAL-TIME daemon: continuous sync + PUSH delivery (long-poll: a");
+    console.error("           teammate's fix lands in ~1s) + outbreak alerts + live brief refresh");
+    console.error("             --interval SECS       feed/pack-check cadence (default 60)");
+    console.error("             --packs-interval SECS pack mirror cadence (default 900)");
+    console.error("             --long-poll SECS      push hold per space (default 25; --no-push disables)");
+    console.error("  check    check ONE just-written file against the live rules (any agent/editor;");
+    console.error("           exit 1 on a proven trap)                              <file> [--dir D] [--json]");
     console.error("  status   what the brain knows, how fresh it is, what it protects  [--json]");
     console.error("  brief    proven traps for a repo's dependencies, ranked + budgeted [dir]");
     console.error("             --sdk NAME        focus on one dependency");
