@@ -43,7 +43,10 @@ function collect(node: any, kind: string, out: any[] = []): any[] {
 // → "addLiquidityETH") or the bare identifier (`swap(...)` → "swap").
 function calleeName(call: any): string {
   let node = namedKids(call)[0];
-  while (node && node.type === "expression") {
+  // Unwrap `expression` wrappers AND the payable-call `struct_expression`
+  // (`router.addLiquidityETH{value: x}(...)` — extremely common for V2 LP seeds),
+  // whose first named child is the real callee expression.
+  while (node && (node.type === "expression" || node.type === "struct_expression")) {
     const nk = namedKids(node);
     if (!nk.length) break;
     node = nk[0];

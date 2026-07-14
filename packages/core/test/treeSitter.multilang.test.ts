@@ -202,6 +202,15 @@ describe("Solidity static AST — cst-positional-arg-forbidden-literal", () => {
     expect(r).toHaveLength(1);
     expect(r[0].result).toBe("fail");
   });
+  it("matches a payable call — router.addLiquidityETH{value: bal}(...,0,...) (RED)", () => {
+    const src = `pragma solidity ^0.8.20;
+contract C { function open() external { router.addLiquidityETH{value: address(this).balance}(tk, bal, 0, 0, to, dl); } }
+`;
+    const rule: Rule = { ...SOL_POSITIONAL_RULE, detect: { ...SOL_POSITIONAL_RULE.detect, nameRegex: "open" } };
+    const r = scan("solidity", "C.sol", src, rule);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("fail");
+  });
 });
 
 describe("finder scoping", () => {
