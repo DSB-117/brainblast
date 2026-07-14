@@ -112,6 +112,58 @@ describe("Solidity static AST — cst-call-forbidden", () => {
   });
 });
 
+const SOL_STRUCT_RULE: Rule = {
+  id: "sol-v3-minout", severity: "high", title: "zeroed amountOutMinimum",
+  component: { name: "solidity", type: "SmartContract" },
+  detect: { modules: ["solidity"], nameRegex: "swap", triggerCalls: [], lang: "solidity" },
+  check: { kind: "cst-struct-field-forbidden-literal", params: { typeName: "ExactInputSingleParams", field: "amountOutMinimum", forbiddenValue: "0" } },
+  test: { kind: "none" },
+};
+
+const solStructVuln = `pragma solidity ^0.8.20;
+contract S {
+  function swap(uint256 amountIn) external {
+    IR.ExactInputSingleParams memory p = IR.ExactInputSingleParams({ tokenIn: address(0), amountIn: amountIn, amountOutMinimum: 0, sqrtPriceLimitX96: 0 });
+  }
+}
+`;
+const solStructFixed = `pragma solidity ^0.8.20;
+contract S {
+  function swap(uint256 amountIn, uint256 minOut) external {
+    IR.ExactInputSingleParams memory p = IR.ExactInputSingleParams({ tokenIn: address(0), amountIn: amountIn, amountOutMinimum: minOut, sqrtPriceLimitX96: 0 });
+  }
+}
+`;
+const solStructSafeLiteral = `pragma solidity ^0.8.20;
+contract S {
+  function swap(uint256 amountIn) external {
+    IR.ExactInputSingleParams memory p = IR.ExactInputSingleParams({ tokenIn: address(0), amountIn: amountIn, amountOutMinimum: 1, sqrtPriceLimitX96: 0 });
+  }
+}
+`;
+
+describe("Solidity static AST — cst-struct-field-forbidden-literal", () => {
+  it("flags a struct field set to the forbidden 0 — amountOutMinimum: 0 (RED)", () => {
+    const r = scan("solidity", "S.sol", solStructVuln, SOL_STRUCT_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("fail");
+  });
+  it("clears a computed field value — amountOutMinimum: minOut (GREEN)", () => {
+    const r = scan("solidity", "S.sol", solStructFixed, SOL_STRUCT_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("pass");
+  });
+  it("clears a non-forbidden literal — amountOutMinimum: 1 (GREEN)", () => {
+    const r = scan("solidity", "S.sol", solStructSafeLiteral, SOL_STRUCT_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("pass");
+  });
+  it("matches the type by member-access suffix (IR.ExactInputSingleParams) not just a bare name", () => {
+    const r = scan("solidity", "S.sol", solStructVuln, SOL_STRUCT_RULE);
+    expect(r[0].result).toBe("fail");
+  });
+});
+
 describe("finder scoping", () => {
   it("does not consider a Go function that neither matches nameRegex nor calls the trigger", () => {
     const src = `package other
