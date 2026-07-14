@@ -24,6 +24,7 @@ import { differentialIo } from "./differentialIo.ts";
 import { cstStructFieldForbiddenLiteral } from "./cstStructFieldForbiddenLiteral.ts";
 import { cstMemberAccessForbidden } from "./cstMemberAccessForbidden.ts";
 import { cstCallForbidden } from "./cstCallForbidden.ts";
+import { cstPositionalArgForbiddenLiteral } from "./cstPositionalArgForbiddenLiteral.ts";
 import type { Candidate, RustCandidate, ConfigCandidate, CstCandidate, CheckOutcome, Checker, RustChecker, ConfigChecker, CstChecker } from "../types.ts";
 
 // Registry of human-vetted checker templates. Rules bind to these by `kind`.
@@ -72,6 +73,9 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker | CstChecke
   // (addr.delegatecall(data)) — regardless of receiver. Complements member-access:
   // catches low-level footguns where the receiver is a variable, not a fixed global.
   "cst-call-forbidden": cstCallForbidden as CstChecker,
+  // Solidity positional-arg analog — the Uniswap V2 zeroed-min-out family
+  // (addLiquidityETH(…,0,0,…), swapExactTokensForTokens(amt,0,…)).
+  "cst-positional-arg-forbidden-literal": cstPositionalArgForbiddenLiteral as CstChecker,
 };
 
 // Move 2 — self-extending checkers. The meta-gate (scripts/fleet-checker-gate.ts)

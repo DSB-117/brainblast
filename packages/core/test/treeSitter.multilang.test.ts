@@ -164,6 +164,46 @@ describe("Solidity static AST — cst-struct-field-forbidden-literal", () => {
   });
 });
 
+const SOL_POSITIONAL_RULE: Rule = {
+  id: "sol-v2-minout", severity: "high", title: "zeroed V2 min-out",
+  component: { name: "solidity", type: "SmartContract" },
+  detect: { modules: ["solidity"], nameRegex: "open", triggerCalls: [], lang: "solidity" },
+  check: { kind: "cst-positional-arg-forbidden-literal", params: { call: "addLiquidityETH", argIndex: 2, forbiddenValue: "0" } },
+  test: { kind: "none" },
+};
+const solPosVuln = `pragma solidity ^0.8.20;
+contract C { function open() external { router.addLiquidityETH(token, bal, 0, 0, owner, block.timestamp); } }
+`;
+const solPosFixed = `pragma solidity ^0.8.20;
+contract C { function open(uint256 minTok) external { router.addLiquidityETH(token, bal, minTok, 1, owner, block.timestamp); } }
+`;
+const solPosCast = `pragma solidity ^0.8.20;
+contract C { function open() external { uni.swapExactTokensForTokens(amountIn, uint256(0), path, to, deadline); } }
+`;
+const SOL_POSITIONAL_CAST_RULE: Rule = {
+  ...SOL_POSITIONAL_RULE,
+  detect: { ...SOL_POSITIONAL_RULE.detect, nameRegex: "open" },
+  check: { kind: "cst-positional-arg-forbidden-literal", params: { call: "swapExactTokensForTokens", argIndex: 1, forbiddenValue: "0" } },
+};
+
+describe("Solidity static AST — cst-positional-arg-forbidden-literal", () => {
+  it("flags a zeroed positional min-out — addLiquidityETH(...,0,...) (RED)", () => {
+    const r = scan("solidity", "C.sol", solPosVuln, SOL_POSITIONAL_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("fail");
+  });
+  it("clears a computed/non-forbidden positional arg (GREEN)", () => {
+    const r = scan("solidity", "C.sol", solPosFixed, SOL_POSITIONAL_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("pass");
+  });
+  it("recognizes a numeric-cast zero — swapExactTokensForTokens(amt, uint256(0), ...) (RED)", () => {
+    const r = scan("solidity", "C.sol", solPosCast, SOL_POSITIONAL_CAST_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("fail");
+  });
+});
+
 describe("finder scoping", () => {
   it("does not consider a Go function that neither matches nameRegex nor calls the trigger", () => {
     const src = `package other
