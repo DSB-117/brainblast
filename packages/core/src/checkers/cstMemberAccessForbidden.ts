@@ -31,6 +31,25 @@ function named(node: any): any[] {
   return out;
 }
 
+// The rightmost identifier leaf of a subtree. Needed because tree-sitter-solidity
+// mis-associates member access across a boolean operator: it parses
+//   !isContract(msg.sender) && tx.origin
+// as `(!isContract(msg.sender) && tx).origin` — a member_expression whose OBJECT is
+// the whole `... && tx` binary_expression, not the bare identifier `tx`. The real
+// object of the `.origin` access is that binary's trailing operand (`tx`), so we
+// match against the object subtree's rightmost identifier as a fallback. For a
+// plain-identifier object this is just the identifier itself (no behavior change).
+function rightmostIdentifier(node: any): string {
+  if (!node) return "";
+  if (node.type === "identifier") return (node.text ?? "").trim();
+  const kids = named(node);
+  for (let i = kids.length - 1; i >= 0; i--) {
+    const r = rightmostIdentifier(kids[i]);
+    if (r) return r;
+  }
+  return "";
+}
+
 export const cstMemberAccessForbidden: CstChecker = (c, p) => {
   const object = String(p.object ?? "");
   const property = String(p.property ?? "");
@@ -38,9 +57,14 @@ export const cstMemberAccessForbidden: CstChecker = (c, p) => {
   for (const m of collect(c.bodyNode, "member_expression")) {
     const kids = named(m); // [object identifier, property identifier]
     if (kids.length < 2) continue;
-    const objText = (kids[0]?.text ?? "").trim();
+    const objNode = kids[0];
+    const objText = (objNode?.text ?? "").trim();
     const propText = (kids[kids.length - 1]?.text ?? "").trim();
-    if (objText === object && propText === property) {
+    // Exact object match, OR (for the `&&`/`||` grammar mis-parse above) the object
+    // subtree's rightmost identifier is the target — `... && tx`.`origin` still trips
+    // the tx.origin trap.
+    const objMatches = objText === object || rightmostIdentifier(objNode) === object;
+    if (objMatches && propText === property) {
       return { result: "fail", detail: (p.failDetail as string) ?? `${object}.${property} is used here` };
     }
   }

@@ -175,6 +175,22 @@ export const objectArgPropertyForbiddenLiteral: Checker = (c, p) => {
     };
   }
 
+  // A concrete array/object literal is a determinable value that is NOT a scalar
+  // forbidden literal — the canonical safe fix for a permissive boolean/scalar
+  // footgun. e.g. socket.io / CORS `origin: true` (allow-all) → an explicit
+  // allowlist `origin: ['https://app.example.com']`, or `origin: { ... }`. Since the
+  // forbidden value here is always a scalar (0 / true / false / "0"), any array/
+  // object literal is provably safe → PASS (instead of cant_tell).
+  const isArrayOrObjectLiteral =
+    kind === SyntaxKind.ArrayLiteralExpression || kind === SyntaxKind.ObjectLiteralExpression;
+  if (isArrayOrObjectLiteral && typeof p.forbiddenValue !== "object") {
+    return {
+      result: "pass",
+      detail: (p.passDetail as string) ??
+        `${p.propName} is an explicit ${kind === SyntaxKind.ArrayLiteralExpression ? "list" : "object"}, not ${p.forbiddenValue}`,
+    };
+  }
+
   // A recognized numeric/percentage wrapper with a non-zero value (e.g. the fixed
   // fixture's `Percentage.fromFraction(500, 10000)`) is a determinable safe value.
   if (p.forbiddenValue === 0 && isKnownNumericWrapperCall(init)) {
