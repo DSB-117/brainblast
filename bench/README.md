@@ -2,8 +2,8 @@
 
 **Does a model avoid silent SDK-integration traps on current APIs?**
 
-The eval wedge of [`ROADMAP-TRAINING-DATA.md`](../ROADMAP-TRAINING-DATA.md)
-(Stage 1, Step 3). Each [Verified Trap Instance](../datasets/seed/README.md) is
+The eval wedge of [`ROADMAP.md`](../ROADMAP.md)
+(Lane 4 — eval-as-a-service). Each [Verified Trap Instance](../datasets/seed/README.md) is
 one eval item. A model is asked to implement a function against a real SDK; we
 grade whether the result ships the trap or avoids it.
 

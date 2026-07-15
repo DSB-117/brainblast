@@ -1,8 +1,8 @@
 # The Agent Wallet — plan
 
 **Status:** P0–P3 landed (engineering) · additive, default-off · audit path unchanged
-**Companion to:** [`ROADMAP-TRAINING-DATA.md`](ROADMAP-TRAINING-DATA.md) (this is the
-on-chain `$BRAIN` substrate its Stages 2 & 4 were deferred onto)
+**Companion to:** [`ROADMAP.md`](ROADMAP.md) (this is the
+on-chain `$BRAIN` substrate — Lane 5)
 
 > **Legend:** ✅ shipped · ◐ in progress · ☐ not started.
 

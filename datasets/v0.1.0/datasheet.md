@@ -6,7 +6,7 @@ _Generated 2026-07-05T02:14:26.180Z by pack-dataset@0.1.0. Records conform to [`
 A corpus of **machine-verified `error → fix → proof` records** for real SDK
 integration traps. Each record is *reward-gradable*: Brainblast's own static
 checker fails (RED) on the vulnerable code and passes (GREEN) on the fix. This is
-the property scraped bug data lacks. See [`ROADMAP-TRAINING-DATA.md`](../../ROADMAP-TRAINING-DATA.md).
+the property scraped bug data lacks. See [`ROADMAP.md`](../../ROADMAP.md).
 
 ## Composition
 - **Records:** 90 (full lot), 3 (open sample).

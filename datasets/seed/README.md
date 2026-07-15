@@ -1,6 +1,6 @@
 # Brainblast seed dataset — Verified Trap Instances (VTIs)
 
-**Stage 0 artifact** of [`ROADMAP-TRAINING-DATA.md`](../../ROADMAP-TRAINING-DATA.md).
+**Owned-corpus seed** for [`ROADMAP.md`](../../ROADMAP.md) (Lane 2 — Corpus & Fleet).
 This is the first, fully-owned slice of the training-data platform: machine-verified
 `error → fix → proof` records, one per bundled rule pack.
 

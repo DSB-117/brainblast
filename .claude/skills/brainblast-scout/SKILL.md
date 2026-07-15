@@ -29,7 +29,7 @@ that lands in `packs/` flows straight into the corpus and the storefront via
 `npm run intake` (`gen:vti → pack:dataset → corpus → catalog`), no `$BRAIN`
 required. **Phase 5 (stake) is OPTIONAL and opt-in** — a quality bond layered on
 top, run only when the operator has set up the capped ops-wallet + caps. This is
-North Star #2 of `ROADMAP-TRAINING-DATA.md`: data intake never blocks on spend.
+a core marketplace invariant (`ROADMAP.md`, Lane 4): data intake never blocks on spend.
 
 Each phase fails closed: if a phase doesn't produce a clean result, stop and
 surface a draft for human review rather than forcing it through.

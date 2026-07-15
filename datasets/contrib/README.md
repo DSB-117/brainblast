@@ -1,8 +1,8 @@
 # Contributor lot — `contributor-grant-v1`
 
 **Physically separate from the owned corpus.** This directory holds VTIs ingested
-from real contributor submissions via `npm run ingest:vti` (Stage 2 of
-[`ROADMAP-TRAINING-DATA.md`](../../ROADMAP-TRAINING-DATA.md)). It is kept apart
+from real contributor submissions via `npm run ingest:vti` (community submission —
+[`ROADMAP.md`](../../ROADMAP.md), Lane 3). It is kept apart
 from [`datasets/seed/`](../seed/) and [`datasets/v*/`](../) so a consent or
 licensing issue here can **never** contaminate the `synthetic-owned` data.
 
