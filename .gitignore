@@ -1,3 +1,6 @@
+# Dependencies & build caches — never commit
+node_modules/
+
 # gstack / browse runtime
 .gstack/
 
