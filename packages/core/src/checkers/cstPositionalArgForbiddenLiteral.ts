@@ -78,7 +78,15 @@ export const cstPositionalArgForbiddenLiteral: CstChecker = (c, p) => {
   const argIndex = Number(p.argIndex ?? 0);
   const forbiddenStr = String(p.forbiddenValue);
 
+  // Scan ALL matching calls, not just the first. A scope often calls the target
+  // more than once (e.g. a multi-hop router: the final hop passes a real min-out
+  // while intermediate hops pass a literal 0). If ANY matching call has the
+  // forbidden literal in the slot, the scope is unsafe → fail. Only when every
+  // matching call's slot is a non-forbidden value is the scope safe → pass. (The
+  // old first-match return missed the footgun whenever a safe call came first.)
   let sawCall = false;
+  let sawArg = false;
+  let safeArgText = "";
   for (const ce of collect(c.bodyNode, "call_expression")) {
     if (calleeName(ce) !== call) continue;
     sawCall = true;
@@ -87,14 +95,18 @@ export const cstPositionalArgForbiddenLiteral: CstChecker = (c, p) => {
     const args = namedKids(ce).filter((k) => k.type === "call_argument");
     const arg = args[argIndex];
     if (!arg) continue;
+    sawArg = true;
     if (argIsForbidden(arg.text ?? "", forbiddenStr)) {
       return { result: "fail", detail: (p.failDetail as string) ?? `${call} positional arg[${argIndex}] is the forbidden literal ${forbiddenStr}` };
     }
-    return { result: "pass", detail: (p.passDetail as string) ?? `${call} arg[${argIndex}] is ${(arg.text ?? "").trim()}, not the forbidden ${forbiddenStr}` };
+    safeArgText = (arg.text ?? "").trim();
   }
 
   if (!sawCall) {
     return { result: "cant_tell", detail: (p.absentCallDetail as string) ?? `no ${call}(...) call in this scope` };
   }
-  return { result: "cant_tell", detail: (p.absentArgDetail as string) ?? `${call} has no positional arg at index ${argIndex}` };
+  if (!sawArg) {
+    return { result: "cant_tell", detail: (p.absentArgDetail as string) ?? `${call} has no positional arg at index ${argIndex}` };
+  }
+  return { result: "pass", detail: (p.passDetail as string) ?? `${call} arg[${argIndex}] is ${safeArgText}, not the forbidden ${forbiddenStr}` };
 };

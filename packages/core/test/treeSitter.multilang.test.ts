@@ -235,6 +235,36 @@ contract C { function open() external { router.addLiquidityETH{value: address(th
     expect(r).toHaveLength(1);
     expect(r[0].result).toBe("fail");
   });
+  // Regression: a scope that calls the target more than once — a safe call FIRST,
+  // then an unguarded 0 in a later hop — must still fail (any-match, not first-
+  // match). Real repo: a Base Aave liquidator's multi-hop _swapDispatch.
+  const SOL_MULTICALL_RULE: Rule = {
+    ...SOL_POSITIONAL_RULE, id: "sol-multihop-minout",
+    detect: { ...SOL_POSITIONAL_RULE.detect, nameRegex: "doSwaps" },
+    check: { kind: "cst-positional-arg-forbidden-literal", params: { call: "_swap", argIndex: 5, forbiddenValue: "0" } },
+  };
+  it("flags a forbidden 0 in a LATER call when the first call is safe (RED, any-match)", () => {
+    const src = `pragma solidity ^0.8.20;
+contract C { function doSwaps(uint256 owed) internal {
+  _swap(col, debt, k1, f1, bal, owed);        // safe (variable min-out)
+  uint256 mid = _swap(col, USDC, k1, f1, bal, 0);  // unguarded
+} }
+`;
+    const r = scan("solidity", "C.sol", src, SOL_MULTICALL_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("fail");
+  });
+  it("passes when every call's slot is a non-forbidden value (GREEN)", () => {
+    const src = `pragma solidity ^0.8.20;
+contract C { function doSwaps(uint256 owed, uint256 midMin) internal {
+  _swap(col, debt, k1, f1, bal, owed);
+  uint256 mid = _swap(col, USDC, k1, f1, bal, midMin);
+} }
+`;
+    const r = scan("solidity", "C.sol", src, SOL_MULTICALL_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("pass");
+  });
 });
 
 describe("finder scoping", () => {
