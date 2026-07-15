@@ -1,0 +1,6 @@
+# Brainblast subnet — Python deps.
+# The pure core (scoring.py, proof.py, tests) needs ONLY the stdlib.
+# bittensor is required only to run the actual neurons (validator.py, miner.py).
+bittensor>=8.0.0
+# proof.py additionally shells out to the TypeScript engine in packages/core:
+#   node >= 18, and `npx tsx` available (installed by that package).

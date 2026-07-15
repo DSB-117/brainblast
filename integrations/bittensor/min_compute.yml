@@ -1,0 +1,22 @@
+# Minimum compute for Brainblast subnet neurons.
+# Validation is a STATIC checker run for most classes — no GPU required, in
+# deliberate contrast to embedding/vision data subnets (e.g. OMEGA: 10-24GB VRAM).
+# This is a core cost advantage: validators are cheap, so consensus is cheap.
+version: "1.0"
+
+validator:
+  cpu: { min_cores: 4, min_speed_ghz: 2.5 }
+  gpu: { required: false }          # static analysis; no model inference
+  memory: { min_gb: 8 }
+  storage: { min_gb: 40 }           # corpus index + cloned repos for provenance
+  network: { min_mbps: 50 }
+  software:
+    - "python >= 3.10"
+    - "node >= 18 (for packages/core checker engine)"
+
+miner:
+  cpu: { min_cores: 4, min_speed_ghz: 2.5 }
+  gpu: { required: false }
+  memory: { min_gb: 8 }
+  storage: { min_gb: 40 }
+  network: { min_mbps: 50 }

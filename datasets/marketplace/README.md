@@ -19,6 +19,14 @@ channels. Read in this order:
 5. **[bench/footgun-eval/](../../bench/footgun-eval/)** — the runnable harness that
    produces the one number that sells everything: how much training on the corpus
    cuts a model's footgun rate, graded by the production checker.
+6. **[CHANNELS.md](CHANNELS.md)** — the full avenue matrix: every place to sell/scale
+   the corpus (direct, Opendatabay, HF, AWS/Snowflake, Ocean, Sahara, Bittensor,
+   Vana, eval-as-benchmark, metered API), how they layer, and the sequencing.
+7. **[BITTENSOR.md](BITTENSOR.md)** — selling verified code-data as a Bittensor
+   subnet: the checker *is* the validator. Design, cost gate, and a runnable scaffold
+   in [`integrations/bittensor/`](../../integrations/bittensor/).
+8. **[../../GROWTH-ROADMAP.md](../../GROWTH-ROADMAP.md)** — the path to 10,000+
+   high-quality VTIs: supply (fleet + modalities), scale (HiveMind + subnet), demand.
 
 ## The sequence (what to actually do)
 
