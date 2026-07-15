@@ -213,6 +213,69 @@ contract C { function open() external { router.addLiquidityETH{value: address(th
   });
 });
 
+// New modality: an ABSENCE trap. Chainlink oracle staleness — reads
+// latestRoundData() but never guards on updatedAt / block.timestamp freshness.
+const SOL_GUARD_RULE: Rule = {
+  id: "sol-oracle-staleness", severity: "high", title: "unchecked oracle staleness",
+  component: { name: "solidity", type: "SmartContract" },
+  detect: { modules: ["solidity"], nameRegex: "price|getPrice|latest|value", triggerCalls: ["latestRoundData"], lang: "solidity" },
+  check: { kind: "cst-required-guard-missing", params: { triggerCall: "latestRoundData", guardTokens: ["updatedAt", "block.timestamp"], guardMode: "all" } },
+  test: { kind: "none" },
+};
+const solStaleVuln = `pragma solidity ^0.8.20;
+contract Oracle { AggregatorV3Interface feed;
+  function getPrice() public view returns (uint256) {
+    (, int256 answer, , , ) = feed.latestRoundData();
+    return uint256(answer);
+  }
+}
+`;
+const solStaleFixed = `pragma solidity ^0.8.20;
+contract Oracle { AggregatorV3Interface feed; uint256 constant MAX_STALENESS = 3600;
+  function getPrice() public view returns (uint256) {
+    (, int256 answer, , uint256 updatedAt, ) = feed.latestRoundData();
+    require(block.timestamp - updatedAt <= MAX_STALENESS, "stale price");
+    return uint256(answer);
+  }
+}
+`;
+// A partial fix (destructures updatedAt but no block.timestamp comparison) must
+// still fail under guardMode:"all" — the identifier alone isn't a real guard.
+const solStalePartial = `pragma solidity ^0.8.20;
+contract Oracle { AggregatorV3Interface feed;
+  function getPrice() public view returns (uint256) {
+    (, int256 answer, , uint256 updatedAt, ) = feed.latestRoundData();
+    return uint256(answer) + updatedAt;
+  }
+}
+`;
+
+describe("Solidity static AST — cst-required-guard-missing (oracle staleness, absence trap)", () => {
+  it("flags latestRoundData() with no staleness guard (RED)", () => {
+    const r = scan("solidity", "Oracle.sol", solStaleVuln, SOL_GUARD_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("fail");
+  });
+  it("clears a read guarded by block.timestamp - updatedAt (GREEN)", () => {
+    const r = scan("solidity", "Oracle.sol", solStaleFixed, SOL_GUARD_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("pass");
+  });
+  it("still flags a partial fix — updatedAt destructured but no block.timestamp check (guardMode all)", () => {
+    const r = scan("solidity", "Oracle.sol", solStalePartial, SOL_GUARD_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("fail");
+  });
+  it("passes (not applicable) when latestRoundData is never called", () => {
+    const src = `pragma solidity ^0.8.20;
+contract Oracle { function getPrice() public pure returns (uint256) { return 1; } }
+`;
+    const r = scan("solidity", "Oracle.sol", src, SOL_GUARD_RULE);
+    // scope matches nameRegex but trigger absent → pass
+    expect(r[0]?.result ?? "pass").toBe("pass");
+  });
+});
+
 describe("finder scoping", () => {
   it("does not consider a Go function that neither matches nameRegex nor calls the trigger", () => {
     const src = `package other

@@ -25,6 +25,7 @@ import { cstStructFieldForbiddenLiteral } from "./cstStructFieldForbiddenLiteral
 import { cstMemberAccessForbidden } from "./cstMemberAccessForbidden.ts";
 import { cstCallForbidden } from "./cstCallForbidden.ts";
 import { cstPositionalArgForbiddenLiteral } from "./cstPositionalArgForbiddenLiteral.ts";
+import { cstRequiredGuardMissing } from "./cstRequiredGuardMissing.ts";
 import type { Candidate, RustCandidate, ConfigCandidate, CstCandidate, CheckOutcome, Checker, RustChecker, ConfigChecker, CstChecker } from "../types.ts";
 
 // Registry of human-vetted checker templates. Rules bind to these by `kind`.
@@ -76,6 +77,7 @@ const registry: Record<string, Checker | RustChecker | ConfigChecker | CstChecke
   // Solidity positional-arg analog — the Uniswap V2 zeroed-min-out family
   // (addLiquidityETH(…,0,0,…), swapExactTokensForTokens(amt,0,…)).
   "cst-positional-arg-forbidden-literal": cstPositionalArgForbiddenLiteral as CstChecker,
+  "cst-required-guard-missing": cstRequiredGuardMissing as CstChecker,
 };
 
 // Move 2 — self-extending checkers. The meta-gate (scripts/fleet-checker-gate.ts)
