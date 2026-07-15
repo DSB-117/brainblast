@@ -1,8 +1,8 @@
 # Brainblast — The Roadmap
 
 **Last updated:** 2026-07-15 · anchored at **v1.0.0** · single source of truth
-(supersedes the former `GROWTH-ROADMAP.md` and `ROADMAP-TRAINING-DATA.md`, now
-redirect stubs).
+(supersedes and replaces the former `GROWTH-ROADMAP.md` and
+`ROADMAP-TRAINING-DATA.md`).
 
 **North star:** Make AI-written code **correct-by-default** — and turn the proof of
 every catch into the only **verifiable** code-security data asset in the world.

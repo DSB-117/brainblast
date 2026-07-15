@@ -25,8 +25,8 @@ channels. Read in this order:
 7. **[BITTENSOR.md](BITTENSOR.md)** — selling verified code-data as a Bittensor
    subnet: the checker *is* the validator. Design, cost gate, and a runnable scaffold
    in [`integrations/bittensor/`](../../integrations/bittensor/).
-8. **[../../GROWTH-ROADMAP.md](../../GROWTH-ROADMAP.md)** — the path to 10,000+
-   high-quality VTIs: supply (fleet + modalities), scale (HiveMind + subnet), demand.
+8. **[../../ROADMAP.md](../../ROADMAP.md)** — the unified product roadmap; the path to
+   10,000+ VTIs is Lane 2 (Corpus & Fleet), with demand across Lanes 4–5.
 
 ## The sequence (what to actually do)
 

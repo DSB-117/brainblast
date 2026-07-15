@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://raw.githubusercontent.com/DSB-117/brainblast/main/schema/vti.schema.json",
   "title": "Brainblast Verified Trap Instance (VTI)",
-  "description": "The sellable atom of the Brainblast training-data platform: a machine-verified error→fix→test→proof record for one coding trap, pinned to a specific SDK version, with source provenance and corroboration. Each record is reward-gradable (RED on the vulnerable snippet, GREEN on the fixed snippet, both proven by Brainblast's own static checker / generated test). See ROADMAP-TRAINING-DATA.md, Stage 0.",
+  "description": "The sellable atom of the Brainblast training-data platform: a machine-verified error→fix→test→proof record for one coding trap, pinned to a specific SDK version, with source provenance and corroboration. Each record is reward-gradable (RED on the vulnerable snippet, GREEN on the fixed snippet, both proven by Brainblast's own static checker / generated test). See ROADMAP.md (Lane 2).",
   "type": "object",
   "additionalProperties": false,
   "required": [

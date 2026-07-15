@@ -94,7 +94,7 @@ Everything Brainblast does today, at a glance.
 - **Wallet Guard (v0.8.2–0.8.3)** — reconcile a project's declared network vs its actual wallet-adapter wiring; runs inside the default audit.
 - **Agent Wallet (v0.9.3)** — a small, capped, Vault-recoverable ops wallet an agent runs *itself* (`wallet init/stake/sweep/rotate/delegate`), with a fail-closed spend gate. Default-off.
 
-**Verified-trap data platform** — every proven fix is an asset (see [ROADMAP-TRAINING-DATA.md](ROADMAP-TRAINING-DATA.md)):
+**Verified-trap data platform** — every proven fix is an asset (see [ROADMAP.md](ROADMAP.md)):
 - **The data factory (v0.9.2)** — each RED→GREEN fix, proven through the generalized oracle, becomes a schema-valid **Verified Trap Instance** (`error→fix→test→proof`, pinned to an SDK version). `gen:vti` / `pack:dataset` / `ingest:vti` (consent-gated, secret-scanned, physically-separated contributor lot) / `corpus` / `sla` manage and self-verify the corpus.
 - **The VTI feed (v0.9.4)** — `brainblast feed` streams the corpus as a **subscription to the delta** (cursor-resumable NDJSON, `$BRAIN`-tiered access, reproducibility receipts). **`brainblast_recall`** exposes it in-tool over MCP so an agent pulls the verified traps for an SDK *before* writing the integration.
 - **The marketplace + automatic intake (v0.9.5)** — `brainblast catalog` (the storefront), `brainblast grant` (a signed access entitlement enforced at distribution), and `brainblast usage` (a hash-chained metering ledger) turn the corpus into a market; `npm run intake` is the one-command conveyor (`gen:vti → pack:dataset → corpus → catalog`) so a freshly-proven pack becomes sellable with no manual glue.
@@ -187,7 +187,7 @@ So an AI agent can hold and move `$BRAIN`/`$USDC`/`$SOL` with near-zero friction
 
 ## VTI feed — a subscription to the verified-trap delta (default-off)
 
-The training-data platform's product surface ([ROADMAP-TRAINING-DATA.md](ROADMAP-TRAINING-DATA.md), Stage 4). Brainblast manufactures **Verified Trap Instances** — `error→fix→test→RED/GREEN-proof` records pinned to a specific SDK version. `brainblast feed` turns that corpus from a static dump into a **subscription to the delta**: stream the newly-verified VTIs that match your stack, each with its reproducibility receipt, and resume from a cursor.
+The training-data platform's product surface ([ROADMAP.md](ROADMAP.md), Lane 4). Brainblast manufactures **Verified Trap Instances** — `error→fix→test→RED/GREEN-proof` records pinned to a specific SDK version. `brainblast feed` turns that corpus from a static dump into a **subscription to the delta**: stream the newly-verified VTIs that match your stack, each with its reproducibility receipt, and resume from a cursor.
 
 ```
 $ brainblast feed --lot my-lot.jsonl --sdk web3.js --severity high --since 2026-06-23T18:59:28Z
@@ -550,8 +550,7 @@ These are baked into every adapter:
 
 Two roadmaps:
 
-- [ROADMAP.md](ROADMAP.md) — the core thesis: turning documentation into *enforcement* along a **Predict → Enforce → Watch → Compound** ladder.
-- [ROADMAP-TRAINING-DATA.md](ROADMAP-TRAINING-DATA.md) — the evolution into a verified-trap **AI training-data platform** (where every proven fix becomes a sellable, reproducible asset).
+- [ROADMAP.md](ROADMAP.md) — the unified product roadmap across five lanes (Engine & Tool · Corpus & Fleet · HiveMind · Marketplace & GTM · $BRAIN & On-chain): the **Predict → Enforce → Watch → Compound** ladder *and* the verified-trap **AI training-data platform** where every proven fix becomes a sellable, reproducible asset.
 
 **Shipped through v1.0.0** (latest release on [npm](https://www.npmjs.com/package/brainblast), with SLSA provenance):
 
