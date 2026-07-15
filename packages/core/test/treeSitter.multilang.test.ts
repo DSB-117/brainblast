@@ -66,6 +66,30 @@ describe("Solidity static AST — cst-member-access-forbidden", () => {
     expect(r).toHaveLength(1);
     expect(r[0].result).toBe("pass");
   });
+  // Regression: tree-sitter-solidity mis-parses `!isContract(x) && tx.origin == y`
+  // as `(!isContract(x) && tx).origin`, so the member_expression's object is a
+  // binary_expression, not the bare `tx`. Matching the object's rightmost identifier
+  // still trips the trap. (Real repo: dypfinance noContractsAllowed gate.)
+  it("flags tx.origin inside a compound && guard (RED)", () => {
+    const src = `pragma solidity ^0.8.0;
+contract Farm { function auth() public view {
+  require(!isContract(msg.sender) && tx.origin == msg.sender, "no contracts");
+} function isContract(address a) internal view returns (bool) { return a.code.length > 0; } }
+`;
+    const r = scan("solidity", "Farm.sol", src, SOL_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("fail");
+  });
+  it("does not fire on a compound && guard once tx.origin is removed (GREEN)", () => {
+    const src = `pragma solidity ^0.8.0;
+contract Farm { function auth() public view {
+  require(!isContract(msg.sender), "no contracts");
+} function isContract(address a) internal view returns (bool) { return a.code.length > 0; } }
+`;
+    const r = scan("solidity", "Farm.sol", src, SOL_RULE);
+    expect(r).toHaveLength(1);
+    expect(r[0].result).toBe("pass");
+  });
 });
 
 const SOL_CALL_RULE: Rule = {

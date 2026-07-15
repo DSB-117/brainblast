@@ -1197,6 +1197,24 @@ describe("objectArgPropertyForbiddenLiteral (BN(0)-aware, v0.7.6)", () => {
     const zeroDecimal = candidate(`export function h(q: any) { return pool.swap({ minOutAmount: new Decimal(0) }); }`, "h");
     expect(objectArgPropertyForbiddenLiteral(zeroDecimal, P).result).toBe("fail");
   });
+
+  // Regression: a permissive BOOLEAN footgun (`origin: true` allow-all CORS) is
+  // idiomatically fixed by an explicit allowlist ARRAY (or an options OBJECT). The
+  // array/object literal is a concrete value that is provably not the forbidden
+  // boolean, so it must reach GREEN (pass), not cant_tell. (Real repo: socket.io
+  // cors origin reflect.)
+  it("FAIL origin:true then PASS on the boolean→array/object safe fix", () => {
+    const B = { call: "cors", argIndex: 0, propName: "origin", forbiddenValue: true };
+    const vuln = candidate(`export function h() { return io({ cors: undefined, }) && cors({ origin: true }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(vuln, B).result).toBe("fail");
+    const fixedArray = candidate(`export function h() { return cors({ origin: ['https://app.example.com'] }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(fixedArray, B).result).toBe("pass");
+    const fixedObject = candidate(`export function h() { return cors({ origin: { allow: 'https://app.example.com' } }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(fixedObject, B).result).toBe("pass");
+    // A non-literal fix (a function/variable) genuinely can't be resolved statically.
+    const fixedFn = candidate(`export function h(check: any) { return cors({ origin: check }); }`, "h");
+    expect(objectArgPropertyForbiddenLiteral(fixedFn, B).result).toBe("cant_tell");
+  });
 });
 
 describe("positionalArgForbiddenLiteral (positional-arg-forbidden-literal)", () => {
