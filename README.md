@@ -463,6 +463,37 @@ Add to `claude.json`:
 
 Tools exposed: `brainblast_audit(dir)`, `brainblast_diff(ecosystem, package, from_version, to_version)`, `brainblast_osv_check(ecosystem, package, version)`, `brainblast_verify(dir, trapId?, oracle?)`, `brainblast_recall(sdk?, class?, min_severity?, since?, lots?)` — recall the verified traps (with their RED→GREEN receipts and fixes) for an SDK **before** writing the integration, straight from the agent's tools (reads the machine-global hive lot by default) — and `hive_brief(dir?, sdk?, min_severity?, limit?)` — the HiveMind briefing: call at session start to pre-immunize against the proven traps for exactly the repo's dependencies (v0.10.0).
 
+## Score your model (v1.1.0)
+
+`brainblast eval` measures whether a coding model ships the silent, verified footguns the corpus catalogs — and how much recalling the matching trap first closes the gap. Each task asks the model to write a real SDK integration; the **same deterministic checker that proves the VTI RED→GREEN grades the output**, so the number has no secret answer key — anyone can re-run it and the checker returns the same color.
+
+It runs two conditions and reports the **lift**: the bare model, and the model handed the matching recalled footgun first (the `brainblast_recall` value proposition).
+
+```bash
+# Score any CLI agent (prompt on stdin, code on stdout):
+brainblast eval --model-cmd "my-agent --quiet"
+
+# Score a hosted model:
+OPENAI_API_KEY=…  brainblast eval --http openai    --model gpt-4o
+ANTHROPIC_API_KEY=… brainblast eval --http anthropic --model claude-sonnet-5
+
+brainblast eval --list                 # the curated, class-balanced task set
+brainblast eval … --verbose            # per-task GREEN/RED grid
+brainblast eval … --json               # machine-readable scorecard
+brainblast eval … --fail-under 80      # CI gate on the bare avoidance rate
+```
+
+```
+brainblast eval — score your model
+  model:  gpt-4o
+  tasks:  12  (verified footguns, checker-graded — no answer key)
+  bare model       avoided  58.3%   (GREEN 7 · RED 5 · UNK 0 of 12)
+  with recall      avoided 100.0%   (GREEN 12 · RED 0 · UNK 0 of 12)
+  lift from recall:  +41.7 pts  (58.3% → 100.0%)
+```
+
+The tasks span the corpus's real shape — auth-bypass, missing-verification, missing-slippage-guard, silent-zero-revenue, unchecked-staleness, unconfirmed-state, immutable-after-deploy — across TypeScript, Solidity, and Go.
+
 ## Upgrade risk diff (v0.6.0)
 
 ```sh
