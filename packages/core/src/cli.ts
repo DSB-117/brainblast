@@ -36,6 +36,8 @@ import { extractRepoDeps, linkRepo } from "./hive/repos.ts";
 //   brainblast mcp
 //   brainblast watch [targetDir]
 //   brainblast trust-graph <programId> [<programId>...] [--rpc URL] [--no-probe] [--json]
+//   brainblast verify <pack-dir> [--oracle=static|compiler|best] [--json]
+//   brainblast eval --model-cmd "<cmd>" | --http openai|anthropic --model <name>
 //
 // `audit` runs every bundled rule (default). With --ci, a confirmed FAIL exits
 // 1. CANT_TELL warns and does NOT fail unless --strict is passed.
@@ -147,6 +149,11 @@ if (args[0] === "pack") {
 
 if (args[0] === "verify") {
   await runVerify(args.slice(1));
+  process.exit(0);
+}
+
+if (args[0] === "eval") {
+  await runEval(args.slice(1));
   process.exit(0);
 }
 
@@ -753,6 +760,120 @@ function runPack(argv: string[]) {
 // runs to check reward-gradability themselves: no trust in us required, they
 // re-run the oracle and get the same colors. Exit 1 if any record fails to
 // reproduce.
+async function runEval(argv: string[]) {
+  const {
+    EVAL_TASKS,
+    runEval: runEvalHarness,
+    commandAdapter,
+    httpAdapter,
+    renderScorecardText,
+    scorecardJson,
+  } = await import("./eval/index.ts");
+  const { SYSTEM_PREAMBLE } = await import("./eval/run.ts");
+
+  const wantsHelp = argv.includes("--help") || argv.includes("-h");
+  const flag = (name: string): string | undefined => {
+    const eq = argv.find((a) => a.startsWith(`--${name}=`));
+    if (eq) return eq.slice(name.length + 3);
+    const i = argv.indexOf(`--${name}`);
+    return i >= 0 ? argv[i + 1] : undefined;
+  };
+
+  if (argv.includes("--list")) {
+    console.log(`brainblast eval — ${EVAL_TASKS.length} verified-footgun tasks:`);
+    for (const t of EVAL_TASKS) {
+      console.log(`  ${t.id.padEnd(32)} ${t.trapClass.padEnd(22)} ${t.sdk}`);
+    }
+    process.exit(0);
+  }
+
+  if (wantsHelp || argv.length === 0) {
+    console.log("usage: brainblast eval --model-cmd \"<cmd>\" [options]");
+    console.log("       brainblast eval --http openai|anthropic --model <name> [options]");
+    console.log("");
+    console.log("  Score a coding model against verified SDK footguns. Each task asks the model to");
+    console.log("  write a real integration; the SAME checker that proves the VTI RED→GREEN grades");
+    console.log("  the output (no secret answer key). Runs two conditions — the bare model, and the");
+    console.log("  model given the matching recalled footgun first — and reports the lift.");
+    console.log("");
+    console.log("  Model source (choose one):");
+    console.log("    --model-cmd \"<cmd>\"     spawn a CLI: prompt on stdin, code on stdout");
+    console.log("    --http openai           OpenAI-compatible /chat/completions (OPENAI_API_KEY)");
+    console.log("    --http anthropic        Anthropic /messages (ANTHROPIC_API_KEY)");
+    console.log("      --model <name>        model id for --http (required)");
+    console.log("      --base-url <url>      override the API base url");
+    console.log("");
+    console.log("  Options:");
+    console.log("    --condition bare|recall|both   default: both");
+    console.log("    --tasks <id,id,...>            restrict to specific task ids (see --list)");
+    console.log("    --verbose                      show the per-task grid");
+    console.log("    --json [--include-code]        machine-readable scorecard");
+    console.log("    --fail-under <pct>             exit 1 if the bare-model avoidance rate is below pct");
+    console.log("    --list                         list the tasks and exit");
+    process.exit(argv.length === 0 ? 2 : 0);
+  }
+
+  // Build the adapter.
+  let adapter;
+  const modelCmd = flag("model-cmd");
+  const httpApi = flag("http");
+  if (modelCmd) {
+    adapter = commandAdapter(modelCmd);
+  } else if (httpApi === "openai" || httpApi === "anthropic") {
+    const model = flag("model");
+    if (!model) {
+      console.error("brainblast eval: --http requires --model <name>");
+      process.exit(2);
+    }
+    const isAnthropic = httpApi === "anthropic";
+    const apiKey = process.env[isAnthropic ? "ANTHROPIC_API_KEY" : "OPENAI_API_KEY"];
+    if (!apiKey) {
+      console.error(`brainblast eval: ${isAnthropic ? "ANTHROPIC_API_KEY" : "OPENAI_API_KEY"} is not set`);
+      process.exit(2);
+    }
+    const baseUrl =
+      flag("base-url") ?? (isAnthropic ? "https://api.anthropic.com" : "https://api.openai.com");
+    adapter = httpAdapter({ api: httpApi, baseUrl, apiKey, model, system: SYSTEM_PREAMBLE });
+  } else {
+    console.error("brainblast eval: choose a model source (--model-cmd or --http). See --help.");
+    process.exit(2);
+  }
+
+  const condArg = (flag("condition") ?? "both").toLowerCase();
+  const conditions =
+    condArg === "bare" ? (["bare"] as const)
+    : condArg === "recall" ? (["recall"] as const)
+    : (["bare", "recall"] as const);
+
+  const taskFilter = flag("tasks");
+  const tasks = taskFilter
+    ? EVAL_TASKS.filter((t) => taskFilter.split(",").map((s) => s.trim()).includes(t.id))
+    : EVAL_TASKS;
+  if (tasks.length === 0) {
+    console.error(`brainblast eval: no tasks matched '${taskFilter}' (see --list)`);
+    process.exit(2);
+  }
+
+  console.error(`brainblast eval: scoring ${adapter.name} on ${tasks.length} task(s) × ${conditions.length} condition(s)…`);
+  const scorecard = await runEvalHarness({ adapter, conditions: [...conditions], tasks });
+
+  if (argv.includes("--json")) {
+    console.log(scorecardJson(scorecard, { includeCode: argv.includes("--include-code") }));
+  } else {
+    console.log(renderScorecardText(scorecard, { verbose: argv.includes("--verbose") }));
+  }
+
+  const failUnder = flag("fail-under");
+  if (failUnder !== undefined) {
+    const threshold = Number(failUnder);
+    const primary = scorecard.conditions.find((c) => c.condition === "bare") ?? scorecard.conditions[0];
+    if (primary && primary.scorePct !== null && primary.scorePct < threshold) {
+      console.error(`brainblast eval: avoidance ${primary.scorePct}% is below --fail-under ${threshold}%`);
+      process.exit(1);
+    }
+  }
+}
+
 async function runVerify(argv: string[]) {
   if (argv.includes("--help") || argv.includes("-h") || argv.filter((a) => !a.startsWith("--")).length === 0) {
     console.log("usage: brainblast verify <pack-dir> [--oracle=static|compiler|best] [--json]");

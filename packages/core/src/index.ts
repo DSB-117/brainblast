@@ -327,3 +327,27 @@ export type {
   ConfigChecker,
   PackManifest,
 } from "./types.ts";
+
+// Eval harness ("score your model") — grade a model against verified footguns
+// with the same deterministic checker that proves each VTI, and measure the
+// lift from recalling the trap first. Programmatic entry for eval-as-a-service.
+export {
+  runEval,
+  gradeCode,
+  buildPrompt,
+  EVAL_TASKS,
+  staticAdapter,
+  commandAdapter,
+  httpAdapter,
+  renderScorecardText,
+  scorecardJson,
+} from "./eval/index.ts";
+export type {
+  EvalTask,
+  EvalColor,
+  EvalCondition,
+  ModelAdapter,
+  TaskOutcome,
+  ConditionScore,
+  Scorecard,
+} from "./eval/index.ts";
