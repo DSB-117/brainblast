@@ -15,14 +15,23 @@ detect:
   nameRegex: send|transfer|execute|submit|payout|swap
   triggerCalls:
     - sendTransaction
+    - sendRawTransaction
     - sendAndConfirmTransaction
+    - sendAndConfirmRawTransaction
+    - confirmTransaction
 check:
   kind: forbidden-call-replacement
   params:
+    # A bare submit that returns a signature without awaiting confirmation is the
+    # footgun; any of the confirming APIs (or an explicit confirmTransaction after
+    # a raw send) is the safe path.
     forbiddenCalls:
       - sendTransaction
+      - sendRawTransaction
     saferCalls:
       - sendAndConfirmTransaction
+      - sendAndConfirmRawTransaction
+      - confirmTransaction
     passDetail: Handler calls sendAndConfirmTransaction, which waits for the cluster
       to confirm the transaction before returning and propagates any on-chain
       error as a thrown exception.

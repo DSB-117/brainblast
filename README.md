@@ -492,7 +492,7 @@ brainblast eval — score your model
   lift from recall:  +41.7 pts  (58.3% → 100.0%)
 ```
 
-The tasks span the corpus's real shape — auth-bypass, missing-verification, missing-slippage-guard, silent-zero-revenue, unchecked-staleness, unconfirmed-state, immutable-after-deploy — across TypeScript, Solidity, and Go.
+The tasks span the corpus's real shape — auth-bypass, missing-verification, missing-slippage-guard, silent-zero-revenue, unchecked-staleness, unconfirmed-state, immutable-after-deploy, wrong-constant, and moved-API — across TypeScript, Solidity, and Go. Most are graded by the static checker; the **wrong-constant / revenue-math** tasks are graded by the **oracle** — the model's function is run against a vetted golden I/O table (a wrong divisor or dropped remainder → RED) — and the **moved-API** task is type-checked against the pinned SDK (a hallucinated method → RED). These are the classes where even a frontier model slips on a subtle bug.
 
 ## Upgrade risk diff (v0.6.0)
 

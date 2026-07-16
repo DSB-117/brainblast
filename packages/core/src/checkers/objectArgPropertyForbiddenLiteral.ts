@@ -21,6 +21,25 @@ import type { Checker } from "../types.ts";
 const NUMERIC_WRAPPER = /(^|\.)(bn|bignum|bignumber|decimal|percentamount|percentage)$/i;
 const FRACTION_FACTORY = /\.(fromfraction|fromdecimal|fromnumber|fromratio|frompercent|frompercentage)$/i;
 
+// Resolve an identifier initializer to a same-file `const NAME = <literal>` so a
+// named constant (`slippageBps: DEFAULT_SLIPPAGE_BPS`, `const DEFAULT_SLIPPAGE_BPS = 50`)
+// is judged by its value, not abstained on. Real code (and careful models) hoist
+// these values to constants; without this the checker returns cant_tell and a
+// provably-safe (or provably-forbidden) value reads as "cannot determine". One
+// hop only — no transitive chains — to stay cheap and predictable.
+function resolveConstInit(init: Expression): Expression | undefined {
+  if (init.getKind() !== SyntaxKind.Identifier) return undefined;
+  const name = init.getText();
+  const decl = init
+    .getSourceFile()
+    .getDescendantsOfKind(SyntaxKind.VariableDeclaration)
+    .find((d) => d.getName() === name);
+  const resolved = decl?.getInitializer();
+  // Never return another identifier (avoid a chain we don't follow) or self.
+  if (!resolved || resolved.getKind() === SyntaxKind.Identifier) return undefined;
+  return resolved;
+}
+
 function calleeOf(init: Expression): string {
   const isNewOrCall = init.getKind() === SyntaxKind.NewExpression || init.getKind() === SyntaxKind.CallExpression;
   if (!isNewOrCall) return "";
@@ -136,70 +155,68 @@ export const objectArgPropertyForbiddenLiteral: Checker = (c, p) => {
     };
   }
 
-  const init = propAssignment.getInitializer();
-  if (!init) {
+  const init0 = propAssignment.getInitializer();
+  if (!init0) {
     return { result: "cant_tell", detail: `${p.propName} has no initializer` };
   }
 
-  const kind = init.getKind();
-  const text = init.getText();
-  const forbidden = JSON.stringify(p.forbiddenValue);
+  // Classify an initializer expression as forbidden / safe / undecidable. Pure —
+  // no I/O — so we can run it on the direct initializer and, if undecidable and
+  // it's a bare identifier, on the resolved same-file constant.
+  const classify = (init: Expression): "forbidden" | "safe" | "unknown" => {
+    const kind = init.getKind();
+    const text = init.getText();
+    const forbidden = JSON.stringify(p.forbiddenValue);
 
-  // Boolean flags are the canonical shape of insecure-default footguns
-  // (`rejectUnauthorized: false`, `ignoreExpiration: true`, `secure: false`).
-  // ts-morph models `true`/`false` as keyword nodes, not Numeric/StringLiteral,
-  // so they need their own branch.
-  const isBool = kind === SyntaxKind.TrueKeyword || kind === SyntaxKind.FalseKeyword;
-  const isStringOrNumber = kind === SyntaxKind.NumericLiteral || kind === SyntaxKind.StringLiteral;
+    // Boolean flags are the canonical shape of insecure-default footguns
+    // (`rejectUnauthorized: false`, `ignoreExpiration: true`, `secure: false`).
+    // ts-morph models `true`/`false` as keyword nodes, not Numeric/StringLiteral.
+    const isBool = kind === SyntaxKind.TrueKeyword || kind === SyntaxKind.FalseKeyword;
+    const isStringOrNumber = kind === SyntaxKind.NumericLiteral || kind === SyntaxKind.StringLiteral;
 
-  const isLiteralForbidden =
-    (isStringOrNumber && (text === forbidden || text === String(p.forbiddenValue))) ||
-    (isBool && typeof p.forbiddenValue === "boolean" && text === String(p.forbiddenValue));
+    const isLiteralForbidden =
+      (isStringOrNumber && (text === forbidden || text === String(p.forbiddenValue))) ||
+      (isBool && typeof p.forbiddenValue === "boolean" && text === String(p.forbiddenValue));
 
-  // A numeric/percentage wrapper that evaluates to zero — `new BN(0)`,
-  // `Percentage.fromFraction(0, 100)`, `percentAmount(0)` — counts as the forbidden
-  // zero (idiomatic amount/slippage/royalty code the bare-literal check misses).
-  const isForbidden = isLiteralForbidden || (p.forbiddenValue === 0 && isZeroValuedNumericCall(init));
+    // A numeric/percentage wrapper that evaluates to zero — `new BN(0)`,
+    // `Percentage.fromFraction(0, 100)`, `percentAmount(0)` — counts as forbidden 0.
+    if (isLiteralForbidden || (p.forbiddenValue === 0 && isZeroValuedNumericCall(init))) return "forbidden";
 
-  if (isForbidden) {
-    return {
-      result: "fail",
-      detail: (p.failDetail as string) ?? `${p.propName} is ${p.forbiddenValue}`,
-    };
+    if (isStringOrNumber || isBool) return "safe";
+
+    // A concrete array/object literal is a determinable value that is NOT a scalar
+    // forbidden literal — the canonical safe fix for a permissive boolean/scalar
+    // footgun (e.g. CORS `origin: true` → an explicit allowlist array/object).
+    const isArrayOrObjectLiteral =
+      kind === SyntaxKind.ArrayLiteralExpression || kind === SyntaxKind.ObjectLiteralExpression;
+    if (isArrayOrObjectLiteral && typeof p.forbiddenValue !== "object") return "safe";
+
+    // A recognized numeric/percentage wrapper with a non-zero value (e.g. the fixed
+    // fixture's `Percentage.fromFraction(500, 10000)`) is a determinable safe value.
+    if (p.forbiddenValue === 0 && isKnownNumericWrapperCall(init)) return "safe";
+
+    return "unknown";
+  };
+
+  let init = init0;
+  let verdict = classify(init0);
+  // When the value is a bare identifier we couldn't judge, resolve it to a
+  // same-file constant and judge that (one hop). Named constants are how real
+  // code — and careful models — express slippage/royalty/fee values.
+  if (verdict === "unknown" && init0.getKind() === SyntaxKind.Identifier) {
+    const resolved = resolveConstInit(init0);
+    if (resolved) {
+      init = resolved;
+      verdict = classify(resolved);
+    }
   }
 
-  if (isStringOrNumber || isBool) {
-    return {
-      result: "pass",
-      detail: (p.passDetail as string) ?? `${p.propName} is ${text}`,
-    };
+  if (verdict === "forbidden") {
+    return { result: "fail", detail: (p.failDetail as string) ?? `${p.propName} is ${p.forbiddenValue}` };
   }
-
-  // A concrete array/object literal is a determinable value that is NOT a scalar
-  // forbidden literal — the canonical safe fix for a permissive boolean/scalar
-  // footgun. e.g. socket.io / CORS `origin: true` (allow-all) → an explicit
-  // allowlist `origin: ['https://app.example.com']`, or `origin: { ... }`. Since the
-  // forbidden value here is always a scalar (0 / true / false / "0"), any array/
-  // object literal is provably safe → PASS (instead of cant_tell).
-  const isArrayOrObjectLiteral =
-    kind === SyntaxKind.ArrayLiteralExpression || kind === SyntaxKind.ObjectLiteralExpression;
-  if (isArrayOrObjectLiteral && typeof p.forbiddenValue !== "object") {
-    return {
-      result: "pass",
-      detail: (p.passDetail as string) ??
-        `${p.propName} is an explicit ${kind === SyntaxKind.ArrayLiteralExpression ? "list" : "object"}, not ${p.forbiddenValue}`,
-    };
+  if (verdict === "safe") {
+    return { result: "pass", detail: (p.passDetail as string) ?? `${p.propName} is ${init.getText()}` };
   }
-
-  // A recognized numeric/percentage wrapper with a non-zero value (e.g. the fixed
-  // fixture's `Percentage.fromFraction(500, 10000)`) is a determinable safe value.
-  if (p.forbiddenValue === 0 && isKnownNumericWrapperCall(init)) {
-    return {
-      result: "pass",
-      detail: (p.passDetail as string) ?? `${p.propName} is a non-zero ${text}`,
-    };
-  }
-
   return {
     result: "cant_tell",
     detail: `${p.propName} is a non-literal expression — cannot determine statically`,
