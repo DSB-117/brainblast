@@ -81,6 +81,17 @@ describe("adapters", () => {
     expect(stripCodeFence("```ts\nconst a = 1;\n```")).toBe("const a = 1;");
     expect(stripCodeFence("const a = 1;")).toBe("const a = 1;");
   });
+
+  it("stripCodeFence extracts a fenced block wrapped in prose", () => {
+    // Models often ignore "no fences" and add commentary — grade the code, not the prose.
+    const wrapped = "Here is the code:\n\n```typescript\nexport const a = 1;\n```\n\nHope that helps!";
+    expect(stripCodeFence(wrapped)).toBe("export const a = 1;");
+  });
+
+  it("stripCodeFence picks the largest block when several are present", () => {
+    const multi = "```bash\nnpm i\n```\nthen\n```ts\nexport function big() {\n  return 42;\n}\n```";
+    expect(stripCodeFence(multi)).toContain("export function big()");
+  });
 });
 
 describe("runEval end-to-end with a static adapter", () => {

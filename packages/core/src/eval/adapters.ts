@@ -16,13 +16,16 @@
 import { spawn } from "node:child_process";
 import type { ModelAdapter } from "./types.ts";
 
-// Strip a leading/trailing Markdown code fence if the model wrapped its answer.
+// Extract source from a model answer. Models frequently wrap code in Markdown
+// fences — sometimes with prose before/after — despite being told not to. We
+// pull the largest fenced block anywhere in the text; if there's an unterminated
+// leading fence we strip it; otherwise the text is returned as-is. Grading on the
+// wrapped text would fail to parse and mis-score a correct answer as off-task.
 export function stripCodeFence(text: string): string {
+  const blocks = [...text.matchAll(/```[a-zA-Z0-9+#.-]*\n([\s\S]*?)```/g)].map((m) => m[1].replace(/\n$/, ""));
+  if (blocks.length) return blocks.sort((a, b) => b.length - a.length)[0];
   const t = text.trim();
-  const fence = t.match(/^```[a-zA-Z0-9]*\n([\s\S]*?)\n```$/);
-  if (fence) return fence[1];
-  // Also handle a single opening fence with no closer.
-  if (t.startsWith("```")) return t.replace(/^```[a-zA-Z0-9]*\n?/, "").replace(/```$/, "");
+  if (t.startsWith("```")) return t.replace(/^```[a-zA-Z0-9+#.-]*\n?/, "").replace(/```\s*$/, "");
   return text;
 }
 
