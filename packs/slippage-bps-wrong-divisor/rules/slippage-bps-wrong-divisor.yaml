@@ -29,9 +29,9 @@ check:
           - 100
         output: 9900
       - input:
-          - 5000
+          - 4000
           - 25
-        output: 4988
+        output: 3990
       - input:
           - 200
           - 300

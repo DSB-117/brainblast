@@ -272,8 +272,10 @@ export const EVAL_TASKS: EvalTask[] = [
     trapClass: "moved-api",
     severity: "high",
     prompt:
-      "Using the stripe Node SDK, write `export async function chargeCustomer(amount: number)` that creates a " +
-      "PaymentIntent for the given amount in USD cents and returns it. Assume `const stripe = new Stripe(key)`.",
+      "Using the stripe Node SDK, write a COMPLETE, self-contained TypeScript file: import Stripe and construct " +
+      "the client as `const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)`, then export " +
+      "`async function chargeCustomer(amount: number)` that creates a PaymentIntent for the given amount in USD " +
+      "cents and returns it.",
     recall:
       "Proven footgun (moved/hallucinated API): the resource is `stripe.paymentIntents` (plural) — " +
       "`stripe.paymentIntents.create({ amount, currency: \"usd\" })`. A singular `stripe.paymentIntent` (or an " +
