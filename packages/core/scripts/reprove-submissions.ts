@@ -10,7 +10,9 @@
 // that provenance somehow passed still has to reproduce through a vetted checker
 // here, or it never reaches the corpus.
 //
-//   BRAINBLAST_REPROVE_TOKEN   shared secret (also set in the registry's Vercel env)
+//   BRAINBLAST_INGEST_TOKEN    shared operator secret (also set in the registry's
+//                              Vercel env). BRAINBLAST_REPROVE_TOKEN is accepted as a
+//                              legacy alias — one value, one name going forward.
 //   FLEET_REGISTRY_URL         default https://registry.brainblast.tech
 //
 // Run: npm run reprove   (scheduled via .github/workflows/reprove.yml)
@@ -23,11 +25,11 @@ import { DEFAULT_REGISTRY_URL } from "../src/telemetry.ts";
 import type { Finding } from "../src/synth/types.ts";
 
 const REGISTRY = (process.env.FLEET_REGISTRY_URL ?? DEFAULT_REGISTRY_URL).replace(/\/+$/, "");
-const TOKEN = process.env.BRAINBLAST_REPROVE_TOKEN;
+const TOKEN = process.env.BRAINBLAST_INGEST_TOKEN ?? process.env.BRAINBLAST_REPROVE_TOKEN;
 
 async function main() {
   if (!TOKEN) {
-    console.error("reprove — BRAINBLAST_REPROVE_TOKEN is required (shared with the registry).");
+    console.error("reprove — BRAINBLAST_INGEST_TOKEN is required (shared operator secret, set in the registry).");
     process.exit(2);
   }
   const auth = { authorization: `Bearer ${TOKEN}` };
