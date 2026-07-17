@@ -40,7 +40,7 @@ prove it's gone, keep watching.
   Brainblast is the retrieved knowledge that closes it.
 - **Now:** an **MCP / retrieval hook** so Cursor / Claude Code / Devin pull the relevant
   proven footgun *before* writing; package the eval harness as a repeatable
-  **"score your model."**
+  **"score your model"** — ✅ shipped (`brainblast eval`, #102/#103).
 - **Next:** **Watch** — re-research pinned dependencies on advisory/version change and
   reopen the gate; deepen checker coverage of the scarce classes (Lane 2).
 - **Later:** **Compound** — every run auto-contributes its catches to the hive + corpus.
@@ -92,7 +92,8 @@ feeds the corpus.
   frontier model waves through."*
 - **Now:** publish the **gated full-corpus** HF repo (turn downloads into leads); run the
   **first outreach wave** (web3/DeFi first, then AI-coding-assistants); stand up
-  **eval-as-a-service** ("bring your model, get your number").
+  **eval-as-a-service** ("bring your model, get your number") — ✅ harness shipped
+  (`brainblast eval`); public run remains.
 - **Next:** list the owned tier on **Opendatabay**; ship the **metered API**; open
   **enterprise pilots**.
 - **Later:** **Ocean compute-to-data** for the wild tier (sell access without shipping
@@ -123,8 +124,8 @@ looking like a security.
 ## If we only do four things (cross-lane priorities, this month)
 
 1. **Close first revenue** (Lane 4) — gated HF corpus + outreach + eval-as-a-service.
-2. **Ship the agent-guard framing** (Lane 1) — the retrieval hook + public eval; it's the
-   product the demo sells.
+2. **Ship the agent-guard framing** (Lane 1) — the retrieval hook + public eval (✅ eval
+   shipped); it's the product the demo sells.
 3. **Rebalance the corpus** (Lane 2) — operator token + class-budget; quality over count.
 4. **Open community/hive supply** (Lane 3) — turn users into scouts.
 
