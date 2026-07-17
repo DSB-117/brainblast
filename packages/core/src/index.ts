@@ -351,3 +351,15 @@ export type {
   ConditionScore,
   Scorecard,
 } from "./eval/index.ts";
+
+// Class-budget gate (Lane 2 corpus rebalance) — turn the corpus's class
+// distribution into an enforceable budget: defer over-represented classes,
+// prioritize the scarce high-value ones.
+export {
+  computeClassBudget,
+  gateClass,
+  countsFromDistribution,
+  MAX_SHARE,
+  MIN_SHARE,
+} from "./classBudget.ts";
+export type { ClassBudget, ClassBudgetRow, ClassCounts, GateVerdict, BudgetStatus } from "./classBudget.ts";

@@ -1,6 +1,6 @@
 # Corpus coverage — Brainblast Verified Traps
 
-_Generated 2026-07-05T02:14:54.129Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
+_Generated 2026-07-17T06:12:40.815Z by corpus-report@0.1.0. Source of truth: `datasets/corpus-index.json`._
 
 ## Summary
 - **90** VTIs (90 unique, 0 duplicate) across **63** SDKs and **9** trap classes.
@@ -87,6 +87,26 @@ _Generated 2026-07-05T02:14:54.129Z by corpus-report@0.1.0. Source of truth: `da
 - wrong-constant · typescript
 
 _All trap classes have at least one instance._
+
+
+## Class budget (rebalance)
+Corpus value = proven-pairs × **class balance** × modality breadth. Targets: no class
+above **25%** (surplus → new submissions deferred by the
+submit gate), every class at least **5%** (deficit → scout priority).
+
+| class | count | share | status | budget |
+|---|--:|--:|---|---|
+| auth-bypass | 35 | 38.9% | surplus | over cap — defer |
+| missing-verification | 27 | 30.0% | surplus | over cap — defer |
+| unconfirmed-state | 8 | 8.9% | ok | room +19 to cap |
+| other | 8 | 8.9% | ok | room +19 to cap |
+| silent-zero-revenue | 4 | 4.4% | deficit | need +1 to reach min |
+| missing-slippage-guard | 4 | 4.4% | deficit | need +1 to reach min |
+| wrong-constant | 2 | 2.2% | deficit | need +3 to reach min |
+| immutable-after-deploy | 1 | 1.1% | deficit | need +4 to reach min |
+| unchecked-staleness | 1 | 1.1% | deficit | need +4 to reach min |
+
+**Scout work order** (scarcest first): immutable-after-deploy → unchecked-staleness → wrong-constant → silent-zero-revenue → missing-slippage-guard → unconfirmed-state.
 
 ## $BRAIN curation
 The per-record `score` in `corpus-index.json` is what pricing and the curation
