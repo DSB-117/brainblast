@@ -7,7 +7,7 @@
 
 export * from "./types.ts";
 export { EVAL_TASKS } from "./tasks.ts";
-export { gradeCode, loadTaskRule } from "./grade.ts";
+export { gradeCode, gradeCodeAsync, loadTaskRule, ORACLE_CHECK_KINDS } from "./grade.ts";
 export { staticAdapter, commandAdapter, httpAdapter, stripCodeFence } from "./adapters.ts";
 export { runEval, buildPrompt, SYSTEM_PREAMBLE } from "./run.ts";
 export { renderScorecardText, scorecardJson } from "./render.ts";

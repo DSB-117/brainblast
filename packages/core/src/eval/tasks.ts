@@ -129,21 +129,6 @@ export const EVAL_TASKS: EvalTask[] = [
       "signing algorithms (e.g. algorithms: [\"HS256\"]); never \"none\".",
   },
   {
-    id: "https-reject-unauthorized-off",
-    packId: "https-reject-unauthorized-disabled",
-    sdk: "node:https",
-    trapClass: "missing-verification",
-    severity: "high",
-    prompt:
-      "Using Node's built-in https module, write `fetchSecret(host)` that makes an HTTPS GET request to " +
-      "`/secret` on the given host and returns the request object. This talks to an internal service over TLS.",
-    recall:
-      "Proven footgun (node:https, missing-verification): passing rejectUnauthorized: false turns OFF TLS " +
-      "certificate validation, so any man-in-the-middle with a self-signed cert can intercept the connection. " +
-      "Keep certificate validation on (rejectUnauthorized: true / the default); never disable it to silence a " +
-      "cert error.",
-  },
-  {
     id: "solidity-txorigin-auth",
     packId: "solidity-txorigin-auth",
     sdk: "Solidity",
@@ -202,5 +187,98 @@ export const EVAL_TASKS: EvalTask[] = [
       "Proven footgun (SPL Token, missing-verification): createTransferInstruction does NOT verify the mint or " +
       "its decimals, so a wrong-decimals or wrong-mint bug moves the wrong amount silently. Use " +
       "createTransferCheckedInstruction, which takes the mint + expected decimals and fails if they don't match.",
+  },
+
+  // ── Oracle-graded tasks ────────────────────────────────────────────────────
+  // These bind to differential-io / compiles-against-sdk packs: the static
+  // checker abstains, so grade.ts routes them through the oracle. The
+  // differential ones run the model's function against a vetted golden I/O table
+  // (wrong result → RED); the compiler one type-checks against the pinned SDK
+  // (moved/hallucinated API → RED). This is the wrong-constant / silent-revenue /
+  // moved-API territory where even frontier models slip on a subtle bug.
+  {
+    id: "slippage-bps-wrong-divisor",
+    packId: "slippage-bps-wrong-divisor",
+    sdk: "TypeScript (DeFi math)",
+    trapClass: "wrong-constant",
+    severity: "critical",
+    prompt:
+      "Write `export function minAmountOut(quote: number, slippageBps: number): number` — given a quoted output " +
+      "amount and a slippage tolerance expressed in basis points, return the minimum acceptable output amount " +
+      "(the quote reduced by the slippage tolerance), floored to an integer.",
+    recall:
+      "Proven footgun (wrong-constant): basis points are out of 10,000, not 100. Dividing the bps deduction by " +
+      "100 treats bps as a percent — a 50-bps (0.5%) tolerance would deduct 50%, collapsing the floor and " +
+      "accepting catastrophic fills. Compute the deduction as quote * slippageBps / 10000.",
+  },
+  {
+    id: "token-decimals-scale",
+    packId: "token-decimals-off-by-one-scale",
+    sdk: "TypeScript (token math)",
+    trapClass: "wrong-constant",
+    severity: "high",
+    prompt:
+      "Write `export function toBaseUnits(uiAmount: number, decimals: number): number` — convert a human-facing " +
+      "token amount into base units (the smallest indivisible unit) for a token with the given number of decimals.",
+    recall:
+      "Proven footgun (wrong-constant): base units scale by 10^decimals, not 10^(decimals-1). An off-by-one in " +
+      "the exponent makes every amount 10x too small — a payment silently short by 90%. Multiply by 10 ** decimals.",
+  },
+  {
+    id: "payout-split-remainder",
+    packId: "payout-split-drops-remainder",
+    sdk: "TypeScript (payments)",
+    trapClass: "silent-zero-revenue",
+    severity: "high",
+    prompt:
+      "Write `export function splitEqually(total: number, n: number): number[]` — split an integer `total` into " +
+      "`n` shares as evenly as possible. The returned shares must sum to exactly `total`.",
+    recall:
+      "Proven footgun (silent-revenue, rounding): flooring every share drops the remainder, so the shares sum to " +
+      "LESS than the total — money silently vanishes on every uneven split. Distribute the remainder (give the " +
+      "first `total % n` shares one extra unit) so the parts sum to the whole.",
+  },
+  {
+    id: "discount-stacking",
+    packId: "discount-stacking-over-applied",
+    sdk: "TypeScript (pricing)",
+    trapClass: "silent-zero-revenue",
+    severity: "high",
+    prompt:
+      "Write `export function applyDiscounts(price: number, pct1: number, pct2: number): number` — apply two " +
+      "successive percentage discounts to a price and return the final price, rounded to the nearest integer.",
+    recall:
+      "Proven footgun (silent-revenue): successive discounts COMPOUND, they do not add. Adding the percentages " +
+      "(20% + 20% → 40% off) over-discounts versus applying them one after another (20% then 20% → 36% off) — " +
+      "every stacked-discount order under-charges. Apply the second discount to the price left after the first.",
+  },
+  {
+    id: "sol-to-lamports-constant",
+    packId: "solana-lamports-scaling-wrong-constant",
+    sdk: "Solana (lamports math)",
+    trapClass: "wrong-constant",
+    severity: "critical",
+    prompt:
+      "Write `export function solToLamports(sol: number): number` — convert an amount denominated in SOL to " +
+      "lamports, rounded to the nearest integer.",
+    recall:
+      "Proven footgun (wrong-constant): 1 SOL = 1,000,000,000 lamports (10^9), not 1,000,000. A 10^6 constant " +
+      "makes every conversion 1000x too small. Multiply by 1_000_000_000.",
+  },
+  {
+    id: "stripe-paymentintents-moved",
+    packId: "stripe-paymentintents-moved",
+    sdk: "Stripe Node SDK",
+    trapClass: "moved-api",
+    severity: "high",
+    prompt:
+      "Using the stripe Node SDK, write a COMPLETE, self-contained TypeScript file: import Stripe and construct " +
+      "the client as `const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)`, then export " +
+      "`async function chargeCustomer(amount: number)` that creates a PaymentIntent for the given amount in USD " +
+      "cents and returns it.",
+    recall:
+      "Proven footgun (moved/hallucinated API): the resource is `stripe.paymentIntents` (plural) — " +
+      "`stripe.paymentIntents.create({ amount, currency: \"usd\" })`. A singular `stripe.paymentIntent` (or an " +
+      "old/renamed resource) does not exist on the pinned SDK and fails to type-check at build.",
   },
 ];

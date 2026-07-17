@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createRequire } from "node:module";
 import { EVAL_TASKS } from "../src/eval/tasks.ts";
-import { gradeCode, loadTaskRule } from "../src/eval/grade.ts";
+import { gradeCode, gradeCodeAsync, loadTaskRule, ORACLE_CHECK_KINDS } from "../src/eval/grade.ts";
 import { runEval, buildPrompt } from "../src/eval/run.ts";
 import { staticAdapter, stripCodeFence } from "../src/eval/adapters.ts";
 import { resolveBundledPackToken } from "../src/bundledPacks.ts";
@@ -43,17 +43,24 @@ describe("eval grader is the real checker (no answer key)", () => {
   // proven fixtures correctly — vulnerable → RED, fixed → GREEN. This both proves
   // the grader is faithful and validates that each task is statically gradable.
   for (const task of EVAL_TASKS) {
-    it.skipIf(!taskGradable(task.packId))(`${task.id}: vulnerable fixture grades RED, fixed grades GREEN`, () => {
+    it.skipIf(!taskGradable(task.packId))(`${task.id}: vulnerable fixture grades RED, fixed grades GREEN`, async () => {
       const packDir = resolveBundledPackToken(task.packId);
       expect(packDir, `bundled pack '${task.packId}' must resolve`).toBeTruthy();
 
-      const vuln = gradeCode(task.packId, fixtureSource(task.packId, "vulnerable"));
+      // Oracle-graded kinds (differential / compiler) go through the async path;
+      // static kinds through either. gradeCodeAsync dispatches correctly for both.
+      const vuln = await gradeCodeAsync(task.packId, fixtureSource(task.packId, "vulnerable"));
       expect(vuln.color, `${task.id} vulnerable → ${vuln.detail}`).toBe("RED");
 
-      const fixed = gradeCode(task.packId, fixtureSource(task.packId, "fixed"));
+      const fixed = await gradeCodeAsync(task.packId, fixtureSource(task.packId, "fixed"));
       expect(fixed.color, `${task.id} fixed → ${fixed.detail}`).toBe("GREEN");
     });
   }
+
+  it("oracle-graded tasks are present (differential + compiler classes)", () => {
+    const oracleTasks = EVAL_TASKS.filter((t) => ORACLE_CHECK_KINDS.has(loadTaskRule(t.packId).rule.check.kind));
+    expect(oracleTasks.length).toBeGreaterThanOrEqual(5);
+  });
 });
 
 describe("grader edge cases", () => {
@@ -80,6 +87,17 @@ describe("adapters", () => {
   it("stripCodeFence unwraps fenced code", () => {
     expect(stripCodeFence("```ts\nconst a = 1;\n```")).toBe("const a = 1;");
     expect(stripCodeFence("const a = 1;")).toBe("const a = 1;");
+  });
+
+  it("stripCodeFence extracts a fenced block wrapped in prose", () => {
+    // Models often ignore "no fences" and add commentary — grade the code, not the prose.
+    const wrapped = "Here is the code:\n\n```typescript\nexport const a = 1;\n```\n\nHope that helps!";
+    expect(stripCodeFence(wrapped)).toBe("export const a = 1;");
+  });
+
+  it("stripCodeFence picks the largest block when several are present", () => {
+    const multi = "```bash\nnpm i\n```\nthen\n```ts\nexport function big() {\n  return 42;\n}\n```";
+    expect(stripCodeFence(multi)).toContain("export function big()");
   });
 });
 

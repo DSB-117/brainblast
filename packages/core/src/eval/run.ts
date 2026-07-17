@@ -6,7 +6,7 @@
 // (what `brainblast_recall` would surface) is prepended — so the delta between
 // `bare` and `recall` is the corpus's measured lift on that model.
 
-import { gradeCode } from "./grade.ts";
+import { gradeCodeAsync } from "./grade.ts";
 import { EVAL_TASKS } from "./tasks.ts";
 import type {
   ConditionScore,
@@ -60,6 +60,12 @@ export interface RunEvalOpts {
   conditions?: EvalCondition[];
   /** Restrict to a subset of tasks (default: the full curated set). */
   tasks?: EvalTask[];
+  /**
+   * Allow the Tier-2 (executed/differential) oracle backends, which grade the
+   * differential-io tasks by running the model's code against a golden table.
+   * Defaults to true — running candidate code is the point of those tasks.
+   */
+  allowTier2?: boolean;
   /** Injectable clock for deterministic tests. */
   now?: () => string;
 }
@@ -67,6 +73,7 @@ export interface RunEvalOpts {
 export async function runEval(opts: RunEvalOpts): Promise<Scorecard> {
   const tasks = opts.tasks ?? EVAL_TASKS;
   const conditions = opts.conditions ?? ["bare", "recall"];
+  const allowTier2 = opts.allowTier2 ?? true;
   const now = opts.now ?? (() => new Date().toISOString());
 
   const outcomes: TaskOutcome[] = [];
@@ -77,7 +84,7 @@ export async function runEval(opts: RunEvalOpts): Promise<Scorecard> {
       let detail = "";
       try {
         code = await opts.adapter.complete(buildPrompt(task, condition));
-        const graded = gradeCode(task.packId, code);
+        const graded = await gradeCodeAsync(task.packId, code, { allowTier2 });
         color = graded.color;
         detail = graded.detail;
       } catch (e) {
