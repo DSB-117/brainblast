@@ -33,5 +33,5 @@ jobs:
           fi
       - name: Bulk submit (operator token — cap-exempt)
         env:
-          BRAINBLAST_INGEST_TOKEN: ${{ secrets.BRAINBLAST_REPROVE_TOKEN }}
+          BRAINBLAST_INGEST_TOKEN: ${{ secrets.BRAINBLAST_INGEST_TOKEN }}
         run: python3 fleet/scripts/sg_submit.py

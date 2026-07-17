@@ -28,4 +28,4 @@ jobs:
       - run: npm run reprove
         env:
           FLEET_REGISTRY_URL: https://registry.brainblast.tech
-          BRAINBLAST_REPROVE_TOKEN: ${{ secrets.BRAINBLAST_REPROVE_TOKEN }}
+          BRAINBLAST_INGEST_TOKEN: ${{ secrets.BRAINBLAST_INGEST_TOKEN }}
