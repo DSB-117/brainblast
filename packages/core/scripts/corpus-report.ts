@@ -11,6 +11,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildCorpusIndex, type CorpusVti } from "../src/corpus.ts";
+import { computeClassBudget, MAX_SHARE, MIN_SHARE } from "../src/classBudget.ts";
 import { hiveRoot } from "../src/hive/store.ts";
 import { statsPath, type DemandSignal } from "../src/hive/stats.ts";
 
@@ -91,6 +92,25 @@ const rows = classes.map((cls) => {
   return `| ${cls} | ${cells.join(" | ")} |`;
 });
 
+// ── Class budget (rebalance) ──────────────────────────────────────────────────
+const budget = computeClassBudget(index.classDistribution);
+const pct = (s: number) => `${(s * 100).toFixed(1)}%`;
+const budgetHeader = "| class | count | share | status | budget |";
+const budgetSep = "|---|--:|--:|---|---|";
+const budgetRows = budget.rows
+  .slice()
+  .sort((a, b) => b.share - a.share)
+  .map((r) => {
+    const b =
+      r.status === "surplus"
+        ? "over cap — defer"
+        : r.status === "deficit"
+          ? `need +${r.needToMin} to reach min`
+          : `room +${r.roomToMax} to cap`;
+    return `| ${r.class} | ${r.count} | ${pct(r.share)} | ${r.status} | ${b} |`;
+  })
+  .join("\n");
+
 const md = `# Corpus coverage — Brainblast Verified Traps
 
 _Generated ${now} by ${GENERATOR}. Source of truth: \`datasets/corpus-index.json\`._
@@ -131,6 +151,17 @@ ${
     : ""
 }
 
+## Class budget (rebalance)
+Corpus value = proven-pairs × **class balance** × modality breadth. Targets: no class
+above **${(MAX_SHARE * 100).toFixed(0)}%** (surplus → new submissions deferred by the
+submit gate), every class at least **${(MIN_SHARE * 100).toFixed(0)}%** (deficit → scout priority).
+
+${budgetHeader}
+${budgetSep}
+${budgetRows}
+
+**Scout work order** (scarcest first): ${budget.workOrder.join(" → ") || "_balanced — no deficit classes_"}.
+
 ## $BRAIN curation
 The per-record \`score\` in \`corpus-index.json\` is what pricing and the curation
 market key off: buyers filter on it, and stakers can **stake \`$BRAIN\` to up-rank**
@@ -144,4 +175,8 @@ console.log(`\nCorpus report — ${GENERATOR}`);
 console.log(`  ${index.counts.vtis} VTIs (${index.counts.unique} unique, ${index.counts.duplicates} dup) · ${index.counts.sdks} SDKs · ${index.counts.classes} classes`);
 console.log(`  quality: mean ${index.quality.mean}, median ${index.quality.median} (high ${index.quality.buckets.high} / med ${index.quality.buckets.medium} / low ${index.quality.buckets.low})`);
 console.log(`  thin cells: ${index.coverage.thinCells.length} · uncovered classes: ${index.coverage.missingClasses.length}`);
+const surplus = budget.rows.filter((r) => r.status === "surplus").map((r) => `${r.class} ${pct(r.share)}`);
+const deficit = budget.rows.filter((r) => r.status === "deficit").map((r) => r.class);
+console.log(`  class budget: surplus [${surplus.join(", ") || "none"}] · deficit [${deficit.join(", ") || "none"}]`);
+console.log(`  work order → ${budget.workOrder.slice(0, 5).join(", ") || "balanced"}`);
 console.log(`  → datasets/corpus-index.json, datasets/COVERAGE.md\n`);

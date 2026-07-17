@@ -15,9 +15,10 @@
 // same override the fleet discover/ledger clients use. Bearer token via
 // BRAINBLAST_INGEST_TOKEN when the registry requires one.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { DEFAULT_REGISTRY_URL } from "../src/telemetry.ts";
 import { ingestSubmission } from "../src/contrib/submit.ts";
+import { gateClass, countsFromDistribution, type ClassCounts } from "../src/classBudget.ts";
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
@@ -25,6 +26,26 @@ function arg(name: string): string | undefined {
 }
 
 const REGISTRY = (process.env.FLEET_REGISTRY_URL ?? DEFAULT_REGISTRY_URL).replace(/\/+$/, "");
+
+// Load the corpus class distribution the budget gate reads. Default: the
+// maintained snapshot (datasets/catalog.json or corpus-index.json), searched
+// both from repo root and from packages/core. Returns null when no snapshot is
+// found — the gate then no-ops (never block a submit on a missing snapshot).
+function loadBudgetCounts(explicit?: string): { counts: ClassCounts; source: string } | null {
+  const paths = explicit
+    ? [explicit]
+    : ["datasets/catalog.json", "datasets/corpus-index.json", "../../datasets/catalog.json", "../../datasets/corpus-index.json"];
+  for (const p of paths) {
+    if (!existsSync(p)) continue;
+    try {
+      const counts = countsFromDistribution(JSON.parse(readFileSync(p, "utf8")));
+      if (Object.keys(counts).length) return { counts, source: p };
+    } catch {
+      /* try the next candidate */
+    }
+  }
+  return null;
+}
 
 async function main() {
   const file = arg("candidate");
@@ -45,6 +66,26 @@ async function main() {
   }
 
   const id = (finding as any)?.id ?? "(no id)";
+
+  // Class-budget gate — corpus rebalance. A candidate in an over-represented
+  // class (≥ 25% of the corpus) is deferred so effort moves to the scarce,
+  // high-value classes; --ignore-budget overrides. No-ops when no snapshot or the
+  // class isn't declared. See src/classBudget.ts.
+  const cls = (finding as any)?.class;
+  if (typeof cls === "string" && !process.argv.includes("--ignore-budget")) {
+    const budget = loadBudgetCounts(arg("budget-source"));
+    if (budget) {
+      const v = gateClass(cls, budget.counts);
+      if (!v.allow) {
+        console.error(`submit-vti — DEFERRED · ${id}\n`);
+        console.error(`  ✗ ${v.reason} (source: ${budget.source})`);
+        console.error(`  → scout a scarce class instead: ${v.suggest.join(", ")}`);
+        console.error(`  → override with --ignore-budget if this catch is genuinely needed.`);
+        process.exit(3);
+      }
+      console.error(`  · class-budget: ${v.reason}`);
+    }
+  }
 
   // --dry-run: run the identical gate locally so a contributor can see accept/
   // reject BEFORE sending anything over the wire. (Same code the server runs.)

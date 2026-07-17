@@ -4,6 +4,17 @@ You are a scout. Your job: find REAL, currently-in-`main` integration footguns i
 public GitHub repos and write submittable candidate Findings. Every candidate you
 return MUST pass the registry's synchronous provenance gate and self-validate green.
 
+## Class budget — scout the scarce classes, not the easy ones
+Corpus value = proven-pairs × **class balance**, not raw count. A class at/above 25%
+of the corpus is a **surplus**: the submit gate (`submit-vti`, `src/classBudget.ts`)
+**defers** new candidates in it — so don't spend effort there. Pour into the
+**deficit** classes (< 5%). Run `npm run corpus` for the live budget + a **scout work
+order** (scarcest first); as of the last snapshot the surplus is `auth-bypass` +
+`missing-verification`, and the priority classes are `immutable-after-deploy`,
+`unchecked-staleness`, `wrong-constant`, `silent-zero-revenue`, `missing-slippage-guard`.
+Pick your seam's class from the work order. (`--ignore-budget` overrides, for a
+genuinely exceptional catch.)
+
 ## Discovery — GitHub code search
 Use `gh search code '<pattern>' --limit 30` to find live instances of your seam's
 footgun. It prints `owner/repo:path: <matched line>`. Prefer real apps/bots/SDKs
